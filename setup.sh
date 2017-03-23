@@ -12,9 +12,9 @@ ln -s ~/.dotfiles/redshift.conf ~/.config/redshift.conf
 rm -rf ~/.config/nvim
 ln -s ~/.dotfiles/nvim/ ~/.config/nvim
 mkdir -p ~/.vimundo/
-mkdir -p ~/.config/nvim/autoload ~/.config/nvim/bundle && \                                                                                   
-curl -LSso ~/.config/nvim/autoload/pathogen.vim https://tpo.pe/pathogen.vim                                                                   
-cd ~/.config/nvim                                                                                                                             
+mkdir -p ~/.config/nvim/autoload ~/.config/nvim/bundle && \
+curl -LSso ~/.config/nvim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
+cd ~/.config/nvim
 git clone https://github.com/kien/ctrlp.vim.git bundle/ctrlp.vim
 
 rm -rf ~/.config/fish
