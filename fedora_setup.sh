@@ -14,14 +14,9 @@ pip2 install epub
 
 # nvim
 dnf install nvim
-mkdir -p ~/.config/nvim/autoload ~/.config/nvim/bundle && \
-curl -LSso ~/.config/nvim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
-cd ~/.config/nvim
-git clone https://github.com/kien/ctrlp.vim.git bundle/ctrlp.vim
 
 # tmux 
 dnf install tmux xclip 
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm 
 
 # fish
 dnf config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_25/shells:fish:release:2.repo
