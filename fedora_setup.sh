@@ -31,3 +31,13 @@ pip2 install epub
 
 
 echo "Manually install goofys (s3 fs)"
+
+echo "To install nvidia drivers 
+ 1. disable noveou
+ 2. sudo dnf install kernel-devel xorg-x11-drv-nvidia akmod-nvidia  
+ 3. sudo dracut --force /boot/initramfs-$(uname -r).img $(uname -r) "
+
+echo "Install dash to dock and pixelsaver, topicons plus gnome extensions."
+
+echo "Install freetype-freeworld for better font rendering."
+
