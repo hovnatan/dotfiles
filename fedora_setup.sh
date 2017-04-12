@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dnf install calibre htop nautilus-open-terminal transmission python3-devel git-cola mpv qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake
+dnf install calibre htop nautilus-open-terminal transmission python3-devel git-cola mpv qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go
 
 # video acceleration
 dnf install vdpauinfo libva-vdpau-driver libva-utils
