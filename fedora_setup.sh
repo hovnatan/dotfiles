@@ -28,3 +28,6 @@ pip3 install spyder
 dnf install recoll djvulibre antiword unzip libxslt-python
 dnf install python-pip
 pip2 install epub 
+
+
+echo "Manually install goofys (s3 fs)"
