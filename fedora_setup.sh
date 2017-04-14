@@ -29,6 +29,9 @@ dnf install recoll djvulibre antiword unzip libxslt-python
 dnf install python-pip
 pip2 install epub 
 
+# settup gnome
+gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
+gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 
 echo "Manually install goofys (s3 fs)"
 
