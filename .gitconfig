@@ -1,0 +1,22 @@
+[user]
+  email = xx
+  name = xx
+[diff]
+  tool = meld
+[difftool]
+  prompt = false
+[difftool "meld"]
+  cmd = meld "$LOCAL" "$REMOTE"
+[merge]
+  tool = meld
+[mergetool "meld"]
+  cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
+[core]
+  editor = 'nvim'
+[filter "gitignoredebugsaveimage"]
+	clean = "sed '/DebugSaveImage/{/noignore/!d}'"
+	smudge = cat
+[gui]
+	editor = nvim
+[branch]
+	autosetuprebase = always
