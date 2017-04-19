@@ -18,5 +18,5 @@
 	smudge = cat
 [gui]
 	editor = nvim
-[branch]
-	autosetuprebase = always
+[pull]
+	rebase = true
