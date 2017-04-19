@@ -34,6 +34,9 @@ gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier
 gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 gsettings set org.gnome.desktop.input-sources per-window "true"
 
+# rc.local for trackpoint adjustment
+cp -i rc.local /etc/rc.d/
+
 echo "Manually install goofys (s3 fs)"
 
 echo "To install nvidia drivers 
