@@ -45,6 +45,11 @@ sudo systemctl disable dnf-makecache.service
 # rc.local for trackpoint adjustment
 sudo cp -i rc.local /etc/rc.d/
 
+# passwordless github
+cd ~                 #Your home directory
+ssh-keygen -t rsa    #Press enter for all values
+echo "To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'."
+
 echo "Manually install goofys (s3 fs)"
 
 echo "To install nvidia drivers 
