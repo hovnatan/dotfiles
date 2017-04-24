@@ -17,12 +17,12 @@ sudo dnf install nvim
 sudo dnf install tmux xclip 
 
 # fish
-sudo dnf config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_25/shells:fish:release:2.repo
+sudo dnf config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_$(rpm -E %fedora)/shells:fish:release:2.repo
 sudo dnf install fish
 
 # python spyder
 sudo dnf install python3-pip 
-sudo pip3 install spyder
+sudo pip3 install --upgrade numpy scipy pandas matplotlib notebook pyqt5 spyder
 
 # install recoll 
 sudo dnf install recoll djvulibre antiword unzip libxslt-python
