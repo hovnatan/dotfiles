@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo "To add the user to sudoers list run
+  1. su -
+  2. usermod <username> -a -G wheel
+  3. logoff/login or reboot"
+
 sudo dnf install calibre htop nautilus-open-terminal transmission python3-devel git-cola mpv qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go
 
 # video acceleration
