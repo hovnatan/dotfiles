@@ -39,8 +39,14 @@ gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier
 gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 gsettings set org.gnome.desktop.input-sources per-window "true"
 gsettings set org.gnome.software download-updates false
+
+# disable automatic update notifications
 sudo systemctl disable dnf-makecache.timer
 sudo systemctl disable dnf-makecache.service
+
+# disable tracker
+mkdir -p ~/.config/autostart
+cp -i trackerd.desktop ~/.config/autostart
 
 # rc.local for trackpoint adjustment
 sudo cp -i rc.local /etc/rc.d/
