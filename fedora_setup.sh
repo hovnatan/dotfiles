@@ -5,7 +5,7 @@ echo "To add the user to sudoers list run
   2. usermod <username> -a -G wheel
   3. logoff/login or reboot"
 
-sudo dnf install calibre htop nautilus-open-terminal transmission python3-devel git-cola mpv qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go
+sudo dnf install calibre htop nautilus-open-terminal transmission python3-devel git-cola mpv qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo
 
 # video acceleration
 sudo dnf install vdpauinfo libva-vdpau-driver libva-utils
