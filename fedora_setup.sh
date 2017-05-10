@@ -27,7 +27,7 @@ sudo dnf install fish
 
 # python spyder
 sudo dnf install python3-pip 
-sudo pip3 install --upgrade numpy scipy pandas statsmodels matplotlib notebook pyqt5 spyder
+sudo pip3 install --upgrade numpy scipy pandas statsmodels scikit-learn matplotlib notebook pyqt5 spyder
 
 # install recoll 
 sudo dnf install recoll djvulibre antiword unzip libxslt-python
