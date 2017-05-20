@@ -4,7 +4,7 @@ sudo dnf install calibre htop nautilus-open-terminal transmission python3-devel 
 
 # non free packages
 sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-sudo dnf install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} libmpg123 lame-libs freetype-freeworld --setopt=strict=0
+sudo dnf install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} libmpg123 lame-libs freetype-freeworld dropbox --setopt=strict=0
 
 # fish
 sudo dnf config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_$(rpm -E %fedora)/shells:fish:release:2.repo
@@ -49,5 +49,5 @@ echo "To install nvidia drivers
  2. sudo dnf install kernel-devel xorg-x11-drv-nvidia akmod-nvidia  
  3. sudo dracut --force /boot/initramfs-$(uname -r).img $(uname -r) "
 
-echo "Install dash to dock and pixelsaver, topicons plus gnome extensions."
+echo "Install dash to dock and pixelsaver, topicons plus gnome extensions. Switch from wayland to X11"
 
