@@ -20,6 +20,7 @@ git clone https://github.com/kien/ctrlp.vim.git bundle/ctrlp.vim
 
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/fish/ ~/.config/fish
+chsh -s `which fish`
 
 rm -rf ~/.config/mpv
 ln -s ~/.dotfiles/mpv/ ~/.config/mpv
