@@ -19,7 +19,7 @@ sudo dnf -y config-manager --add-repo http://download.opensuse.org/repositories/
 sudo dnf -y install fish
 
 # python science libs  
-sudo pip3 install --upgrade numpy scipy pandas statsmodels scikit-learn sklearn-pandas matplotlib notebook pyqt5 spyder
+sudo pip3 install --upgrade xlrd numpy scipy pandas statsmodels scikit-learn sklearn-pandas matplotlib notebook pyqt5 spyder
 
 # install for recoll 
 sudo pip2 install epub 
