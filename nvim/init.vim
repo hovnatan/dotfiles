@@ -1,8 +1,3 @@
-if v:version >= 704
-    execute pathogen#infect()
-endif
-  
-
 set nocompatible                  " use vim defaults
 
 "------------------"
@@ -179,23 +174,6 @@ nnoremap <S-l> gt
 
 silent! set clipboard=unnamedplus " map default clipboard to xwindows clipboard
 
-"set runtimepath^=~/.vim/bundle/ctrlp.vim
-"eCtrlP settings
-let g:ctrlp_map = '<c-p>'
-let g:ctrlp_cmd = 'CtrlPMixed'
-let g:ctrlp_match_window = 'bottom,order:ttb'
-let g:ctrlp_switch_buffer = 0
-let g:ctrlp_working_path_mode = 0
-let g:ctrlp_max_files = 1000
-let g:ctrlp_max_depth = 5
-"let g:ctrlp_follow_symlinks = 1
-"let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
-"let g:ctrlp_prompt_mappings = {
-"    \ 'AcceptSelection("e")': ['<c-t>'],
-"    \ 'AcceptSelection("t")': ['<cr>', '<2-LeftMouse>'],
-"    \ }
-"let g:ctrlp_user_command = 'ag %s -l -f --nocolor --hidden -g ""'
-
 " " allows cursor change in tmux mode
 if exists('$TMUX')
     let &t_SI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=1\x7\<Esc>\\"
@@ -211,4 +189,9 @@ if has('persistent_undo')
     set undolevels=1000         " How many undos
     set undoreload=10000        " number of lines to save for undo
 endif
+
+call plug#begin('~/.local/share/nvim/site/plugged')
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --bin' }
+Plug 'junegunn/fzf.vim'
+call plug#end()
 

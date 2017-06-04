@@ -3,6 +3,7 @@ function fish_user_key_bindings
     bind \cn down-or-search
     bind \ep history-token-search-backward
     bind \en history-token-search-forward
+    fzf_key_bindings
 end
 
 set -u fish_color_cwd cyan
