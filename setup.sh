@@ -15,7 +15,7 @@ ln -s ~/.dotfiles/nvim/ ~/.config/nvim
 mkdir -p ~/.vimundo/
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-nvim -c PlugInstall
+nvim -c 'PlugInstall | qa'
 
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/fish/ ~/.config/fish
