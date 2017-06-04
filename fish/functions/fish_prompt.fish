@@ -88,21 +88,12 @@ function fish_prompt --description 'Write out the prompt'
 	end
 
     set -l usr $USER
-    if [ $usr = "hkarapet" ]
-        set usr "hk"
-    end
     set -l hstnm  $__fish_prompt_hostname
-    if [ $hstnm = "amy-hkarapet-lnx" ]
-        set hstnm "amy-hk-lnx"
-    end
-
     set -l prpwd (prompt_pwd)
     set -l gitpr (__fish_git_prompt)
 	set -l part1 (echo -e "$usr@$hstnm $prpwd   %")
-#jjecho $part1
 	echo -n -s "$usr" @ "$hstnm" $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
     set -l lpart1 (expr length $part1)
-#jjecho $lpart1
     if [ (expr $COLUMNS - $lpart1) -lt 50 ]
         echo 
     end
