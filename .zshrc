@@ -1,13 +1,12 @@
-
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
 
 autoload -Uz compinit promptinit
 compinit
 promptinit
 
 # This will set the default prompt to the walters theme
-prompt walters
+PROMPT='%B%(?..[%?] )%b%n@%m%u %% '
+RPROMPT="%F{${1:-blue}}%~%f"
 
 autoload -Uz compinit
 compinit
