@@ -1,5 +1,16 @@
 fortune
+
+HISTSIZE=1000
+SAVEHIST=1000
+HISTFILE=~/.zsh_history
+setopt hist_ignore_dups
+setopt append_history # Allow multiple terminal sessions to all append to one zsh command history
+setopt inc_append_history
+
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+export FZF_COMPLETION_TRIGGER=''
+bindkey '^E' fzf-completion
+bindkey '^I' $fzf_default_completion
 
 autoload -Uz compinit promptinit
 compinit
