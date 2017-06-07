@@ -18,7 +18,7 @@ promptinit
 
 # This will set the default prompt to the walters theme
 PROMPT='%B%(?..[%?] )%b%n@%m%u %% '
-RPROMPT="%F{${1:-blue}}%~%f"
+RPROMPT="%F{${1:-cyan}}%~%f"
 
 autoload -Uz compinit
 compinit
