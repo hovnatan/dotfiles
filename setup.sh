@@ -31,7 +31,8 @@ mkdir -p ~/opt
 cd ~/opt
 git clone https://github.com/junegunn/fzf.git
 cd fzf
-./install --bin
+make
+make install
 sudo ln -s ~/opt/fzf/bin/fzf-tmux /usr/local/bin/fzf-tmux
 sudo ln -s ~/opt/fzf/bin/fzf /usr/local/bin/fzf
 
