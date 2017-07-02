@@ -1,0 +1,17 @@
+# 
+# /etc/fstab: static file system information
+#
+# <file system>	<dir>	<type>	<options>	<dump>	<pass>
+# /dev/sda6
+UUID=bd51afc9-8ba9-402b-90b2-2fc95a22bc16	/         	btrfs     	rw,relatime,ssd,compress=lzo,space_cache,subvol=/root	0 0
+
+# /dev/sda7
+UUID=f1216527-afd1-41a1-ac41-52c3595f2357	/home     	ext4      	rw,relatime,data=ordered	0 2
+
+# /dev/sda5
+UUID=92f43191-3283-43bc-a839-48a8b67a30b8	none		swap		defaults 0 0
+
+# /dev/sda1
+/dev/sda1	/mnt/windows	ntfs-3g	uid=hovnatan,gid=users	0	0
+
+/dev/sda6	/root/btrfs-top-lvl	btrfs	subvol=/,defaults,noauto,compress=lzo,noatime   0  0
