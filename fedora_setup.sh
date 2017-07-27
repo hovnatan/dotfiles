@@ -38,6 +38,7 @@ echo "Xft.lcdfilter: lcddefault" > ~/.Xresources
 gsettings "set" "org.gnome.settings-daemon.plugins.xsettings" "hinting" "slight"
 gsettings "set" "org.gnome.settings-daemon.plugins.xsettings" "antialiasing" "rgba"
 sudo cp -i 00-keyboard.conf /etc/X11/xorg.conf.d/
+sudo cp -i 50-synaptics.conf /etc/X11/xorg.conf.d/
 
 # disable automatic update notifications
 sudo systemctl disable dnf-makecache.timer
