@@ -8,11 +8,11 @@
 
 sudo dnf -y upgrade --refresh
 
-sudo dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola mpv qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip python3-pip recoll djvulibre antiword unzip libxslt-python python-pip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache opencv-devel gdal-devel
+sudo dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip python3-pip recoll djvulibre antiword unzip libxslt-python python-pip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache opencv-devel gdal-devel chrome-gnome-shell
 
 # non free packages
 sudo dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-sudo dnf install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} mac libmpg123 lame-libs ffmpeg freetype-freeworld dropbox --setopt=strict=0
+sudo dnf -y install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} mac libmpg123 lame-libs ffmpeg freetype-freeworld dropbox mpv --setopt=strict=0
 
 # fish
 sudo dnf -y config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_$(rpm -E %fedora)/shells:fish:release:2.repo
@@ -51,10 +51,10 @@ cp -i trackerd.desktop ~/.config/autostart
 sudo cp -i rc.local /etc/rc.d/
 
 # passwordless github
-# cd ~                 #Your home directory
-# ssh-keygen -t rsa    #Press enter for all values
+cd ~                 #Your home directory
+ssh-keygen -t rsa    #Press enter for all values
 # echo "To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'."
-# git remote set-url origin git@github.com:hovnatan/dotfiles.git
+git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
 echo "Manually install goofys (s3 fs)"
 
