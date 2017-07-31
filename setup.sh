@@ -26,3 +26,7 @@ ln -s ~/.dotfiles/mpv/ ~/.config/mpv
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
+
+rm -rf ~/.workrave
+mkdir -p ~/.workrave/
+ln -s ~/.dotfiles/workrave.ini ~/.workrave/workrave.ini
