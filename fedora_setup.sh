@@ -68,3 +68,8 @@ echo "To install nvidia drivers
 
 echo "Install dash to dock and pixelsaver, topicons plus and Clipboard Indicator gnome extensions. Switch from wayland to X11"
 
+#for Matlab
+#sudo rm /usr/local/MATLAB/R2017a/sys/os/glnxa64/libstd*
+#sudo rm /usr/local/MATLAB/R2017a/bin/glnxa64/libfreetype.so.6
+#sudo rm /usr/local/MATLAB/R2017a/bin/glnxa64/libfreetype.so.6.11.1
+
