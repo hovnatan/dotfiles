@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=MATLAB 2017a
+Comment=Matlab 2017a
+Exec=/usr/local/MATLAB/R2017a/bin/matlab -desktop
+Icon=/usr/local/MATLAB/R2017a/toolbox/shared/dastudio/resources/MatlabIcon.png
+Terminal=false
+Categories=GNOME;GTK;Core;

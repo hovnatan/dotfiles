@@ -72,4 +72,4 @@ echo "Install dash to dock and pixelsaver, topicons plus and Clipboard Indicator
 #sudo rm /usr/local/MATLAB/R2017a/sys/os/glnxa64/libstd*
 #sudo rm /usr/local/MATLAB/R2017a/bin/glnxa64/libfreetype.so.6
 #sudo rm /usr/local/MATLAB/R2017a/bin/glnxa64/libfreetype.so.6.11.1
-
+#sudo cp ./matlab.desktop /usr/share/applications/
