@@ -35,6 +35,7 @@ sudo dnf -y install hack-fonts
 gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
 gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 gsettings set org.gnome.desktop.input-sources per-window "true"
+gsettings set org.gnome.shell.app-switcher current-workspace-only true
 gsettings set org.gnome.software download-updates false
 echo "Xft.lcdfilter: lcddefault" > ~/.Xresources
 gsettings "set" "org.gnome.settings-daemon.plugins.xsettings" "hinting" "slight"
