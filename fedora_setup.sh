@@ -6,11 +6,11 @@
 # sudo swapon /newswap
 # sudo echo "/swapfile    swap    swap   defaults 0 0" >> /etc/fstab
 
-sudo dnf -y remove evolution
+sudo dnf -y remove evolution rhythmbox
 
 sudo dnf -y upgrade --refresh
 
-sudo dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip python3-pip recoll djvulibre antiword unzip libxslt-python python-pip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache opencv-devel gdal-devel chrome-gnome-shell strace
+sudo dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip python3-pip recoll djvulibre antiword unzip libxslt-python python-pip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache opencv-devel gdal-devel chrome-gnome-shell strace fzf ipython3 python3-spyder
 
 # non free packages
 sudo dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
