@@ -5,31 +5,23 @@
 # sudo mkswap /swapfile
 # sudo swapon /newswap
 # sudo echo "/swapfile    swap    swap   defaults 0 0" >> /etc/fstab
-
 sudo dnf -y remove evolution rhythmbox
+
+sudo dnf -y install dnf-plugins-core
+
+sudo dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+sudo dnf -y config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_$(rpm -E %fedora)/shells:fish:release:2.repo
+
+sudo dnf -y copr enable heliocastro/hack-fonts
 
 sudo dnf -y upgrade --refresh
 
-sudo dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip python3-pip recoll djvulibre antiword unzip libxslt-python python-pip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache opencv-devel gdal-devel chrome-gnome-shell strace fzf ipython3 python3-spyder
 
-# non free packages
-sudo dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-sudo dnf -y install gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} mac libmpg123 lame-libs ffmpeg freetype-freeworld dropbox mpv --setopt=strict=0
-
-# fish
-sudo dnf -y config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_$(rpm -E %fedora)/shells:fish:release:2.repo
-sudo dnf -y install fish
-
-# hack font
-sudo dnf -y install dnf-plugins-core
-sudo dnf -y copr enable heliocastro/hack-fonts
-sudo dnf -y install hack-fonts
+sudo dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip python3-pip recoll djvulibre antiword unzip libxslt-python python-pip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache opencv-devel gdal-devel chrome-gnome-shell strace fzf ipython3 python3-spyder texlive gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} mac libmpg123 lame-libs ffmpeg freetype-freeworld dropbox mpv fish hack-fonts --setopt=strict=0
 
 # python science libs  
 # sudo pip3 install --upgrade xlrd numpy scipy pandas statsmodels scikit-learn sklearn-pandas matplotlib notebook pyqt5 spyder
-
-# install for recoll 
-# sudo pip2 install epub 
 
 # gnome setup
 gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
