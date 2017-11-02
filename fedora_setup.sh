@@ -64,3 +64,8 @@ echo "Install dash to dock and pixelsaver, topicons plus and Clipboard Indicator
 #sudo rm /usr/local/MATLAB/R2017a/bin/glnxa64/libfreetype.so.6
 #sudo rm /usr/local/MATLAB/R2017a/bin/glnxa64/libfreetype.so.6.11.1
 #sudo cp ./matlab.desktop /usr/share/applications/
+
+#for system76
+#sudo cp sound-headphones.conf /etc/modules-load.d/sound-headphones.conf
+#sudo cp grub /etc/sysconfig/grub
+#sudo grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
