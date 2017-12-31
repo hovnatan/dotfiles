@@ -193,6 +193,7 @@ endif
 call plug#begin('~/.local/share/nvim/site/plugged')
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --bin' }
 Plug 'junegunn/fzf.vim'
+Plug 'vim-scripts/neat.vim'
 call plug#end()
 
 nnoremap <silent> <c-p> :Files <CR>
