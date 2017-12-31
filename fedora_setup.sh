@@ -10,16 +10,18 @@ sudo dnf -y remove evolution rhythmbox
 sudo dnf -y install dnf-plugins-core
 sudo dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf -y config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_$(rpm -E %fedora)/shells:fish:release:2.repo
-sudo dnf -y copr enable heliocastro/hack-fonts ribenakid/puzzles
+sudo dnf -y copr enable heliocastro/hack-fonts
+sudo dnf -y copr enable ribenakid/puzzles
+sudo dnf install http://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm
 sudo dnf -y upgrade --refresh
-sudo dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip recoll djvulibre antiword unzip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache gdal-devel chrome-gnome-shell strace valgrind gdb fzf texlive gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} mac libmpg123 lame-libs ffmpeg freetype-freeworld dropbox mpv fish hack-fonts puzzles uget boost-static --setopt=strict=0
+sudo dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip recoll djvulibre antiword unzip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache gdal-devel chrome-gnome-shell strace valgrind gdb fzf texlive gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} mac libmpg123 lame-libs ffmpeg freetype-freeworld dropbox mpv fish hack-fonts puzzles uget boost-static tlp tlp-rdw --setopt=strict=0
+
+# for thinkpads
+# sudo dnf --enablerepo=tlp-updates-testing install akmod-tp_smapi akmod-acpi_call kernel-devel 
 
 wget 'https://go.skype.com/skypeforlinux-64.rpm'
 sudo dnf -y install 'skypeforlinux-64.rpm'
 rm 'skypeforlinux-64.rpm'
-
-# python science libs  
-# sudo pip3 install --upgrade xlrd numpy scipy pandas statsmodels scikit-learn sklearn-pandas matplotlib notebook pyqt5 spyder
 
 # gnome setup
 gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
