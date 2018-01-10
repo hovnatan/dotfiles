@@ -2,7 +2,7 @@
 
 # ip link show -> name of wired internet -> turn of wake on lan
 # /usr/sbin/ethtool -s enp0s31f6 wol d
-echo -n 160 > /sys/devices/platform/i8042/serio1/serio2/speed
-echo -n 250 > /sys/devices/platform/i8042/serio1/serio2/sensitivity
-echo -n 3 > /sys/devices/platform/i8042/serio1/serio2/inertia 
+echo -n 97 > /sys/devices/platform/i8042/serio1/serio2/speed
+echo -n 200 > /sys/devices/platform/i8042/serio1/serio2/sensitivity
+echo -n 6 > /sys/devices/platform/i8042/serio1/serio2/inertia 
 
