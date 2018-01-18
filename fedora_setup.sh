@@ -59,7 +59,7 @@ echo "To install nvidia drivers
  2. sudo dnf install kernel-devel xorg-x11-drv-nvidia akmod-nvidia  
  3. sudo dracut --force /boot/initramfs-$(uname -r).img $(uname -r) "
 
-echo "Install dash to dock and pixelsaver, topicons plus and Clipboard Indicator gnome extensions. Switch from wayland to X11"
+echo "Install dash to dock and pixelsaver, topicons plus, Remove Accessibility, and Clipboard Indicator gnome extensions. Switch from wayland to X11"
 
 #for Matlab
 #sudo rm /usr/local/MATLAB/R2017a/sys/os/glnxa64/libstd*
