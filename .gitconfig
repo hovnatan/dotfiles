@@ -14,8 +14,8 @@
 [core]
   editor = 'nvim'
 [filter "gitignoredebugsaveimage"]
-	clean = "sed '/DebugSaveImage/{/noignore/!d}'"
-	smudge = cat
+  #clean = "sed '/DebugSaveImage/{/noignore/!d}'"
+	#smudge = cat
 [gui]
 	editor = nvim
 [pull]
