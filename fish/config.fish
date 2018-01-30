@@ -5,8 +5,7 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     fish_vi_key_bindings --no-erase
     bind \cp up-or-search
     bind \cn down-or-search
-    bind \ep history-token-search-backward
-    bind \en history-token-search-forward
+    bind \t complete-and-search
     fzf_key_bindings
 end
 
