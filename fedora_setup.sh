@@ -71,3 +71,16 @@ echo "Install dash to dock and pixelsaver, topicons plus, Remove Accessibility, 
 #sudo cp sound-headphones.conf /etc/modules-load.d/sound-headphones.conf
 #sudo cp grub /etc/sysconfig/grub
 #sudo grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+
+
+#install opencv from sources
+#cmake  -DWITH_QT=ON -DWITH_OPENGL=ON -DFORCE_VTK=ON -DWITH_TBB=ON -DWITH_GDAL=ON -DWITH_XINE=ON -DBUILD_TESTS=OFF \
+#                                      -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/hovnatan/Downloads/opencv_contrib-3.4.0/modules/ \
+#                                      -D PYTHON3_EXECUTABLE=/usr/bin/python3.6 \
+#                                      -D PYTHON3_PACKAGES_PATH=/usr/lib64/python3.6/site-packages \
+#                                      -D PYTHON3_NUMPY_INCLUDE_DIRS=/usr/lib64/python3.6/site-packages/numpy/core/include/ \
+#                                      -D PYTHON3_LIBRARY=/usr/lib64/libpython3.6m.so \
+#                                      -D PYTHON2_EXECUTABLE=/usr/bin/python2.7 \
+#                                      -D PYTHON2_PACKAGES_PATH=/usr/lib64/python2.7/site-packages/ \
+#                                      -D PYTHON2_NUMPY_INCLUDE_DIRS=/usr/lib64/python2.7/site-packages/numpy/core/include/ \
+#                                      -D PYTHON2_LIBRARY=/usr/lib64/libpython2.7.so ..
