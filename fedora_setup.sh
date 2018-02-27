@@ -67,9 +67,10 @@ echo "Install dash to dock and pixelsaver, topicons plus, Remove Accessibility, 
 #sudo cp ./matlab.desktop /usr/share/applications/
 
 #for system76
-#sudo cp sound-headphones.conf /etc/modules-load.d/sound-headphones.conf
-#sudo cp grub /etc/sysconfig/grub
-#sudo grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+#cp sound-headphones.conf /etc/modules-load.d/sound-headphones.conf
+#cp grub /etc/sysconfig/grub
+#grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+#cp sleep.sh /usr/lib/systemd/system-sleep/sleep.sh
 
 
 #install opencv from sources
