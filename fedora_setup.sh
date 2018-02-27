@@ -12,11 +12,14 @@ dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-releas
 dnf -y config-manager --add-repo http://download.opensuse.org/repositories/shells:fish:release:2/Fedora_$(rpm -E %fedora)/shells:fish:release:2.repo
 dnf -y copr enable heliocastro/hack-fonts
 dnf -y copr enable ribenakid/puzzles
-dnf install http://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm
 dnf -y upgrade --refresh
 
-dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip recoll djvulibre antiword unzip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache gdal-devel chrome-gnome-shell strace valgrind gdb fzf texlive texlive-units gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} mac libmpg123 lame-libs ffmpeg freetype-freeworld dropbox mpv fish hack-fonts puzzles uget boost-static cmake-gui tlp tlp-rdw awscli pss meld clang lldb llvm-devel libcxx-devel libcxxabi-devel --setopt=strict=0
+dnf -y install calibre htop nautilus-open-terminal transmission python3-devel git-cola qt-creator gnome-tweak-tool fuse fuse-devel libcurl-devel automake go texinfo redhat-rpm-config vdpauinfo libva-vdpau-driver libva-utils neovim tmux xclip recoll djvulibre antiword unzip fortune-mod workrave redshift-gtk xorg-x11-drv-synaptics-legacy gimp java-devel flacon libevent-devel ncurses-devel ccache gdal-devel chrome-gnome-shell strace valgrind gdb fzf texlive texlive-units gstreamer{1,}-{ffmpeg,libav,plugins-{good,ugly,bad{,-free,-nonfree}}} gstreamer{1,}-{plugin-crystalhd,ffmpeg,plugins-{good,ugly,bad{,-free,-nonfree,-freeworld,-extras}{,-extras}}} mac libmpg123 lame-libs ffmpeg freetype-freeworld dropbox mpv fish hack-fonts puzzles uget boost-static cmake-gui awscli pss meld clang lldb llvm-devel libcxx-devel libcxxabi-devel notebook python3-spyder --setopt=strict=0
 
+
+# TLP
+# dnf install http://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm
+# dnf -y install tlp tlp-rdw 
 # for thinkpads
 # dnf --enablerepo=tlp-updates-testing install akmod-tp_smapi akmod-acpi_call kernel-devel
 
