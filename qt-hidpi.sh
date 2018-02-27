@@ -1,0 +1,2 @@
+export QT_SCREEN_SCALE_FACTORS='1.33'
+export QT_SCALE_FACTOR='0.75'
