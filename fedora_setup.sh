@@ -47,7 +47,7 @@ mkdir -p ~/.config/autostart
 cp -i trackerd.desktop ~/.config/autostart
 
 # rc.local for trackpoint adjustment
-sudo cp -i rc.local /etc/rc.d/
+# sudo cp -i rc.local /etc/rc.d/
 
 # passwordless github
 cd ~                 #Your home directory
