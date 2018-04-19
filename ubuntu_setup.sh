@@ -20,6 +20,11 @@ wget 'https://go.skype.com/skypeforlinux-64.deb'
 sudo apt install ./skypeforlinux-64.deb
 rm skypeforlinux-64.deb
 
+cd ~                 #Your home directory
+ssh-keygen -t rsa    #Press enter for all values
+# echo "To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'."
+git remote set-url origin git@github.com:hovnatan/dotfiles.git
+
 # for Qt apps favorite on dock add to .desktop files StartupWMClass=QT...
 #
 # for pixel saver close button icon to work:
