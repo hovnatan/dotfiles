@@ -20,3 +20,16 @@ wget 'https://go.skype.com/skypeforlinux-64.deb'
 sudo apt install ./skypeforlinux-64.deb
 rm skypeforlinux-64.deb
 
+# for Qt apps favorite on dock add to .desktop files StartupWMClass=QT...
+#
+# for pixel saver close button icon to work:
+# cd ~/.local/share/gnome-shell/extensions/pixel-saver@deadalnix.me/themes
+# mv Ambiance Ambiance.bak
+# ln -s default Ambiance
+# 
+# to increase swap space:
+# sudo swapoff -a
+# sudo dd if=/dev/zero of=/swapfile bs=1M count=32768
+# sudo mkswap /swapfile
+# sudo swapon /swapfile
+
