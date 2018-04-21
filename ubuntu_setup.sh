@@ -8,6 +8,9 @@ gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier
 gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 gsettings set org.gnome.desktop.input-sources per-window "true"
 gsettings set org.gnome.shell.app-switcher current-workspace-only true
+gsettings set org.gnome.desktop.sound allow-volume-above-100-percent true
+gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
+gsettings set org.gnome.nautilus.preferences show-image-thumbnails 'never'
 
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
