@@ -37,7 +37,7 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 # 
 # to increase swap space:
 # sudo swapoff -a
-# sudo dd if=/dev/zero of=/swapfile bs=1M count=32768
+# sudo fallocate -l 24G /swapfile
 # sudo mkswap /swapfile
 # sudo swapon /swapfile
 
