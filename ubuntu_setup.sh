@@ -41,3 +41,11 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 # sudo mkswap /swapfile
 # sudo swapon /swapfile
 
+# for debug set to 0
+# sudo nvim /etc/sysctl.d/10-ptrace.conf
+
+# cp ~/.dotfiles/70-pointingstick.hwdb /lib/udev/hwdb.d/70-pointingstick.hwdb 
+# sudo udevadm hwdb -u
+# sudo udevadm trigger
+
+

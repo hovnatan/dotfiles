@@ -1,0 +1,2 @@
+evdev:name:*ETPS/2\ Elantech\ TrackPoint:dmi:bvn*:bvr*:bd*:svn*:pn*:pvr*:*
+ LIBINPUT_ATTR_TRACKPOINT_RANGE=15
