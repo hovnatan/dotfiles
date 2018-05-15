@@ -30,3 +30,7 @@ cp ~/.dotfiles/.gitconfig ~/
 rm -rf ~/.workrave
 mkdir -p ~/.workrave/
 ln -s ~/.dotfiles/workrave.ini ~/.workrave/workrave.ini
+
+rm -rf ~/.config/htop
+mkdir ~/.config/htop
+ln -s ~/.dotfiles/htoprc ~/.config/htop/htoprc
