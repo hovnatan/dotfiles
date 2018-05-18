@@ -21,6 +21,9 @@ gsettings set org.gnome.shell.app-switcher current-workspace-only true
 gsettings set org.gnome.desktop.sound allow-volume-above-100-percent true
 gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
 gsettings set org.gnome.nautilus.preferences show-image-thumbnails 'never'
+gsettings set org.gnome.shell.extensions.dash-to-dock middle-click-action 'previews'
+gsettings set org.gnome.shell.extensions.dash-to-dock shift-click-action 'previews'
+gsettings set org.gnome.shell.extensions.dash-to-dock shift-middle-click-action 'minimize'
 
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
