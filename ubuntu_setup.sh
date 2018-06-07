@@ -61,4 +61,3 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 # sudo udevadm hwdb -u
 # sudo udevadm trigger
 
-cp ./2e98525f-68b2-4efb-b129-042af121bfca.desktop ~/.local/share/file-manager/actions/2e98525f-68b2-4efb-b129-042af121bfca.desktop

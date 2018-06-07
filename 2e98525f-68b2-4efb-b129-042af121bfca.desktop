@@ -12,5 +12,5 @@ Profiles=profile-zero;
 Name[en_US]=Default profile
 Name[en]=Default profile
 Name[C]=Default profile
-Exec=/usr/bin/feh -F %f
+Exec=/usr/bin/feh %f
 MimeTypes=image/*;
