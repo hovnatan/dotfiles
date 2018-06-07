@@ -60,3 +60,5 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 # cp ~/.dotfiles/70-pointingstick.hwdb /lib/udev/hwdb.d/70-pointingstick.hwdb 
 # sudo udevadm hwdb -u
 # sudo udevadm trigger
+
+cp ./2e98525f-68b2-4efb-b129-042af121bfca.desktop ~/.local/share/file-manager/actions/2e98525f-68b2-4efb-b129-042af121bfca.desktop

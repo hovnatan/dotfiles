@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Action
+Name[en_US]=feh
+Name[en]=feh
+Name[C]=feh
+ToolbarLabel[en_US]=feh
+ToolbarLabel[en]=feh
+ToolbarLabel[C]=feh
+Profiles=profile-zero;
+
+[X-Action-Profile profile-zero]
+Name[en_US]=Default profile
+Name[en]=Default profile
+Name[C]=Default profile
+Exec=/usr/bin/feh -F %f
+MimeTypes=image/*;
