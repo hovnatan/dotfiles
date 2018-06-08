@@ -1,1 +1,1 @@
-feh --keep-zoom-vp --force-aliasing
+feh --keep-zoom-vp --force-aliasing -d
