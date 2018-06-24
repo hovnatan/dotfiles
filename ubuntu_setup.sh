@@ -24,6 +24,7 @@ gsettings set org.gnome.nautilus.preferences show-image-thumbnails 'never'
 gsettings set org.gnome.shell.extensions.dash-to-dock middle-click-action 'previews'
 gsettings set org.gnome.shell.extensions.dash-to-dock shift-click-action 'previews'
 gsettings set org.gnome.shell.extensions.dash-to-dock shift-middle-click-action 'minimize'
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 300
 
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
