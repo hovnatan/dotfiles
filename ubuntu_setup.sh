@@ -1,11 +1,5 @@
 #!/bin/bash
 
-tracker daemon -t
-cd ~/.config/autostart
-cp -v /etc/xdg/autostart/tracker-* ./
-for FILE in `ls`; do echo Hidden=true >> $FILE; done
-rm -rf ~/.cache/tracker ~/.local/share/tracker
-
 sudo apt update; sudo apt -y dist-upgrade
 
 sudo apt -y install spyder3 git-cola net-tools qtcreator chrome-gnome-shell lm-sensors tmux fish python3-gdal python-gdal gdal-bin neovim libfreetype6-dev gfortran libopenblas-dev liblapack-dev tk-dev cmake qtdeclarative5-dev libtbb-dev libeigen3-dev libvtk6-dev zlib1g-dev libjpeg-dev libwebp-dev libpng-dev libtiff5-dev libopenexr-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev yasm libopencore-amrnb-dev libopencore-amrwb-dev libv4l-dev libxine2-dev liblapack-dev liblapacke-dev checkinstall python3-numpy python-numpy libblas-dev gfortran libatlas-base-dev libboost-all-dev ccache fonts-hack-ttf build-essential cmake pkg-config unzip workrave redshift-gtk clang-tools clang-format libgdal-dev valgrind automake python3-pip python-pip neovim curl fortune-mod fortunes htop uget vainfo mpv jupyter-notebook jupyter-core python-ipykernel python3-pandas awscli vlc ubuntu-restricted-extras feh
@@ -34,12 +28,13 @@ rm -rf ~/.fzf
 sudo -H pip3 install pss
 
 wget 'https://go.skype.com/skypeforlinux-64.deb'
-sudo apt install ./skypeforlinux-64.deb
+sudo apt -y install ./skypeforlinux-64.deb
 rm skypeforlinux-64.deb
 
 cd ~                 #Your home directory
 ssh-keygen -t rsa    #Press enter for all values
 # echo "To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'."
+cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
 # for Qt apps favorite on dock add to .desktop files StartupWMClass=QT...
@@ -61,4 +56,11 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 # cp ~/.dotfiles/70-pointingstick.hwdb /lib/udev/hwdb.d/70-pointingstick.hwdb 
 # sudo udevadm hwdb -u
 # sudo udevadm trigger
+
+tracker daemon -t
+mkdir -p ~/.config/autostart
+cd ~/.config/autostart
+cp -v /etc/xdg/autostart/tracker-* ./
+for FILE in `ls`; do echo Hidden=true >> $FILE; done
+rm -rf ~/.cache/tracker ~/.local/share/tracker
 
