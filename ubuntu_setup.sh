@@ -20,6 +20,7 @@ gsettings set org.gnome.shell.extensions.dash-to-dock shift-click-action 'previe
 gsettings set org.gnome.shell.extensions.dash-to-dock shift-middle-click-action 'minimize'
 gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 300
 gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true
+gsettings set org.gnome.desktop.peripherals.touchpad natural-scroll false
 
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install
