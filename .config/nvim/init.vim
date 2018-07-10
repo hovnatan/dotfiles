@@ -172,7 +172,7 @@ nnoremap <S-h> gT
 " next tab
 nnoremap <S-l> gt
 
-silent! set clipboard=unnamedplus " map default clipboard to xwindows clipboard
+"silent! set clipboard=unnamedplus " map default clipboard to xwindows clipboard
 
 " " allows cursor change in tmux mode
 if exists('$TMUX')
