@@ -60,12 +60,12 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 # sudo udevadm hwdb -u
 # sudo udevadm trigger
 
-tracker daemon -t
-mkdir -p ~/.config/autostart
-cd ~/.config/autostart
-cp -v /etc/xdg/autostart/tracker-* ./
-for FILE in `ls`; do echo Hidden=true >> $FILE; done
-rm -rf ~/.cache/tracker ~/.local/share/tracker
+# tracker daemon -t
+# mkdir -p ~/.config/autostart
+# cd ~/.config/autostart
+# cp -v /etc/xdg/autostart/tracker-* ./
+# for FILE in `ls`; do echo Hidden=true >> $FILE; done
+# rm -rf ~/.cache/tracker ~/.local/share/tracker
 
 #opencv install
 #cmake  -DWITH_QT=ON -DWITH_OPENGL=ON -DFORCE_VTK=ON -DWITH_TBB=ON -DBUILD_TBB=ON -DWITH_IPP=ON -DWITH_GDAL=ON -DWITH_XINE=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DWITH_CUDA=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/hovnatan/Downloads/opencv_contrib-3.4.1/modules/-DCMAKE_BUILD_TYPE=Release ..
