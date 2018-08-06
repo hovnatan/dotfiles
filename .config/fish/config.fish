@@ -19,3 +19,6 @@ set -u fish_color_cwd cyan
 set -u fish_color_command normal
 set -u fish_color_error normal
 set -u fish_color_param normal
+
+set -x PATH ~/anaconda3/bin/ $PATH
+source (conda info --root)/etc/fish/conf.d/conda.fish
