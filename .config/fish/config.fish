@@ -20,5 +20,7 @@ set -u fish_color_command normal
 set -u fish_color_error normal
 set -u fish_color_param normal
 
-set -x PATH ~/anaconda3/bin/ $PATH
-source (conda info --root)/etc/fish/conf.d/conda.fish
+#if test -d ~/miniconda3/bin
+#  set -x PATH ~/miniconda3/bin/ $PATH
+#  source (conda info --root)/etc/fish/conf.d/conda.fish
+#end
