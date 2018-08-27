@@ -1,5 +1,5 @@
 #!/bin/bash
-
+sudo add-apt-repository -y ppa:mc3man/mpv-tests
 sudo apt update; sudo apt -y dist-upgrade
 
 sudo apt -y install spyder3 git-cola net-tools qtcreator chrome-gnome-shell lm-sensors tmux fish neovim libfreetype6-dev gfortran libopenblas-dev liblapack-dev tk-dev cmake qtdeclarative5-dev libtbb-dev libeigen3-dev libvtk6-dev zlib1g-dev libjpeg-dev libwebp-dev libpng-dev libtiff5-dev libopenexr-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev yasm libopencore-amrnb-dev libopencore-amrwb-dev libv4l-dev libxine2-dev liblapack-dev liblapacke-dev checkinstall python3-numpy python-numpy libblas-dev gfortran libatlas-base-dev libboost-all-dev ccache fonts-hack-ttf build-essential cmake pkg-config unzip workrave redshift-gtk clang-tools clang-format valgrind automake python3-pip python-pip neovim curl fortune-mod fortunes htop uget vainfo mpv jupyter-notebook jupyter-core python-ipykernel python3-pandas awscli vlc ubuntu-restricted-extras feh jq gimp pinta python3-boto meld
