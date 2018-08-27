@@ -7,7 +7,7 @@ function fish_title
     end
     echo $out
     if [ $TMUX ]
-        set outde (echo $out | sed -e 's/.*\(...............\)/\1/' | sed -e 's/-*\(.*\)/\1/g' )
+        set outde (echo $out | sed -e 's:.*/::' | sed -e 's/^\(.\{10\}\).*/\1/' )
         tmux rename-window "$outde" 
     end
 end
