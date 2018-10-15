@@ -5,7 +5,7 @@ function fish_title
     else
         set out $_ 
     end
-    echo $out
+#echo $out
     if [ $TMUX ]
         set outde (echo $out | sed -e 's:.*/::' | sed -e 's/^\(.\{10\}\).*/\1/' )
         tmux rename-window "$outde" 
