@@ -3,11 +3,26 @@
 #sudo add-apt-repository ppa:saiarcot895/chromium-beta
 sudo apt update; sudo apt -y dist-upgrade
 
-sudo apt -y install spyder3 git-cola net-tools qtcreator chrome-gnome-shell lm-sensors tmux fish neovim libfreetype6-dev gfortran libopenblas-dev liblapack-dev tk-dev cmake qtdeclarative5-dev libtbb-dev libeigen3-dev libvtk6-dev zlib1g-dev libjpeg-dev libwebp-dev libpng-dev libtiff5-dev libopenexr-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev libtheora-dev libvorbis-dev libxvidcore-dev libx264-dev yasm libopencore-amrnb-dev libopencore-amrwb-dev libv4l-dev libxine2-dev liblapack-dev liblapacke-dev checkinstall python3-numpy python-numpy libblas-dev gfortran libatlas-base-dev libboost-all-dev ccache fonts-hack-ttf build-essential cmake pkg-config unzip workrave redshift-gtk clang-tools clang-format valgrind automake python3-pip python-pip neovim curl fortune-mod fortunes htop uget vainfo mpv jupyter-notebook jupyter-core python-ipykernel python3-pandas awscli vlc ubuntu-restricted-extras feh jq gimp pinta python3-boto meld cppcheck chromium-browser cython3
 
+sudo apt -y install feh gimp pinta tmux fish neovim git-cola meld fortune-mod fortunes htop uget mpv vlc curl workrave unzip lm-sensors jq awscli fonts-hack-ttf vainfo ubuntu-restricted-extras net-tools chrome-gnome-shell 
 sudo apt -y install evolution gnome-session 
 sudo apt -y install vanilla-gnome-desktop gnome-clocks
 #sudo update-alternatives --config gdm3.css
+
+sudo apt -y install python3-pip python-pip jupyter-notebook jupyter-core python-ipykernel python3-pandas python3-boto cython3 spyder3 python3-numpy python-numpy 
+sudo apt -y install build-essential cppcheck automake clang-tools clang-format valgrind gfortran checkinstall cmake libboost-all-dev ccache pkg-config 
+sudo apt -y install libopenblas-dev tk-dev libtbb-dev libeigen3-dev zlib1g-dev libjpeg-dev libpng-dev libtiff5-dev liblapacke-dev libblas-dev libatlas-base-dev   
+
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+~/.fzf/install
+sudo cp ~/.fzf/bin/fzf /usr/local/bin/
+rm -rf ~/.fzf
+
+sudo -H pip3 install pss
+
+wget 'https://go.skype.com/skypeforlinux-64.deb'
+sudo apt -y install ./skypeforlinux-64.deb
+rm skypeforlinux-64.deb
 
 gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
 gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
@@ -23,17 +38,6 @@ gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true
 gsettings set org.gnome.desktop.peripherals.touchpad natural-scroll false
 gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 600
 gsettings set org.gtk.Settings.FileChooser sort-directories-first true
-
-git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-~/.fzf/install
-sudo cp ~/.fzf/bin/fzf /usr/local/bin/
-rm -rf ~/.fzf
-
-sudo -H pip3 install pss
-
-wget 'https://go.skype.com/skypeforlinux-64.deb'
-sudo apt -y install ./skypeforlinux-64.deb
-rm skypeforlinux-64.deb
 
 cd ~                 #Your home directory
 ssh-keygen -t rsa    #Press enter for all values
