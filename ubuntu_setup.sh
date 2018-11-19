@@ -84,3 +84,9 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 #git clone https://github.com/deadalnix/pixel-saver.git
 #mv pixel-saver/pixel-saver@deadalnix.me/ 
 #rm -rf pixel-saver
+# sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+# echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main" >> /etc/apt/sources.list
+# sudo apt update
+# sudo apt install clang-7 lldb-7 lld-7 clang-7 clang-tools-7 clang-7-doc libclang-common-7-dev libclang-7-dev libclang1-7 clang-format-7 python-clang-7
+# sudo sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 100
+# sudo sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 100
