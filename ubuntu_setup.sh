@@ -73,7 +73,11 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 # rm -rf ~/.cache/tracker ~/.local/share/tracker
 
 #opencv install
-#cmake  -DWITH_QT=ON -DWITH_OPENGL=ON -DFORCE_VTK=ON -DWITH_TBB=ON -DBUILD_TBB=ON -DWITH_IPP=ON -DWITH_GDAL=ON -DWITH_XINE=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DWITH_CUDA=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/hovnatan/Downloads/opencv_contrib-3.4.1/modules/-DCMAKE_BUILD_TYPE=Release ..
+#cmake -DWITH_TBB=ON -DWITH_IPP=ON -DWITH_GDAL=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DWITH_CUDA=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/hovnatan/Downloads/opencv_contrib-3.4.1/modules/-DCMAKE_BUILD_TYPE=Release ..
+# python3 -m site
+# cd /usr/lib/python3/dist-packages/
+# ln -s /usr/local/python/cv2/python-3.6/cv2.cpython-36m-x86_64-linux-gnu.so cv2.so
+
 # make feh default to open tiff files add image/tiff=feh.desktop to ~/.config/mimeapps.list [Default Applications]
 
 #sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
