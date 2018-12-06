@@ -45,3 +45,6 @@ ln -s ~/.dotfiles/.config/feh ~/.config/feh
 # modify ~/.config/mimeapps.list for image/tiff feh.desktop
 
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
+
+mkdir -p ~/Documents/MATLAB
+ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
