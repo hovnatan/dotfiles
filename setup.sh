@@ -48,3 +48,6 @@ ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 
 mkdir -p ~/Documents/MATLAB
 ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
+
+echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
+chmod 644 ~/.ssh/config
