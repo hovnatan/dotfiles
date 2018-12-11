@@ -94,5 +94,5 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 # sudo apt install clang-7 lldb-7 lld-7 clang-7 clang-tools-7 clang-7-doc libclang-common-7-dev libclang-7-dev libclang1-7 clang-format-7 python-clang-7
 # sudo sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7 100
 # sudo sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 100
-# make SRCDIR=build CFGDIR=/usr/share/cppcheck/ -j8
+# make SRCDIR=build CFGDIR=/usr/share/cppcheck/ HAVE_RULES=yes CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function" -j8
 # sudo make install CFGDIR=/usr/share/cppcheck/ -j8
