@@ -1,5 +1,14 @@
-# for intel distribution installation
-# install gdal 
+# #for intel distribution installation
+# # install miniconda
+# conda update conda
+# conda config --add channels intel
+# conda create -n idp intelpython3_full python=3
+# set -x PATH /home/hovnatan/miniconda3/bin $PATH
+# source (conda info --root)/etc/fish/conf.d/conda.fish
+# conda activate idp
+# conda install conda install mkl-devel
+
+# #install gdal 
 # set -x PKG_CONFIG_PATH /home/hovnatan/miniconda3/envs/idp/lib/pkgconfig
 # set -x CPPFLAGS -I/home/hovnatan/miniconda3/envs/idp/include/
 # set -x CXXFLAGS -I/home/hovnatan/miniconda3/envs/idp/include/
@@ -7,7 +16,7 @@
 # set -x LDFLAGS -L/home/hovnatan/miniconda3/envs/idp/lib/
 # set -x LD_LIBRARY_PATH /home/hovnatan/miniconda3/envs/idp/lib/
 # ./configure --prefix=/home/hovnatan/miniconda3/envs/idp/ --with-python=/home/hovnatan/miniconda3/envs/idp/bin/python3
-# install opencv 
+# #install opencv 
 # set -x CMAKE_PREFIX_PATH /home/hovnatan/miniconda3/envs/idp
 # cmake ...... -WITH_PROTOBUFF=OFF for opencv
 
