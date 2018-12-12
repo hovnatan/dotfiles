@@ -1,3 +1,15 @@
+# for intel distribution installation
+# set -x PKG_CONFIG_PATH /home/hovnatan/miniconda3/envs/idp/lib/pkgconfig
+# set -x CPPFLAGS -I/home/hovnatan/miniconda3/envs/idp/include/
+# set -x CXXFLAGS -I/home/hovnatan/miniconda3/envs/idp/include/
+# set -x CFLAGS -I/home/hovnatan/miniconda3/envs/idp/include/
+# set -x LDFLAGS -L/home/hovnatan/miniconda3/envs/idp/lib/
+# set -x LD_LIBRARY_PATH /home/hovnatan/miniconda3/envs/idp/lib/
+# set -x CMAKE_PREFIX_PATH /home/hovnatan/miniconda3/envs/idp
+# -WITH_PROTOBUFF=OFF for opencv
+# ./configure --prefix=/home/hovnatan/miniconda3/envs/idp/
+# ./configure --prefix=/home/hovnatan/miniconda3/envs/idp/ --with-python=/home/hovnatan/miniconda3/envs/idp/bin/python3
+
 # Check PROJ4
 wget http://download.osgeo.org/proj/proj-5.1.0.tar.gz
 tar -xf proj-5.1.0.tar.gz
