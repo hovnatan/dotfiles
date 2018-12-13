@@ -19,6 +19,7 @@
 # #install opencv 
 # set -x CMAKE_PREFIX_PATH /home/hovnatan/miniconda3/envs/idp
 # cmake ...... -WITH_PROTOBUFF=OFF for opencv
+# cmake -DWITH_TBB=ON -DWITH_GDAL=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/hovnatan/Downloads/opencv_contrib-4.0.0/modules/ -DPYTHON3_EXECUTABLE=/home/hovnatan/miniconda3/envs/idp/bin/python3 -DPYTHON3_LIBRARY=/home/hovnatan/miniconda3/envs/idp/lib/libpython3.so -DPYTHON3_PACKAGES_PATH=/home/hovnatan/miniconda3/envs/idp/lib/python3.6/site-packages/ -DCMAKE_INSTALL_PREFIX=/home/hovnatan/miniconda3/envs/idp/ -DWITH_PROTOBUF=OFF ..
 
 # Check PROJ4
 wget http://download.osgeo.org/proj/proj-5.1.0.tar.gz
