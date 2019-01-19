@@ -9,9 +9,9 @@ sudo apt -y install evolution gnome-session
 sudo apt -y install vanilla-gnome-desktop gnome-clocks
 #sudo update-alternatives --config gdm3.css
 
-sudo apt -y install python3-pip python-pip jupyter-notebook jupyter-core python-ipykernel python3-pandas python3-boto cython3 spyder3 python3-numpy python-numpy 
+sudo apt -y install python3-pip python-pip jupyter-notebook jupyter-core python-ipykernel python3-pandas python3-boto cython3 spyder3 python3-numpy python-numpy ipython3
 sudo apt -y install build-essential cppcheck automake clang-tools clang-format valgrind gfortran checkinstall cmake libboost-all-dev ccache pkg-config 
-sudo apt -y install libopenblas-dev tk-dev libtbb-dev libeigen3-dev zlib1g-dev libjpeg-dev libpng-dev libtiff5-dev liblapacke-dev libblas-dev libatlas-base-dev libhdf5-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev
+sudo apt -y install libopenblas-dev tk-dev libtbb-dev libeigen3-dev zlib1g-dev libjpeg-dev libpng-dev libtiff5-dev liblapacke-dev libblas-dev libatlas-base-dev libhdf5-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libncurses5-dev
 
 
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
