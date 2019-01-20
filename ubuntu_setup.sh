@@ -46,6 +46,9 @@ ssh-keygen -t rsa    #Press enter for all values
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
+# for qgis
+sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrep
+
 # for Qt apps favorite on dock add to .desktop files StartupWMClass=QT...
 #
 # for pixel saver close button icon to work:
