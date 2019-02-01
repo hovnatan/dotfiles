@@ -25,6 +25,10 @@ wget 'https://go.skype.com/skypeforlinux-64.deb'
 sudo apt -y install ./skypeforlinux-64.deb
 rm skypeforlinux-64.deb
 
+wget 'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'
+sudo apt -y install ./google-chrome-stable_current_amd64.deb
+rm ./google-chrome-stable_current_amd64.deb
+
 gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
 gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 gsettings set org.gnome.desktop.input-sources per-window "true"
