@@ -94,7 +94,7 @@ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub
 # sudo apt install adobe-flashplugin 
 #cd ~/.local/share/gnome-shell/extensions
 #git clone https://github.com/deadalnix/pixel-saver.git
-#mv pixel-saver/pixel-saver@deadalnix.me/ 
+#mv pixel-saver/pixel-saver@deadalnix.me/ . 
 #rm -rf pixel-saver
 # sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
 # echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main" >> /etc/apt/sources.list
