@@ -51,3 +51,7 @@ ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
 
 echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
 chmod 644 ~/.ssh/config
+
+rm ~/.config/gtk-3.0/bookmarks
+ln -s ~/Dropbox/scripts/bookmarks ~/.config/gtk-3.0/bookmarks
+
