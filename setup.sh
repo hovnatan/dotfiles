@@ -23,6 +23,7 @@ chsh -s `which fish`
 
 rm -rf ~/.config/mpv
 ln -s ~/.dotfiles/.config/mpv ~/.config/mpv
+xdg-mime default mpv.desktop 'video/x-m4v' 'video/x-matroska' 'video/x-msvideo'
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
