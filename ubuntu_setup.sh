@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#sudo add-apt-repository ppa:saiarcot895/chromium-beta
+sudo add-apt-repository -y ppa:saiarcot895/chromium-beta
 sudo apt update; sudo apt -y dist-upgrade
 
 
-sudo apt -y install feh gimp pinta tmux fish neovim git-cola meld fortune-mod fortunes htop uget mpv vlc curl workrave unzip lm-sensors jq awscli fonts-hack-ttf vainfo ubuntu-restricted-extras net-tools chrome-gnome-shell 
+sudo apt -y install feh gimp pinta tmux fish neovim git-cola meld fortune-mod fortunes htop uget mpv vlc curl workrave unzip lm-sensors jq awscli fonts-hack-ttf vainfo ubuntu-restricted-extras net-tools chrome-gnome-shell chromium-browser adobe-flashplugin
 sudo apt -y install evolution gnome-session 
 sudo apt -y install vanilla-gnome-desktop gnome-clocks
 #sudo update-alternatives --config gdm3.css
@@ -24,10 +24,6 @@ sudo -H pip3 install pss
 wget 'https://go.skype.com/skypeforlinux-64.deb'
 sudo apt -y install ./skypeforlinux-64.deb
 rm skypeforlinux-64.deb
-
-wget 'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'
-sudo apt -y install ./google-chrome-stable_current_amd64.deb
-rm ./google-chrome-stable_current_amd64.deb
 
 gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
 gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
@@ -104,3 +100,5 @@ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub
 # sudo sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7 100
 # make SRCDIR=build CFGDIR=/usr/share/cppcheck/ HAVE_RULES=yes CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function" -j8
 # sudo make install CFGDIR=/usr/share/cppcheck/ -j8
+
+echo "Add google id from scripts/.profile"
