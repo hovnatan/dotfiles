@@ -69,12 +69,12 @@ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub
 # sudo udevadm hwdb -u
 # sudo udevadm trigger
 
-# tracker daemon -t
-# mkdir -p ~/.config/autostart
-# cd ~/.config/autostart
-# cp -v /etc/xdg/autostart/tracker-* ./
-# for FILE in `ls`; do echo Hidden=true >> $FILE; done
-# rm -rf ~/.cache/tracker ~/.local/share/tracker
+tracker daemon -t
+mkdir -p ~/.config/autostart
+cd ~/.config/autostart
+cp -v /etc/xdg/autostart/tracker-* ./
+for FILE in `ls`; do echo Hidden=true >> $FILE; done
+rm -rf ~/.cache/tracker ~/.local/share/tracker
 
 #opencv install
 #cmake -DWITH_TBB=ON -DWITH_IPP=ON -DWITH_GDAL=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DWITH_CUDA=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/hovnatan/Downloads/opencv_contrib-3.4.1/modules/-DCMAKE_BUILD_TYPE=Release ..
