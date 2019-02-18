@@ -1,5 +1,8 @@
 #!/bin/bash
 
+git update-index --assume-unchanged workrave.ini
+#git update-index --no-assume-unchanged workrave.ini
+
 sudo add-apt-repository -y ppa:saiarcot895/chromium-beta
 sudo apt update; sudo apt -y dist-upgrade
 
