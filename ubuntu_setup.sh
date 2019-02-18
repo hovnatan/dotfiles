@@ -15,8 +15,9 @@ sudo apt -y install libopenblas-dev tk-dev libtbb-dev libeigen3-dev zlib1g-dev l
 
 
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-~/.fzf/install
+~/.fzf/install --bin
 sudo cp ~/.fzf/bin/fzf /usr/local/bin/
+cp ~/.fzf/shell/key-bindings.fish ~/.config/fish/functions/fzf_key_bindings.fish
 rm -rf ~/.fzf
 
 sudo -H pip3 install pss
