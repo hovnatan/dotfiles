@@ -40,6 +40,7 @@ ln -s ~/.dotfiles/.config/htoprc ~/.config/htop/htoprc
 
 rm -rf ~/.config/feh
 ln -s ~/.dotfiles/.config/feh ~/.config/feh
+xdg-mime default feh.desktop 'image/tiff'
 
 # ln -s ~/.dotfiles/2e98525f-68b2-4efb-b129-042af121bfca.desktop ~/.local/share/file-manager/actions/2e98525f-68b2-4efb-b129-042af121bfca.desktop
 
