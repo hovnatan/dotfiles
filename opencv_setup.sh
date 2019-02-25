@@ -1,3 +1,8 @@
+#set -x CFLAGS "-O3 -march=native -fexpensive-optimizations -finline-functions -fomit-frame-pointer"
+#set -x CXXFLAGS $CFLAGS
+#set -x LDFLAGS "-flto"
+
+
 # #for intel distribution installation
 # # install miniconda
 # conda update conda
