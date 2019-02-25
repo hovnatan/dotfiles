@@ -8,7 +8,7 @@ sudo add-apt-repository -y ppa:rob-caelers/workrave
 sudo apt update; sudo apt -y dist-upgrade
 
 
-sudo apt -y install feh gimp pinta tmux fish neovim git-cola meld fortune-mod fortunes htop uget mpv vlc curl workrave unzip lm-sensors jq awscli fonts-hack-ttf vainfo ubuntu-restricted-extras net-tools chrome-gnome-shell chromium-browser adobe-flashplugin
+sudo apt -y install feh gimp pinta tmux fish neovim git-cola meld fortune-mod fortunes htop uget mpv vlc curl workrave workrave-gnome unzip lm-sensors jq awscli fonts-hack-ttf vainfo ubuntu-restricted-extras net-tools chrome-gnome-shell chromium-browser adobe-flashplugin
 sudo apt -y install evolution gnome-session 
 sudo apt -y install vanilla-gnome-desktop gnome-clocks
 #sudo update-alternatives --config gdm3.css
