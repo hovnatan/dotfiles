@@ -99,3 +99,4 @@ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub
 # sudo make install CFGDIR=/usr/share/cppcheck/ -j8
 
 echo "Add google id from scripts/.profile"
+echo "Edit /etc/default/avahi-daemon for disabling network discovery."
