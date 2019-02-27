@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo pacman -S NetworkManager os-prober openssh 
+sudo pacman -S networkmanager os-prober openssh 
