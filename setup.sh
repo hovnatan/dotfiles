@@ -49,6 +49,10 @@ ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
 rm -rf ~/.config/zathura
 ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
 
+ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/chromium-flags.conf
+
+#echo "export QT_SCALE_FACTOR=1.5" >> ~/.profile
+
 # ln -s ~/.dotfiles/2e98525f-68b2-4efb-b129-042af121bfca.desktop ~/.local/share/file-manager/actions/2e98525f-68b2-4efb-b129-042af121bfca.desktop
 
 # modify ~/.config/mimeapps.list for image/tiff feh.desktop
