@@ -12,6 +12,9 @@ git clone https://aur.archlinux.org/yay.git
 cd yay
 makepkg -si
 
+cd ~
+git clone https://github.com/hastinbe/i3-volume.git
+
 yay -S skype git-cola ttf-ms-fonts dropbox wd719x-firmware aic94xx-firmware
 sudo mkinitcpio -p linux
 
