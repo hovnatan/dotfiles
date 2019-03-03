@@ -29,7 +29,6 @@ rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
 nvim ~/.gitconfig
 
-
 rm -rf ~/.workrave
 mkdir -p ~/.workrave/
 ln -s ~/.dotfiles/workrave.ini ~/.workrave/workrave.ini
@@ -41,6 +40,14 @@ ln -s ~/.dotfiles/.config/htoprc ~/.config/htop/htoprc
 rm -rf ~/.config/feh
 ln -s ~/.dotfiles/.config/feh ~/.config/feh
 xdg-mime default feh.desktop 'image/tiff'
+
+rm -rf ~/.config/i3
+ln -s ~/.dotfiles/.config/i3 ~/.config/i3
+rm -rf ~/.config/i3status
+ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
+
+rm -rf ~/.config/zathura
+ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
 
 # ln -s ~/.dotfiles/2e98525f-68b2-4efb-b129-042af121bfca.desktop ~/.local/share/file-manager/actions/2e98525f-68b2-4efb-b129-042af121bfca.desktop
 
