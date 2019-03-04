@@ -49,6 +49,9 @@ ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
 rm -rf ~/.config/zathura
 ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
 
+rm -rf ~/.config/termite/
+ln -s ~/.dotfiles/.config/termite ~/.config/termite
+
 ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/chromium-flags.conf
 
 #echo "export QT_SCALE_FACTOR=1.5" >> ~/.profile
