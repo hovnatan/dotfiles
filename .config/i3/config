@@ -164,7 +164,28 @@ bar {
         status_command i3status
         position top
         font pango:DejaVu Sans Mono, 20px
+        colors {
+          statusline #f0f0f0
+          separator  #3465a4
+          background #202332  
+          #                    border   bg       fg
+          focused_workspace   #ffffff  #3465a4  #ffffff
+          active_workspace    #3465a4  #383c4a  #3465a4
+          inactive_workspace  #bababa  #383c4a  #bababa
+          urgent_workspace    #ffffff  #eb709b  #ffffff
+       }
 }
+
+#--------------------------------------------------------------------------
+# Window borders and colors
+#--------------------------------------------------------------------------
+#                        border     bg         fg         indicator  child_border
+client.focused           #3465a4    #3465a4    #e0e0e0    #00ff00    #202332
+client.focused_inactive  #383c4a    #383c4a    #e0e0e0    #00ff00    #202332
+client.unfocused         #383c4a    #383c4a    #808080    #00ff00    #202332
+client.urgent            #383c4a    #900000    #ffffff    #00ff00    #202332
+client.placeholder       #383c4a    #0c0c0c    #ffffff    #00ff00    #202332
+client.background        #202332
 
 new_window none
 bindsym XF86MonBrightnessUp exec xbacklight -inc 10 # increase screen brightness

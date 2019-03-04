@@ -52,6 +52,9 @@ ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
 rm -rf ~/.config/termite/
 ln -s ~/.dotfiles/.config/termite ~/.config/termite
 
+rm -rf ~/.config/rofi/
+ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
+
 ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/chromium-flags.conf
 
 #echo "export QT_SCALE_FACTOR=1.5" >> ~/.profile
