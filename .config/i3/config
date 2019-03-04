@@ -4,6 +4,18 @@
 # Should you change your keyboard layout some time, delete
 # this file and re-run i3-config-wizard(1).
 #
+# color defines for zenburn styled i3
+set $bg     #2c2c2e
+set $fg     #9f9f9f
+set $hi     #efef8f
+set $ac     #a0afa0
+set $tx     #040404
+set $ia     #8f8f8f
+set $be     #8faf9f
+set $yw     #ccdc90
+set $gn     #88b090
+set $rd     #e89393
+
 
 # i3 config file (v4)
 #
@@ -165,29 +177,26 @@ bar {
         position top
         font pango:DejaVu Sans Mono, 20px
         colors {
-          statusline #f0f0f0
-          separator  #3465a4
-          background #202332  
-          #                    border   bg       fg
-          focused_workspace   #ffffff  #3465a4  #ffffff
-          active_workspace    #3465a4  #383c4a  #3465a4
-          inactive_workspace  #bababa  #383c4a  #bababa
-          urgent_workspace    #ffffff  #eb709b  #ffffff
-       }
+          background          $bg
+          statusline          $fg
+          separator           $hi
+          focused_workspace   $gn        $bg        $ac
+          active_workspace    $gn        $ac        $tx
+          inactive_workspace  $bg        $bg        $ia
+          urgent_workspace    $rd        $bg        $ac
+        }
 }
 
 #--------------------------------------------------------------------------
 # Window borders and colors
 #--------------------------------------------------------------------------
-#                        border     bg         fg         indicator  child_border
-client.focused           #3465a4    #3465a4    #e0e0e0    #00ff00    #202332
-client.focused_inactive  #383c4a    #383c4a    #e0e0e0    #00ff00    #202332
-client.unfocused         #383c4a    #383c4a    #808080    #00ff00    #202332
-client.urgent            #383c4a    #900000    #ffffff    #00ff00    #202332
-client.placeholder       #383c4a    #0c0c0c    #ffffff    #00ff00    #202332
-client.background        #202332
+# set some nice colors      border     background  text
+client.focused              $ac        $ac         $tx
+client.unfocused            $bg        $bg         $ia
+client.focused_inactive     $bg        $bg         $ac
+client.urgent               $rd        $rd         $tx
 
-new_window none
+new_window pixel 1 
 bindsym XF86MonBrightnessUp exec xbacklight -inc 10 # increase screen brightness
 bindsym XF86MonBrightnessDown exec xbacklight -dec 10 # decrease screen brightness
 
