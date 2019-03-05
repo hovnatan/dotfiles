@@ -171,7 +171,7 @@ bindsym $mod+r mode "resize"
 bar {
         status_command i3status
         position top
-        font pango:DejaVu Sans Mono, 10
+        font pango:DejaVu Sans Mono, 12
         colors {
           background          $bg
           statusline          $fg
