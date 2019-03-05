@@ -55,6 +55,10 @@ ln -s ~/.dotfiles/.config/termite ~/.config/termite
 rm -rf ~/.config/rofi/
 ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
 
+mkdir -p ~/.config/gtk-3.0
+rm -rf  ~/.config/gtk-3.0/settings.ini
+ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
+
 ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/chromium-flags.conf
 
 sudo ln -s /home/hovnatan/.dotfiles/wakelock.service /etc/systemd/system/wakelock.service
