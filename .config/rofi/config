@@ -1,7 +1,7 @@
 rofi.color-enabled: true
 rofi.opacity: 50
 rofi.columns: 1
-rofi.font: DejaVu Sans Mono 10
+rofi.font: pango:DejaVu Sans Mono 10
 rofi.separator-style: none
 rofi.theme: glue_pro_blue
 rofi.modi: combi
