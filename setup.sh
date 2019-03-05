@@ -57,7 +57,7 @@ ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
 
 ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/chromium-flags.conf
 
-sudo ln -s /home/hovnatan/dotfiles/wakelock.service /etc/systemd/system/wakelock.service
+sudo ln -s /home/hovnatan/.dotfiles/wakelock.service /etc/systemd/system/wakelock.service
 sudo systemctl enable /etc/systemd/system/wakelock.service
 
 #echo "export QT_SCALE_FACTOR=1.5" >> ~/.profile
