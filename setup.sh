@@ -104,3 +104,5 @@ chmod 644 ~/.ssh/config
 
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
+
+# qt5ct set to adwaitwa dark, icons too, fonts cantarell 10, dejavu sans mono 10
