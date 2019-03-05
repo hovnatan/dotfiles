@@ -211,5 +211,6 @@ bindsym $mod+Escape exec ~/.dotfiles/lock.sh
 bindsym $mod+Shift+Escape exec ~/.dotfiles/lock.sh && systemctl suspend
 exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "grp:alt_space_toggle,caps:ctrl_modifier"
 exec --no-startup-id dropbox start
+exec --no-startup-id redshift-gtk
 #xrandr --query
 #xrandr --output DP-0 --off
