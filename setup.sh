@@ -101,3 +101,6 @@ echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
 chmod 644 ~/.ssh/config
 
 # echo "To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'."
+
+cd ~/.dotfiles
+git remote set-url origin git@github.com:hovnatan/dotfiles.git
