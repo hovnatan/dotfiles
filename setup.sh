@@ -55,10 +55,6 @@ ln -s ~/.dotfiles/.config/termite ~/.config/termite
 rm -rf ~/.config/rofi/
 ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
 
-mkdir -p ~/.config/gtk-3.0
-rm -rf  ~/.config/gtk-3.0/settings.ini
-ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
-
 ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/chromium-flags.conf
 
 sudo ln -s /home/hovnatan/.dotfiles/wakelock.service /etc/systemd/system/wakelock.service
@@ -75,7 +71,11 @@ ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 mkdir -p ~/Documents/MATLAB
 ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
 
-rm ~/.config/gtk-3.0/bookmarks
+mkdir -p ~/.config/gtk-3.0
+rm -rf  ~/.config/gtk-3.0/settings.ini
+ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
+
+rm -rf ~/.config/gtk-3.0/bookmarks
 ln -s ~/Dropbox/scripts/bookmarks ~/.config/gtk-3.0/bookmarks
 
 #gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
