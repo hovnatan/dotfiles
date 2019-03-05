@@ -1,9 +1,9 @@
 Xft.dpi: 157
-Xft.autohint: 0
+Xft.autohint: false
 Xft.lcdfilter:  lcddefault
-Xft.hintstyle:  hintfull
-Xft.hinting: 1
-Xft.antialias: 1
+Xft.hintstyle:  hintslight
+Xft.hinting: true
+Xft.antialias: true
 Xft.rgba: rgb
 
 rofi.dpi: 157
