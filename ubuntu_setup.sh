@@ -30,11 +30,6 @@ wget 'https://go.skype.com/skypeforlinux-64.deb'
 sudo apt -y install ./skypeforlinux-64.deb
 rm skypeforlinux-64.deb
 
-echo "Add Dropbox to search locations in settings"
-
-cd ~/.dotfiles
-git remote set-url origin git@github.com:hovnatan/dotfiles.git
-
 # for qgis
 sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrep
 
