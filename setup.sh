@@ -75,29 +75,29 @@ ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 mkdir -p ~/Documents/MATLAB
 ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
 
-echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
-chmod 644 ~/.ssh/config
-
 rm ~/.config/gtk-3.0/bookmarks
 ln -s ~/Dropbox/scripts/bookmarks ~/.config/gtk-3.0/bookmarks
 
-gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
-gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
-gsettings set org.gnome.desktop.input-sources per-window "true"
-gsettings set org.gnome.shell.app-switcher current-workspace-only true
-gsettings set org.gnome.desktop.sound allow-volume-above-100-percent true
-gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
-gsettings set org.gnome.nautilus.preferences show-image-thumbnails 'never'
-gsettings set org.gnome.shell.extensions.dash-to-dock middle-click-action 'previews'
-gsettings set org.gnome.shell.extensions.dash-to-dock shift-click-action 'previews'
-gsettings set org.gnome.shell.extensions.dash-to-dock shift-middle-click-action 'minimize'
-gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true
-gsettings set org.gnome.desktop.peripherals.touchpad natural-scroll false
-gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 600
-gsettings set org.gtk.Settings.FileChooser sort-directories-first true
-gsettings set org.freedesktop.Tracker.Miner.Files index-on-battery false
-gsettings set org.freedesktop.Tracker.Miner.Files index-on-battery-first-time false
+#gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
+#gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
+#gsettings set org.gnome.desktop.input-sources per-window "true"
+#gsettings set org.gnome.shell.app-switcher current-workspace-only true
+#gsettings set org.gnome.desktop.sound allow-volume-above-100-percent true
+#gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
+#gsettings set org.gnome.nautilus.preferences show-image-thumbnails 'never'
+#gsettings set org.gnome.shell.extensions.dash-to-dock middle-click-action 'previews'
+#gsettings set org.gnome.shell.extensions.dash-to-dock shift-click-action 'previews'
+#gsettings set org.gnome.shell.extensions.dash-to-dock shift-middle-click-action 'minimize'
+#gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true
+#gsettings set org.gnome.desktop.peripherals.touchpad natural-scroll false
+#gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 600
+#gsettings set org.gtk.Settings.FileChooser sort-directories-first true
+#gsettings set org.freedesktop.Tracker.Miner.Files index-on-battery false
+#gsettings set org.freedesktop.Tracker.Miner.Files index-on-battery-first-time false
 
 cd ~                 #Your home directory
 ssh-keygen -t rsa    #Press enter for all values
+echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
+chmod 644 ~/.ssh/config
+
 # echo "To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'."
