@@ -213,6 +213,7 @@ exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option 
 exec --no-startup-id dropbox start
 exec --no-startup-id redshift-gtk
 exec --no-startup-id workrave 
+exec --no-startup-id dunst
 for_window [class="Workrave"] border none
 for_window [class="Workrave"] floating enable
 #xrandr --query
