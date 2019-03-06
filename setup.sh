@@ -82,6 +82,10 @@ rm -rf ~/.config/fontconfig/fonts.conf
 mkdir -p ~/.config/fontconfig
 ln -s ~/.dotfiles/.config/fontconfig/fonts.conf ~/.config/fontconfig/fonts.conf
 
+rm -rf ~/.config/dunst/dunstrc
+mkdir -p ~/.config/dunst
+ln -s ~/.dotfiles/.config/dunst/dunstrc  ~/.config/dunst/dunstrc
+
 #gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
 #gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 #gsettings set org.gnome.desktop.input-sources per-window "true"
