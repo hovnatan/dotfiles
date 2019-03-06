@@ -12,6 +12,17 @@ sudo nvim  /etc/profile.d/freetype2.sh
 # to install dunst as notifier edit to /usr/bin/dunst 
 #sudo nvim /usr/share/dbus-1/services/org.freedesktop.Notifications.service
 
+#wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-win10.tar.gz
+#tar xf ttf-ms-win10.tar.gz
+#cd ttf-ms-win10
+#mv ~/fonts/* .
+#makepkg -Acs
+#sudo pacman -U ttf-ms-win10-10.0.17763.1-1-any.pkg.tar.xz
+
+#for printing 
+# sudo pacman -S hplip avahi cups
+# sudo gpasswd -a hovnatan lp
+
 #allow_others in /etc/fuse.conf
 #pacman -Sy gnome gnome-weather gnome-tweaks chrome-gnome-shell gdm
 
@@ -27,5 +38,5 @@ makepkg -si
 cd ~
 git clone https://github.com/hastinbe/i3-volume.git
 
-yay -S skype git-cola ttf-ms-fonts dropbox wd719x-firmware aic94xx-firmware zoom
+yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom
 sudo mkinitcpio -p linux
