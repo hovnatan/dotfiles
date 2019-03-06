@@ -78,6 +78,10 @@ ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
 rm -rf ~/.config/gtk-3.0/bookmarks
 ln -s ~/Dropbox/scripts/bookmarks ~/.config/gtk-3.0/bookmarks
 
+rm -rf ~/.config/fontconfig/fonts.conf
+mkdir -p ~/.config/fontconfig
+ln -s ~/.dotfiles/.config/fontconfig/fonts.conf ~/.config/fontconfig/fonts.conf
+
 #gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
 #gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 #gsettings set org.gnome.desktop.input-sources per-window "true"
