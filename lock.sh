@@ -1,7 +1,6 @@
 #!/bin/bash
-if pgrep i3lock 
+if ! pgrep i3lock ;
 then
-else
 # Take a screenshot
 scrot /tmp/screen_locked.png
 
