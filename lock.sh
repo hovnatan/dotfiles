@@ -1,15 +1,22 @@
 #!/bin/bash
-if ! pgrep i3lock ;
+if ! pgrep -x "i3lock" > /dev/null ;
 then
-# Take a screenshot
-scrot /tmp/screen_locked.png
+  # Take a screenshot
+  scrot /tmp/screen_locked.png
 
-# Pixellate it 10x
-mogrify -scale 10% -scale 1000% /tmp/screen_locked.png
+  # Pixellate it 10x
+  mogrify -scale 10% -scale 1000% /tmp/screen_locked.png
 
-# Lock screen displaying this image.
-i3lock -i /tmp/screen_locked.png
+  # Lock screen displaying this image.
+  i3lock -i /tmp/screen_locked.png
 
-# Turn the screen off after a delay.
-sleep 60; pgrep i3lock && xset dpms force off
+  if ! [ -z "$1" ] ; 
+  then 
+    # Turn the screen off after a delay.
+    sleep 30
+    if pgrep -x "i3lock" > /dev/null
+    then
+      xset dpms force off
+    fi
+  fi
 fi
