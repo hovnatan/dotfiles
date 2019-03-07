@@ -217,5 +217,7 @@ exec --no-startup-id workrave
 exec --no-startup-id dunst
 for_window [class="Workrave"] border none
 for_window [class="Workrave"] floating enable
+bindsym Print exec scrot -e 'mv $f /tmp/ && gimp /tmp/$f'
+bindsym --release Mod1+Sys_Req exec scrot -s -e 'mv $f /tmp/ && gimp /tmp/$f'
 #xrandr --query
 #xrandr --output DP-0 --off
