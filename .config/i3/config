@@ -209,7 +209,7 @@ bindsym XF86AudioMute        exec $volumepath/volume -y -mn -t $statuscmd -u $st
 bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+Escape exec ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec ~/.dotfiles/lock.sh && systemctl suspend
-exec --no-startup-id xautolock -time 10 -locker "~/.dotfiles/lock.sh dummy"
+exec --no-startup-id xautolock -time 1 -locker "~/.dotfiles/lock.sh dummy"
 exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "grp:alt_space_toggle,caps:ctrl_modifier"
 exec --no-startup-id dropbox start
 exec --no-startup-id redshift-gtk
