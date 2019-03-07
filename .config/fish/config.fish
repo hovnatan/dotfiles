@@ -10,6 +10,8 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     fzf_key_bindings
 end
 
+set -u fish_term24bit 1
+
 set -g fish_key_bindings hybrid_bindings
 
 set -U fish_cursor_default block
