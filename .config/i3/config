@@ -219,5 +219,6 @@ for_window [class="Workrave"] border none
 for_window [class="Workrave"] floating enable
 bindsym Print exec scrot -e 'mv $f /tmp/ && gimp /tmp/$f'
 bindsym --release $mod+Sys_Req exec scrot -s -e 'mv $f /tmp/ && gimp /tmp/$f'
+bindsym Mod4+p exec --no-startup-id ~/.dotfiles/monitor.sh
 #xrandr --query
 #xrandr --output DP-0 --off
