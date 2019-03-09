@@ -20,7 +20,8 @@ sudo nvim  /etc/profile.d/freetype2.sh
 #sudo pacman -U ttf-ms-win10 ttf-ms-win10-other
 
 #for printing 
-#sudo pacman -S sudo gpasswd -a hovnatan lp
+#sudo pacman -S 
+#sudo gpasswd -a hovnatan lp
 
 #allow_others in /etc/fuse.conf
 #pacman -Sy gnome gnome-weather gnome-tweaks chrome-gnome-shell gdm
