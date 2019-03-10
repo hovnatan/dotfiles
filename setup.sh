@@ -48,14 +48,15 @@ ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
 
 rm -rf ~/.config/zathura
 ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
+rm -rf ~/.local/share/zathura/bookmarks
+ln -s ~/Dropbox/scripts/bookmarks ~/.local/share/zathura/bookmarks
+
 
 rm -rf ~/.config/termite/
 ln -s ~/.dotfiles/.config/termite ~/.config/termite
 
 rm -rf ~/.config/rofi/
 ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
-
-ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/chromium-flags.conf
 
 sudo ln -s /home/hovnatan/.dotfiles/wakelock.service /etc/systemd/system/wakelock.service
 sudo systemctl enable /etc/systemd/system/wakelock.service
@@ -74,9 +75,6 @@ ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
 mkdir -p ~/.config/gtk-3.0
 rm -rf  ~/.config/gtk-3.0/settings.ini
 ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
-
-rm -rf ~/.config/gtk-3.0/bookmarks
-ln -s ~/Dropbox/scripts/bookmarks ~/.config/gtk-3.0/bookmarks
 
 rm -rf ~/.config/fontconfig/fonts.conf
 mkdir -p ~/.config/fontconfig
