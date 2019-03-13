@@ -43,8 +43,10 @@ xdg-mime default feh.desktop 'image/tiff'
 
 rm -rf ~/.config/i3
 ln -s ~/.dotfiles/.config/i3 ~/.config/i3
-rm -rf ~/.config/i3status
-ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
+rm -rf ~/.config/i3blocks
+ln -s ~/.dotfiles/.config/i3blocks/ ~/.config/i3blocks
+#rm -rf ~/.config/i3status
+#ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
 
 rm -rf ~/.config/zathura
 ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
