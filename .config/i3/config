@@ -200,9 +200,9 @@ set $volumepath ~/i3-volume
 set $statuscmd i3status
 set $statussig SIGUSR1
 set $volumestep 5
-bindsym XF86AudioRaiseVolume exec $volumepath/volume -y -np -i $volumestep -t $statuscmd -u $statussig
-bindsym XF86AudioLowerVolume exec $volumepath/volume -y -np -d $volumestep -t $statuscmd -u $statussig
-bindsym XF86AudioMute        exec $volumepath/volume -y -mn -t $statuscmd -u $statussig
+bindsym XF86AudioRaiseVolume exec --no-startup-id $volumepath/volume -y -np -i $volumestep -t $statuscmd -u $statussig
+bindsym XF86AudioLowerVolume exec --no-startup-id $volumepath/volume -y -np -d $volumestep -t $statuscmd -u $statussig
+bindsym XF86AudioMute        exec --no-startup-id $volumepath/volume -y -mn -t $statuscmd -u $statussig
 bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+Escape exec ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec ~/.dotfiles/lock.sh && systemctl suspend
