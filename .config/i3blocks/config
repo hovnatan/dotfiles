@@ -2,6 +2,19 @@ command=/usr/lib/i3blocks/$BLOCK_NAME
 separator_block_width=15
 markup=pango
 
+[time]
+command=date +'%m/%d %H:%M'
+interval=30
+label=📅
+
+[key_layout]
+command=$SCRIPT_DIR/key_layout
+interval=once
+signal=10
+
+[load_average]
+interval=10
+
 [volume]
 label=♪
 instance=Master
@@ -27,20 +40,9 @@ interval=30
 command=$SCRIPT_DIR/iface_contrib
 interval=30
 
-[load_average]
-interval=10
-
 [battery]
 # label=BAT
 label=⚡
 #instance=1
 interval=30
 
-[time]
-command=date '+%Y-%m-%d %H:%M:%S'
-interval=5
-
-[key_layout]
-command=$SCRIPT_DIR/key_layout
-interval=once
-signal=10
