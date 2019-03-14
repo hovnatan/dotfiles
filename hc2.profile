@@ -1,0 +1,2 @@
+export ETH_INTERFACE=enp0s25
+export WIFI_INTERFACE=wlp3s0
