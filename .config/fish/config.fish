@@ -23,6 +23,10 @@ set -u fish_color_command normal
 set -u fish_color_error normal
 set -u fish_color_param normal
 
+function bell_on_prompt --on-event fish_prompt
+    echo -e -n "\a"
+end
+
 #if test -d ~/miniconda3/bin
 #  set -x PATH ~/miniconda3/bin/ $PATH
 #  source (conda info --root)/etc/fish/conf.d/conda.fish
