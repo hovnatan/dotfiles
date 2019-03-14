@@ -1,6 +1,6 @@
 #!/bin/bash
 EXTERNAL_OUTPUT="HDMI1"
-INTERNAL_OUTPUT="LVDS1"
+INTERNAL_OUTPUT="$INTERNAL_MONITOR_OUTPUT"
 
 # if we don't have a file, start at zero
 if [ ! -f "/tmp/monitor_mode.dat" ] ; then
