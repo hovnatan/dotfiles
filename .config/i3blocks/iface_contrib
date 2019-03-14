@@ -2,7 +2,8 @@
 
 echo eth # full text
 echo eth # short text
-if [[ "$(cat /sys/class/net/$ETH_INTERFACE/operstate)" = 'down' ]]; then
+STATUS=$(nmcli c show --active | grep ethernet | awk '{ print $1 }')
+if [ -z "$STATUS" ]; then
   echo \#FF0000 # color
   exit
 fi
