@@ -1,6 +1,5 @@
 #!/bin/bash
 
-WIFI_INTERFACE=$(cat /proc/net/wireless | perl -ne '/(\w+):/ && print $1')
 if [ -z $WIFI_INTERFACE] || [ "$(cat /sys/class/net/$WIFI_INTERFACE/operstate)" = 'down' ]; then
     echo "wifi"
     echo "wifi"

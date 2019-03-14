@@ -2,7 +2,6 @@
 
 echo eth # full text
 echo eth # short text
-ETH_INTERFACE=$(ip route | awk '/^default/ { print $5 ; exit }')
 if [[ "$(cat /sys/class/net/$ETH_INTERFACE/operstate)" = 'down' ]]; then
   echo \#FF0000 # color
   exit
