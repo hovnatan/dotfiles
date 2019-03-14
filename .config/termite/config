@@ -1,5 +1,5 @@
 [options]
-font = DejaVu Sans Mono 11
+font = DejaVu Sans Mono 12
 allow_bold = on
 search_wrap = true
 scroll_on_output = false
