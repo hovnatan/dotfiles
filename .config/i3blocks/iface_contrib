@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [[ -n $BLOCK_INSTANCE ]]; then
+  IF=$BLOCK_INSTANCE
+else
+  IF=$(ip route | awk '/^default/ { print $5 ; exit }')
+fi
+
+
+echo eth # full text
+echo eth # short text
+if [[ "$(cat /sys/class/net/$IF/operstate)" = 'down' ]]; then
+  echo \#FF0000 # color
+  exit
+fi
+
+echo \#00FF00 # color
