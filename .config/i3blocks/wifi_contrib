@@ -1,21 +1,18 @@
 #!/bin/bash
 
-if [[ -z "$INTERFACE" ]] ; then
-    INTERFACE="${BLOCK_INSTANCE:-wlan0}"
-fi
-
-echo "wifi"
-echo "wifi"
-if [[ "$(cat /sys/class/net/$INTERFACE/operstate)" = 'down' ]]; then
+WIFI_INTERFACE=$(cat /proc/net/wireless | perl -ne '/(\w+):/ && print $1')
+if [ -z $WIFI_INTERFACE] || [ "$(cat /sys/class/net/$WIFI_INTERFACE/operstate)" = 'down' ]; then
+    echo "wifi"
+    echo "wifi"
     echo "#FF0000"
     exit
 fi
 
-QUALITY=$(grep $INTERFACE /proc/net/wireless | awk '{ print int($3 * 100 / 70) }')
+QUALITY="$(grep $WIFI_INTERFACE /proc/net/wireless | awk '{ print int($3 * 100 / 70) }')"
 
-SSID="$(iw dev ${INTERFACE} link | grep SSID | cut -d " " -f 2-)"
-echo ": $SSID $QUALITY%"
-echo ": $SSID $QUALITY%"
+SSID="$(iw dev ${WIFI_INTERFACE} link | grep SSID | cut -d " " -f 2-)"
+echo "wifi: $SSID $QUALITY%"
+echo "wifi: $SSID $QUALITY%"
 
 if [[ $QUALITY -ge 80 ]]; then
     echo "#00FF00"

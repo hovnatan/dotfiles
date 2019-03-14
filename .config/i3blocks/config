@@ -21,12 +21,11 @@ interval=30
 
 [wifi_contrib]
 command=$SCRIPT_DIR/wifi_contrib
-interval=10
-instance=wlp110s0
+interval=30
 
 [iface]
 command=$SCRIPT_DIR/iface_contrib
-interval=10
+interval=30
 
 [load_average]
 interval=10
