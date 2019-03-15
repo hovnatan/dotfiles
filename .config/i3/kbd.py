@@ -28,8 +28,7 @@ def on_window_focus(i3, e):
             subprocess.run(["setxkbmap", "us"])
         else:
             subprocess.run(["setxkbmap", "-layout", "am", "-variant", "phonetic-alt"])
-        subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
-
+    subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
     previous_focus = current_focus
     #print(len(lays))
 
