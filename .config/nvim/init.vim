@@ -172,7 +172,7 @@ nnoremap <S-h> gT
 " next tab
 nnoremap <S-l> gt
 
-"silent! set clipboard=unnamedplus " map default clipboard to xwindows clipboard
+silent! set clipboard=unnamedplus " map default clipboard to xwindows clipboard
 
 " " allows cursor change in tmux mode
 if exists('$TMUX')
@@ -191,7 +191,6 @@ if has('persistent_undo')
 endif
 
 call plug#begin('~/.local/share/nvim/site/plugged')
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --bin' }
 Plug 'junegunn/fzf.vim'
 Plug 'vim-scripts/neat.vim'
 call plug#end()
