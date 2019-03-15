@@ -2,11 +2,11 @@
 case $BLOCK_BUTTON in
     1) ~/.config/i3/key_layout_switch ;;  # left click, switch
 esac
-LNG=$(xkblayout-state print %s | awk '{print toupper($0)}')
+LNG=$(xkblayout-state print %s)
 case $LNG in
-  "US")
+  "us")
     CLR=\#00FF00 ;; # green
-  "AM")
+  "am")
     CLR=\#FF0000 ;; # red
 esac
 echo "$LNG"
