@@ -3,7 +3,7 @@ separator_block_width=15
 markup=pango
 
 [time]
-command=date +'%m/%d %H:%M'
+command=date +'%H:%M %m/%d'
 interval=30
 label=📅
 
