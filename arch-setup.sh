@@ -40,5 +40,5 @@ makepkg -si
 cd ~
 git clone https://github.com/hastinbe/i3-volume.git
 
-yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom xkblayout-state-git
+yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom xkblayout-state-git i3ipc-python
 sudo mkinitcpio -p linux
