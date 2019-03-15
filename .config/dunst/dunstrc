@@ -28,7 +28,7 @@
     sticky_history = yes
     history_length = 20
 
-    dmenu = /usr/bin/rofi -p dunst:
+    dmenu = /usr/bin/rofi -dmenu -p dunst:
     browser = /usr/bin/chromium -new-tab
     always_run_script = true
     title = Dunst
