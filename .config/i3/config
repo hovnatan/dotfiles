@@ -203,7 +203,7 @@ exec --no-startup-id xautolock -time 5 -locker "~/.dotfiles/lock.sh dummy" -corn
 exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "caps:ctrl_modifier"
 exec --no-startup-id dropbox start
 exec --no-startup-id redshift-gtk
-exec --no-startup-id ~/.config/i3/kbd.py  # > /tmp/log.out 2>&1
+exec_always --no-startup-id ~/.config/i3/kbd.py
 bindsym $mod+space exec --no-startup-id ~/.config/i3/key_layout_switch; exec --no-startup-id pkill -RTMIN+10 i3blocks
 
 exec --no-startup-id workrave 
