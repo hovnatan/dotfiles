@@ -1,6 +1,11 @@
 #!/bin/bash
 
-if [ -z $WIFI_INTERFACE] || [ "$(cat /sys/class/net/$WIFI_INTERFACE/operstate)" = 'down' ]; then
+case $BLOCK_BUTTON in
+    1) nmcli radio wifi on ; sleep 10 ;;
+    3) nmcli radio wifi off ; sleep 1 ;;
+esac
+
+if [ -z $WIFI_INTERFACE] || [ "$(cat /sys/class/net/$WIFI_INTERFACE/operstate)" != 'up' ]; then
     echo "wifi"
     echo "wifi"
     echo "#FF0000"

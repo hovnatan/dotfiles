@@ -1,5 +1,10 @@
 #!/bin/bash
 
+case $BLOCK_BUTTON in
+    1) nmcli dev connect "$ETH_INTERFACE" > /dev/null ; sleep 3 ;;
+    3) nmcli dev disconnect "$ETH_INTERFACE" > /dev/null ; sleep 1 ;;
+esac
+
 echo eth # full text
 echo eth # short text
 STATUS=$(nmcli c show --active | grep ethernet | awk '{ print $1 }')
