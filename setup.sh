@@ -39,7 +39,7 @@ ln -s ~/.dotfiles/.config/htoprc ~/.config/htop/htoprc
 
 rm -rf ~/.config/feh
 ln -s ~/.dotfiles/.config/feh ~/.config/feh
-xdg-mime default feh.desktop 'image/tiff'
+xdg-mime default feh.desktop 'image/tiff' 'image/jpeg'
 
 rm -rf ~/.config/i3
 ln -s ~/.dotfiles/.config/i3 ~/.config/i3
