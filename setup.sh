@@ -115,3 +115,4 @@ cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
 # qt5ct set to adwaitwa dark, icons too, fonts cantarell 10, dejavu sans mono 10
+#cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf 
