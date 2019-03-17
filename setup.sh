@@ -87,6 +87,8 @@ rm -rf ~/.config/dunst/dunstrc
 mkdir -p ~/.config/dunst
 ln -s ~/.dotfiles/.config/dunst/dunstrc  ~/.config/dunst/dunstrc
 
+ln -s ~/.dotfiles/.config/libinput-gestures.conf ~/.config
+
 #gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
 #gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 #gsettings set org.gnome.desktop.input-sources per-window "true"
@@ -116,3 +118,6 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
 # qt5ct set to adwaitwa dark, icons too, fonts cantarell 10, dejavu sans mono 10
 #cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf 
+sudo gpasswd -a $USER lp
+sudo gpasswd -a $USER input
+

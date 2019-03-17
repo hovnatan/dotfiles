@@ -21,7 +21,6 @@ sudo nvim  /etc/profile.d/freetype2.sh
 
 #for printing 
 #sudo pacman -S 
-#sudo gpasswd -a hovnatan lp
 
 #allow_others in /etc/fuse.conf
 #pacman -Sy gnome gnome-weather gnome-tweaks chrome-gnome-shell gdm
@@ -40,5 +39,5 @@ makepkg -si
 cd ~
 git clone https://github.com/hastinbe/i3-volume.git
 
-yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom xkblayout-state-git i3ipc-python
+yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom xkblayout-state-git i3ipc-python libinput-gestures
 sudo mkinitcpio -p linux
