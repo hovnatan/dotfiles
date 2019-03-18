@@ -203,5 +203,6 @@ for_window [title="Preferences$"] floating enable
 workspace_auto_back_and_forth yes
 
 exec --no-startup-id clipster -d
-bindsym $mod+c exec --no-startup-id clipster -s
+bindcode $mod+54 exec --no-startup-id clipster -s
 
+#bindcode Mod4+40 xdotool 
