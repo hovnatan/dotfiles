@@ -89,6 +89,8 @@ ln -s ~/.dotfiles/.config/dunst/dunstrc  ~/.config/dunst/dunstrc
 
 ln -s ~/.dotfiles/.config/libinput-gestures.conf ~/.config
 
+ln -sf ~/.dotfiles/.config/clipster/ ~/.config/
+
 #gsettings set org.gnome.desktop.input-sources xkb-options  "['caps:ctrl_modifier', 'grp:lalt_lshift_toggle', 'grp:switch']"
 #gsettings set org.gnome.desktop.input-sources mru-sources "[('xkb', 'us'), ('xkb', 'ru+phonetic_winkeys'), ('xkb', 'am+phonetic-alt')]"
 #gsettings set org.gnome.desktop.input-sources per-window "true"
