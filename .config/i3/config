@@ -95,6 +95,9 @@ bindcode $mod+Shift+17 move container to workspace $ws8
 bindcode $mod+Shift+18 move container to workspace $ws9
 bindcode $mod+Shift+19 move container to workspace $ws10
 
+bindsym Mod4+Right workspace next
+bindsym Mod4+Left workspace prev
+
 bindcode $mod+Shift+54 reload
 bindcode $mod+Shift+27 restart
 bindcode $mod+Shift+26 exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
