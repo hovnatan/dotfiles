@@ -196,3 +196,10 @@ Plug 'vim-scripts/neat.vim'
 call plug#end()
 
 nnoremap <silent> <c-p> :Files <CR>
+
+tnoremap <Esc> <C-\><C-n>
+au TermOpen * setlocal listchars= nonumber norelativenumber
+au TermOpen * startinsert
+au BufEnter,BufWinEnter,WinEnter term://* startinsert
+au BufLeave term://* stopinsert
+
