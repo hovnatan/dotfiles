@@ -1,2 +1,4 @@
 set font "Cantarell 11"
 set adjust-open best-fit
+set statusbar-home-tilde true
+set guioptions ''
