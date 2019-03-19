@@ -186,15 +186,15 @@ for_window [instance="dropdown"] border normal
 
 bindsym Print exec scrot -e 'mv $f /tmp/ && gimp /tmp/$f'
 bindsym --release $mod+Sys_Req exec scrot -s -e 'mv $f /tmp/ && gimp /tmp/$f'
-bindsym Mod4+p exec --no-startup-id ~/.dotfiles/monitor.sh
+bindcode Mod4+33 exec --no-startup-id ~/.dotfiles/monitor.sh
 #xrandr --query
 #xrandr --output DP-0 --off
 
 bindcode $mod+Shift+20 move scratchpad
 bindcode $mod+20 scratchpad show
 
-bindsym $mod+m exec i3-input -F 'mark %s' -l 1 -P 'Mark: '
-bindsym $mod+g exec i3-input -F '[con_mark="%s"] focus' -l 1 -P 'Goto: '
+bindcode $mod+58 exec i3-input -F 'mark %s' -l 1 -P 'Mark: '
+bindcode $mod+42 exec i3-input -F '[con_mark="%s"] focus' -l 1 -P 'Goto: '
 show_marks yes
 
 for_window [window_role="pop-up"] floating enable
