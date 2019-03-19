@@ -1,27 +1,34 @@
 #!/bin/bash
-EXTERNAL_OUTPUT="HDMI1"
+
+EXTERNAL_OUTPUT="HDMI-0"
 INTERNAL_OUTPUT="$INTERNAL_MONITOR_OUTPUT"
 
-# if we don't have a file, start at zero
-if [ ! -f "/tmp/monitor_mode.dat" ] ; then
+DATA_FILE="${HOME}/.local/monitor_mode.dat"
+if [ ! -f "$DATA_FILE" ] ; then
   monitor_mode="all"
-
-# otherwise read the value from the file
 else
-  monitor_mode=`cat /tmp/monitor_mode.dat`
+  monitor_mode=`cat "$DATA_FILE"`
+fi
+
+if [ -z "$1" ] ;
+then
+  if [ $monitor_mode = "all" ]; then
+    monitor_mode="EXTERNAL"
+  elif [ $monitor_mode = "EXTERNAL" ]; then
+    monitor_mode="INTERNAL"
+  else
+    monitor_mode="all"
+  fi
 fi
 
 if [ $monitor_mode = "all" ]; then
-        monitor_mode="EXTERNAL"
-        xrandr --output $INTERNAL_OUTPUT --off --output $EXTERNAL_OUTPUT --auto
+  xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --auto $EXTERNAL_MONITOR_LOCATION $INTERNAL_OUTPUT
 elif [ $monitor_mode = "EXTERNAL" ]; then
-        monitor_mode="INTERNAL"
-        xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --off
-elif [ $monitor_mode = "INTERNAL" ]; then
-        monitor_mode="CLONES"
-        xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --auto --same-as $INTERNAL_OUTPUT
+  xrandr --output $INTERNAL_OUTPUT --off --output $EXTERNAL_OUTPUT --auto
 else
-        monitor_mode="all"
-        xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --auto --left-of $INTERNAL_OUTPUT
+  xrandr --output $INTERNAL_OUTPUT --auto --output $EXTERNAL_OUTPUT --off
 fi
-echo "${monitor_mode}" > /tmp/monitor_mode.dat
+
+echo "${monitor_mode}" > "$DATA_FILE"
+killall xautolock
+${HOME}/.dotfiles/xautolock_start.sh &
