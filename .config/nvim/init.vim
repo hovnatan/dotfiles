@@ -203,3 +203,5 @@ au TermOpen * startinsert
 au BufEnter,BufWinEnter,WinEnter term://* startinsert
 au BufLeave term://* stopinsert
 
+
+set relativenumber
