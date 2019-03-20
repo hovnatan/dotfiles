@@ -3,9 +3,8 @@ separator_block_width=15
 markup=pango
 
 [time]
-command=date +'%H:%M %m/%d'
+command=echo "<b>`date +'%H:%M'`</b> `date +'%m/%d %a'`"; [[ -z "${BLOCK_BUTTON}" ]] || chromium --new-window calendar.google.com &
 interval=30
-label=📅
 
 [key_layout]
 command=$SCRIPT_DIR/key_layout
