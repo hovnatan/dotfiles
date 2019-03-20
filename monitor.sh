@@ -30,5 +30,4 @@ else
 fi
 
 echo "${monitor_mode}" > "$DATA_FILE"
-killall xautolock
 ${HOME}/.dotfiles/xautolock_start.sh &
