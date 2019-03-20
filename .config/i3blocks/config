@@ -3,8 +3,12 @@ separator_block_width=15
 markup=pango
 
 [time]
-command=echo "<b>`date +'%H:%M'`</b> `date +'%m/%d %a'`"; [[ -z "${BLOCK_BUTTON}" ]] || chromium --new-window calendar.google.com &
+command=date +'%H:%M'
 interval=30
+
+[date]
+command=date +'%m/%d %a'; [[ -z "${BLOCK_BUTTON}" ]] || chromium --new-window calendar.google.com &
+interval=300
 
 [key_layout]
 command=$SCRIPT_DIR/key_layout
@@ -41,7 +45,7 @@ interval=30
 
 [battery]
 # label=BAT
-label=⚡
+label=🔋
 #instance=1
 interval=30
 
