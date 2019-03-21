@@ -81,7 +81,7 @@ if has('mouse')
 endif
 
 "---------------------"
-" Behavioural section "
+" Behavioral section "
 "---------------------"
 
 set ttyfast                       " smoother changes
@@ -133,22 +133,15 @@ endif
 
 set shortmess=at
 set number "show line number
-"set cursorline "highlight current line
 set wildmenu
 set lazyredraw "redraw only when need to
 set showmatch           " highlight matching [{()}]
-"cnoremap <C-p> <Up>
-"cnoremap <C-n> <Down>
-" turn off search highlight
-" move vertically by visual line
 nnoremap j gj
 nnoremap k gk
 " highlight last inserted text
 nnoremap gV `[v`]
 let mapleader=","       " leader is comma
 inoremap jk <esc>
-" toggle gundo
-"nnoremap <leader>u :GundoToggle<CR>
 nnoremap <leader><space> :nohlsearch<CR>
 
 set history=200
@@ -163,25 +156,10 @@ cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'   " map %% as 
 filetype plugin on
 runtime plugins/matchit.vim
 
-"set makeprg=/home/hkarapet/scripts/fdi_build.csh\ -i\ /home/hkarapet/fdi_build\ -TDBG
-"compiler gcc
-"set errorformat^=%-G%f:%l:\ warning:%m
-"set tags +=/home/hkarapet/fdi_build/ic/fdi/src/fdi/tags
-" previous tab
 nnoremap <S-h> gT
-" next tab
 nnoremap <S-l> gt
 
 silent! set clipboard=unnamedplus " map default clipboard to xwindows clipboard
-
-" " allows cursor change in tmux mode
-if exists('$TMUX')
-    let &t_SI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=1\x7\<Esc>\\"
-    let &t_EI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=0\x7\<Esc>\\"
-else
-    let &t_SI = "\<Esc>]50;CursorShape=1\x7"
-    let &t_EI = "\<Esc>]50;CursorShape=0\x7"
-endif
 
 if has('persistent_undo')
     set undofile                " Save undo's after file closes
@@ -220,3 +198,8 @@ set relativenumber
 setlocal spell
 set spelllang=en_us
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
+for d in glob('~/.config/nvim/spell/*.add', 1, 1)
+    if filereadable(d) && (!filereadable(d . '.spl') || getftime(d) > getftime(d . '.spl'))
+        exec 'mkspell! ' . fnameescape(d)
+    endif
+endfor
