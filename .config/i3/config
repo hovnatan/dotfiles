@@ -62,6 +62,7 @@ bindsym Mod4+Shift+space floating toggle
 # change focus between tiling / floating windows
 bindsym Mod4+space focus mode_toggle
 bindcode $mod+38 focus parent
+bindcode $mod+52 focus child
 
 set $ws1 "1"
 set $ws2 "2"
