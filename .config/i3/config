@@ -19,7 +19,7 @@ font pango:DejaVu Sans Mono 8
 floating_modifier Mod1
 
 # start a terminal
-bindsym Mod1+Return exec termite
+bindsym Mod1+Return exec termite -d $(xcwd)
 
 # kill focused window # Alt+Shift+q, Win+d
 bindcode Mod1+Shift+24 kill

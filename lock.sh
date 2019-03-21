@@ -11,7 +11,7 @@ then
     mogrify -scale 5% -scale 2000% /tmp/screen_locked.png
     # Lock screen displaying this image.
     i3lock -i /tmp/screen_locked.png
-
+    setxkbmap us
     if ! [ -z "$1" ] ; 
     then 
       # Turn the screen off after a delay.
