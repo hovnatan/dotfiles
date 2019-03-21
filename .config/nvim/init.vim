@@ -193,7 +193,19 @@ endif
 call plug#begin('~/.local/share/nvim/site/plugged')
 Plug 'junegunn/fzf.vim'
 Plug 'vim-scripts/neat.vim'
+Plug 'lervag/vimtex'
+Plug 'sirver/ultisnips'
 call plug#end()
+
+let g:UltiSnipsExpandTrigger = '<tab>'
+let g:UltiSnipsJumpForwardTrigger = '<tab>'
+let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
+
+let g:tex_flavor='latex'
+let g:vimtex_view_method='zathura'
+let g:vimtex_quickfix_mode=0
+set conceallevel=1
+let g:tex_conceal='abdmg'
 
 nnoremap <silent> <c-p> :Files <CR>
 
@@ -203,5 +215,8 @@ au TermOpen * startinsert
 au BufEnter,BufWinEnter,WinEnter term://* startinsert
 au BufLeave term://* stopinsert
 
-
 set relativenumber
+
+setlocal spell
+set spelllang=en_us
+inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
