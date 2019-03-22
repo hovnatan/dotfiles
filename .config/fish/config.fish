@@ -1,3 +1,7 @@
+if status --is-login
+  source ~/.profile
+end
+
 function hybrid_bindings --description "Vi-style bindings that inherit emacs-style bindings in all modes"
     for mode in default insert visual
         fish_default_key_bindings -M $mode
