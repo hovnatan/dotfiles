@@ -1,24 +1,8 @@
 set nocompatible                  " use vim defaults
 
-"------------------"
-" Bugs workarounds "
-"------------------"
-
 set backspace=indent,eol,start    " fixes backspace issues
 
 set t_Co=256
-"---------------------"
-" Gvim configurations "
-"---------------------"
-
-if has("gui_running")
-    set guifont=Monospace\ 14     " use this font
-    set lines=40                  " height = 50 lines
-    set columns=120               " width = 100 columns
-    "set guioptions-=m             " Remove menu bar
-    set guioptions-=T             " Remove toolbar
-    "set guioptions-=r             " Remove scrollbar
-endif
 colorscheme wombat
 
 "----------------------"
@@ -42,12 +26,12 @@ set cindent                       " cindent
 " Highlighting, searching section "
 "---------------------------------"
 
-syntax on                         " syntax highlighing
-set showmatch                     " highlight matching breckets
-set hlsearch                      " highlight searches
-set incsearch                     " do incremental searching
-set smartcase                    " smart case: change behaviour when capital letter is encountered
-set ignorecase                    " ignore case (combined with smart case)
+syntax on
+set showmatch
+set hlsearch
+set incsearch
+set smartcase
+set ignorecase
 
 
 "hi Search       ctermbg=darkyellow ctermfg=NONE    " change search hl color
@@ -62,9 +46,6 @@ set ignorecase                    " ignore case (combined with smart case)
 "
 "hi Folded       ctermbg=NONE ctermfg=darkblue  " change folded line color
 "hi FoldColumn   ctermbg=NONE ctermfg=darkblue  " change folded column color
-
-" highlight sourcecode lines longer than 100
-"au FileType cpp,c,java,pl,php,asp let w:m2=matchadd('ErrorMsg', '\%>100v.\+', -1) 
 
 "------------------------"
 " Environment components "
@@ -89,7 +70,6 @@ set ttyfast                       " smoother changes
 set nostartofline                 " don't jump to first character when paging
 set nobackup                      " do not keep a backup file
 set autowrite                     " auto saves changes when quitting and swiching buffer
-"set nowrap                       " don't wrap lines
 set shortmess=atI                 " Abbreviate messages
 set modeline                      " last lines in document sets vim mode
 set modelines=3                   " number lines checked for modelines
@@ -127,10 +107,6 @@ inoremap jk <esc>
 nnoremap <leader><space> :nohlsearch<CR>
 
 set history=200
-nnoremap <silent> [b :bprevious<CR>
-nnoremap <silent> ]b :bnext<CR>
-nnoremap <silent> [B :bfirst<CR>
-nnoremap <silent> ]B :blast<CR>
 
 set hidden
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'   " map %% as filepath without filename
