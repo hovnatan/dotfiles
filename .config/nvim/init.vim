@@ -101,34 +101,15 @@ set whichwrap=b,s,h,l,<,>,[,]     " move freely between files
 set visualbell t_vb=              " turn off error beep/flash
 set novisualbell                  " turn off visual bell
 
-"------------------------"
-" Autocmd configurations "
-"------------------------"
+" Restore cursor position
+au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
 
-if has("autocmd")
-    " Restore cursor position
-    au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
-    
-    " Filetypes (au = autocmd)
-    au FileType helpfile set nonumber      " no line numbers when viewing help
-    au FileType helpfile nnoremap <buffer><cr> <c-]>   " Enter selects subject
-    au FileType helpfile nnoremap <buffer><bs> <c-T>   " Backspace to go back
-    
-    " When using mutt, text width=72
-    au FileType mail,tex set textwidth=72
-    au FileType cpp,c,java,sh,pl,php,asp  set autoindent
-    au FileType cpp,c,java,sh,pl,php,asp  set smartindent
-    au FileType cpp,c,java,sh,pl,php,asp  set cindent
-    "au BufRead mutt*[0-9] set tw=72
-    
-    " Automatically chmod +x Shell and Perl scripts
-    au BufWritePost   *.sh             !chmod +x %
+au FileType markdown,mkd,md
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
+au BufWritePost *.sh silent! !chmod +x %:p
 
-    " File formats
-    au BufNewFile,BufRead  *.pls    set syntax=dosini
-    au BufNewFile,BufRead  *.skl    set syntax=skill
-    au BufNewFile,BufRead  modprobe.conf    set syntax=modconf
-endif
+" headless dispatch
+nn <F9> :silent Dispatch!<CR>
 
 
 set shortmess=at
@@ -163,16 +144,17 @@ silent! set clipboard=unnamedplus " map default clipboard to xwindows clipboard
 
 if has('persistent_undo')
     set undofile                " Save undo's after file closes
-    set undodir=$HOME/.vimundo " where to save undo histories
+    set undodir=$HOME/.vimundo  " where to save undo histories
     set undolevels=1000         " How many undos
     set undoreload=10000        " number of lines to save for undo
 endif
 
 call plug#begin('~/.local/share/nvim/site/plugged')
-Plug 'junegunn/fzf.vim'
-Plug 'vim-scripts/neat.vim'
-Plug 'lervag/vimtex'
-Plug 'sirver/ultisnips'
+  Plug 'junegunn/fzf.vim'
+  Plug 'vim-scripts/neat.vim'
+  Plug 'lervag/vimtex'
+  Plug 'sirver/ultisnips'
+  Plug 'tpope/vim-dispatch'
 call plug#end()
 
 let g:UltiSnipsExpandTrigger = '<tab>'
