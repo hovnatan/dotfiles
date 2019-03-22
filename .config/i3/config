@@ -29,13 +29,13 @@ bindcode Mod4+40 kill
 bindcode $mod+40 exec rofi -show drun
 bindcode $mod+shift+40 exec rofi -show run
 
-# change focus
+# change focus, h j k l
 bindcode $mod+43 focus left
 bindcode $mod+44 focus down
 bindcode $mod+45 focus up
 bindcode $mod+46 focus right
 
-# move focused window
+# move focused window, h j k l
 bindcode $mod+Shift+43 move left
 bindcode $mod+Shift+44 move down
 bindcode $mod+Shift+45 move up
@@ -107,10 +107,10 @@ bindcode $mod+Shift+27 restart
 bindcode $mod+Shift+26 exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
 
 mode "resize" {
-        bindsym j resize shrink width 5 px or 5 ppt
-        bindsym k resize grow height 5 px or 5 ppt
-        bindsym l resize shrink height 5 px or 5 ppt
-        bindsym semicolon resize grow width 5 px or 5 ppt
+        bindsym h resize shrink width 5 px or 5 ppt
+        bindsym j resize grow height 5 px or 5 ppt
+        bindsym k resize shrink height 5 px or 5 ppt
+        bindsym l resize grow width 5 px or 5 ppt
 
         # same bindings, but for the arrow keys
         bindsym Left resize shrink width 10 px or 10 ppt
