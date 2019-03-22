@@ -74,6 +74,7 @@ set ls=2                          " always show status line
 set title                         " show title in console title bar
 set ruler                         " show the cursor position all the time
 set number                        " show line numbers
+set relativenumber
 set numberwidth=5                 " set line numbers column width
 set showcmd                       " display incomplete commands
 if has('mouse')
@@ -140,14 +141,12 @@ runtime plugins/matchit.vim
 nnoremap <S-h> gT
 nnoremap <S-l> gt
 
-silent! set clipboard=unnamedplus " map default clipboard to xwindows clipboard
+silent! set clipboard=unnamedplus
 
-if has('persistent_undo')
-    set undofile                " Save undo's after file closes
-    set undodir=$HOME/.vimundo  " where to save undo histories
-    set undolevels=1000         " How many undos
-    set undoreload=10000        " number of lines to save for undo
-endif
+set undofile                
+set undodir=$HOME/.vimundo  
+set undolevels=1000         
+set undoreload=10000        
 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'junegunn/fzf.vim'
@@ -174,8 +173,6 @@ au TermOpen * setlocal listchars= nonumber norelativenumber
 au TermOpen * startinsert
 au BufEnter,BufWinEnter,WinEnter term://* startinsert
 au BufLeave term://* stopinsert
-
-set relativenumber
 
 setlocal spell
 set spelllang=en_us
