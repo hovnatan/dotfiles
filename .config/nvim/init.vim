@@ -87,6 +87,8 @@ au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|
 
 au FileType markdown,mkd,md
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
+au FileType tex,latex
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
 au BufWritePost *.sh silent! !chmod +x %:p
 
 " headless dispatch
@@ -127,7 +129,7 @@ set undoreload=10000
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'junegunn/fzf.vim'
   Plug 'vim-scripts/neat.vim'
-  Plug 'lervag/vimtex'
+  " Plug 'lervag/vimtex'
   Plug 'sirver/ultisnips'
   Plug 'tpope/vim-dispatch'
 call plug#end()
