@@ -4,5 +4,5 @@ set statusbar-home-tilde true
 set guioptions ''
 map d scroll half-down
 map u scroll half-up
-map <C-d> toggle_page_mode
+map <C-D> toggle_page_mode
 map n toggle_statusbar
