@@ -194,6 +194,7 @@ for_window [class="Workrave"] border none
 for_window [class="Workrave"] floating enable
 exec --no-startup-id dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:'normal'
 bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh
+bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 
 exec --no-startup-id dunst
 
