@@ -192,6 +192,9 @@ bindsym $mod+space exec --no-startup-id ~/.config/i3/key_layout_switch; exec --n
 exec --no-startup-id workrave 
 for_window [class="Workrave"] border none
 for_window [class="Workrave"] floating enable
+exec --no-startup-id dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:'normal'
+bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh
+
 exec --no-startup-id dunst
 
 exec --no-startup-id termite --name dropdown
