@@ -9,8 +9,6 @@ browser = xdg-open
 #filter_unmatched_urls = true
 
 [colors]
-# Base16 Google Dark
-# Author: Seth Wright (http://sethawright.com)
 
 foreground          = #c5c8c6
 foreground_bold     = #e0e0e0

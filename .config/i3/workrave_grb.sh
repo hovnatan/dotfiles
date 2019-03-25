@@ -9,5 +9,5 @@ seconds_left=`expr $timer - $elapsed`
 minutes=$((seconds_left / 60))
 seconds=$((seconds_left % 60))
 
-notify-send -t 3000 "${minutes}:${seconds} left"
+notify-send -t 3000 "Left ${minutes}:${seconds}"
 
