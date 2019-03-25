@@ -35,9 +35,6 @@ git clone https://aur.archlinux.org/yay.git
 cd yay
 makepkg -si
 
-cd ~
-git clone https://github.com/hastinbe/i3-volume.git
-
 # change tar.gz to tar and specify makeflags to correct number of cores
 sudo nvim /etc/makepkg.conf
 yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom xkblayout-state-git i3ipc-python libinput-gestures clipster xcwd-git foxitreader
