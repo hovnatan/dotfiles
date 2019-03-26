@@ -131,7 +131,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   " Plug 'lervag/vimtex'
   Plug 'sirver/ultisnips'
   Plug 'tpope/vim-dispatch'
-  Plug 'arcticicestudio/nord-vim'
+  Plug 'morhetz/gruvbox'
 call plug#end()
 
 let g:UltiSnipsExpandTrigger = '<tab>'
