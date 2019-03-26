@@ -44,8 +44,7 @@ command=$SCRIPT_DIR/iface_contrib
 interval=30
 
 [battery]
-# label=BAT
-label=🔋
+label=
 #instance=1
 interval=30
 

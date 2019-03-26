@@ -156,7 +156,7 @@ bindsym $mod+Shift+m mode "move"
 bar {
         status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
         position top
-        font pango:DejaVu Sans Mono, 11
+        font pango:DejaVu Sans Mono, Awesome 11
         colors {
           background	$background
           statusline	$foreground
