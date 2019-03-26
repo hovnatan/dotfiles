@@ -19,7 +19,7 @@ echo "wifi: $SSID $QUALITY%"
 echo "wifi: $SSID $QUALITY%"
 
 if [[ $QUALITY -ge 80 ]]; then
-    echo "#98971a"
+    echo "#689d68"
 elif [[ $QUALITY -ge 60 ]]; then
     echo "#d79921"
 elif [[ $QUALITY -ge 40 ]]; then

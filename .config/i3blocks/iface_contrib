@@ -13,4 +13,4 @@ if [ -z "$STATUS" ]; then
   exit
 fi
 
-echo \#98971a
+echo \#689d68
