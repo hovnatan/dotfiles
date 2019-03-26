@@ -3,7 +3,6 @@ set nocompatible                  " use vim defaults
 set backspace=indent,eol,start    " fixes backspace issues
 
 set t_Co=256
-colorscheme wombat
 
 "----------------------"
 " Tabs->spaces section "
@@ -132,6 +131,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   " Plug 'lervag/vimtex'
   Plug 'sirver/ultisnips'
   Plug 'tpope/vim-dispatch'
+  Plug 'arcticicestudio/nord-vim'
 call plug#end()
 
 let g:UltiSnipsExpandTrigger = '<tab>'
