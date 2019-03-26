@@ -160,7 +160,7 @@ bar {
         colors {
           background	$background
           statusline	$foreground
-          separator	$background
+          separator	$lighterbg
 
           #Type               border      background	font
           focused_workspace	$lighterbg  $lighterbg  $foreground
