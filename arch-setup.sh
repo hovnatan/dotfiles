@@ -35,7 +35,7 @@ git clone https://aur.archlinux.org/yay.git
 cd yay
 makepkg -si
 
-cd ~	
+cd ~/.dotfiles
 git clone https://github.com/hastinbe/i3-volume.git
 
 # change tar.gz to tar and specify makeflags to correct number of cores
