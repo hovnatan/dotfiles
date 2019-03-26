@@ -1,7 +1,7 @@
 rofi.combi-modi:            window,drun
 rofi.show-icons:            false
 rofi.modi:                  combi
-rofi.lines:                 7
+rofi.lines:                 10
 rofi.line-padding:          10
 rofi.matching:              fuzzy
 rofi.bw:                    0
@@ -9,4 +9,4 @@ rofi.padding:               0
 rofi.separator-style:       none
 rofi.hide-scrollbar:        true
 rofi.line-margin:           0
-rofi.theme: nord.rasi
+rofi.theme: gruvbox-dark-hard.rasi

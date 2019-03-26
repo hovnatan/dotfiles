@@ -6,6 +6,6 @@ map d scroll half-down
 map u scroll half-up
 map <C-D> toggle_page_mode
 map n toggle_statusbar
-set recolor-darkcolor "#D8DEE9"
-set recolor-lightcolor "#2e3440"
+set recolor-darkcolor "#EBDBB2"
+set recolor-lightcolor "#282828"
 map r recolor

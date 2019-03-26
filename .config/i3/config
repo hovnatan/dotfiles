@@ -1,29 +1,5 @@
 exec --no-startup-id ~/.dotfiles/monitor.sh a
 
-set_from_resource $base03   i3wm.color8     #002b36
-set_from_resource $base02   i3wm.color0     #073642
-set_from_resource $base01   i3wm.color10    #586e75
-set_from_resource $base00   i3wm.color11    #657b83
-set_from_resource $base0    i3wm.color12    #839496
-set_from_resource $base1    i3wm.color14    #93a1a1
-set_from_resource $base2    i3wm.color7     #eee8d5
-set_from_resource $base3    i3wm.color15    #fdf6e3
-
-set_from_resource $yellow   i3wm.color3     #b58900
-set_from_resource $orange   i3wm.color9     #cb4b16
-set_from_resource $red      i3wm.color1     #dc322f
-set_from_resource $magenta  i3wm.color5     #d33682
-set_from_resource $violet   i3wm.color13    #6c71c4
-set_from_resource $blue     i3wm.color4     #268bd2
-set_from_resource $cyan     i3wm.color6     #2aa198
-set_from_resource $green    i3wm.color2     #859900
-
-set_from_resource $background i3wm.background $base3
-set_from_resource $foreground i3wm.foreground $base00
-
-set_from_resource $lighterbg  i3wm.lighterbg  $base02
-set_from_resource $separator  i3wm.separator  $lighterbg
-
 set $mod Mod1
 
 font pango:DejaVu Sans Mono 10
@@ -153,28 +129,41 @@ mode "move" {
 }
 bindsym $mod+Shift+m mode "move"
 
+# set primary gruvbox colorscheme colors
+set $bg #282828
+set $red #cc241d
+set $green #98971a
+set $yellow #d79921
+set $blue #458588
+set $purple #b16286
+set $aqua #689d68
+set $gray #a89984
+set $darkgray #1d2021
+
 bar {
         status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
         position top
         font pango:DejaVu Sans Mono, Awesome 11
         colors {
-          background	$background
-          statusline	$foreground
-          separator	$lighterbg
-
-          #Type               border      background	font
-          focused_workspace	$lighterbg  $lighterbg  $foreground
-          active_workspace	$background $background $foreground
-          inactive_workspace	$background $background $foreground
-          urgent_workspace	$background $background $foreground
+          #  bar background color
+          background $bg
+          # text color used for blocks that do not have a color specified.
+          statusline $yellow
+          # workspaces section            
+          #                    border  backgr. text
+          focused_workspace    $aqua $aqua $darkgray
+          inactive_workspace   $darkgray $darkgray $yellow
+          active_workspace     $darkgray $darkgray $yellow
+          urgent_workspace     $red $red $bg
       	}
 }
 
-client.focused		        #2C313D        #2e3440        $background  $background
-client.focused_inactive	    #2C313D        #303743        $background  $background
-client.unfocused	        #2C313D        #303743        $background  $background
-client.urgent		        $background    #282d37    $background  $background
-client.placeholder	        $background    #282D37    $background  $background
+# green gruvbox
+# class                 border|backgr|text|indicator|child_border
+client.focused          $green $green $darkgray $purple $darkgray
+client.focused_inactive $darkgray $darkgray $yellow $purple $darkgray
+client.unfocused        $darkgray $darkgray $yellow $purple $darkgray
+client.urgent           $red $red $white $red $red
 
 hide_edge_borders smart
 default_border pixel 1 
