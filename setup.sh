@@ -52,6 +52,7 @@ rm -rf ~/.config/zathura
 ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
 rm -rf ~/.local/share/zathura/bookmarks
 ln -s ~/Dropbox/scripts/bookmarks ~/.local/share/zathura/bookmarks
+xdg-mime default org.pwmt.zathura.desktop 'application/pdf'
 
 
 rm -rf ~/.config/termite/
