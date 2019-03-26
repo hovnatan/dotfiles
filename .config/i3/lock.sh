@@ -5,10 +5,10 @@ scrot $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
 
 B='#00000000'  # blank
 C='#ffffff22'  # clear ish
-D='#ebcb8bcc'  # default
-T='#D8DEE9ee'  # text
-W='#BF616Abb'  # wrong
-V='#b48eadbb'  # verifying
+D='#689d68cc'  # default
+T='#d79921ff'  # text
+W='#cc241dbb'  # wrong
+V='#b16286bb'  # verifying
 
 i3lock \
 -i $TMPBG \

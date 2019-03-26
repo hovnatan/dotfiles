@@ -5,7 +5,7 @@ esac
 LNG=$(xkblayout-state print %s)
 case $LNG in
   "us")
-    CLR=\#98971a ;; # green
+    CLR=\#689d68 ;; # green
   "am")
     CLR=\#cc241d ;; # red
 esac
