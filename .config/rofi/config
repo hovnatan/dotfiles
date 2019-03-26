@@ -1,13 +1,12 @@
-rofi.color-enabled: true
-rofi.opacity: 50
-rofi.columns: 1
-rofi.font: pango:Cantarell 11
-rofi.separator-style: none
-rofi.theme: glue_pro_blue
-rofi.modi: combi
-rofi.combi-modi: window,drun
-rofi.display-run: : 
-#rofi.color-window: #383c4a, #5294E2, #5294E2
-#rofi.color-normal: #202332, #5294E2, #383c4a, #5294E2, #383c4a
-#rofi.color-active: #202332, #5294E2, #383c4a, #5294E2, #383c4a
-#rofi.color-urgent: #202332, #5294E2, #383c4a, #5294E2, #383c4a
+rofi.combi-modi:            window,drun
+rofi.show-icons:            false
+rofi.modi:                  combi
+rofi.lines:                 7
+rofi.line-padding:          10
+rofi.matching:              fuzzy
+rofi.bw:                    0
+rofi.padding:               0
+rofi.separator-style:       none
+rofi.hide-scrollbar:        true
+rofi.line-margin:           0
+rofi.theme: nord.rasi
