@@ -128,3 +128,11 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 sudo gpasswd -a $USER lp
 sudo gpasswd -a $USER input
 
+mkdir -p ~/.local/share/applications
+for filename in ~/.dotfiles/.local/share/applications/*.desktop; do
+    [ -e "$filename" ] || continue
+    basename=$(basename "$filename")
+    ln -sf $filename ~/.local/share/applications/$basename
+done
+
+

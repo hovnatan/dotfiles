@@ -4,4 +4,4 @@ Version=1.0
 Terminal=false
 Type=Application
 Name=IntelinAir Slack
-Exec=/usr/bin/chromium --app=https://intelinair.slack.com
+Exec=/usr/bin/chromium --app=https://intelinairteam.slack.com
