@@ -1,11 +1,11 @@
 rofi.color-enabled: true
 rofi.opacity: 50
 rofi.columns: 1
-rofi.font: pango:DejaVu Sans Mono 10
+rofi.font: pango:Cantarell 11
 rofi.separator-style: none
 rofi.theme: glue_pro_blue
 rofi.modi: combi
-rofi.combi-modi: window,drun,ssh
+rofi.combi-modi: window,drun
 rofi.display-run: : 
 #rofi.color-window: #383c4a, #5294E2, #5294E2
 #rofi.color-normal: #202332, #5294E2, #383c4a, #5294E2, #383c4a
