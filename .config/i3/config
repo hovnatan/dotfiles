@@ -25,7 +25,7 @@ bindcode Mod1+Shift+24 kill
 bindcode Mod4+40 kill
 
 # start run (a program launcher), 40=d
-bindcode Mod1+40 exec rofi -show window
+bindcode Mod1+40 exec rofi -show combi
 bindcode Mod1+Shift+40 exec rofi -show drun
 
 # change focus, h j k l
