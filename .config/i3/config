@@ -25,8 +25,8 @@ bindcode Mod1+Shift+24 kill
 bindcode Mod4+40 kill
 
 # start run (a program launcher), 40=d
-bindcode Mod1+40 exec rofi -show drun
-bindcode Mod1+shift+40 exec rofi -show run
+bindcode Mod1+40 exec rofi -show window
+bindcode Mod1+Shift+40 exec rofi -show drun
 
 # change focus, h j k l
 bindcode Mod1+43 focus left
@@ -220,10 +220,6 @@ bindcode $mod+20 scratchpad show
 bindcode $mod+58 exec --no-startup-id i3-input -F 'mark %s' -l 1 -P 'Mark: '
 bindcode $mod+42 exec --no-startup-id i3-input -F '[con_mark="%s"] focus' -l 1 -P 'Goto: '
 show_marks yes
-
-for_window [window_role="pop-up"] floating enable
-for_window [window_role="task_dialog"] floating enable
-for_window [title="Preferences$"] floating enable
 
 workspace_auto_back_and_forth yes
 
