@@ -48,8 +48,8 @@ ln -s ~/.dotfiles/.config/i3blocks/ ~/.config/i3blocks
 #rm -rf ~/.config/i3status
 #ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
 
-rm -rf ~/.config/zathura
-ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
+ln -sf ~/.dotfiles/.config/zathura ~/.config/zathura
+ln -sf ~/.dotfiles/.config/zathura_lt/ ~/.config/zathura_lt
 rm -rf ~/.local/share/zathura/bookmarks
 ln -s ~/Dropbox/scripts/bookmarks ~/.local/share/zathura/bookmarks
 xdg-mime default org.pwmt.zathura.desktop 'application/pdf'
