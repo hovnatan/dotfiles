@@ -144,3 +144,7 @@ done
 cd ~/.dotfiles/issue
 ./create_new_issue.sh
 cd ~
+
+# for oomox, then export 
+#git clone https://github.com/Yethiel/gruvmox-colors.git
+#cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
