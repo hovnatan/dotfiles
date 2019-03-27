@@ -5,7 +5,7 @@ set guioptions ''
 map d scroll half-down
 map u scroll half-up
 map <C-D> toggle_page_mode
-map n toggle_statusbar
+map <C-n> toggle_statusbar
 
 #set recolor-darkcolor "#EBDBB2"
 #set recolor-lightcolor "#282828"
