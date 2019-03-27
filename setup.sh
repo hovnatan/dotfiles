@@ -123,11 +123,6 @@ chmod 644 ~/.ssh/config
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
-mkdir -p ~/.local/share/themes
-cd ~/.local/share/themes
-git clone https://github.com/3ximus/gruvbox-gtk.git
-cd ~
-
 ln -sf ~/.dotfiles/.config/qt5ct/ ~/.config/qt5ct
 
 #cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf 
@@ -148,6 +143,7 @@ cd ~
 mkdir -p ~/.local/share/themes
 ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-hard-aqua/ ~/.local/share/themes/
 
-# for oomox, then export 
+#gruvbox theme
+#yay -S oomox 
 #git clone https://github.com/Yethiel/gruvmox-colors.git
 #cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
