@@ -123,7 +123,13 @@ chmod 644 ~/.ssh/config
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
-# qt5ct set to adwaitwa dark, icons too, fonts cantarell 10, dejavu sans mono 10
+mkdir -p ~/.local/share/themes
+cd ~/.local/share/themes
+git clone https://github.com/3ximus/gruvbox-gtk.git
+cd ~
+
+ln -sf ~/.dotfiles/.config/qt5ct/ ~/.config/qt5ct
+
 #cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf 
 sudo gpasswd -a $USER lp
 sudo gpasswd -a $USER input
