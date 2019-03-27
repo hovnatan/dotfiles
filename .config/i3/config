@@ -139,6 +139,7 @@ set $purple #b16286
 set $aqua #689d68
 set $gray #a89984
 set $darkgray #1d2021
+set $white #ebdbb2
 
 bar {
         status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
@@ -160,7 +161,7 @@ bar {
 
 # green gruvbox
 # class                 border|backgr|text|indicator|child_border
-client.focused          $green $green $darkgray $purple $darkgray
+client.focused          $green $green $darkgray $purple $yellow
 client.focused_inactive $darkgray $darkgray $yellow $purple $darkgray
 client.unfocused        $darkgray $darkgray $yellow $purple $darkgray
 client.urgent           $red $red $white $red $red
