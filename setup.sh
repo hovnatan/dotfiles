@@ -141,4 +141,6 @@ for filename in ~/.dotfiles/.local/share/applications/*.desktop; do
     ln -sf $filename ~/.local/share/applications/$basename
 done
 
-
+cd ~/.dotfiles/issue
+./create_new_issue.sh
+cd ~
