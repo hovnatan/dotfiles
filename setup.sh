@@ -145,6 +145,9 @@ cd ~/.dotfiles/issue
 ./create_new_issue.sh
 cd ~
 
+mkdir -p ~/.local/share/themes
+ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-hard-aqua/ ~/.local/share/themes/
+
 # for oomox, then export 
 #git clone https://github.com/Yethiel/gruvmox-colors.git
 #cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
