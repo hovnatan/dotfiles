@@ -23,7 +23,7 @@
     startup_notification = false
     icon_position = left
     max_icon_size = 128
-#icon_path=/usr/share/icons/Adwaita/128x128/devices/:/usr/share/icons/Adwaita/64x64/status/
+    icon_path=/usr/share/icons/Gruvbox/scalable/devices:/usr/share/icons/Gruvbox/scalable/status:/usr/share/icons/Gruvbox/scalable/places:/usr/share/icons/Gruvbox/scalable/notifications:/usr/share/icons/Gruvbox/scalable/mimetypes:/usr/share/icons/Gruvbox/scalable/emblems:/usr/share/icons/Gruvbox/scalable/categories:/usr/share/icons/Gruvbox/scalable/apps:/usr/share/icons/Gruvbox/scalable/actions
     frame_width = 2
     frame_color = "#d79921"
 
