@@ -136,10 +136,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 call plug#end()
 
 filetype plugin indent on
-let $NVIM_TUI_ENABLE_TRUE_COLOR=1
-let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1 " change cursor shape on insert
 
 let g:gruvbox_contrast_dark = 'hard'
+let g:gruvbox_color_column = 'dark0'
+let g:gruvbox_hls_cursor = 'red'
 
 let g:UltiSnipsExpandTrigger = '<tab>'
 let g:UltiSnipsJumpForwardTrigger = '<tab>'
