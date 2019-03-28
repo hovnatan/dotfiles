@@ -132,7 +132,14 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sirver/ultisnips'
   Plug 'tpope/vim-dispatch'
   Plug 'morhetz/gruvbox'
+  Plug 'vim-airline/vim-airline'
 call plug#end()
+
+filetype plugin indent on
+let $NVIM_TUI_ENABLE_TRUE_COLOR=1
+let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1 " change cursor shape on insert
+
+let g:gruvbox_contrast_dark = 'hard'
 
 let g:UltiSnipsExpandTrigger = '<tab>'
 let g:UltiSnipsJumpForwardTrigger = '<tab>'
@@ -143,6 +150,7 @@ let g:vimtex_view_method='zathura'
 let g:vimtex_quickfix_mode=0
 set conceallevel=1
 let g:tex_conceal='abdmg'
+
 
 nnoremap <silent> <c-p> :Files <CR>
 
@@ -161,4 +169,3 @@ for d in glob('~/.config/nvim/spell/*.add', 1, 1)
     endif
 endfor
 
-let g:gruvbox_contrast_dark = 'hard'

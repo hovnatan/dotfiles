@@ -193,7 +193,6 @@ exec_always --no-startup-id ~/.config/i3/kbd.py
 bindsym $mod+space exec --no-startup-id ~/.config/i3/key_layout_switch; exec --no-startup-id pkill -RTMIN+10 i3blocks
 
 exec --no-startup-id workrave 
-for_window [class="Workrave"] border none
 for_window [class="Workrave"] floating enable
 exec --no-startup-id dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:'normal'
 bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh
