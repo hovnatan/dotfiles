@@ -9,10 +9,10 @@ map <C-n> toggle_statusbar
 
 #set recolor-darkcolor "#EBDBB2"
 #set recolor-lightcolor "#282828"
-set recolor-lightcolor "#fbf1c7"
-set recolor-darkcolor "#3c3836"
+set recolor-lightcolor "#f9f5d7"
+set recolor-darkcolor "#282828"
 #set default-fg "#3c3836"
-set default-bg "#fbf1c7"
+set default-bg "#f9f5d7"
 #set recolor-keephue true
 #set recolor-reverse-video true
 map r recolor
