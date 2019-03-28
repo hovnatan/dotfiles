@@ -6,22 +6,21 @@ color() {
   echo -n "\e]P${1}${2}"
 }
 
-color 0 '1d2021'
-color 1 'cc241d'
-color 2 '98991a'
-color 3 'd89a22'
-color 4 '468589'
-color 5 'b16286'
-color 6 '689e6a'
-color 7 'a99a84'
-
-color 8 '938374'
-color 9 'fc4935'
-color a 'b8ba26'
-color b 'fbbe2f'
-color c '83a699'
-color d 'd4869c'
-color e '8fc17d'
-color f 'eddbb3'
+color 0  '1d2021'
+color 1  'fb4934'
+color 2  'b8bb26'
+color 3  'fabd2f'
+color 4  '83a598'
+color 5  'd3869b'
+color 6  '8ec07c'
+color 7  'ebdbb2'
+color 8  '928374'
+color 9  'cc241d'
+color a  '98971a'
+color b  'd79921'
+color c  '458588'
+color d  'b16286'
+color e  '689d6a'
+color f  'a89984'
 
 clear
