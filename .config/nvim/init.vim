@@ -160,3 +160,5 @@ for d in glob('~/.config/nvim/spell/*.add', 1, 1)
         exec 'mkspell! ' . fnameescape(d)
     endif
 endfor
+
+let g:gruvbox_contrast_dark = 'hard'
