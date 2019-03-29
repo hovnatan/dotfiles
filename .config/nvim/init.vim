@@ -104,7 +104,7 @@ nnoremap k gk
 " highlight last inserted text
 nnoremap gV `[v`]
 let mapleader=","       " leader is comma
-inoremap jk <esc>
+" inoremap jk <esc>
 nnoremap <leader><space> :nohlsearch<CR>
 
 set history=200
