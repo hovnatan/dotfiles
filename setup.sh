@@ -147,3 +147,5 @@ ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-hard-aqua/ ~/.local/sh
 #yay -S oomox 
 #git clone https://github.com/Yethiel/gruvmox-colors.git
 #cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
+git update-index --assume-unchanged workrave.ini
+#git update-index --no-assume-unchanged workrave.ini
