@@ -34,11 +34,6 @@ end
 
 set fish_user_paths $PATH ~/.dotfiles/bin
 
-if status is-interactive
-and not set -q TMUX
-    exec tmux
-end
-
 #if test -d ~/miniconda3/bin
 #  set -x PATH ~/miniconda3/bin/ $PATH
 #  source (conda info --root)/etc/fish/conf.d/conda.fish
