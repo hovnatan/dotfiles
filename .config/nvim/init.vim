@@ -133,7 +133,22 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-dispatch'
   Plug 'morhetz/gruvbox'
   Plug 'vim-airline/vim-airline'
+  Plug 'ncm2/ncm2'
+  Plug 'roxma/nvim-yarp'
+  Plug 'ncm2/ncm2-bufword'
+  Plug 'ncm2/ncm2-path'
+  Plug 'fgrsnau/ncm-otherbuf'
+  Plug 'fgrsnau/ncm2-aspell'
+  Plug 'wellle/tmux-complete.vim'
 call plug#end()
+
+autocmd BufEnter * call ncm2#enable_for_buffer()
+
+set completeopt=noinsert,menuone,noselect
+inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+
+let g:airline_theme = 'gruvbox'
 
 filetype plugin indent on
 
