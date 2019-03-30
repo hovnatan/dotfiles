@@ -32,6 +32,8 @@ function bell_on_prompt --on-event fish_prompt
     echo -e -n "\a"
 end
 
+set fish_user_paths $PATH ~/.dotfiles/bin
+
 #if test -d ~/miniconda3/bin
 #  set -x PATH ~/miniconda3/bin/ $PATH
 #  source (conda info --root)/etc/fish/conf.d/conda.fish
