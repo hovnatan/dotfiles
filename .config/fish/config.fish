@@ -12,7 +12,7 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     bind \cd forward-word
     bind -M insert \cd forward-word
     fzf_key_bindings
-#bind -M insert -m default jk backward-char force-repaint
+    bind -M insert -m default jk backward-char force-repaint
 end
 
 set -u fish_term24bit 1
@@ -20,7 +20,7 @@ set -u fish_term24bit 1
 set -g fish_key_bindings hybrid_bindings
 
 set -U fish_cursor_default block
-set -U fish_cursor_insert block blink
+set -U fish_cursor_insert underscore blink
 set -U fish_cursor_visual block
 
 set -u fish_color_cwd cyan

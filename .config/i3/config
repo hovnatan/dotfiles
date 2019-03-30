@@ -74,6 +74,7 @@ bindcode $mod+16 workspace $ws7
 bindcode $mod+17 workspace $ws8
 bindcode $mod+18 workspace $ws9
 bindcode $mod+19 workspace $ws10
+bindcode $mod+49 exec --no-startup-id ~/.dotfiles/.config/i3/grave.sh
 
 # move focused container to workspace
 bindcode $mod+Shift+10 move container to workspace $ws1
@@ -185,7 +186,7 @@ bindsym XF86AudioPrev exec playerctl previous
 bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+Escape exec ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec ~/.dotfiles/lock.sh && systemctl suspend
-exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt"
+exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps"
 exec --no-startup-id dropbox start
 exec --no-startup-id redshift-gtk
 exec --no-startup-id libinput-gestures
