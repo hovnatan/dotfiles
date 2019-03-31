@@ -129,7 +129,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'junegunn/fzf.vim'
   Plug 'vim-scripts/neat.vim'
   " Plug 'lervag/vimtex'
-  Plug 'sirver/ultisnips'
+  " Plug 'sirver/ultisnips'
   Plug 'tpope/vim-dispatch'
   Plug 'morhetz/gruvbox'
   Plug 'vim-airline/vim-airline'
