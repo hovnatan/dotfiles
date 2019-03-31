@@ -36,4 +36,4 @@ if [ -n "$PID" ]; then
 	fi
 fi
 cd "$CWD"
-termite $@ -e "tmux"
+~/opt/xst/xst $@ -e tmux
