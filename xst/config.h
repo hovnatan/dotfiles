@@ -98,7 +98,7 @@ static unsigned int defaultcs = 258;
 static unsigned int defaultrcs = 259;
 
 /* 2 4 6 7: █ _ | ☃ */
-static unsigned int cursorshape = 2;
+static unsigned int cursorshape = 1;
 
 /* 0: normal blinking
  * 1: leave cursor border and blink with cursor's background */

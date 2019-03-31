@@ -201,7 +201,7 @@ bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 
 exec --no-startup-id dunst
 
-exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh -n dropdown
+exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh --name dropdown
 for_window [instance="dropdown"] floating enable, move scratchpad
 bindcode $mod+31 [instance="dropdown"] scratchpad show, move position center
 
