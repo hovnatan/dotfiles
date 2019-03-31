@@ -137,9 +137,9 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'roxma/nvim-yarp'
   Plug 'ncm2/ncm2-bufword'
   Plug 'ncm2/ncm2-path'
+  Plug 'ncm2/ncm2-tmux'
   Plug 'fgrsnau/ncm-otherbuf'
   Plug 'fgrsnau/ncm2-aspell'
-  Plug 'wellle/tmux-complete.vim'
 call plug#end()
 
 autocmd BufEnter * call ncm2#enable_for_buffer()
