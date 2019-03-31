@@ -20,7 +20,7 @@ set -u fish_term24bit 1
 set -g fish_key_bindings hybrid_bindings
 
 set -U fish_cursor_default block
-set -U fish_cursor_insert underscore blink
+set -U fish_cursor_insert block blink
 set -U fish_cursor_visual block
 
 set -u fish_color_cwd cyan
