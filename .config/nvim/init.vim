@@ -85,10 +85,10 @@ set novisualbell                  " turn off visual bell
 au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
 
 au FileType markdown,mkd,md
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell
 au FileType tex,latex
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell
 au BufWritePost *.sh silent! !chmod +x %:p
 
