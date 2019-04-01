@@ -86,8 +86,10 @@ au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|
 
 au FileType markdown,mkd,md
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
+                \ setlocal spell
 au FileType tex,latex
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
+                \ setlocal spell
 au BufWritePost *.sh silent! !chmod +x %:p
 
 " headless dispatch
@@ -175,7 +177,6 @@ au TermOpen * startinsert
 au BufEnter,BufWinEnter,WinEnter term://* startinsert
 au BufLeave term://* stopinsert
 
-setlocal spell
 set spelllang=en_us
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
 for d in glob('~/.config/nvim/spell/*.add', 1, 1)
