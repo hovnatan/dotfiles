@@ -7,7 +7,7 @@ command=date +'%H:%M'
 interval=30
 
 [date]
-command=date +'%m/%d %a'; [[ -z "${BLOCK_BUTTON}" ]] || chromium --new-window calendar.google.com &
+command=date +'%m/%d %a'; [[ -z "${BLOCK_BUTTON}" ]] || chromium calendar.google.com &
 interval=300
 
 [key_layout]
