@@ -152,4 +152,5 @@ git update-index --assume-unchanged workrave.ini
 ln -s ~/.dotfiles/.xbindkeysrc ~/
 
 mkdir -p ~/.config/vifm
+rm -rf ~/.config/vifm/vifmrc
 ln -s ~/.dotfiles/.config/vifm/vifmrc ~/.config/vifm/
