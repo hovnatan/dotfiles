@@ -10,7 +10,7 @@ T='#d79921ff'  # text
 W='#cc241dbb'  # wrong
 V='#b16286bb'  # verifying
 
-i3lock \
+i3lock -n \
 -i $TMPBG \
 --insidevercolor=$C   \
 --ringvercolor=$V     \
@@ -36,6 +36,6 @@ i3lock \
 --indicator           \
 --timestr="%H:%M:%S"  \
 --datestr="%A, %m %Y" \
---keylayout 2         \
+--keylayout 2
 
-rm $TMPBG
+xinput --enable $POINTER_DEVICE_ID_TO_SUSPEND
