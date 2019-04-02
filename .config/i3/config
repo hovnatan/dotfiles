@@ -222,8 +222,8 @@ exec --no-startup-id clipster -d
 bindcode $mod+54 exec --no-startup-id clipster -s
 exec --no-startup-id ~/.dotfiles/xautolock_start.sh
 
-for_window [title=".*SuperAnnotate Slack.*"] move container to workspace $ws10
-for_window [title="WhatsApp"] move container to workspace $ws10
-for_window [title="Messenger" instance="www.messenger.com"] move container to workspace $ws10
+for_window [title=".*SuperAnnotate Slack.*"] move to workspace $ws10
+for_window [title="WhatsApp"] move to workspace $ws10
+for_window [title="Messenger" instance="www.messenger.com"] move to workspace $ws10
 
 #exec --no-startup-id xbindkeys
