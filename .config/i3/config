@@ -184,8 +184,8 @@ bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
 bindsym $mod+Tab workspace back_and_forth
-bindsym $mod+Escape exec ~/.dotfiles/lock.sh dummy
-bindsym $mod+Shift+Escape exec ~/.dotfiles/lock.sh && systemctl suspend
+bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
+bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
 exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps"
 exec --no-startup-id dropbox start
 exec --no-startup-id redshift-gtk
