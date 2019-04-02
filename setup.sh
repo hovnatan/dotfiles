@@ -64,7 +64,7 @@ ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
 sudo ln -s /home/hovnatan/.dotfiles/wakelock.service /etc/systemd/system/wakelock.service
 sudo systemctl enable /etc/systemd/system/wakelock.service
 sudo mkdir -p /usr/local/share/kbd/keymaps
-#sudo cp ~/.dotfiles/caps_control.kmap /usr/local/share/kbd/keymaps/
+sudo cp ~/.dotfiles/caps_control.kmap /usr/local/share/kbd/keymaps/
 sudo cp ~/.dotfiles/vconsole.conf /etc/
 
 ln -sf ~/.dotfiles/.profile ~/.profile
