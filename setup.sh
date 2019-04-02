@@ -149,3 +149,4 @@ ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-hard-aqua/ ~/.local/sh
 #cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
 git update-index --assume-unchanged workrave.ini
 #git update-index --no-assume-unchanged workrave.ini
+ln -s ~/.dotfiles/.xbindkeysrc ~/
