@@ -33,5 +33,5 @@
 # NumLock, CapsLock and ScrollLock.
 # Uncomment the lines above if you want to pay attention to them.
 
-"xdotool click 2"
+"~/.dotfiles/primary_insert.sh"
   control + shift + Insert

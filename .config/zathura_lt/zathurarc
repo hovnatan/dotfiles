@@ -4,6 +4,10 @@ set statusbar-home-tilde true
 set guioptions ''
 map d scroll half-down
 map u scroll half-up
+map <PageDown> scroll half-down
+map <PageUp> scroll half-up
+map <S-PageDown> navigate next
+map <S-PageUp> navigate previous
 map <C-D> toggle_page_mode
 map <C-n> toggle_statusbar
 
@@ -16,3 +20,4 @@ set default-bg "#f9f5d7"
 #set recolor-keephue true
 #set recolor-reverse-video true
 map r recolor
+set selection-clipboard clipboard
