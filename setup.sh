@@ -150,3 +150,6 @@ ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-hard-aqua/ ~/.local/sh
 git update-index --assume-unchanged workrave.ini
 #git update-index --no-assume-unchanged workrave.ini
 ln -s ~/.dotfiles/.xbindkeysrc ~/
+
+mkdir -p ~/.config/vifm
+ln -s ~/.dotfiles/.config/vifm/vifmrc ~/.config/vifm/
