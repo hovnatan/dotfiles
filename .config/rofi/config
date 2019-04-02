@@ -1,4 +1,4 @@
-rofi.combi-modi:            window,drun
+rofi.combi-modi:            drun,window
 rofi.show-icons:            false
 rofi.modi:                  combi
 rofi.lines:                 10
