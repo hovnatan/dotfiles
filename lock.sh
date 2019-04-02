@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if ! pgrep -x "i3lock" > /dev/null ;
 then
   eval $(xdotool getmouselocation --shell)
@@ -12,7 +13,7 @@ then
       sleep 3
       if pgrep -x "i3lock" > /dev/null
       then
-        xinput --disable $POINTER_DEVICE_ID_TO_SUSPEND
+        xinput --disable "$POINTER_DEVICE_ID_TO_SUSPEND"
         xset dpms force off
       fi
     fi

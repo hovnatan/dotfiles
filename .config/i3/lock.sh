@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 TMPBG=/tmp/screen.png
 scrot $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
@@ -38,4 +38,4 @@ i3lock -n \
 --datestr="%A, %m %Y" \
 --keylayout 2
 
-xinput --enable $POINTER_DEVICE_ID_TO_SUSPEND
+xinput --enable "$POINTER_DEVICE_ID_TO_SUSPEND"
