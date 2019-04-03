@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<style-scheme version="1.0" name="gruvbox - dark (copy)">
+<style-scheme version="1.0" name="gruvbox-dark">
   <style name="Text" foreground="#ebdbb2" background="#1d2021"/>
   <style name="Link" foreground="#a89984"/>
   <style name="Selection" foreground="#665c54" background="#ebdbb2"/>
