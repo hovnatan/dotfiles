@@ -9,28 +9,28 @@
   <style name="Parentheses" foreground="#ebdbb2" background="#665c54" bold="true"/>
   <style name="ParenthesesMismatch" background="#ff00ff"/>
   <style name="AutoComplete" foreground="#000080" background="#c0c0ff"/>
-  <style name="CurrentLine" foreground="#ebdbb2" background="#3c3836"/>
-  <style name="CurrentLineNumber" foreground="#fabd2f" background="#3c3836"/>
+  <style name="CurrentLine" foreground="#ebdbb2" background="#1d2021"/>
+  <style name="CurrentLineNumber" foreground="#fabd2f" background="#1d2021"/>
   <style name="Occurrences" foreground="#ebdbb2" background="#665c54" bold="true"/>
   <style name="Occurrences.Unused" foreground="#ebdbb2"/>
   <style name="Occurrences.Rename" foreground="#ebdbb2"/>
-  <style name="Number" foreground="#d3869b"/>
-  <style name="String" foreground="#b8bb26"/>
-  <style name="Type" foreground="#fabd2f"/>
+  <style name="Number" foreground="#b16286"/>
+  <style name="String" foreground="#b16286"/>
+  <style name="Type" foreground="#ebdbb2"/>
   <style name="Local" foreground="#ebdbb2"/>
-  <style name="Global" foreground="#ce5c00"/>
-  <style name="Field" foreground="#83a598"/>
+  <style name="Global" foreground="#ebdbb2"/>
+  <style name="Field" foreground="#ebdbb2"/>
   <style name="Static" foreground="#d3869b"/>
-  <style name="VirtualMethod" foreground="#b8bb26" bold="true" italic="true"/>
-  <style name="Function" foreground="#b8bb26" bold="true"/>
-  <style name="Keyword" foreground="#fb4934"/>
-  <style name="PrimitiveType" foreground="#808000"/>
+  <style name="VirtualMethod" foreground="#ebdbb2" italic="true"/>
+  <style name="Function" foreground="#ebdbb2"/>
+  <style name="Keyword" foreground="#87ffaf"/>
+  <style name="PrimitiveType" foreground="#87ffaf"/>
   <style name="Operator" foreground="#ebdbb2"/>
-  <style name="Overloaded Operator" foreground="#00677c"/>
+  <style name="Overloaded Operator" foreground="#ebdbb2"/>
   <style name="Punctuation"/>
-  <style name="Preprocessor" foreground="#8ec07c"/>
+  <style name="Preprocessor" foreground="#5fd7ff"/>
   <style name="Label" foreground="#fb4934"/>
-  <style name="Comment" foreground="#928374" italic="true"/>
+  <style name="Comment" foreground="#689d6a" italic="true"/>
   <style name="Doxygen.Comment" foreground="#fe8019"/>
   <style name="Doxygen.Tag" foreground="#ebdbb2" bold="true"/>
   <style name="VisualWhitespace" foreground="#c0c0c0"/>
@@ -61,7 +61,7 @@
   <style name="WarningContext" underlineColor="#ffbe00" underlineStyle="DotLine"/>
   <style name="Error" underlineColor="#ff0000" underlineStyle="SingleUnderline"/>
   <style name="ErrorContext" underlineColor="#ff0000" underlineStyle="DotLine"/>
-  <style name="Declaration" bold="true"/>
+  <style name="Declaration"/>
   <style name="FunctionDefinition"/>
   <style name="OutputArgument" italic="true"/>
 </style-scheme>
