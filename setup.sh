@@ -154,3 +154,8 @@ ln -s ~/.dotfiles/.xbindkeysrc ~/
 mkdir -p ~/.config/vifm
 rm -rf ~/.config/vifm/vifmrc
 ln -s ~/.dotfiles/.config/vifm/vifmrc ~/.config/vifm/
+
+mkdir -p ~/.config/QtProject/qtcreator/styles
+mkdir -p ~/.config/QtProject/qtcreator/themes
+ln -s ~/.dotfiles/.config/QtProject/qtcreator/themes/gruvbox.creatortheme ~/.config/QtProject/qtcreator/themes
+ln -s ~/.dotfiles/.config/QtProject/qtcreator/styles/gruvbox-dark.xml ~/.config/QtProject/qtcreator/styles
