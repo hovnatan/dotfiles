@@ -18,11 +18,11 @@ map <C-n> toggle_statusbar
 #set statusbar-bg "#1d2021"
 #set statusbar-fg "#ebdbb2"
 #gruvbox-medium
-set recolor-darkcolor "#ffd7af"
-set recolor-lightcolor "#262626"
-set default-bg "#262626"
-set statusbar-bg "#262626"
-set statusbar-fg "#ffd7af"
+set recolor-darkcolor "#ebdbb2"
+set recolor-lightcolor "#282828"
+set default-bg "#282828"
+set statusbar-bg "#282828"
+set statusbar-fg "#ebdbb2"
 #set recolor-keephue true
 #set recolor-reverse-video true
 map r recolor
