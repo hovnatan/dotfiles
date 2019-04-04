@@ -130,17 +130,28 @@ mode "move" {
 }
 bindsym $mod+Shift+m mode "move"
 
-# set primary gruvbox colorscheme colors
-set $bg #1d2021
-set $red #fb4934
-set $green #b8bb26
-set $yellow #fabd2f
-set $blue #83a598
-set $purple #d3869b
-set $aqua #8ec07c
+# set primary gruvbox colorscheme colors hard
+#set $bg #1d2021
+#set $red #fb4934
+#set $green #b8bb26
+#set $yellow #fabd2f
+#set $blue #83a598
+#set $purple #d3869b
+#set $aqua #8ec07c
+#set $gray #a89984
+#set $darkgray #1d2021
+#set $white #ebdbb2
+
+# set primary gruvbox colorscheme colors medium
+set $bg #262626
+set $red #cc241d
+set $green #98971a
+set $yellow #d79921
+set $blue #458588
+set $purple #b16286
+set $aqua #689d68
 set $gray #a89984
 set $darkgray #1d2021
-set $white #ebdbb2
 
 bar {
         status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
