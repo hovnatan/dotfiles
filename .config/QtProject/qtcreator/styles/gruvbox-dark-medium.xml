@@ -10,12 +10,12 @@
   <style name="ParenthesesMismatch" background="#ff00ff"/>
   <style name="AutoComplete" foreground="#000080" background="#c0c0ff"/>
   <style name="CurrentLine" foreground="#ebdbb2" background="#1d2021"/>
-  <style name="CurrentLineNumber" foreground="#d79921" background="#1d2021"/>
+  <style name="CurrentLineNumber" foreground="#ffaf00" background="#1d2021"/>
   <style name="Occurrences" foreground="#ebdbb2" background="#665c54" bold="true"/>
   <style name="Occurrences.Unused" foreground="#ebdbb2"/>
   <style name="Occurrences.Rename" foreground="#ebdbb2"/>
-  <style name="Number" foreground="#b16286"/>
-  <style name="String" foreground="#b16286"/>
+  <style name="Number" foreground="#afaf00"/>
+  <style name="String" foreground="#afaf00"/>
   <style name="Type" foreground="#ebdbb2"/>
   <style name="Local" foreground="#ebdbb2"/>
   <style name="Global" foreground="#ebdbb2"/>
@@ -23,14 +23,14 @@
   <style name="Static" foreground="#ebdbb2"/>
   <style name="VirtualMethod" foreground="#ebdbb2" italic="true"/>
   <style name="Function" foreground="#ebdbb2"/>
-  <style name="Keyword" foreground="#87ffaf"/>
-  <style name="PrimitiveType" foreground="#87ffaf"/>
+  <style name="Keyword" foreground="#d75f5f"/>
+  <style name="PrimitiveType" foreground="#ffaf00"/>
   <style name="Operator" foreground="#ebdbb2"/>
   <style name="Overloaded Operator" foreground="#ebdbb2"/>
   <style name="Punctuation"/>
-  <style name="Preprocessor" foreground="#5fd7ff"/>
+  <style name="Preprocessor" foreground="#87af87"/>
   <style name="Label" foreground="#fb4934"/>
-  <style name="Comment" foreground="#689d6a" italic="true"/>
+  <style name="Comment" foreground="#8a8a8a" italic="true"/>
   <style name="Doxygen.Comment" foreground="#fe8019"/>
   <style name="Doxygen.Tag" foreground="#ebdbb2" bold="true"/>
   <style name="VisualWhitespace" foreground="#c0c0c0"/>

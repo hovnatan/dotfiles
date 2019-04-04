@@ -9,8 +9,8 @@ echo eth # full text
 echo eth # short text
 STATUS=$(nmcli c show --active | grep ethernet | awk '{ print $1 }')
 if [ -z "$STATUS" ]; then
-  echo \#fb4934
+  echo \#cc241d
   exit
 fi
 
-echo \#b8bb26
+echo \#98971a

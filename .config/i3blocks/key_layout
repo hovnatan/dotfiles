@@ -5,9 +5,9 @@ esac
 LNG=$(xkblayout-state print %s)
 case $LNG in
   "us")
-    CLR=\#b8bb26 ;; # green
+    CLR=\#98971a ;; # green
   "am")
-    CLR=\#fb4934 ;; # red
+    CLR=\#cc241d ;; # red
 esac
 echo "$LNG"
 echo "$LNG"

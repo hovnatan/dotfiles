@@ -8,7 +8,7 @@ esac
 if [ -z $WIFI_INTERFACE] || [ "$(cat /sys/class/net/$WIFI_INTERFACE/operstate)" != 'up' ]; then
     echo "wifi"
     echo "wifi"
-    echo "#fb4934"
+    echo "#cc241d"
     exit
 fi
 
@@ -19,11 +19,9 @@ echo "wifi: $SSID $QUALITY%"
 echo "wifi: $SSID $QUALITY%"
 
 if [[ $QUALITY -ge 80 ]]; then
-    echo "#b8bb26"
+    echo "#98971a"
 elif [[ $QUALITY -ge 60 ]]; then
-    echo "#fabd2f"
-elif [[ $QUALITY -ge 40 ]]; then
-    echo "#fb4934"
+    echo "#d79921"
 else
-    echo "#fb4934"
+    echo "#cc241d"
 fi

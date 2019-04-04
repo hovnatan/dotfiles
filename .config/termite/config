@@ -10,7 +10,7 @@ browser = xdg-open
 
 #gruvbox medium
 [colors]
-background = #282828
+background = #262626
 foreground = #ebdbb2
 color0 = #1d2021
 color1 = #fb4934
