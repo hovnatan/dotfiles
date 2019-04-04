@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <style-scheme version="1.0" name="gruvbox-dark-medium">
-  <style name="Text" foreground="#ffd7af" background="#262626"/>
+  <style name="Text" foreground="#fbf1c7" background="#282828"/>
   <style name="Link" foreground="#a89984"/>
   <style name="Selection" foreground="#ebdbb2" background="#6c6c6c"/>
   <style name="LineNumber" foreground="#7c6f64"/>
