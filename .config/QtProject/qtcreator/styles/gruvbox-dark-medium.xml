@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <style-scheme version="1.0" name="gruvbox-dark-medium">
-  <style name="Text" foreground="#ebdbb2" background="#282828"/>
+  <style name="Text" foreground="#ffd7af" background="#282828"/>
   <style name="Link" foreground="#a89984"/>
   <style name="Selection" foreground="#665c54" background="#8ec07c"/>
-  <style name="LineNumber" foreground="#7c6f64"/>
+  <style name="LineNumber" foreground="#767676"/>
   <style name="SearchResult" foreground="#282828" background="#d79921"/>
   <style name="SearchScope" foreground="#ebdbb2"/>
   <style name="Parentheses" foreground="#ebdbb2" background="#665c54" bold="true"/>
   <style name="ParenthesesMismatch" background="#ff00ff"/>
   <style name="AutoComplete" foreground="#000080" background="#c0c0ff"/>
-  <style name="CurrentLine" foreground="#ebdbb2" background="#1d2021"/>
-  <style name="CurrentLineNumber" foreground="#ffaf00" background="#1d2021"/>
+  <style name="CurrentLine" foreground="#ebdbb2" background="#3a3a3a"/>
+  <style name="CurrentLineNumber" foreground="#ffaf00" background="#3a3a3a"/>
   <style name="Occurrences" foreground="#ebdbb2" background="#665c54" bold="true"/>
   <style name="Occurrences.Unused" foreground="#ebdbb2"/>
   <style name="Occurrences.Rename" foreground="#ebdbb2"/>
   <style name="Number" foreground="#afaf00"/>
   <style name="String" foreground="#afaf00"/>
-  <style name="Type" foreground="#ebdbb2"/>
-  <style name="Local" foreground="#ebdbb2"/>
-  <style name="Global" foreground="#ebdbb2"/>
-  <style name="Field" foreground="#ebdbb2"/>
-  <style name="Static" foreground="#ebdbb2"/>
-  <style name="VirtualMethod" foreground="#ebdbb2" italic="true"/>
-  <style name="Function" foreground="#ebdbb2"/>
+  <style name="Type" foreground="#ffd7af"/>
+  <style name="Local" foreground="#ffd7af"/>
+  <style name="Global" foreground="#ffd7af"/>
+  <style name="Field" foreground="#ffd7af"/>
+  <style name="Static" foreground="#ffd7af"/>
+  <style name="VirtualMethod" foreground="#ffd7af" italic="true"/>
+  <style name="Function" foreground="#ffd7af"/>
   <style name="Keyword" foreground="#d75f5f"/>
   <style name="PrimitiveType" foreground="#ffaf00"/>
-  <style name="Operator" foreground="#ebdbb2"/>
-  <style name="Overloaded Operator" foreground="#ebdbb2"/>
+  <style name="Operator" foreground="#ffd7af"/>
+  <style name="Overloaded Operator" foreground="#ffd7af"/>
   <style name="Punctuation"/>
   <style name="Preprocessor" foreground="#87af87"/>
   <style name="Label" foreground="#fb4934"/>
