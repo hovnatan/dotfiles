@@ -11,18 +11,18 @@ map <S-PageUp> navigate previous
 map <C-D> toggle_page_mode
 map <C-n> toggle_statusbar
 
-#gruvbox-dark
-#set recolor-lightcolor "#f9f5d7"
-#set recolor-darkcolor "#282828"
-#set default-bg "#f9f5d7"
-#set statusbar-bg "#f9f5d7"
-#set statusbar-fg "#282828"
+#gruvbox-hard
+#set recolor-darkcolor "#ebdbb2"
+#set recolor-lightcolor "#1d2021"
+#set default-bg "#1d2021"
+#set statusbar-bg "#1d2021"
+#set statusbar-fg "#ebdbb2"
 #gruvbox-medium
-set recolor-lightcolor "#fbf1c7"
-set recolor-darkcolor "#3c3836"
-set default-bg "#fbf1c7"
-set statusbar-bg "#fbf1c7"
-set statusbar-fg "#3c3836"
+set recolor-darkcolor "#ebdbb2"
+set recolor-lightcolor "#282828"
+set default-bg "#282828"
+set statusbar-bg "#282828"
+set statusbar-fg "#ebdbb2"
 #set recolor-keephue true
 #set recolor-reverse-video true
 map r recolor
