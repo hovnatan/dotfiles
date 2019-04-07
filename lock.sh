@@ -4,7 +4,7 @@ if ! pgrep -x "i3lock" > /dev/null ;
 then
   eval $(xdotool getmouselocation --shell)
   echo "$X"
-  if [ "$X" -gt 30 ] || [ "$Y" -gt 30 ] ; then  
+  if [ "$X" -gt 30 ] ; then  
     ~/.dotfiles/.config/i3/lock.sh &
     setxkbmap us
     if ! [ -z "$1" ] ; 
