@@ -10,4 +10,3 @@ unset f
 
 exec i3
 #exec i3 --shmlog-size=26214400
-#exec sway
