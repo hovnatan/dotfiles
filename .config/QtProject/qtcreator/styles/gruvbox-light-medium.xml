@@ -23,12 +23,12 @@
   <style name="Static" foreground="#3a3a3a"/>
   <style name="VirtualMethod" foreground="#3a3a3a" italic="true"/>
   <style name="Function" foreground="#3a3a3a"/>
-  <style name="Keyword" foreground="#af8700"/>
+  <style name="Keyword" foreground="#870000"/>
   <style name="PrimitiveType" foreground="#af8700"/>
   <style name="Operator" foreground="#3a3a3a"/>
   <style name="Overloaded Operator" foreground="#3a3a3a"/>
   <style name="Punctuation"/>
-  <style name="Preprocessor" foreground="#87af87"/>
+  <style name="Preprocessor" foreground="#5f8787"/>
   <style name="Label" foreground="#fb4934"/>
   <style name="Comment" foreground="#808080" italic="true"/>
   <style name="Doxygen.Comment" foreground="#fe8019"/>
