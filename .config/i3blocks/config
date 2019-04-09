@@ -16,6 +16,7 @@ interval=once
 signal=10
 
 [load_average]
+command=$SCRIPT_DIR/load_average
 interval=10
 
 [volume]

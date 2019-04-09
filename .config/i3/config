@@ -2,7 +2,7 @@ exec --no-startup-id ~/.dotfiles/monitor.sh a
 
 set $mod Mod1
 
-font pango:DejaVu Sans Mono 10
+font pango:DejaVu Sans Mono 8
 
 floating_modifier Mod1
 
