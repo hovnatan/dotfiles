@@ -15,7 +15,7 @@
   <style name="Occurrences.Unused" foreground="#ebdbb2"/>
   <style name="Occurrences.Rename" foreground="#ebdbb2"/>
   <style name="Number" foreground="#875f87"/>
-  <style name="String" foreground="#875f87"/>
+  <style name="String" foreground="#878700"/>
   <style name="Type" foreground="#3a3a3a"/>
   <style name="Local" foreground="#3a3a3a"/>
   <style name="Global" foreground="#3a3a3a"/>
@@ -30,7 +30,7 @@
   <style name="Punctuation"/>
   <style name="Preprocessor" foreground="#5f8787"/>
   <style name="Label" foreground="#fb4934"/>
-  <style name="Comment" foreground="#808080" italic="true"/>
+  <style name="Comment" foreground="#808080"/>
   <style name="Doxygen.Comment" foreground="#fe8019"/>
   <style name="Doxygen.Tag" foreground="#ebdbb2" bold="true"/>
   <style name="VisualWhitespace" foreground="#c0c0c0"/>
