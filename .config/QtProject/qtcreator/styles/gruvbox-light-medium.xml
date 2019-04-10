@@ -2,7 +2,7 @@
 <style-scheme version="1.0" name="gruvbox-light-medium">
   <style name="Text" foreground="#3a3a3a" background="#ffffaf"/>
   <style name="Link" foreground="#a89984"/>
-  <style name="Selection" foreground="#665c54" background="#8ec07c"/>
+  <style name="Selection"/>
   <style name="LineNumber" foreground="#949494"/>
   <style name="SearchResult" foreground="#282828" background="#d79921"/>
   <style name="SearchScope" foreground="#ebdbb2"/>
@@ -57,8 +57,8 @@
   <style name="DiffDestLine" foreground="#282828" background="#8ec07c"/>
   <style name="DiffDestChar" foreground="#282828" background="#b8bb26"/>
   <style name="LogChangeLine" foreground="#c00000"/>
-  <style name="Warning" underlineColor="#ffbe00" underlineStyle="SingleUnderline"/>
-  <style name="WarningContext" underlineColor="#ffbe00" underlineStyle="DotLine"/>
+  <style name="Warning" foreground="#d79921" underlineColor="#d79921" underlineStyle="WaveUnderline"/>
+  <style name="WarningContext" underlineColor="#ffffff" underlineStyle="DotLine"/>
   <style name="Error" underlineColor="#ff0000" underlineStyle="SingleUnderline"/>
   <style name="ErrorContext" underlineColor="#ff0000" underlineStyle="DotLine"/>
   <style name="Declaration" foreground="#3a3a3a"/>
