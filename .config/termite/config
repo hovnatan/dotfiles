@@ -30,8 +30,8 @@ color14 = #689d6a
 color15 = #a89984
 
 [colors]
-background = #f2e5bc
-#background = #fbf1c7
+#background = #f2e5bc
+background = #fbf1c7
 #background = #f9f5d7
 foreground = #3c3836
 foreground_bold = #3c3836
