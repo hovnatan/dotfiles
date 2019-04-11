@@ -188,3 +188,5 @@ for d in glob('~/.config/nvim/spell/*.add', 1, 1)
         exec 'mkspell! ' . fnameescape(d)
     endif
 endfor
+
+set iskeyword=@,48-57,_,192-255,-

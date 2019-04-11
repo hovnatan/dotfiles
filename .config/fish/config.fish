@@ -23,8 +23,8 @@ set -U fish_cursor_default block
 set -U fish_cursor_insert block blink
 set -U fish_cursor_visual block
 
-set -u fish_color_cwd cyan
-set -u fish_color_prompt_bg yellow
+set -u fish_color_cwd brcyan
+set -u fish_color_prompt_bg brcyan
 set -u fish_color_command normal
 set -u fish_color_error normal
 set -u fish_color_param normal
