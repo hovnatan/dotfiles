@@ -159,8 +159,8 @@ let g:gruvbox_contrast_dark = 'medium'
 " let g:gruvbox_color_column = 'dark0'
 let g:gruvbox_hls_cursor = 'red'
 colorscheme gruvbox
-" set background=light
-set background=dark
+set background=light
+" set background=dark
 
 let g:UltiSnipsExpandTrigger = '<tab>'
 let g:UltiSnipsJumpForwardTrigger = '<tab>'
