@@ -209,9 +209,9 @@ QmlDesigner_FormeditorBackgroundColor=qmlDesignerButtonColor
 QmlDesigner_AlternateBackgroundColor=qmlDesignerButtonColor
 QmlDesigner_ScrollBarHandleColor=ff595b5c
 
+PaletteBase=normalBackground
 PaletteWindow=normalBackground
 PaletteWindowText=text
-PaletteBase=normalBackground
 
 [Flags]
 ComboBoxDrawTextShadow=false
