@@ -160,8 +160,7 @@ mkdir -p ~/.config/QtProject/qtcreator/themes
 ln -s ~/.dotfiles/.config/QtProject/qtcreator/themes/gruvbox.creatortheme ~/.config/QtProject/qtcreator/themes
 ln -s ~/.dotfiles/.config/QtProject/qtcreator/styles/gruvbox-dark.xml ~/.config/QtProject/qtcreator/styles
 
-mkdir ~/.dotfiles/.config/sway
-ln -s ~/.dotfiles/.config/sway/config ~/.config/sway/config
+ln -s ~/.dotfiles/.config/sway ~/.config/sway
 ln -s .Xdefaults .Xresources
 
 #for printer discovery
