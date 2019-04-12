@@ -141,7 +141,7 @@ cd ~/.dotfiles/issue
 cd ~
 
 mkdir -p ~/.local/share/themes
-ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-hard-aqua/ ~/.local/share/themes/
+ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-medium-aqua/ ~/.local/share/themes/
 
 #gruvbox theme
 #yay -S oomox 
