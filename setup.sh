@@ -164,3 +164,8 @@ mkdir ~/.dotfiles/.config/sway
 ln -s ~/.dotfiles/.config/sway/config ~/.config/sway/config
 ln -s .Xdefaults .Xresources
 
+#for printer discovery
+#sudo systemctl start avahi-daemon.service
+#for printing
+#sudo systemctl start org.cups.cupsd.service
+#then visit http://localhost:631 to add printer

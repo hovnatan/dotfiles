@@ -81,6 +81,7 @@ set whichwrap=b,s,h,l,<,>,[,]     " move freely between files
 set visualbell t_vb=              " turn off error beep/flash
 set novisualbell                  " turn off visual bell
 
+set iskeyword=@,48-57,_,192-255,-,.
 " Restore cursor position
 au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
 
@@ -90,6 +91,8 @@ au FileType markdown,mkd,md
 au FileType tex,latex
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell
+au FileType json
+      \ set conceallevel=0
 au BufWritePost *.sh silent! !chmod +x %:p
 
 " headless dispatch
@@ -189,4 +192,3 @@ for d in glob('~/.config/nvim/spell/*.add', 1, 1)
     endif
 endfor
 
-set iskeyword=@,48-57,_,192-255,-
