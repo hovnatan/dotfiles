@@ -142,6 +142,9 @@ cd ~
 
 mkdir -p ~/.local/share/themes
 ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-medium-aqua/ ~/.local/share/themes/
+cd ~/.local/share/themes
+git clone https://github.com/salimundo/Pop-gruvbox.git
+cd ~
 
 #gruvbox theme
 #yay -S oomox 
