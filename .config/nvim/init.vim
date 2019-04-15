@@ -195,8 +195,7 @@ au FileType json
       \ set conceallevel=0
 au FileType cpp
                 \ set iskeyword-=. |
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
-                \ setlocal spell
+                \ let b:dispatch = 'dd'
 au BufWritePost *.sh silent! !chmod +x %:p
 
 " use <tab> for trigger completion and navigate to next complete item
