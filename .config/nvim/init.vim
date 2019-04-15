@@ -1,124 +1,62 @@
-set nocompatible                  " use vim defaults
-
 set backspace=indent,eol,start    " fixes backspace issues
-
 set t_Co=256
-
-"----------------------"
-" Tabs->spaces section "
-"----------------------"
-
-set tabstop=2                     " numbers of spaces of tab character
-set shiftwidth=2                  " numbers of spaces to (auto)indent
-set scrolloff=5                   " keep lines when scrolling
-set expandtab                     " tabs are converted to spaces, use only when required
-
-"---------------------"
-" Indentation section "
-"---------------------"
-
-set autoindent                    " always set autoindenting on
-set smartindent                   " smart indent
-set cindent                       " cindent
-
-"---------------------------------"
-" Highlighting, searching section "
-"---------------------------------"
-
+set tabstop=2
+set shiftwidth=2
+set scrolloff=5
+set expandtab
+set autoindent
+set smartindent
+set cindent
 syntax on
 set showmatch
 set hlsearch
 set incsearch
 set smartcase
 set ignorecase
-
-
-"hi Search       ctermbg=darkyellow ctermfg=NONE    " change search hl color
-"hi MatchParen   ctermbg=darkgreen ctermfg=NONE       " change matching parentheses color
-"
-"hi LineNr       ctermbg=NONE ctermfg=darkgray  " change line numbers color
-"
-"hi StatusLine   ctermbg=NONE ctermfg=darkgray  " change status line color
-"hi StatusLineNC ctermbg=NONE ctermfg=darkgray  " change non activestatus line color
-"
-"hi VertSplit    ctermbg=NONE ctermfg=darkgray  " change vertical split line color 
-"
-"hi Folded       ctermbg=NONE ctermfg=darkblue  " change folded line color
-"hi FoldColumn   ctermbg=NONE ctermfg=darkblue  " change folded column color
-
-"------------------------"
-" Environment components "
-"------------------------"
-
-set ls=2                          " always show status line
-set title                         " show title in console title bar
-set ruler                         " show the cursor position all the time
-set number                        " show line numbers
+set ls=2
+set title
+set ruler
+set number
 set relativenumber
-set numberwidth=5                 " set line numbers column width
-set showcmd                       " display incomplete commands
+set numberwidth=5
+set showcmd
 if has('mouse')
   set mouse=a
 endif
-
-"---------------------"
-" Behavioral section "
-"---------------------"
-
-set ttyfast                       " smoother changes
-set nostartofline                 " don't jump to first character when paging
-set nobackup                      " do not keep a backup file
-set autowrite                     " auto saves changes when quitting and swiching buffer
-set shortmess=atI                 " Abbreviate messages
-set modeline                      " last lines in document sets vim mode
-set modelines=3                   " number lines checked for modelines
-set whichwrap=b,s,h,l,<,>,[,]     " move freely between files
-
-"------------------"
-" Turning of bells "
-"------------------"
-
-set visualbell t_vb=              " turn off error beep/flash
-set novisualbell                  " turn off visual bell
-
+set ttyfast
+set nostartofline
+set nobackup
+set autowrite
+set shortmess=atI
+set modeline
+set modelines=3
+set whichwrap=b,s,h,l,<,>,[,]
+set visualbell t_vb=
+set novisualbell
 set iskeyword=@,48-57,_,192-255,-,.
-" Restore cursor position
-
-" headless dispatch
 nn <F9> :silent Dispatch!<CR>
-
-
 set shortmess=at
-set number "show line number
 set wildmenu
-set lazyredraw "redraw only when need to
-set showmatch           " highlight matching [{()}]
+set lazyredraw
+set showmatch
 nnoremap j gj
 nnoremap k gk
-" highlight last inserted text
 nnoremap gV `[v`]
-let mapleader=","       " leader is comma
+let mapleader=","
 inoremap jk <esc>
 nnoremap <leader><space> :nohlsearch<CR>
-
 set history=200
-
 set hidden
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'   " map %% as filepath without filename
-
 filetype plugin on
 runtime plugins/matchit.vim
-
 nnoremap <S-h> gT
 nnoremap <S-l> gt
-
 silent! set clipboard=unnamedplus
-
 set undofile                
 set undodir=$HOME/.vimundo  
 set undolevels=1000         
 set undoreload=10000        
-
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'junegunn/fzf.vim'
   Plug 'vim-scripts/neat.vim'
@@ -135,7 +73,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'fgrsnau/ncm-otherbuf'
   Plug 'fgrsnau/ncm2-aspell'
 "  Plug 'autozimu/LanguageClient-neovim'
-  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
+"  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
 call plug#end()
 
 autocmd BufEnter * call ncm2#enable_for_buffer()
@@ -194,17 +132,5 @@ au FileType tex,latex
 au FileType json
       \ set conceallevel=0
 au FileType cpp
-                \ set iskeyword-=. |
-                \ let b:dispatch = 'dd'
+                \ set iskeyword-=.
 au BufWritePost *.sh silent! !chmod +x %:p
-
-" use <tab> for trigger completion and navigate to next complete item
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~ '\s'
-endfunction
-
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
