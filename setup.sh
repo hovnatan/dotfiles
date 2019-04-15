@@ -158,8 +158,10 @@ ln -s ~/.dotfiles/.config/vifm/vifmrc ~/.config/vifm/
 
 mkdir -p ~/.config/QtProject/qtcreator/styles
 mkdir -p ~/.config/QtProject/qtcreator/themes
-ln -s ~/.dotfiles/.config/QtProject/qtcreator/themes/gruvbox.creatortheme ~/.config/QtProject/qtcreator/themes
-ln -s ~/.dotfiles/.config/QtProject/qtcreator/styles/gruvbox-dark.xml ~/.config/QtProject/qtcreator/styles
+ln -s ~/.dotfiles/.config/QtProject/qtcreator/themes/gruvbox-medium.creatortheme.creatortheme ~/.config/QtProject/qtcreator/themes
+ln -s ~/.dotfiles/.config/QtProject/qtcreator/themes/gruvbox-light-medium.creatortheme ~/.config/QtProject/qtcreator/themes
+ln -s ~/.dotfiles/.config/QtProject/qtcreator/styles/gruvbox-dark-medium.xml ~/.config/QtProject/qtcreator/styles
+ln -s ~/.dotfiles/.config/QtProject/qtcreator/styles/gruvbox-light-medium.xml ~/.config/QtProject/qtcreator/styles
 
 ln -s ~/.dotfiles/.config/sway ~/.config/sway
 ln -s .Xdefaults .Xresources
