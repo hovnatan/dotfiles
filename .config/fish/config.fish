@@ -23,7 +23,7 @@ set -U fish_cursor_default block
 set -U fish_cursor_insert block blink
 set -U fish_cursor_visual block
 
-#set -u fish_color_cwd brcyan
+set -u fish_color_cwd brcyan
 set -u fish_color_prompt_bg yellow
 set -u fish_color_command normal
 set -u fish_color_error normal
@@ -33,9 +33,4 @@ function bell_on_prompt --on-event fish_prompt
     echo -e -n "\a"
 end
 
-set fish_user_paths $PATH ~/.dotfiles/bin
-
-#if test -d ~/miniconda3/bin
-#  set -x PATH ~/miniconda3/bin/ $PATH
-#  source (conda info --root)/etc/fish/conf.d/conda.fish
-#end
+set -U fish_user_paths ~/.dotfiles/bin
