@@ -83,17 +83,6 @@ set novisualbell                  " turn off visual bell
 
 set iskeyword=@,48-57,_,192-255,-,.
 " Restore cursor position
-au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
-
-au FileType markdown,mkd,md
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
-                \ setlocal spell
-au FileType tex,latex
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
-                \ setlocal spell
-au FileType json
-      \ set conceallevel=0
-au BufWritePost *.sh silent! !chmod +x %:p
 
 " headless dispatch
 nn <F9> :silent Dispatch!<CR>
@@ -145,6 +134,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'ncm2/ncm2-tmux'
   Plug 'fgrsnau/ncm-otherbuf'
   Plug 'fgrsnau/ncm2-aspell'
+"  Plug 'autozimu/LanguageClient-neovim'
+  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
 call plug#end()
 
 autocmd BufEnter * call ncm2#enable_for_buffer()
@@ -192,3 +183,29 @@ for d in glob('~/.config/nvim/spell/*.add', 1, 1)
     endif
 endfor
 
+au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
+
+au FileType markdown,mkd,md
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
+                \ setlocal spell
+au FileType tex,latex
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
+                \ setlocal spell
+au FileType json
+      \ set conceallevel=0
+au FileType cpp
+                \ set iskeyword-=. |
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
+                \ setlocal spell
+au BufWritePost *.sh silent! !chmod +x %:p
+
+" use <tab> for trigger completion and navigate to next complete item
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~ '\s'
+endfunction
+
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
