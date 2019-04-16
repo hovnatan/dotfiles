@@ -241,3 +241,5 @@ for_window [title="Messenger" instance="www.messenger.com"] move to workspace $w
 
 floating_minimum_size 50 x 50
 floating_maximum_size 1024 x 768
+
+focus_follows_mouse no
