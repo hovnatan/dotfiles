@@ -9,23 +9,6 @@ sudo ln -s /etc/fonts/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d
 sudo ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d
 #Uncomment  export FREETYPE_PROPERTIES="truetype:interpreter-version=40"
 sudo nvim  /etc/profile.d/freetype2.sh
-# to install dunst as notifier edit to /usr/bin/dunst 
-#sudo nvim /usr/share/dbus-1/services/org.freedesktop.Notifications.service
-
-#wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-win10.tar.gz
-#tar xf ttf-ms-win10.tar.gz
-#cd ttf-ms-win10
-#mv ~/fonts/* .
-#makepkg -Acs
-#sudo pacman -U ttf-ms-win10 ttf-ms-win10-other
-
-#for printing 
-#sudo pacman -S 
-
-#allow_others in /etc/fuse.conf
-#pacman -Sy gnome gnome-weather gnome-tweaks chrome-gnome-shell gdm
-
-sudo pip3 install pss
 
 sudo systemctl enable tlp.service
 sudo systemctl enable NetworkManager.service
@@ -43,7 +26,7 @@ sudo nvim /etc/makepkg.conf
 #for dropbox
 wget https://linux.dropbox.com/fedora/rpm-public-key.asc
 gpg --import rpm-public-key.asc
-yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom xkblayout-state-git i3ipc-python libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme ccls
+yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom xkblayout-state-git i3ipc-python libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme pss-git
 sudo mkinitcpio -p linux
 
 #yay -S interception-caps2esc
