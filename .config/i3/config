@@ -185,9 +185,9 @@ bindsym XF86MonBrightnessDown exec xbacklight -dec 10
 set $volumepath ~/.dotfiles/i3-volume
 set $volumestep 5
 
-bindsym XF86AudioRaiseVolume exec --no-startup-id $volumepath/volume -y -np -i $volumestep ; exec --no-startup-id pkill -RTMIN+10 i3blocks
-bindsym XF86AudioLowerVolume exec --no-startup-id $volumepath/volume -y -np -d $volumestep; exec --no-startup-id pkill -RTMIN+10 i3blocks
-bindsym XF86AudioMute        exec --no-startup-id $volumepath/volume -y -mn; exec --no-startup-id pkill -RTMIN+10 i3blocks
+bindsym XF86AudioRaiseVolume exec --no-startup-id $volumepath/volume -y -np -i $volumestep && pkill -RTMIN+10 i3blocks
+bindsym XF86AudioLowerVolume exec --no-startup-id $volumepath/volume -y -np -d $volumestep && pkill -RTMIN+10 i3blocks
+bindsym XF86AudioMute        exec --no-startup-id $volumepath/volume -y -mn && pkill -RTMIN+10 i3blocks
 
 bindsym XF86AudioPlay exec playerctl play
 bindsym XF86AudioPause exec playerctl pause
