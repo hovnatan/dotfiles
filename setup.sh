@@ -82,6 +82,7 @@ ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
 mkdir -p ~/.config/gtk-3.0
 rm -rf  ~/.config/gtk-3.0/settings.ini
 ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
+ln -s ~/.dotfiles/.gtkrc-2.0 ~/.gtkrc-2.0
 
 rm -rf ~/.config/fontconfig/fonts.conf
 mkdir -p ~/.config/fontconfig
