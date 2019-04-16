@@ -1,0 +1,3 @@
+include "/home/hovnatan/.local/share/themes/Pop-gruvbox/gtk-2.0/gtkrc"
+gtk-theme-name = "Pop-gruvbox"
+gtk-font-name = "Cantarell 11"
