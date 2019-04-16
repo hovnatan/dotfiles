@@ -5,7 +5,7 @@ then
   eval $(xdotool getmouselocation --shell)
   echo "$X"
   if [ "$X" -gt 30 ] ; then  
-    ~/.dotfiles/.config/i3/lock.sh &
+    nohup ~/.dotfiles/.config/i3/lock.sh >/dev/null 2>&1 &
     setxkbmap us
     if ! [ -z "$1" ] ; 
     then 
