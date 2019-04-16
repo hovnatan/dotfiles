@@ -153,7 +153,7 @@ cd ~
 #git clone https://github.com/Yethiel/gruvmox-colors.git
 #cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
 cd ~/.dotfiles
-git update-index --assume-unchanged workrave.ini
+git update-index --assume-unchanged .workrave/workrave.ini
 #git update-index --no-assume-unchanged workrave.ini
 ln -s ~/.dotfiles/.xbindkeysrc ~/
 
