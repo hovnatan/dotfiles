@@ -51,7 +51,7 @@ ln -s ~/.dotfiles/.config/i3blocks/ ~/.config/i3blocks
 ln -sf ~/.dotfiles/.config/zathura ~/.config/zathura
 ln -sf ~/.dotfiles/.config/zathura_lt/ ~/.config/zathura_lt
 rm -rf ~/.local/share/zathura/bookmarks
-ln -s ~/Dropbox/scripts/bookmarks ~/.local/share/zathura/bookmarks
+ln -s ~/Dropbox/scripts/zathura_bookmarks ~/.local/share/zathura/bookmarks
 xdg-mime default org.pwmt.zathura.desktop 'application/pdf'
 
 
@@ -82,6 +82,7 @@ ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
 mkdir -p ~/.config/gtk-3.0
 rm -rf  ~/.config/gtk-3.0/settings.ini
 ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
+ln -s ~/Dropbox/scripts/gtk_bookmarks ~/.config/gtk-3.0/bookmarks
 ln -s ~/.dotfiles/.gtkrc-2.0 ~/.gtkrc-2.0
 
 rm -rf ~/.config/fontconfig/fonts.conf
