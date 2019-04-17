@@ -34,3 +34,8 @@ function bell_on_prompt --on-event fish_prompt
 end
 
 set -U fish_user_paths ~/.dotfiles/bin
+
+if test -d ~/anaconda/bin
+  set -U fish_user_paths ~/anaconda/bin
+  source (conda info --root)/etc/fish/conf.d/conda.fish
+end
