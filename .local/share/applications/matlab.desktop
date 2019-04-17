@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=MATLAB
+Comment=Matlab
+Exec=matlab -desktop
+Terminal=false
+Categories=GNOME;GTK;Core;
