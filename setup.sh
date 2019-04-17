@@ -161,3 +161,6 @@ ln -s .Xdefaults .Xresources
 #then visit http://localhost:631 to add printer
 
 #for pulseaudio switching comment load-module module-switch-on-port-available in /etc/pulse/default.pa
+
+#for running iso executables with root uncomment allow_other in /etc/fuse.conf then run e.g.,
+# fuseiso xxx.iso ~/iso -o allow_other
