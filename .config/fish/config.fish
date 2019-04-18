@@ -36,6 +36,6 @@ end
 set -U fish_user_paths ~/.dotfiles/bin
 
 if test -d ~/anaconda3/bin
-  set -U fish_user_paths ~/anaconda3/bin
+  set -U fish_user_paths ~/anaconda3/bin $fish_user_paths
   source (conda info --root)/etc/fish/conf.d/conda.fish
 end
