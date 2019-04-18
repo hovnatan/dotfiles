@@ -57,6 +57,10 @@ xdg-mime default org.pwmt.zathura.desktop 'application/pdf'
 
 rm -rf ~/.config/termite/
 ln -s ~/.dotfiles/.config/termite ~/.config/termite
+# mkdir ~/.terminfo
+# cd ~/.terminfo
+# wget https://raw.githubusercontent.com/thestinger/termite/master/termite.terminfo
+# cd ~ 
 
 rm -rf ~/.config/rofi/
 ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
