@@ -1,4 +1,4 @@
-exec --no-startup-id ~/.dotfiles/monitor.sh a
+exec --no-startup-id monitor_setup.sh a
 
 set $mod Mod1
 
@@ -198,12 +198,13 @@ bindsym XF86AudioPrev exec playerctl previous
 bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
-exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps"
+exec --no-startup-id setxkbmap -option ""
+exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"
 exec --no-startup-id dropbox start
 exec --no-startup-id redshift-gtk
 exec --no-startup-id libinput-gestures
 exec_always --no-startup-id ~/.config/i3/kbd.py
-bindsym $mod+space exec --no-startup-id ~/.config/i3/key_layout_switch; exec --no-startup-id pkill -RTMIN+10 i3blocks
+bindsym $mod+space exec --no-startup-id key_layout_switch.sh; exec --no-startup-id pkill -RTMIN+10 i3blocks
 
 exec --no-startup-id workrave 
 for_window [class="Workrave"] floating enable
@@ -219,7 +220,7 @@ bindcode $mod+31 [instance="dropdown"] scratchpad show, move position center
 
 bindsym Print exec --no-startup-id scrot -e 'mv $f /tmp/ && gimp /tmp/$f'
 bindsym --release $mod+Sys_Req exec scrot -s -e 'mv $f /tmp/ && gimp /tmp/$f'
-bindcode Mod4+33 exec --no-startup-id ~/.dotfiles/monitor.sh
+bindcode Mod4+33 exec --no-startup-id monitor_setup.sh
 
 bindcode $mod+Shift+20 move scratchpad
 bindcode $mod+20 scratchpad show

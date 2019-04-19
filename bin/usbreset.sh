@@ -6,4 +6,5 @@ sudo rmmod ehci_pci
 sudo modprobe ehci_pci
 #sudo modprobe xhci_pci
 
-setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps"
+setxkbmap -option ""
+setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"

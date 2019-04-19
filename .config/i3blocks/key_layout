@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 case $BLOCK_BUTTON in
-    1) ~/.config/i3/key_layout_switch ;;  # left click, switch
+    1) key_layout_switch.sh ;;  # left click, switch
 esac
-LNG=$(xkblayout-state print %s)
+LNG=$(check_layout.sh)
 case $LNG in
   "us")
     CLR=\#98971a ;; # green
