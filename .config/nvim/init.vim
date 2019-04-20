@@ -8,7 +8,6 @@ set autoindent
 set smartindent
 set cindent
 syntax on
-set path+=**
 set showmatch
 set hlsearch
 set incsearch
@@ -71,11 +70,12 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'roxma/nvim-yarp'
   Plug 'ncm2/ncm2-bufword'
   Plug 'ncm2/ncm2-path'
-  Plug 'ncm2/ncm2-tmux'
+"  Plug 'ncm2/ncm2-tmux'
   Plug 'fgrsnau/ncm-otherbuf'
   Plug 'fgrsnau/ncm2-aspell'
 "  Plug 'autozimu/LanguageClient-neovim'
 "  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
+  Plug 'wellle/tmux-complete.vim'
 call plug#end()
 
 autocmd BufEnter * call ncm2#enable_for_buffer()
