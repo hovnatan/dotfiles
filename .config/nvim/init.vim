@@ -8,6 +8,7 @@ set autoindent
 set smartindent
 set cindent
 syntax on
+set path+=**
 set showmatch
 set hlsearch
 set incsearch
@@ -23,6 +24,7 @@ set showcmd
 if has('mouse')
   set mouse=a
 endif
+command! MakeTags !ctags -R .
 set ttyfast
 set nostartofline
 set nobackup
