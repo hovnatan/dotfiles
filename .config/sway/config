@@ -140,7 +140,7 @@ bar {
 }
 
 include /etc/sway/config.d/*
-output eDP-1 disable
+#output eDP-1 disable
 exec --no-startup-id dropbox start
 exec --no-startup-id libinput-gestures
 hide_edge_borders smart
