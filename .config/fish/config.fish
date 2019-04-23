@@ -2,6 +2,11 @@ if status --is-login
   source ~/.profile
 end
 
+set -gx FZF_DEFAULT_OPTS           '--height=50% --min-height=15 --reverse'
+set -gx FZF_DEFAULT_COMMAND        'rg --files --no-ignore-vcs --hidden'
+set -gx FZF_CTRL_T_COMMAND         $FZF_DEFAULT_COMMAND
+set -gx EDITOR                     nvim
+
 function hybrid_bindings --description "Vi-style bindings that inherit emacs-style bindings in all modes"
     for mode in default insert visual
         fish_default_key_bindings -M $mode
@@ -12,7 +17,7 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     bind \cd forward-word
     bind -M insert \cd forward-word
     fzf_key_bindings
-    bind -M insert -m default jk backward-char force-repaint
+#    bind -M insert -m default jk backward-char force-repaint
 end
 
 set -u fish_term24bit 1
@@ -39,3 +44,8 @@ if test -d ~/anaconda3/bin
   set -U fish_user_paths ~/anaconda3/bin $fish_user_paths
   source (conda info --root)/etc/fish/conf.d/conda.fish
 end
+
+abbr v   "$EDITOR ."
+abbr z   "zathura"
+
+[ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
