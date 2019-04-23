@@ -16,13 +16,13 @@
   <style name="Occurrences.Rename" foreground="#ebdbb2"/>
   <style name="Number" foreground="#875f87"/>
   <style name="String" foreground="#878700"/>
-  <style name="Type" foreground="#3a3a3a"/>
+  <style name="Type" foreground="#875f87"/>
   <style name="Local" foreground="#3a3a3a"/>
   <style name="Global" foreground="#3a3a3a"/>
   <style name="Field" foreground="#3a3a3a"/>
   <style name="Static" foreground="#3a3a3a"/>
-  <style name="VirtualMethod" foreground="#3a3a3a" italic="true"/>
-  <style name="Function" foreground="#3a3a3a"/>
+  <style name="VirtualMethod" foreground="#878700" italic="true"/>
+  <style name="Function" foreground="#878700" bold="true"/>
   <style name="Keyword" foreground="#870000"/>
   <style name="PrimitiveType" foreground="#af8700"/>
   <style name="Operator" foreground="#3a3a3a"/>
@@ -61,7 +61,7 @@
   <style name="WarningContext" underlineColor="#ffffff" underlineStyle="DotLine"/>
   <style name="Error" underlineColor="#ff0000" underlineStyle="SingleUnderline"/>
   <style name="ErrorContext" underlineColor="#ff0000" underlineStyle="DotLine"/>
-  <style name="Declaration" foreground="#3a3a3a"/>
-  <style name="FunctionDefinition" foreground="#3a3a3a"/>
+  <style name="Declaration" foreground="#878700"/>
+  <style name="FunctionDefinition" foreground="#878700"/>
   <style name="OutputArgument" italic="true"/>
 </style-scheme>
