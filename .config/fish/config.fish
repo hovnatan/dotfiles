@@ -47,5 +47,6 @@ end
 
 abbr v   "$EDITOR ."
 abbr z   "zathura"
+abbr gc  "git-cola"
 
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
