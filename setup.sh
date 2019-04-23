@@ -168,3 +168,6 @@ ln -s .Xdefaults .Xresources
 
 #for running iso executables with root uncomment allow_other in /etc/fuse.conf then run e.g.,
 # fuseiso xxx.iso ~/iso -o allow_other
+
+# font debugging
+# env FC_DEBUG=4 pango-view --font=monospace -t xyz | grep famil
