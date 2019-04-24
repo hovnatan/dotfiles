@@ -171,3 +171,5 @@ ln -s .Xdefaults .Xresources
 
 # font debugging
 # env FC_DEBUG=4 pango-view --font=monospace -t xyz | grep famil
+
+# for chromecast from chromium enable chrome://flags/#load-media-router-component-extension
