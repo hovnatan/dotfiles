@@ -9,7 +9,6 @@ set smartindent
 set cindent
 syntax on
 set showmatch
-set nohlsearch
 set smartcase
 set ignorecase
 set ls=2
@@ -77,6 +76,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'wellle/tmux-complete.vim'
   Plug 'haya14busa/incsearch.vim'
   Plug 'haya14busa/incsearch-fuzzy.vim'
+  Plug 'haya14busa/incsearch-easymotion.vim'
   Plug 'easymotion/vim-easymotion'
 call plug#end()
 
@@ -86,9 +86,28 @@ map g/ <Plug>(incsearch-stay)
 map z/ <Plug>(incsearch-fuzzy-/)
 map z? <Plug>(incsearch-fuzzy-?)
 map zg/ <Plug>(incsearch-fuzzy-stay)
+set hlsearch
+map n  <Plug>(incsearch-nohl-n)
+map N  <Plug>(incsearch-nohl-N)
+map *  <Plug>(incsearch-nohl-*)
+map #  <Plug>(incsearch-nohl-#)
+map g* <Plug>(incsearch-nohl-g*)
+map g# <Plug>(incsearch-nohl-g#)
 let g:incsearch#auto_nohlsearch                   = 1 " auto unhighlight after searching
 let g:incsearch#do_not_save_error_message_history = 1 " do not store incsearch errors in history
 let g:incsearch#consistent_n_direction            = 1 " when searching backward, do not invert meaning of n and N
+
+function! s:config_easyfuzzymotion(...) abort
+  return extend(copy({
+  \   'converters': [incsearch#config#fuzzy#converter()],
+  \   'modules': [incsearch#config#easymotion#module()],
+  \   'keymap': {"\<CR>": '<Over>(easymotion)'},
+  \   'is_expr': 0,
+  \   'is_stay': 1
+  \ }), get(a:, 1, {}))
+endfunction
+
+noremap <silent><expr> <Space>/ incsearch#go(<SID>config_easyfuzzymotion())
 
 autocmd BufEnter * call ncm2#enable_for_buffer()
 
