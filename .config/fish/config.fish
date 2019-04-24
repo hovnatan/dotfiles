@@ -20,7 +20,7 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
 #    bind -M insert -m default jk backward-char force-repaint
 end
 
-set -u fish_term24bit 1
+#set -u fish_term24bit 1
 
 set -g fish_key_bindings hybrid_bindings
 
