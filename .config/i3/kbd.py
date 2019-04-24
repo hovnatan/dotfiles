@@ -19,10 +19,10 @@ def on_window_focus(i3, e):
         result = subprocess.run(['check_layout.sh'], stdout=subprocess.PIPE)
         if debug:
             print(f"Current layout {result}.")
-        if result.stdout.decode() == "us":
-            lays[previous_focus] = 0
-        else:
+        if result.stdout.decode() == "am":
             lays[previous_focus] = 1
+        else:
+            lays[previous_focus] = 0
     else:
         if debug:
             print("Previous focus not found.")
