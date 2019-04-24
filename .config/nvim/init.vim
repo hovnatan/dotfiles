@@ -9,8 +9,7 @@ set smartindent
 set cindent
 syntax on
 set showmatch
-set hlsearch
-set incsearch
+set nohlsearch
 set smartcase
 set ignorecase
 set ls=2
@@ -45,7 +44,6 @@ nnoremap k gk
 nnoremap gV `[v`]
 let mapleader=","
 inoremap jk <esc>
-nnoremap <leader><space> :nohlsearch<CR>
 set history=200
 set hidden
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'   " map %% as filepath without filename
@@ -77,7 +75,20 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 "  Plug 'autozimu/LanguageClient-neovim'
 "  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
   Plug 'wellle/tmux-complete.vim'
+  Plug 'haya14busa/incsearch.vim'
+  Plug 'haya14busa/incsearch-fuzzy.vim'
+  Plug 'easymotion/vim-easymotion'
 call plug#end()
+
+map /  <Plug>(incsearch-forward)
+map ?  <Plug>(incsearch-backward)
+map g/ <Plug>(incsearch-stay)
+map z/ <Plug>(incsearch-fuzzy-/)
+map z? <Plug>(incsearch-fuzzy-?)
+map zg/ <Plug>(incsearch-fuzzy-stay)
+let g:incsearch#auto_nohlsearch                   = 1 " auto unhighlight after searching
+let g:incsearch#do_not_save_error_message_history = 1 " do not store incsearch errors in history
+let g:incsearch#consistent_n_direction            = 1 " when searching backward, do not invert meaning of n and N
 
 autocmd BufEnter * call ncm2#enable_for_buffer()
 
@@ -142,3 +153,9 @@ aug i3config_ft_detection
   au!
   au BufNewFile,BufRead ~/.config/i3/config set filetype=i3config
 aug end
+
+let g:netrw_banner    = 0
+let g:netrw_winsize   = 20
+let g:netrw_liststyle = 3
+let g:netrw_altv      = 1
+let g:netrw_cursor    = 1
