@@ -1,4 +1,5 @@
-set backspace=indent,eol,start    " fixes backspace issues
+set nocompatible
+set backspace=indent,eol,start
 set t_Co=256
 set tabstop=2
 set shiftwidth=2
@@ -63,7 +64,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   " Plug 'sirver/ultisnips'
   Plug 'tpope/vim-dispatch'
   Plug 'morhetz/gruvbox'
-  Plug 'vim-airline/vim-airline'
+  Plug 'shinchu/lightline-gruvbox.vim'
+  Plug 'itchyny/lightline.vim'
   Plug 'ncm2/ncm2'
   Plug 'roxma/nvim-yarp'
   Plug 'ncm2/ncm2-bufword'
@@ -79,6 +81,9 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'haya14busa/incsearch-easymotion.vim'
   Plug 'easymotion/vim-easymotion'
 call plug#end()
+
+let g:lightline = {}
+let g:lightline.colorscheme = 'gruvbox'
 
 map /  <Plug>(incsearch-forward)
 map ?  <Plug>(incsearch-backward)
