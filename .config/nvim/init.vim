@@ -80,6 +80,9 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'haya14busa/incsearch-fuzzy.vim'
   Plug 'haya14busa/incsearch-easymotion.vim'
   Plug 'easymotion/vim-easymotion'
+" Plug 'vim-vdebug/vdebug'
+" Plug 'Shougo/vimproc.vim', {'do' : 'make'}
+" Plug 'idanarye/vim-vebugger'
 call plug#end()
 
 let g:lightline = {}
