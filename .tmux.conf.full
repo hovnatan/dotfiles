@@ -27,7 +27,6 @@ bind-key C-v select-layout even-horizontal
 bind-key C-o resize-pane -y 1000
 set-window-option -g automatic-rename on
 
-bind -n C-k send-keys -R \; clear-history
 setw -g mode-keys vi
 unbind-key -T copy-mode-vi r
 bind-key -T copy-mode-vi 'v' send -X begin-selection
