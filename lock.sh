@@ -13,7 +13,7 @@ then
       sleep 3
       if pgrep -x "i3lock" > /dev/null
       then
-        xinput --disable "$POINTER_DEVICE_ID_TO_SUSPEND"
+        xinput --disable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
         xset dpms force off
       fi
     fi
