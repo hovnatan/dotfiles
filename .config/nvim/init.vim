@@ -85,6 +85,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 " Plug 'idanarye/vim-vebugger'
 call plug#end()
 
+map <Leader> <Plug>(easymotion-prefix)
+
 let g:lightline = {}
 let g:lightline.colorscheme = 'gruvbox'
 
