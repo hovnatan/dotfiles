@@ -1,5 +1,5 @@
 if status --is-login
-  source ~/.profile
+  bass ~/.profile
 end
 
 set -gx FZF_DEFAULT_OPTS           '--height=50% --min-height=15 --reverse'
