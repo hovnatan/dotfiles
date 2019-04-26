@@ -38,4 +38,4 @@ i3lock -n \
 --datestr="%A, %m %Y" \
 --keylayout 2
 
-xinput --enable "$POINTER_DEVICE_ID_TO_SUSPEND"
+xinput --enable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
