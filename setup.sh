@@ -20,11 +20,6 @@ nvim -c 'PlugInstall | qa'
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
 chsh -s `which fish`
-cd ~/Downloads
-git clone https://github.com/edc/bass.git
-cd bass
-make install
-cd ~
 
 rm -rf ~/.config/mpv
 ln -s ~/.dotfiles/.config/mpv ~/.config/mpv
