@@ -174,6 +174,8 @@ au FileType json
       \ set conceallevel=0
 au FileType cpp
                 \ set iskeyword-=.
+au FileType python
+                \ set iskeyword-=.
 au BufWritePost *.sh silent! !chmod +x %:p
 
 aug i3config_ft_detection
