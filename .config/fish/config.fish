@@ -2,7 +2,7 @@ if status --is-login
   source ~/.profile
 end
 
-set -gx FZF_DEFAULT_OPTS           '--height=50% --min-height=15 --reverse'
+set -x FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --history=$HOME/.fzf_history --height=50% --min-height=15 --reverse"
 set -x FZF_CTRL_T_COMMAND "fd -L -p -H . \$dir"
 set -x FZF_DEFAULT_COMMAND $FZF_CTRL_T_COMMAND
 set -gx EDITOR                     nvim
