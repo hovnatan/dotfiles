@@ -115,9 +115,8 @@ map *  <Plug>(incsearch-nohl-*)
 map #  <Plug>(incsearch-nohl-#)
 map g* <Plug>(incsearch-nohl-g*)
 map g# <Plug>(incsearch-nohl-g#)
-let g:incsearch#auto_nohlsearch                   = 1 " auto unhighlight after searching
-let g:incsearch#do_not_save_error_message_history = 1 " do not store incsearch errors in history
-let g:incsearch#consistent_n_direction            = 1 " when searching backward, do not invert meaning of n and N
+let g:incsearch#auto_nohlsearch = 1 " auto unhighlight after searching
+let g:incsearch#consistent_n_direction = 1
 nnoremap <leader><space> :nohlsearch<CR>
 
 function! s:config_easyfuzzymotion(...) abort
