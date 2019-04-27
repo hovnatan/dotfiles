@@ -3,8 +3,8 @@ if status --is-login
 end
 
 set -gx FZF_DEFAULT_OPTS           '--height=50% --min-height=15 --reverse'
-#set -gx FZF_DEFAULT_COMMAND "fdx -L -p -H . \$dir"
 set -x FZF_CTRL_T_COMMAND "fd -L -p -H . \$dir"
+set -x FZF_DEFAULT_COMMAND $FZF_CTRL_T_COMMAND
 set -gx EDITOR                     nvim
 
 function hybrid_bindings --description "Vi-style bindings that inherit emacs-style bindings in all modes"

@@ -73,7 +73,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 "  Plug 'ncm2/ncm2-tmux'
   Plug 'fgrsnau/ncm-otherbuf'
   Plug 'fgrsnau/ncm2-aspell'
-"  Plug 'autozimu/LanguageClient-neovim'
+  Plug 'autozimu/LanguageClient-neovim', {
+    \ 'branch': 'next',
+    \ 'do': 'bash install.sh',
+    \ }
 "  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
   Plug 'wellle/tmux-complete.vim'
   Plug 'haya14busa/incsearch.vim'
@@ -85,7 +88,16 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 " Plug 'idanarye/vim-vebugger'
 call plug#end()
 
-map <Leader> <Plug>(easymotion-prefix)
+set colorcolumn=80
+set hidden
+
+let g:LanguageClient_serverCommands = {
+    \ 'python': ['pyls'],
+    \ }
+nnoremap <F5> :call LanguageClient_contextMenu()<CR>
+nnoremap <silent> K :call LanguageClient#textDocument_hover()<CR>
+nnoremap <silent> gd :call LanguageClient#textDocument_definition()<CR>
+nnoremap <silent> <F2> :call LanguageClient#textDocument_rename()<CR>
 
 let g:lightline = {}
 let g:lightline.colorscheme = 'gruvbox'
@@ -148,8 +160,10 @@ let g:vimtex_quickfix_mode=0
 set conceallevel=1
 let g:tex_conceal='abdmg'
 
-
-nnoremap <silent> <c-p> :Files <CR>
+nmap <Leader>b :Buffers<CR>
+nmap <Leader>f :GFiles<CR>
+nmap <Leader>F :Files<CR>
+nmap <Leader>a :Rg<Space>
 
 tnoremap <Esc> <C-\><C-n>
 au TermOpen * setlocal listchars= nonumber norelativenumber
