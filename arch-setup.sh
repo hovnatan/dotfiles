@@ -36,7 +36,7 @@ sudo nvim /etc/makepkg.conf
 #for dropbox
 wget https://linux.dropbox.com/fedora/rpm-public-key.asc
 gpg --import rpm-public-key.asc
-yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom i3ipc-python libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme pycharm-professional python-torchvision
+yay -S skype git-cola dropbox wd719x-firmware aic94xx-firmware zoom i3ipc-python libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme pycharm-professional python-torchvision bear-git
 sudo mkinitcpio -p linux
 
 #yay -S interception-caps2esc

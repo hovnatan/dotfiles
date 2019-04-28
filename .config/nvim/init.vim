@@ -73,11 +73,11 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 "  Plug 'ncm2/ncm2-tmux'
   Plug 'fgrsnau/ncm-otherbuf'
   Plug 'fgrsnau/ncm2-aspell'
-  Plug 'autozimu/LanguageClient-neovim', {
-    \ 'branch': 'next',
-    \ 'do': 'bash install.sh',
-    \ }
-"  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
+  "Plug 'autozimu/LanguageClient-neovim', {
+  "  \ 'branch': 'next',
+  "  \ 'do': 'bash install.sh',
+  "  \ }
+  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
   Plug 'wellle/tmux-complete.vim'
   Plug 'haya14busa/incsearch.vim'
   Plug 'haya14busa/incsearch-fuzzy.vim'
@@ -93,6 +93,7 @@ set hidden
 
 let g:LanguageClient_serverCommands = {
     \ 'python': ['pyls'],
+    \ 'cpp': ['clangd'],
     \ }
 nnoremap <F5> :call LanguageClient_contextMenu()<CR>
 nnoremap <silent> K :call LanguageClient#textDocument_hover()<CR>
