@@ -2,10 +2,10 @@ if status --is-login
   source ~/.profile
 end
 
-set -x FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --history=$HOME/.fzf_history --height=50% --min-height=15 --reverse"
+set -x FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
 set -x FZF_CTRL_T_COMMAND "fd -L -p -H . \$dir"
 set -x FZF_DEFAULT_COMMAND $FZF_CTRL_T_COMMAND
-set -gx EDITOR                     nvim
+set -x EDITOR nvim
 
 function hybrid_bindings --description "Vi-style bindings that inherit emacs-style bindings in all modes"
     for mode in default insert visual
