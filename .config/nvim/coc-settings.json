@@ -1,6 +1,4 @@
 {
-  "coc.source.dictionary.enable": true,
-  "coc.source.dictionary.filetypes": ["txt"],
   "languageserver": {
     "clangd": {
       "command": "clangd",
