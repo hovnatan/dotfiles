@@ -180,7 +180,6 @@ let g:lightline = {
       \ },
       \ }
 
-let g:tmuxcomplete#trigger = ''
 nnoremap <silent> <space>a  :<C-u>CocList diagnostics<cr>
 nnoremap <silent> <space>e  :<C-u>CocList extensions<cr>
 nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
