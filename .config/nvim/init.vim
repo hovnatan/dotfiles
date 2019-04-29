@@ -18,6 +18,7 @@ set ruler
 set number
 set relativenumber
 set numberwidth=5
+set termguicolors
 set showcmd
 if has('mouse')
   set mouse=a
@@ -63,6 +64,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   " Plug 'lervag/vimtex'
   " Plug 'sirver/ultisnips'
   Plug 'tpope/vim-dispatch'
+  Plug 'tpope/vim-commentary'
+  Plug 'tpope/vim-endwise'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
