@@ -18,7 +18,7 @@ set ruler
 set number
 set relativenumber
 set numberwidth=5
-set termguicolors
+" set termguicolors
 set showcmd
 if has('mouse')
   set mouse=a
@@ -128,7 +128,6 @@ function! s:check_back_space() abort
 endfunction
 
 inoremap <silent><expr> <c-space> coc#refresh()
-inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 
 nmap <silent> [c <Plug>(coc-diagnostic-prev)
 nmap <silent> ]c <Plug>(coc-diagnostic-next)
