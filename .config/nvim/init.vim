@@ -52,7 +52,7 @@ filetype plugin on
 runtime plugins/matchit.vim
 nnoremap <S-h> gT
 nnoremap <S-l> gt
-silent! set clipboard=unnamedplus
+set clipboard+=unnamedplus
 set undofile                
 set undodir=$HOME/.vimundo  
 set undolevels=1000         
@@ -257,3 +257,4 @@ let g:netrw_winsize   = 20
 let g:netrw_liststyle = 3
 let g:netrw_altv      = 1
 let g:netrw_cursor    = 1
+let g:netrw_browsex_viewer="xdg-open" 
