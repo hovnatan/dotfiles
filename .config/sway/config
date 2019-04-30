@@ -1,6 +1,6 @@
 input * xkb_layout "us,am"
 input * xkb_variant ",phonetic-alt"
-input * xkb_options "ctrl:nocaps"
+input * xkb_options "ctrl:nocaps,grp:alt_space_toggle"
 
 font pango:DejaVu Sans Mono 8
 
@@ -87,9 +87,6 @@ bindsym $mod+f fullscreen
 # Toggle the current focus between tiling and floating mode
 bindsym $mod+Shift+space floating toggle
 
-# Swap focus between the tiling area and the floating area
-bindsym $mod+space focus mode_toggle
-
 # move focus to the parent container
 bindsym $mod+a focus parent
 #
@@ -139,9 +136,10 @@ bar {
     }
 }
 
-include /etc/sway/config.d/*
+include ~/.config/sway_local
 #output eDP-1 disable
 exec --no-startup-id dropbox start
 exec --no-startup-id libinput-gestures
+exec --no-startup-id workrave
 hide_edge_borders smart
 default_border pixel 1 
