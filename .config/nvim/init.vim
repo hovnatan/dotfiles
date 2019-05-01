@@ -299,3 +299,6 @@ let g:netrw_liststyle = 3
 let g:netrw_altv      = 1
 let g:netrw_cursor    = 1
 let g:netrw_browsex_viewer="xdg-open" 
+
+tnoremap <Esc> <C-\><C-n>
+tnoremap <C-v><Esc> <Esc>
