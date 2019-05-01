@@ -1,4 +1,5 @@
 set nocompatible
+set hidden
 set backspace=indent,eol,start
 set t_Co=256
 set tabstop=2
@@ -41,13 +42,16 @@ set wildmenu
 set lazyredraw
 set showmatch
 nnoremap j gj
+nnoremap gj j
 nnoremap k gk
+nnoremap gk k
 nnoremap gV `[v`]
+cnoremap <C-p> <Up>
+cnoremap <C-n> <Down>
 let mapleader=","
 inoremap jk <esc>
 set history=200
-set hidden
-cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'   " map %% as filepath without filename
+cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
 nnoremap <S-h> gT
@@ -67,6 +71,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-dispatch'
   Plug 'tpope/vim-commentary'
   Plug 'tpope/vim-endwise'
+  Plug 'tpope/vim-unimpaired'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
@@ -79,7 +84,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 call plug#end()
 
 set colorcolumn=80
-set hidden
 
 map /  <Plug>(incsearch-forward)
 map ?  <Plug>(incsearch-backward)
@@ -110,7 +114,6 @@ endfunction
 
 noremap <silent><expr> <Space>/ incsearch#go(<SID>config_easyfuzzymotion())
 
-set hidden
 set nobackup
 set nowritebackup
 set cmdheight=2
