@@ -49,6 +49,7 @@ nnoremap gV `[v`]
 cnoremap <C-p> <Up>
 cnoremap <C-n> <Down>
 let mapleader=","
+noremap \ ,
 inoremap jk <esc>
 set history=200
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
