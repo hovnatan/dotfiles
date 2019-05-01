@@ -48,6 +48,10 @@ nnoremap gk k
 nnoremap gV `[v`]
 cnoremap <C-p> <Up>
 cnoremap <C-n> <Down>
+
+nnoremap & :&&<CR>
+xnoremap & :&&<CR>
+
 let mapleader=","
 noremap \ ,
 inoremap jk <esc>
@@ -85,6 +89,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'easymotion/vim-easymotion'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
+  Plug 'bronson/vim-visual-star-search'
 call plug#end()
 call textobj#user#plugin('line', {
 \   '-': {
