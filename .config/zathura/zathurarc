@@ -10,8 +10,8 @@ map <S-PageDown> navigate next
 map <S-PageUp> navigate previous
 map <C-D> toggle_page_mode
 map <C-n> toggle_statusbar
-map <Button3> jumplist backward
-map <Button2> jumplist forward
+#map <Button3> jumplist backward
+#map <Button2> jumplist forward
 
 #gruvbox-dark
 #set recolor-lightcolor "#f9f5d7"
