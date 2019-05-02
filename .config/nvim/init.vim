@@ -73,6 +73,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'vim-scripts/neat.vim'
   " Plug 'lervag/vimtex'
   Plug 'tpope/vim-dispatch'
+  Plug 'radenling/vim-dispatch-neovim'
   Plug 'tpope/vim-commentary'
   Plug 'tpope/vim-endwise'
   Plug 'tpope/vim-unimpaired'
