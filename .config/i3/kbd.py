@@ -16,7 +16,6 @@ lays = {}
 previous_focus = -1
 deleted_focus = -1
 
-
 def on_window_focus(i3, e):
     global previous_focus
     if previous_focus != -1 and previous_focus != deleted_focus:
