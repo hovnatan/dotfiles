@@ -72,7 +72,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'junegunn/fzf.vim'
   Plug 'vim-scripts/neat.vim'
   " Plug 'lervag/vimtex'
-  " Plug 'sirver/ultisnips'
   Plug 'tpope/vim-dispatch'
   Plug 'tpope/vim-commentary'
   Plug 'tpope/vim-endwise'
@@ -193,8 +192,8 @@ endfunction
 autocmd CursorHold * silent call CocActionAsync('highlight')
 
 nmap <leader>rn <Plug>(coc-rename)
-vmap <leader>f  <Plug>(coc-format-selected)
-nmap <leader>f  <Plug>(coc-format-selected)
+vmap <leader>fs  <Plug>(coc-format-selected)
+nmap <leader>fs  <Plug>(coc-format-selected)
 
 augroup mygroup
   autocmd!
@@ -241,10 +240,6 @@ let g:gruvbox_hls_cursor = 'red'
 colorscheme gruvbox
 set background=light
 " set background=dark
-
-let g:UltiSnipsExpandTrigger = '<tab>'
-let g:UltiSnipsJumpForwardTrigger = '<tab>'
-let g:UltiSnipsJumpBackwardTrigger = '<s-tab>'
 
 let g:tex_flavor='latex'
 let g:vimtex_view_method='zathura'
