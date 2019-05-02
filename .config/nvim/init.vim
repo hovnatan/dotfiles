@@ -6,6 +6,7 @@ set tabstop=2
 set shiftwidth=2
 set scrolloff=5
 set expandtab
+set termguicolors
 set autoindent
 set smartindent
 set cindent
@@ -252,11 +253,19 @@ let g:tex_conceal='abdmg'
 nmap <Leader>b :Buffers<CR>
 nmap <Leader>f :GFiles<CR>
 nmap <Leader>F :Files<CR>
+nnoremap <silent> <Leader>rg :Rg <C-R><C-W><CR>
 nmap <Leader>a :Rg<Space>
 
 let g:fzf_buffers_jump = 1
 
+function! s:build_quickfix_list(lines)
+  call setqflist(map(copy(a:lines), '{ "filename": v:val }'))
+  copen
+  cc
+endfunction
+
 let g:fzf_action = {
+  \ 'ctrl-q': function('s:build_quickfix_list'),
   \ 'ctrl-t': 'tab split',
   \ 'ctrl-x': 'split',
   \ 'ctrl-v': 'vsplit' }
