@@ -6,5 +6,5 @@
       "filetypes": ["c", "cpp", "objc", "objcpp"]
     }
   },
-  "python.linting.pylintUseMinimalCheckers" : false
+  "python.linting.pylintUseMinimalCheckers" : true
 }
