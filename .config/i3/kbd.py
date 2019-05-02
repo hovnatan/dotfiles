@@ -2,6 +2,11 @@
 
 import subprocess
 import i3ipc
+import signal
+
+def handle_pdb(sig, frame):
+    import pdb
+    pdb.Pdb().set_trace(frame)
 
 DEBUG = False
 
@@ -67,5 +72,5 @@ def on_window_close(i3, e):
 
 i3.on("window::focus", on_window_focus)
 i3.on("window::close", on_window_close)
-
+signal.signal(signal.SIGUSR1, handle_pdb)
 i3.main()

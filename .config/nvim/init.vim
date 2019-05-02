@@ -78,6 +78,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-endwise'
   Plug 'tpope/vim-unimpaired'
   Plug 'tpope/vim-surround'
+  Plug 'tpope/vim-projectionist'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
