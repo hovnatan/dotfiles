@@ -51,7 +51,10 @@ end
 
 abbr v   "$EDITOR ."
 abbr z   "zathura"
+abbr zd  "zathura -c ~/.config/zathura_lt"
 abbr gc  "git-cola"
 abbr ta  "tmux_attach_deattached.sh"
+abbr rgh "rg --hidden"
+abbr mpvhq "mpv --profile=hq"
 
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
