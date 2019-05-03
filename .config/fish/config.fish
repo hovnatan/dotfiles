@@ -29,7 +29,9 @@ set -U fish_cursor_insert block blink
 set -U fish_cursor_visual block
 
 set -u fish_color_cwd brcyan
-set -u fish_color_prompt_bg yellow
+if [ $TMUX ]
+  set -u fish_color_prompt_bg yellow
+end
 set -u fish_color_command normal
 set -u fish_color_error normal
 set -u fish_color_param normal
