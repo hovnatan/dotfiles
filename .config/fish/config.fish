@@ -31,6 +31,8 @@ set -U fish_cursor_visual block
 set -u fish_color_cwd brcyan
 if [ $TMUX ]
   set -u fish_color_prompt_bg yellow
+else
+  set -u fish_color_prompt_bg red
 end
 set -u fish_color_command normal
 set -u fish_color_error normal
