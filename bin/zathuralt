@@ -1,3 +1,0 @@
-#!/bin/bash
-
-zathura -c ~/.config/zathura_lt "$@"
