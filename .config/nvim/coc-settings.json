@@ -8,5 +8,5 @@
   },
   "python.linting.pylintUseMinimalCheckers" : true,
   "python.autoComplete.showAdvancedMembers" : false,
-  "python.formatting.autopep8Args" : ["-a"]
+  "python.formatting.autopep8Args" : ["-a", "-a"]
 }
