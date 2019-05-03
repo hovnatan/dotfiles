@@ -139,7 +139,6 @@ map g* <Plug>(incsearch-nohl-g*)
 map g# <Plug>(incsearch-nohl-g#)
 let g:incsearch#auto_nohlsearch = 1 " auto unhighlight after searching
 let g:incsearch#consistent_n_direction = 1
-nnoremap <leader><space> :nohlsearch<CR>
 
 function! s:config_easyfuzzymotion(...) abort
   return extend(copy({
@@ -194,9 +193,9 @@ endfunction
 
 autocmd CursorHold * silent call CocActionAsync('highlight')
 
-nmap <leader>rn <Plug>(coc-rename)
-vmap <leader>fs  <Plug>(coc-format-selected)
-nmap <leader>fs  <Plug>(coc-format-selected)
+nmap <leader>crn <Plug>(coc-rename)
+vmap <leader>cfs  <Plug>(coc-format-selected)
+nmap <leader>cfs  <Plug>(coc-format-selected)
 
 augroup mygroup
   autocmd!
@@ -206,10 +205,10 @@ augroup mygroup
   autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
 augroup end
 
-vmap <leader>a  <Plug>(coc-codeaction-selected)
-nmap <leader>a  <Plug>(coc-codeaction-selected)
-nmap <leader>ac  <Plug>(coc-codeaction)
-nmap <leader>qf  <Plug>(coc-fix-current)
+vmap <leader>ca  <Plug>(coc-codeaction-selected)
+nmap <leader>ca  <Plug>(coc-codeaction-selected)
+nmap <leader>cac  <Plug>(coc-codeaction)
+nmap <leader>cqf  <Plug>(coc-fix-current)
 command! -nargs=0 Format :call CocAction('format')
 command! -nargs=? Fold :call CocAction('fold', <f-args>)
 

@@ -48,5 +48,6 @@ end
 abbr v   "$EDITOR ."
 abbr z   "zathura"
 abbr gc  "git-cola"
+abbr ta  "tmux_attach_deattached.sh"
 
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
