@@ -85,13 +85,11 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'itchyny/lightline.vim'
   Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
   Plug 'wellle/tmux-complete.vim'
-  Plug 'haya14busa/incsearch.vim'
-  Plug 'haya14busa/incsearch-fuzzy.vim'
-  Plug 'haya14busa/incsearch-easymotion.vim'
   Plug 'easymotion/vim-easymotion'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
   Plug 'bronson/vim-visual-star-search'
+  Plug 'google/vim-searchindex'
 call plug#end()
 call textobj#user#plugin('line', {
 \   '-': {
@@ -123,34 +121,6 @@ function! CurrentLineI()
 endfunction
 
 set colorcolumn=80
-
-map /  <Plug>(incsearch-forward)
-map ?  <Plug>(incsearch-backward)
-map g/ <Plug>(incsearch-stay)
-map z/ <Plug>(incsearch-fuzzy-/)
-map z? <Plug>(incsearch-fuzzy-?)
-map zg/ <Plug>(incsearch-fuzzy-stay)
-set hlsearch
-map n  <Plug>(incsearch-nohl-n)
-map N  <Plug>(incsearch-nohl-N)
-map *  <Plug>(incsearch-nohl-*)
-map #  <Plug>(incsearch-nohl-#)
-map g* <Plug>(incsearch-nohl-g*)
-map g# <Plug>(incsearch-nohl-g#)
-let g:incsearch#auto_nohlsearch = 1 " auto unhighlight after searching
-let g:incsearch#consistent_n_direction = 1
-
-function! s:config_easyfuzzymotion(...) abort
-  return extend(copy({
-  \   'converters': [incsearch#config#fuzzy#converter()],
-  \   'modules': [incsearch#config#easymotion#module()],
-  \   'keymap': {"\<CR>": '<Over>(easymotion)'},
-  \   'is_expr': 0,
-  \   'is_stay': 1
-  \ }), get(a:, 1, {}))
-endfunction
-
-noremap <silent><expr> <Space>/ incsearch#go(<SID>config_easyfuzzymotion())
 
 set nobackup
 set nowritebackup
