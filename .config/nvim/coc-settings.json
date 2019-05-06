@@ -8,5 +8,6 @@
   },
   "python.linting.pylintUseMinimalCheckers" : true,
   "python.autoComplete.showAdvancedMembers" : false,
-  "python.formatting.autopep8Args" : ["-a", "-a"]
+  "python.formatting.autopep8Args" : ["-a", "-a"],
+  "python.linting.pylintArgs": ["--generated-members=numpy.* ,torch.* ,cv2.* , cv.*"]
 }
