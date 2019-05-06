@@ -18,8 +18,6 @@ set ls=2
 set title
 set ruler
 set number
-set relativenumber
-set numberwidth=5
 " set termguicolors
 set showcmd
 if has('mouse')
