@@ -42,6 +42,7 @@ set shortmess=at
 set wildmenu
 set lazyredraw
 set showmatch
+set diffopt+=vertical
 nnoremap j gj
 nnoremap gj j
 nnoremap k gk
@@ -92,6 +93,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'bronson/vim-visual-star-search'
   Plug 'google/vim-searchindex'
 call plug#end()
+
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',
