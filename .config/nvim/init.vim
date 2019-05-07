@@ -80,6 +80,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-git'
   Plug 'tpope/vim-fugitive'
   Plug 'tpope/vim-surround'
+  Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
@@ -91,6 +92,9 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kana/vim-textobj-lastpat'
   Plug 'bronson/vim-visual-star-search'
   Plug 'google/vim-searchindex'
+  Plug 'svermeulen/vim-cutlass'
+  Plug 'svermeulen/vim-yoink'
+  Plug 'svermeulen/vim-subversive'
 call plug#end()
 
 call textobj#user#plugin('line', {
@@ -279,3 +283,20 @@ let g:netrw_browsex_viewer="xdg-open"
 
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
+nnoremap <C-w>o :mksession! ~/session.vim<CR>:wincmd o<CR>
+nnoremap <C-w>u :source ~/session.vim<CR>
+nnoremap x d
+xnoremap x d
+
+nnoremap xx dd
+nnoremap X D
+nmap <c-n> <plug>(YoinkPostPasteSwapBack)
+nmap <c-p> <plug>(YoinkPostPasteSwapForward)
+
+nmap p <plug>(YoinkPaste_p)
+nmap P <plug>(YoinkPaste_P)
+let g:yoinkIncludeDeleteOperations=1
+
+nmap s <plug>(SubversiveSubstitute)
+nmap ss <plug>(SubversiveSubstituteLine)
+nmap S <plug>(SubversiveSubstituteToEndOfLine)
