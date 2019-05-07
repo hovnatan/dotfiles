@@ -41,6 +41,8 @@ set wildmenu
 set lazyredraw
 set showmatch
 set diffopt+=vertical
+set splitbelow
+set splitright
 nnoremap j gj
 nnoremap gj j
 nnoremap k gk
