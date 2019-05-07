@@ -285,13 +285,16 @@ let g:netrw_browsex_viewer="xdg-open"
 
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
+
 nnoremap <C-w>o :mksession! ~/session.vim<CR>:wincmd o<CR>
 nnoremap <C-w>u :source ~/session.vim<CR>
-nnoremap x d
-xnoremap x d
 
-nnoremap xx dd
-nnoremap X D
+nnoremap gm m
+nnoremap m d
+xnoremap m d
+
+nnoremap mm dd
+nnoremap M D
 nmap <c-n> <plug>(YoinkPostPasteSwapBack)
 nmap <c-p> <plug>(YoinkPostPasteSwapForward)
 
