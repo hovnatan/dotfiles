@@ -87,7 +87,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
-  Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
+  Plug 'neoclide/coc.nvim', {'tag': '*', 'do': './install.sh'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'easymotion/vim-easymotion'
   Plug 'kana/vim-textobj-user'
