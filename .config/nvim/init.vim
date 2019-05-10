@@ -286,8 +286,7 @@ let g:netrw_browsex_viewer="xdg-open"
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
 
-nnoremap <C-w>o :mksession! ~/session.vim<CR>:wincmd o<CR>
-nnoremap <C-w>u :source ~/session.vim<CR>
+noremap <leader>t :tab split<CR>
 
 nnoremap gm m
 nnoremap m d
