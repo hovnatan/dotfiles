@@ -18,7 +18,6 @@ set ls=2
 set title
 set ruler
 set number
-" set termguicolors
 set showcmd
 if has('mouse')
   set mouse=a
