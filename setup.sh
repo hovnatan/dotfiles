@@ -105,8 +105,8 @@ ln -sf ~/.dotfiles/.xinitrc  ~/.xinitrc
 
 cd ~
 ssh-keygen -t rsa
-echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
-chmod 644 ~/.ssh/config
+#echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
+#chmod 644 ~/.ssh/config
 
 # To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'. with xclip -i ~/.ssh/id_rsa.pub
 
