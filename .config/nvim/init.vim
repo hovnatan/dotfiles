@@ -83,6 +83,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-surround'
   Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
+  Plug 'tpope/vim-vinegar'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
@@ -281,6 +282,7 @@ let g:netrw_liststyle = 3
 let g:netrw_altv      = 1
 let g:netrw_cursor    = 1
 let g:netrw_browsex_viewer="xdg-open" 
+autocmd FileType netrw setl bufhidden=delete
 
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
