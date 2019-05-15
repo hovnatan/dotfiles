@@ -99,6 +99,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'svermeulen/vim-subversive'
 call plug#end()
 
+let g:coc_global_extensions = [ 'coc-emoji', 'coc-python', 'coc-prettier', 'coc-json', 'coc-word', 'coc-highlight' ] 
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',
