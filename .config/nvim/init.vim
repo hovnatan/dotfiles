@@ -258,6 +258,9 @@ endfor
 
 au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
 
+hi CocInfoSign guifg=#b57614
+hi CocWarningSign guifg=#b57614
+
 au FileType markdown,mkd,md
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell
