@@ -99,7 +99,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'svermeulen/vim-subversive'
 call plug#end()
 
-let g:coc_global_extensions = [ 'coc-emoji', 'coc-python', 'coc-prettier', 'coc-json', 'coc-word', 'coc-highlight' ] 
+let g:coc_global_extensions = [ 'coc-emoji', 'coc-python', 'coc-prettier', 'coc-json', 'coc-word' ] 
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',
@@ -134,7 +134,6 @@ set colorcolumn=80
 set nobackup
 set nowritebackup
 set cmdheight=2
-" set updatetime=300
 set shortmess+=c
 set signcolumn=yes
 inoremap <silent><expr> <TAB>
@@ -169,8 +168,6 @@ function! s:show_documentation()
     call CocAction('doHover')
   endif
 endfunction
-
-autocmd CursorHold * silent call CocActionAsync('highlight')
 
 nmap <leader>crn <Plug>(coc-rename)
 vmap <leader>cfs  <Plug>(coc-format-selected)
