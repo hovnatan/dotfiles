@@ -134,7 +134,7 @@ set colorcolumn=80
 set nobackup
 set nowritebackup
 set cmdheight=2
-set updatetime=300
+" set updatetime=300
 set shortmess+=c
 set signcolumn=yes
 inoremap <silent><expr> <TAB>
