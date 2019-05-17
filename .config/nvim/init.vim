@@ -90,6 +90,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'easymotion/vim-easymotion'
+  Plug 'haya14busa/vim-asterisk'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
   Plug 'bronson/vim-visual-star-search'
@@ -98,6 +99,18 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'svermeulen/vim-yoink'
   Plug 'svermeulen/vim-subversive'
 call plug#end()
+
+map <space> <Plug>(easymotion-prefix)
+nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
+
+map *   <Plug>(asterisk-*)
+map #   <Plug>(asterisk-#)
+map g*  <Plug>(asterisk-g*)
+map g#  <Plug>(asterisk-g#)
+map z*  <Plug>(asterisk-z*)
+map gz* <Plug>(asterisk-gz*)
+map z#  <Plug>(asterisk-z#)
+map gz# <Plug>(asterisk-gz#)
 
 let g:coc_global_extensions = [ 'coc-emoji', 'coc-python', 'coc-prettier', 'coc-json', 'coc-word' ] 
 call textobj#user#plugin('line', {
@@ -201,7 +214,6 @@ let g:lightline = {
       \ }
 
 nnoremap <silent> <space>a  :<C-u>CocList diagnostics<cr>
-nnoremap <silent> <space>e  :<C-u>CocList extensions<cr>
 nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
 nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
