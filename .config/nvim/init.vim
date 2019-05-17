@@ -90,14 +90,30 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'easymotion/vim-easymotion'
+  Plug 'haya14busa/incsearch.vim'
+  Plug 'haya14busa/incsearch-easymotion.vim'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
   Plug 'bronson/vim-visual-star-search'
-  Plug 'google/vim-searchindex'
   Plug 'svermeulen/vim-cutlass'
   Plug 'svermeulen/vim-yoink'
   Plug 'svermeulen/vim-subversive'
+  Plug 'osyo-manga/vim-anzu'
 call plug#end()
+
+map z/ <Plug>(incsearch-easymotion-/)
+map z? <Plug>(incsearch-easymotion-?)
+map zg/ <Plug>(incsearch-easymotion-stay)
+
+map /  <Plug>(incsearch-forward)
+map ?  <Plug>(incsearch-backward)
+map g/ <Plug>(incsearch-stay)
+
+set hlsearch
+map n <Plug>(anzu-n-with-echo)
+map N <Plug>(anzu-N-with-echo)
+map * <Plug>(anzu-star-with-echo)
+map # <Plug>(anzu-sharp-with-echo)
 
 let g:coc_global_extensions = [ 'coc-emoji', 'coc-python', 'coc-prettier', 'coc-json', 'coc-word' ] 
 call textobj#user#plugin('line', {
