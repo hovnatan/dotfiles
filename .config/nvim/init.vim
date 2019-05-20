@@ -103,14 +103,15 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-fugitive'
 call plug#end()
 
+let g:gitgutter_map_keys = 0
 let g:gitgutter_sign_added = ''
 let g:gitgutter_sign_modified = ''
 let g:gitgutter_sign_removed = ''
 let g:gitgutter_sign_removed_first_line = ''
 let g:gitgutter_sign_modified_removed = ''
 
-nmap <Leader>gn <Plug>GitGutterNextHunk
-nmap <Leader>gp <Plug>GitGutterPrevHunk
+nmap ]g <Plug>GitGutterNextHunk
+nmap [g <Plug>GitGutterPrevHunk
 
 nmap <Leader>ga <Plug>GitGutterStageHunk
 nmap <Leader>gu <Plug>GitGutterUndoHunk
