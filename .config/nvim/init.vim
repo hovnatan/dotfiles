@@ -116,6 +116,8 @@ nmap [g <Plug>GitGutterPrevHunk
 nmap <Leader>ga <Plug>GitGutterStageHunk
 nmap <Leader>gu <Plug>GitGutterUndoHunk
 
+nnoremap <Leader>gb :Gblame<CR>
+
 map <space> <Plug>(easymotion-prefix)
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 
