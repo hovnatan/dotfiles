@@ -110,36 +110,11 @@ let g:gitgutter_sign_removed = ''
 let g:gitgutter_sign_removed_first_line = ''
 let g:gitgutter_sign_modified_removed = ''
 
+nmap ]g <Plug>GitGutterNextHunk
+nmap [g <Plug>GitGutterPrevHunk
+
 nmap <Leader>ga <Plug>GitGutterStageHunk
 nmap <Leader>gu <Plug>GitGutterUndoHunk
-
-function! PrevHunkWrap(count)
-  for i in range(1, a:count)
-    let line = line('.')
-    silent GitGutterPrevHunk
-    if line('.') == line
-      normal G
-      silent GitGutterPrevHunk
-    endif
-  endfor
-endfunction
-
-function! NextHunkWrap(count)
-  for i in range(1, a:count)
-    let line = line('.')
-    silent GitGutterNextHunk
-    if line('.') == line
-      normal 1G
-      silent GitGutterNextHunk
-    endif
-  endfor
-endfunction
-
-command -count=1 Phw call PrevHunkWrap(<count>)
-command -count=1 Nhw call NextHunkWrap(<count>)
-
-nnoremap ]g :Nhw<CR>
-nnoremap [g :Phw<CR>
 
 nnoremap <Leader>gb :Gblame<CR>
 nnoremap <leader>gs :Magit<CR>
