@@ -98,7 +98,22 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'svermeulen/vim-cutlass'
   Plug 'svermeulen/vim-yoink'
   Plug 'svermeulen/vim-subversive'
+  Plug 'airblade/vim-gitgutter'
+  Plug 'jreybert/vimagit'
+  Plug 'tpope/vim-fugitive'
 call plug#end()
+
+let g:gitgutter_sign_added = ''
+let g:gitgutter_sign_modified = ''
+let g:gitgutter_sign_removed = ''
+let g:gitgutter_sign_removed_first_line = ''
+let g:gitgutter_sign_modified_removed = ''
+
+nmap <Leader>gn <Plug>GitGutterNextHunk
+nmap <Leader>gp <Plug>GitGutterPrevHunk
+
+nmap <Leader>ga <Plug>GitGutterStageHunk
+nmap <Leader>gu <Plug>GitGutterUndoHunk
 
 map <space> <Plug>(easymotion-prefix)
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
