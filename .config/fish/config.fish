@@ -56,5 +56,6 @@ abbr gc  "git-cola"
 abbr ta  "tmux_attach_deattached.sh"
 abbr rgh "rg --hidden"
 abbr mpvhq "mpv --profile=hq"
+abbr icat "kitty +kitten icat"
 
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
