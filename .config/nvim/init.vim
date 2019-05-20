@@ -117,6 +117,8 @@ nmap <Leader>ga <Plug>GitGutterStageHunk
 nmap <Leader>gu <Plug>GitGutterUndoHunk
 
 nnoremap <Leader>gb :Gblame<CR>
+nnoremap <leader>gs :Magit<CR>
+nnoremap <leader>gP :! git push<CR>
 
 map <space> <Plug>(easymotion-prefix)
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
