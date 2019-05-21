@@ -340,7 +340,8 @@ autocmd FileType netrw setl bufhidden=delete
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
 
-noremap <leader>t :tab split<CR>
+nnoremap <leader>t <C-W>T<CR>
+nnoremap <C-W>t :tab split<CR>
 
 nnoremap gm m
 nnoremap m d
