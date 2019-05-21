@@ -103,16 +103,14 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-fugitive'
 call plug#end()
 
-
-" navigate chunks of current buffer
 nmap [g <Plug>(coc-git-prevchunk)
 nmap ]g <Plug>(coc-git-nextchunk)
-" show chunk diff at current position
 nmap <leader>gi <Plug>(coc-git-chunkinfo)
-" show commit ad current position
 nmap <leader>gc <Plug>(coc-git-commit)
+nnoremap <leader>ga :<C-u>CocCommand git.chunkStage<CR>
+nnoremap <leader>gu :<C-u>CocCommand git.chunkUndo<CR>
 
-nnoremap <Leader>gb :Gblame<CR>
+nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gs :Magit<CR>
 nnoremap <leader>gP :! git push<CR>
 
