@@ -86,6 +86,7 @@ ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
 mkdir -p ~/.config/gtk-3.0
 rm -rf  ~/.config/gtk-3.0/settings.ini
 ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
+ln -s ~/.dotfiles/.config/gtk-3.0/gtk.css  ~/.config/gtk-3.0/gtk.css
 ln -s ~/Dropbox/scripts/gtk_bookmarks ~/.config/gtk-3.0/bookmarks
 ln -s ~/.dotfiles/.gtkrc-2.0 ~/.gtkrc-2.0
 
