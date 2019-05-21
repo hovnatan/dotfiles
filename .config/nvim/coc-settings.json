@@ -1,4 +1,5 @@
 {
+  "diagnostic.maxWindowHeight": 25,
   "languageserver": {
     "clangd": {
       "command": "clangd",
@@ -10,11 +11,16 @@
   "python.autoComplete.showAdvancedMembers" : false,
   "python.formatting.autopep8Args" : ["-a", "-a"],
   "python.linting.pylintArgs": ["--generated-members=numpy.* ,torch.* ,cv2.* , cv.*", "--disable=C0111,C0103"],
-  "coc.preferences.formatOnSaveFiletypes": ["python"],
+  "coc.preferences.formatOnSaveFiletypes": ["python", "cpp"],
   "git.addedSign.hlGroup": "GitGutterAdd",
+  "git.addedSign.text": "",
   "git.changedSign.hlGroup": "GitGutterChange",
+  "git.changedSign.text": "",
   "git.removedSign.hlGroup": "GitGutterDelete",
+  "git.removedSign.text": "",
   "git.topRemovedSign.hlGroup": "GitGutterDelete",
+  "git.topRemovedSign.text": "",
   "git.changeRemovedSign.hlGroup": "GitGutterChangeDelete",
+  "git.changeRemovedSign.text": "",
   "git.enableGutters": true
 }
