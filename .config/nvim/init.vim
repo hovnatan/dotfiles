@@ -99,29 +99,23 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'svermeulen/vim-cutlass'
   Plug 'svermeulen/vim-yoink'
   Plug 'svermeulen/vim-subversive'
-  Plug 'airblade/vim-gitgutter'
   Plug 'jreybert/vimagit'
   Plug 'tpope/vim-fugitive'
 call plug#end()
 
-let g:gitgutter_map_keys = 0
-let g:gitgutter_sign_added = ''
-let g:gitgutter_sign_modified = ''
-let g:gitgutter_sign_removed = ''
-let g:gitgutter_sign_removed_first_line = ''
-let g:gitgutter_sign_modified_removed = ''
 
-nmap ]g <Plug>GitGutterNextHunk
-nmap [g <Plug>GitGutterPrevHunk
-
-nmap <Leader>ga <Plug>GitGutterStageHunk
-nmap <Leader>gu <Plug>GitGutterUndoHunk
+" navigate chunks of current buffer
+nmap [g <Plug>(coc-git-prevchunk)
+nmap ]g <Plug>(coc-git-nextchunk)
+" show chunk diff at current position
+nmap <leader>gi <Plug>(coc-git-chunkinfo)
+" show commit ad current position
+nmap <leader>gc <Plug>(coc-git-commit)
 
 nnoremap <Leader>gb :Gblame<CR>
 nnoremap <leader>gs :Magit<CR>
 nnoremap <leader>gP :! git push<CR>
 
-map <space> <Plug>(easymotion-prefix)
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 
 map *   <Plug>(asterisk-*)
@@ -133,7 +127,7 @@ map gz* <Plug>(asterisk-gz*)
 map z#  <Plug>(asterisk-z#)
 map gz# <Plug>(asterisk-gz#)
 
-let g:coc_global_extensions = [ 'coc-emoji', 'coc-python', 'coc-prettier', 'coc-json', 'coc-word' ] 
+let g:coc_global_extensions = [ 'coc-git', 'coc-emoji', 'coc-python', 'coc-prettier', 'coc-json', 'coc-word' ] 
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',

@@ -10,5 +10,11 @@
   "python.autoComplete.showAdvancedMembers" : false,
   "python.formatting.autopep8Args" : ["-a", "-a"],
   "python.linting.pylintArgs": ["--generated-members=numpy.* ,torch.* ,cv2.* , cv.*", "--disable=C0111,C0103"],
-  "coc.preferences.formatOnSaveFiletypes": ["python"]
+  "coc.preferences.formatOnSaveFiletypes": ["python"],
+  "git.addedSign.hlGroup": "GitGutterAdd",
+  "git.changedSign.hlGroup": "GitGutterChange",
+  "git.removedSign.hlGroup": "GitGutterDelete",
+  "git.topRemovedSign.hlGroup": "GitGutterDelete",
+  "git.changeRemovedSign.hlGroup": "GitGutterChangeDelete",
+  "git.enableGutters": true
 }
