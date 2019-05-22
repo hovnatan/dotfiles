@@ -149,6 +149,8 @@ mkdir -p ~/.config/vifm
 rm -rf ~/.config/vifm/vifmrc
 ln -s ~/.dotfiles/.config/vifm/vifmrc ~/.config/vifm/
 
+ln -s ~/.dotfiles/.config/ranger/ ~/.config/ranger
+
 mkdir -p ~/.config/QtProject/qtcreator/styles
 mkdir -p ~/.config/QtProject/qtcreator/themes
 ln -s ~/.dotfiles/.config/QtProject/qtcreator/themes/gruvbox-medium.creatortheme.creatortheme ~/.config/QtProject/qtcreator/themes
