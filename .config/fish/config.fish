@@ -49,13 +49,16 @@ if test -d ~/anaconda3/bin
   source (conda info --root)/etc/fish/conf.d/conda.fish
 end
 
-abbr v   "$EDITOR ."
+abbr r   "ranger"
 abbr z   "zathura"
 abbr zd  "zathura -c ~/.config/zathura_lt"
-abbr gc  "git-cola"
+abbr gs  "git status"
+abbr gp  "git push"
+abbr gP  "git pull"
+abbr ga  "git add"
 abbr ta  "tmux_attach_deattached.sh"
+abbr tl  "tmux list-sessions"
 abbr rgh "rg --hidden"
 abbr mpvhq "mpv --profile=hq"
-abbr icat "kitty +kitten icat"
 
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
