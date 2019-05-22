@@ -145,10 +145,7 @@ git update-index --assume-unchanged .workrave/workrave.ini
 #git update-index --no-assume-unchanged workrave.ini
 ln -s ~/.dotfiles/.xbindkeysrc ~/
 
-mkdir -p ~/.config/vifm
-rm -rf ~/.config/vifm/vifmrc
-ln -s ~/.dotfiles/.config/vifm/vifmrc ~/.config/vifm/
-
+rm -rf ~/.config/ranger
 ln -s ~/.dotfiles/.config/ranger/ ~/.config/ranger
 
 mkdir -p ~/.config/QtProject/qtcreator/styles
