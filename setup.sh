@@ -147,6 +147,8 @@ ln -s ~/.dotfiles/.xbindkeysrc ~/
 
 rm -rf ~/.config/ranger
 ln -s ~/.dotfiles/.config/ranger/ ~/.config/ranger
+rm -rf ~/.local/share/ranger
+ln -s ~/Dropbox/scripts/ranger ~/.local/share/ranger
 
 mkdir -p ~/.config/QtProject/qtcreator/styles
 mkdir -p ~/.config/QtProject/qtcreator/themes
