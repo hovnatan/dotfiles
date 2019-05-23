@@ -13,6 +13,14 @@ sudo ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d
 #Uncomment  export FREETYPE_PROPERTIES="truetype:interpreter-version=40"
 sudo nvim  /etc/profile.d/freetype2.sh
 
+#win fonts
+#wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-win10.tar.gz
+#tar xf ttf-ms-win10.tar.gz
+#cd ttf-ms-win10
+#mv ~/fonts/* .
+#makepkg -Acs
+#sudo pacman -U ttf-ms-win10 ttf-ms-win10-other
+
 sudo systemctl enable tlp.service
 sudo systemctl enable NetworkManager.service
 systemctl --user enable pulseaudio
