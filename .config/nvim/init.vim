@@ -67,7 +67,6 @@ set undofile
 set undodir=$HOME/.vimundo  
 set undolevels=1000         
 set undoreload=10000        
-set guicursor=a:blinkon100 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
   Plug 'junegunn/fzf'
