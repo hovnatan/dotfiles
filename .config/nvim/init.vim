@@ -103,6 +103,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-fugitive'
 call plug#end()
 
+map <space> <Plug>(easymotion-prefix)
+
 nmap [g <Plug>(coc-git-prevchunk)
 nmap ]g <Plug>(coc-git-nextchunk)
 nmap <leader>gi <Plug>(coc-git-chunkinfo)
