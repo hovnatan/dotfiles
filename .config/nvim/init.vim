@@ -71,6 +71,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
   Plug 'junegunn/fzf'
   Plug 'junegunn/fzf.vim'
+  Plug 'junegunn/limelight.vim'
+  Plug 'junegunn/goyo.vim'
   Plug 'vim-scripts/neat.vim'
   " Plug 'lervag/vimtex'
   Plug 'tpope/vim-dispatch'
