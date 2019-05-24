@@ -9,9 +9,10 @@
     }
   },
   "python.linting.pylintUseMinimalCheckers" : true,
-  "python.autoComplete.showAdvancedMembers" : false,
-  "python.formatting.autopep8Args" : ["-a", "-a"],
   "python.linting.pylintArgs": ["--generated-members=numpy.* ,torch.* ,cv2.* , cv.*", "--disable=C0111,C0103"],
+  "python.formatting.provider" : "yapf",
+  "python.formatting.yapfArgs" : ["--style=google"],
+  "python.autoComplete.showAdvancedMembers" : false,
   "coc.preferences.formatOnSaveFiletypes": ["python", "cpp"],
   "git.addedSign.hlGroup": "GitGutterAdd",
   "git.addedSign.text": "",
