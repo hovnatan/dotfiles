@@ -218,8 +218,8 @@ exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh --name dropdown
 for_window [instance="dropdown"] floating enable, move scratchpad
 bindcode $mod+31 [instance="dropdown"] scratchpad show, move position center
 
-bindsym Print exec --no-startup-id scrot -e 'mv $f /tmp/ && gimp /tmp/$f'
-bindsym --release $mod+Sys_Req exec scrot -s -e 'mv $f /tmp/ && gimp /tmp/$f'
+bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
+bindsym --release $mod+Sys_Req exec scrot -s -e 'mv $f ~/tmp/'
 bindcode Mod4+33 exec --no-startup-id monitor_setup.sh
 
 bindcode $mod+Shift+20 move scratchpad
