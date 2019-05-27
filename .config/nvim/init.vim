@@ -97,7 +97,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kana/vim-textobj-lastpat'
   Plug 'bronson/vim-visual-star-search'
   Plug 'svermeulen/vim-cutlass'
-  Plug 'svermeulen/vim-yoink'
   Plug 'svermeulen/vim-subversive'
   Plug 'jreybert/vimagit'
   Plug 'tpope/vim-fugitive'
@@ -346,13 +345,30 @@ xnoremap m d
 
 nnoremap mm dd
 nnoremap M D
-nmap <c-n> <plug>(YoinkPostPasteSwapBack)
-nmap <c-p> <plug>(YoinkPostPasteSwapForward)
-
-nmap p <plug>(YoinkPaste_p)
-nmap P <plug>(YoinkPaste_P)
-let g:yoinkIncludeDeleteOperations=1
 
 nmap s <plug>(SubversiveSubstitute)
 nmap ss <plug>(SubversiveSubstituteLine)
 nmap S <plug>(SubversiveSubstituteToEndOfLine)
+
+nnoremap <Tab> :bnext<cr>
+nnoremap <S-Tab> :bprevious<cr>
+nnoremap <space><space> <c-^>
+
+" move to the split in the direction shown, or create a new split
+nnoremap <silent> <C-h> :call WinMove('h')<cr>
+nnoremap <silent> <C-j> :call WinMove('j')<cr>
+nnoremap <silent> <C-k> :call WinMove('k')<cr>
+nnoremap <silent> <C-l> :call WinMove('l')<cr>
+
+function! WinMove(key)
+  let t:curwin = winnr()
+  exec "wincmd ".a:key
+  if (t:curwin == winnr())
+    if (match(a:key,'[jk]'))
+      wincmd v
+    else
+      wincmd s
+    endif
+    exec "wincmd ".a:key
+  endif
+endfunction
