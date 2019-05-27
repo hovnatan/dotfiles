@@ -7,7 +7,7 @@ font pango:DejaVu Sans Mono 8
 floating_modifier Mod1
 
 bindsym Mod1+Return exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh
-bindsym Mod1+Shift+Return exec --no-startup-id termite
+bindsym Mod1+Shift+Return exec --no-startup-id kitty
 
 # kill focused window # Alt+Shift+q, Win+d
 bindcode Mod1+Shift+24 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
