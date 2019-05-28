@@ -10,7 +10,6 @@ set termguicolors
 set autoindent
 set smartindent
 set cindent
-syntax on
 set showmatch
 set smartcase
 set ignorecase
@@ -60,6 +59,7 @@ set history=200
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
+syntax on
 nnoremap <S-h> gT
 nnoremap <S-l> gt
 set clipboard+=unnamedplus
@@ -74,7 +74,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'junegunn/limelight.vim'
   Plug 'junegunn/goyo.vim'
   Plug 'vim-scripts/neat.vim'
-  " Plug 'lervag/vimtex'
+  Plug 'lervag/vimtex'
   Plug 'tpope/vim-dispatch'
   Plug 'radenling/vim-dispatch-neovim'
   Plug 'tpope/vim-commentary'
@@ -101,6 +101,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'jreybert/vimagit'
   Plug 'tpope/vim-fugitive'
 call plug#end()
+
+let g:polyglot_disabled = ['latex']
 
 map <space> <Plug>(easymotion-prefix)
 
