@@ -128,7 +128,9 @@ map gz* <Plug>(asterisk-gz*)
 map z#  <Plug>(asterisk-z#)
 map gz# <Plug>(asterisk-gz#)
 
-let g:coc_global_extensions = [ 'coc-git', 'coc-emoji', 'coc-python', 'coc-prettier', 'coc-json', 'coc-word' ] 
+let g:coc_global_extensions = [ 'coc-git', 'coc-emoji', 'coc-python',
+      \ 'coc-prettier', 'coc-json', 'coc-word',
+      \ 'coc-vimtex' ] 
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',
@@ -352,8 +354,7 @@ nmap s <plug>(SubversiveSubstitute)
 nmap ss <plug>(SubversiveSubstituteLine)
 nmap S <plug>(SubversiveSubstituteToEndOfLine)
 
-nnoremap <Tab> :bnext<cr>
-nnoremap <S-Tab> :bprevious<cr>
+nnoremap <S-Tab> :bnext<cr>
 nnoremap <space><space> <c-^>
 
 " move to the split in the direction shown, or create a new split
