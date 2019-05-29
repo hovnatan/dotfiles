@@ -64,3 +64,5 @@ sudo mkinitcpio -p linux
 
 # remove orphans
 # sudo pacman -Rns (pacman -Qtdq)
+# remove cache
+# yay -Sc
