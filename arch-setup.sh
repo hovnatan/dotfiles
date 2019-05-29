@@ -61,3 +61,6 @@ sudo mkinitcpio -p linux
 # HibernateDelaySec=1800
 # sudo nvim /etc/systemd/logind.conf
 # HandleLidSwitch=suspend-then-hibernate
+
+# remove orphans
+# sudo pacman -Rns (pacman -Qtdq)
