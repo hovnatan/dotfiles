@@ -5,3 +5,6 @@
 #scroll_down Down
 #scroll_left Left
 #scroll_right Right
+#
+next_img l
+prev_img h
