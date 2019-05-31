@@ -9,7 +9,7 @@
     }
   },
   "python.linting.pylintUseMinimalCheckers" : true,
-  "python.linting.pylintArgs": ["--generated-members=numpy.* ,torch.* ,cv2.* , cv.*", "--disable=C0111,C0103,R0913,R0914,R0903"],
+  "python.linting.pylintArgs": ["--generated-members=numpy.* ,torch.* ,cv2.* , cv.*", "--disable=C0111,C0103,R0913,R0914,R0903,R0915"],
   "python.formatting.provider" : "yapf",
   "python.formatting.yapfArgs" : ["--style=facebook"],
   "python.autoComplete.showAdvancedMembers" : false,
@@ -25,5 +25,6 @@
   "git.topRemovedSign.text": "",
   "git.changeRemovedSign.hlGroup": "GitGutterChangeDelete",
   "git.changeRemovedSign.text": "",
-  "git.enableGutters": true
+  "git.enableGutters": true,
+  "suggest.detailMaxLength": 200
 }
