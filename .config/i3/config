@@ -66,16 +66,16 @@ set $ws9 "9"
 set $ws10 "10"
 
 # switch to workspace
-bindcode $mod+10 workspace $ws1
-bindcode $mod+11 workspace $ws2
-bindcode $mod+12 workspace $ws3
-bindcode $mod+13 workspace $ws4
-bindcode $mod+14 workspace $ws5
-bindcode $mod+15 workspace $ws6
-bindcode $mod+16 workspace $ws7
-bindcode $mod+17 workspace $ws8
-bindcode $mod+18 workspace $ws9
-bindcode $mod+19 workspace $ws10
+bindcode $mod+10 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws1
+bindcode $mod+11 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws2
+bindcode $mod+12 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws3
+bindcode $mod+13 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws4
+bindcode $mod+14 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws5
+bindcode $mod+15 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws6
+bindcode $mod+16 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws7
+bindcode $mod+17 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws8
+bindcode $mod+18 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws9
+bindcode $mod+19 exec --no-startup-id ~/.dotfiles/.config/i3/message_wn.sh $ws10
 bindcode $mod+49 exec --no-startup-id ~/.dotfiles/.config/i3/grave.sh
 
 # move focused container to workspace
