@@ -91,10 +91,17 @@ def on_window_close(i3, e):
             deleted_focus = current_focus
 
 
+def on_workspace_focus(i3, e):
+    subprocess.run(["dunstify", "-t", "2000", str(e.old.name)])
+
+
 if DEBUG:
     buffsize = 0
-    f = open("/tmp/kbd_py.log", "wb", buffering=buffsize)
+    f = open("/tmp/i3_ipc.log", "wb", buffering=buffsize)
+
 i3.on("window::focus", on_window_focus)
 i3.on("window::close", on_window_close)
+i3.on("workspace::focus", on_workspace_focus)
+
 signal.signal(signal.SIGUSR1, handle_pdb)
 i3.main()
