@@ -92,7 +92,10 @@ def on_window_close(i3, e):
 
 
 def on_workspace_focus(i3, e):
-    subprocess.run(["dunstify", "-t", "2000", str(e.old.name)])
+    subprocess.run(
+        ["dunstify", "-t", "2000",
+         str(e.old.name) + " was previous workspace"]
+    )
 
 
 if DEBUG:
