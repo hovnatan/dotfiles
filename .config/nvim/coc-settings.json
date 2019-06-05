@@ -1,6 +1,5 @@
 {
   "diagnostic.maxWindowHeight": 25,
-  "diagnostic.checkCurrentLine": true,
   "languageserver": {
     "clangd": {
       "command": "clangd",

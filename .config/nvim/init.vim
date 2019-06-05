@@ -92,8 +92,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'easymotion/vim-easymotion'
-  Plug 'haya14busa/vim-asterisk'
-  Plug 'haya14busa/incsearch.vim'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
   Plug 'bronson/vim-visual-star-search'
@@ -120,22 +118,9 @@ nnoremap <leader>gP :! git push<CR>
 
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 
-map /  <Plug>(incsearch-forward)
-map ?  <Plug>(incsearch-backward)
-map g/ <Plug>(incsearch-stay)
-
-map *   <Plug>(asterisk-*)
-map #   <Plug>(asterisk-#)
-map g*  <Plug>(asterisk-g*)
-map g#  <Plug>(asterisk-g#)
-map z*  <Plug>(asterisk-z*)
-map gz* <Plug>(asterisk-gz*)
-map z#  <Plug>(asterisk-z#)
-map gz# <Plug>(asterisk-gz#)
-
 let g:coc_global_extensions = [ 'coc-git', 'coc-emoji', 'coc-python',
       \ 'coc-prettier', 'coc-json', 'coc-word',
-      \ 'coc-vimtex' ] 
+      \ 'coc-vimtex', 'coc-highlight' ] 
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',
@@ -399,3 +384,6 @@ function! WinMove(key)
     exec "wincmd ".a:key
   endif
 endfunction
+
+set updatetime=300
+autocmd CursorHold * silent call CocActionAsync('highlight')
