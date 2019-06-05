@@ -93,6 +93,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'wellle/tmux-complete.vim'
   Plug 'easymotion/vim-easymotion'
   Plug 'haya14busa/vim-asterisk'
+  Plug 'haya14busa/incsearch.vim'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
   Plug 'bronson/vim-visual-star-search'
@@ -118,6 +119,10 @@ nnoremap <leader>gs :Magit<CR>
 nnoremap <leader>gP :! git push<CR>
 
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
+
+map /  <Plug>(incsearch-forward)
+map ?  <Plug>(incsearch-backward)
+map g/ <Plug>(incsearch-stay)
 
 map *   <Plug>(asterisk-*)
 map #   <Plug>(asterisk-#)
