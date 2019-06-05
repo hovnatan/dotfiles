@@ -91,19 +91,15 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'itchyny/lightline.vim'
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
-  Plug 'easymotion/vim-easymotion'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
   Plug 'bronson/vim-visual-star-search'
   Plug 'svermeulen/vim-cutlass'
   Plug 'svermeulen/vim-subversive'
   Plug 'jreybert/vimagit'
-  Plug 'tpope/vim-fugitive'
 call plug#end()
 
 let g:polyglot_disabled = ['latex']
-
-map <space> <Plug>(easymotion-prefix)
 
 nmap [g <Plug>(coc-git-prevchunk)
 nmap ]g <Plug>(coc-git-nextchunk)
