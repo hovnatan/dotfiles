@@ -69,8 +69,6 @@ set undolevels=1000
 set undoreload=10000        
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
-  Plug 'junegunn/fzf'
-  Plug 'junegunn/fzf.vim'
   Plug 'junegunn/limelight.vim'
   Plug 'junegunn/goyo.vim'
   Plug 'vim-scripts/neat.vim'
@@ -220,7 +218,10 @@ let g:lightline = {
 nnoremap <silent> <space>a  :<C-u>CocList diagnostics<cr>
 nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
 nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
+nnoremap <silent> <space>h  :<C-u>CocList mru<cr>
+nnoremap <silent> <space>l  :<C-u>CocList <cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
+nnoremap <silent> <space>g  :<C-u>CocList grep<cr>
 nnoremap <silent> <space>j  :<C-u>CocNext<CR>
 nnoremap <silent> <space>k  :<C-u>CocPrev<CR>
 nnoremap <silent> <space>p  :<C-u>CocListResume<CR>
@@ -243,64 +244,6 @@ let g:vimtex_view_method='zathura'
 let g:vimtex_quickfix_mode=0
 set conceallevel=1
 let g:tex_conceal='abdmg'
-
-nmap <Leader>b :Buffers<CR>
-nmap <Leader>f :GFiles<CR>
-nmap <Leader>F :Files<CR>
-nmap <Leader>h :History<CR>
-nmap <Leader>l :BLines<CR>
-nnoremap <silent> <Leader>rg :Rg <C-R><C-W><CR>
-nmap <Leader>a :Rg<Space>
-
-let g:fzf_buffers_jump = 1
-
-function! s:build_quickfix_list(lines)
-  call setqflist(map(copy(a:lines), '{ "filename": v:val }'))
-  copen
-  cc
-endfunction
-
-let g:fzf_action = {
-  \ 'ctrl-q': function('s:build_quickfix_list'),
-  \ 'ctrl-t': 'tab split',
-  \ 'ctrl-x': 'split',
-  \ 'ctrl-v': 'vsplit' }
-
-let g:fzf_layout = { 'window': 'call FloatingFZF()' }
-
-function! FloatingFZF()
-    let buf = nvim_create_buf(v:false, v:true)
-    call setbufvar(buf, '&signcolumn', 'no')
-
-    let height = &lines / 2
-    let width = float2nr(&columns - (&columns * 2 / 4))
-    let col = float2nr((&columns - width) / 2)
-
-    let opts = {
-                \ 'relative': 'editor',
-                \ 'row': &lines / 5,
-                \ 'col': col,
-                \ 'width': width,
-                \ 'height': height
-                \ }
-
-    call nvim_open_win(buf, v:true, opts)
-endfunction
-" Customize fzf colors to match your color scheme
-let g:fzf_colors =
-\ { 'fg':      ['fg', 'Normal'],
-  \ 'bg':      ['bg', 'Normal'],
-  \ 'hl':      ['fg', 'Comment'],
-  \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
-  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
-  \ 'hl+':     ['fg', 'Statement'],
-  \ 'info':    ['fg', 'PreProc'],
-  \ 'border':  ['fg', 'Ignore'],
-  \ 'prompt':  ['fg', 'Conditional'],
-  \ 'pointer': ['fg', 'Exception'],
-  \ 'marker':  ['fg', 'Keyword'],
-  \ 'spinner': ['fg', 'Label'],
-  \ 'header':  ['fg', 'Comment'] }
 
 set spelllang=en_us
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
