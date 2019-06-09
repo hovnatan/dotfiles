@@ -84,6 +84,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
   Plug 'tpope/vim-vinegar'
+  Plug 'jpalardy/vim-slime'
+  Plug 'hanschen/vim-ipython-cell'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
@@ -96,6 +98,17 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'svermeulen/vim-subversive'
   Plug 'jreybert/vimagit'
 call plug#end()
+
+let g:slime_target = 'tmux'
+let g:slime_python_ipython = 1
+
+autocmd FileType python nnoremap <buffer> <F6> :IPythonCellExecuteCell<CR>
+autocmd FileType python inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR>
+
+autocmd FileType python nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR>
+autocmd FileType python inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR>
+
+let g:ipython_cell_delimit_cells_by = 'tags'
 
 let g:polyglot_disabled = ['latex']
 
