@@ -5,9 +5,9 @@ esac
 LNG=$(check_layout.sh)
 case $LNG in
   "us")
-    CLR=\#98971a ;; # green
+    CLR=\#79740e ;; # green
   "am")
-    CLR=\#cc241d ;; # red
+    CLR=\#af3a03 ;; # red
 esac
 echo "$LNG"
 echo "$LNG"
