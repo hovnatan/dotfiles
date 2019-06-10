@@ -122,6 +122,8 @@ setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
 3,14fold
+3
+normal! zo
 let s:l = 3 - ((2 * winheight(0) + 16) / 33)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
