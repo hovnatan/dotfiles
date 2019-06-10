@@ -18,6 +18,9 @@ bindcode Mod4+40 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
 bindcode Mod1+40 exec rofi -show combi
 bindcode Mod1+Shift+40 exec rofi -show drun
 
+# bindcode 64 exec --no-startup-id touch /tmp/ff
+# bindcode --release 64 exec --no-startup-id rm /tmp/ff
+
 # change focus, h j k l
 bindcode Mod1+43 focus left
 bindcode Mod1+44 focus down
