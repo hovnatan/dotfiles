@@ -1,0 +1,133 @@
+let s:so_save = &so | let s:siso_save = &siso | set so=0 siso=0
+argglobal
+if bufexists("~/.dotfiles/.config/i3/i3_custom_ipc.py") | buffer ~/.dotfiles/.config/i3/i3_custom_ipc.py | else | edit ~/.dotfiles/.config/i3/i3_custom_ipc.py | endif
+let s:cpo_save=&cpo
+set cpo&vim
+inoremap <buffer> <F7> :IPythonCellExecuteCellJump
+inoremap <buffer> <F6> :IPythonCellExecuteCell
+nnoremap <buffer> <F7> :IPythonCellExecuteCellJump
+nnoremap <buffer> <F6> :IPythonCellExecuteCell
+let &cpo=s:cpo_save
+unlet s:cpo_save
+setlocal keymap=
+setlocal noarabic
+setlocal autoindent
+setlocal backupcopy=
+setlocal nobinary
+setlocal nobreakindent
+setlocal breakindentopt=
+setlocal bufhidden=
+setlocal buflisted
+setlocal buftype=
+setlocal cindent
+setlocal cinkeys=0{,0},0),0],:,!^F,o,O,e
+setlocal cinoptions=
+setlocal cinwords=if,else,while,do,for,switch
+setlocal colorcolumn=80
+setlocal comments=b:#,fb:-
+setlocal commentstring=#\ %s
+setlocal complete=.,w,b,u,t
+setlocal concealcursor=
+setlocal conceallevel=1
+setlocal completefunc=tmuxcomplete#complete
+setlocal nocopyindent
+setlocal nocursorbind
+setlocal nocursorcolumn
+setlocal nocursorline
+setlocal define=
+setlocal dictionary=
+setlocal nodiff
+setlocal equalprg=
+setlocal errorformat=%E%f:%l:\ could\ not\ compile,%-Z%p^,%A%f:%l:%c:\ %t%n\ %m,%A%f:%l:\ %t%n\ %m,%+GTraceback%.%#,%E\ \ File\ \"%f\"\\,\ line\ %l\\,%m%\\C,%E\ \ File\ \"%f\"\\,\ line\ %l%\\C,%C%p^,%+C\ \ \ \ %.%#,%+C\ \ %.%#,%Z%\\S%\\&%m,%-G%.%#
+setlocal expandtab
+if &filetype != 'python'
+setlocal filetype=python
+endif
+setlocal fillchars=
+setlocal fixendofline
+setlocal foldcolumn=0
+setlocal foldenable
+setlocal foldexpr=0
+setlocal foldignore=#
+setlocal foldlevel=0
+setlocal foldmarker={{{,}}}
+setlocal foldmethod=manual
+setlocal foldminlines=1
+setlocal foldnestmax=20
+setlocal foldtext=foldtext()
+setlocal formatexpr=
+setlocal formatoptions=tcqj
+setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
+setlocal formatprg=
+setlocal grepprg=
+setlocal iminsert=0
+setlocal imsearch=-1
+setlocal include=^\\s*\\(from\\|import\\)
+setlocal includeexpr=substitute(substitute(substitute(v:fname,b:grandparent_match,b:grandparent_sub,''),b:parent_match,b:parent_sub,''),b:child_match,b:child_sub,'g')
+setlocal indentexpr=GetPythonPEPIndent(v:lnum)
+setlocal indentkeys=!^F,o,O,<:>,0),0],0},=elif,=except
+setlocal noinfercase
+setlocal iskeyword=@,48-57,_,192-255,-
+setlocal keywordprg=pydoc
+setlocal nolinebreak
+setlocal nolisp
+setlocal lispwords=
+setlocal nolist
+setlocal listchars=tab:>\ ,trail:-,nbsp:+
+setlocal makeencoding=
+setlocal makeprg=python
+setlocal matchpairs=(:),{:},[:]
+setlocal modeline
+setlocal modifiable
+setlocal nrformats=bin,hex
+setlocal number
+setlocal numberwidth=4
+setlocal omnifunc=python3complete#Complete
+setlocal path=
+setlocal nopreserveindent
+setlocal nopreviewwindow
+setlocal quoteescape=\\
+setlocal noreadonly
+setlocal norelativenumber
+setlocal norightleft
+setlocal rightleftcmd=search
+setlocal scrollback=-1
+setlocal noscrollbind
+setlocal shiftwidth=4
+setlocal signcolumn=yes
+setlocal smartindent
+setlocal softtabstop=4
+setlocal nospell
+setlocal spellcapcheck=[.?!]\\_[\\])'\"\	\ ]\\+
+setlocal spellfile=
+setlocal spelllang=en_us
+setlocal statusline=%{lightline#link()}%#LightlineLeft_active_0#%(\ %{lightline#mode()}\ %)%{(&paste)?\"|\":\"\"}%(\ %{&paste?\"PASTE\":\"\"}\ %)%#LightlineLeft_active_0_1#%#LightlineLeft_active_1#%(\ %{coc#status()}\ %)%{coc#status()!=#\"\"&&((&readonly)||1||(&modified||!&modifiable))?\"|\":\"\"}%(\ %R\ %)%{(&readonly)&&(1||(&modified||!&modifiable))?\"|\":\"\"}%(\ %F\ %)%{(&modified||!&modifiable)?\"|\":\"\"}%(\ %M\ %)%#LightlineLeft_active_1_2#%#LightlineMiddle_active#%=%#LightlineRight_active_2_3#%#LightlineRight_active_2#%(\ %{&ff}\ %)%{1||1?\"|\":\"\"}%(\ %{&fenc!=#\"\"?&fenc:&enc}\ %)%{1?\"|\":\"\"}%(\ %{&ft!=#\"\"?&ft:\"no\ ft\"}\ %)%#LightlineRight_active_1_2#%#LightlineRight_active_1#%(\ %3p%%\ %)%#LightlineRight_active_0_1#%#LightlineRight_active_0#%(\ %3l:%-2v\ %)
+setlocal suffixesadd=.py
+setlocal swapfile
+setlocal synmaxcol=3000
+if &syntax != 'python'
+setlocal syntax=python
+endif
+setlocal tabstop=8
+setlocal tagcase=
+setlocal tags=
+setlocal textwidth=0
+setlocal thesaurus=
+setlocal undofile
+setlocal undolevels=-123456
+setlocal winhighlight=
+setlocal nowinfixheight
+setlocal nowinfixwidth
+setlocal wrap
+setlocal wrapmargin=0
+silent! normal! zE
+3,14fold
+let s:l = 3 - ((2 * winheight(0) + 16) / 33)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+3
+normal! 0
+let &so = s:so_save | let &siso = s:siso_save
+doautoall SessionLoadPost
+" vim: set ft=vim :
