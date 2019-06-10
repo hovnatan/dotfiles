@@ -28,7 +28,7 @@ class FocusWatcher:
         self.listening_socket.bind(SOCKET_FILE)
         self.listening_socket.listen(1)
         self.window_list = collections.OrderedDict()
-        self.window_list_lock = threading.RLock()
+        self.window_list_lock = threading.Lock()
 
     def on_window_close(self, i3conn, event):
         with self.window_list_lock:
@@ -104,9 +104,11 @@ class FocusWatcher:
                 with self.window_list_lock:
                     tree = self.i3.get_tree()
                     windows = set(w.id for w in tree.leaves())
-                    for window_id in self.window_list[1:]:
+                    for k, window_id in enumerate(reversed(self.window_list)):
+                        if k == 0:
+                            continue
                         if window_id not in windows:
-                            self.window_list.remove(window_id)
+                            del self.window_list[window_id]
                         else:
                             self.i3.command('[con_id=%s] focus' % window_id)
                             break
@@ -129,17 +131,7 @@ class FocusWatcher:
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(
-        prog='focus-last.py',
-        description='''
-        Focus last focused window.
-
-        This script should be launch from the .xsessionrc without argument.
-
-        Then you can bind this script with the `--switch` option to one of your
-        i3 keybinding.
-        '''
-    )
+    parser = ArgumentParser()
     parser.add_argument(
         '--switch',
         dest='switch',

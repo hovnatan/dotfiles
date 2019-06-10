@@ -1,14 +1,6 @@
 let s:so_save = &so | let s:siso_save = &siso | set so=0 siso=0
 argglobal
-if bufexists("~/.dotfiles/.config/i3/i3_custom_ipc.py") | buffer ~/.dotfiles/.config/i3/i3_custom_ipc.py | else | edit ~/.dotfiles/.config/i3/i3_custom_ipc.py | endif
-let s:cpo_save=&cpo
-set cpo&vim
-inoremap <buffer> <F7> :IPythonCellExecuteCellJump
-inoremap <buffer> <F6> :IPythonCellExecuteCell
-nnoremap <buffer> <F7> :IPythonCellExecuteCellJump
-nnoremap <buffer> <F6> :IPythonCellExecuteCell
-let &cpo=s:cpo_save
-unlet s:cpo_save
+if bufexists("~/.dotfiles/.config/i3/terminal.sh") | buffer ~/.dotfiles/.config/i3/terminal.sh | else | edit ~/.dotfiles/.config/i3/terminal.sh | endif
 setlocal keymap=
 setlocal noarabic
 setlocal autoindent
@@ -20,12 +12,12 @@ setlocal bufhidden=
 setlocal buflisted
 setlocal buftype=
 setlocal cindent
-setlocal cinkeys=0{,0},0),0],:,!^F,o,O,e
+setlocal cinkeys=0{,0},0),0],:,0#,!^F,o,O,e
 setlocal cinoptions=
 setlocal cinwords=if,else,while,do,for,switch
 setlocal colorcolumn=80
 setlocal comments=b:#,fb:-
-setlocal commentstring=#\ %s
+setlocal commentstring=#%s
 setlocal complete=.,w,b,u,t
 setlocal concealcursor=
 setlocal conceallevel=1
@@ -38,10 +30,10 @@ setlocal define=
 setlocal dictionary=
 setlocal nodiff
 setlocal equalprg=
-setlocal errorformat=%E%f:%l:\ could\ not\ compile,%-Z%p^,%A%f:%l:%c:\ %t%n\ %m,%A%f:%l:\ %t%n\ %m,%+GTraceback%.%#,%E\ \ File\ \"%f\"\\,\ line\ %l\\,%m%\\C,%E\ \ File\ \"%f\"\\,\ line\ %l%\\C,%C%p^,%+C\ \ \ \ %.%#,%+C\ \ %.%#,%Z%\\S%\\&%m,%-G%.%#
+setlocal errorformat=
 setlocal expandtab
-if &filetype != 'python'
-setlocal filetype=python
+if &filetype != 'sh'
+setlocal filetype=sh
 endif
 setlocal fillchars=
 setlocal fixendofline
@@ -62,27 +54,27 @@ setlocal formatprg=
 setlocal grepprg=
 setlocal iminsert=0
 setlocal imsearch=-1
-setlocal include=^\\s*\\(from\\|import\\)
-setlocal includeexpr=substitute(substitute(substitute(v:fname,b:grandparent_match,b:grandparent_sub,''),b:parent_match,b:parent_sub,''),b:child_match,b:child_sub,'g')
-setlocal indentexpr=GetPythonPEPIndent(v:lnum)
-setlocal indentkeys=!^F,o,O,<:>,0),0],0},=elif,=except
+setlocal include=
+setlocal includeexpr=
+setlocal indentexpr=GetShIndent()
+setlocal indentkeys=0{,0},0),0],!^F,o,O,e,0=then,0=do,0=else,0=elif,0=fi,0=esac,0=done,0=end,),0=;;,0=;&,0=fin,0=fil,0=fip,0=fir,0=fix
 setlocal noinfercase
-setlocal iskeyword=@,48-57,_,192-255,-
-setlocal keywordprg=pydoc
+setlocal iskeyword=@,48-57,_,192-255,-,.
+setlocal keywordprg=
 setlocal nolinebreak
 setlocal nolisp
 setlocal lispwords=
 setlocal nolist
 setlocal listchars=tab:>\ ,trail:-,nbsp:+
 setlocal makeencoding=
-setlocal makeprg=python
+setlocal makeprg=
 setlocal matchpairs=(:),{:},[:]
 setlocal modeline
 setlocal modifiable
 setlocal nrformats=bin,hex
 setlocal number
 setlocal numberwidth=4
-setlocal omnifunc=python3complete#Complete
+setlocal omnifunc=
 setlocal path=
 setlocal nopreserveindent
 setlocal nopreviewwindow
@@ -93,22 +85,22 @@ setlocal norightleft
 setlocal rightleftcmd=search
 setlocal scrollback=-1
 setlocal noscrollbind
-setlocal shiftwidth=4
+setlocal shiftwidth=2
 setlocal signcolumn=yes
-setlocal smartindent
-setlocal softtabstop=4
+setlocal nosmartindent
+setlocal softtabstop=0
 setlocal nospell
 setlocal spellcapcheck=[.?!]\\_[\\])'\"\	\ ]\\+
 setlocal spellfile=
 setlocal spelllang=en_us
 setlocal statusline=%{lightline#link()}%#LightlineLeft_active_0#%(\ %{lightline#mode()}\ %)%{(&paste)?\"|\":\"\"}%(\ %{&paste?\"PASTE\":\"\"}\ %)%#LightlineLeft_active_0_1#%#LightlineLeft_active_1#%(\ %{coc#status()}\ %)%{coc#status()!=#\"\"&&((&readonly)||1||(&modified||!&modifiable))?\"|\":\"\"}%(\ %R\ %)%{(&readonly)&&(1||(&modified||!&modifiable))?\"|\":\"\"}%(\ %F\ %)%{(&modified||!&modifiable)?\"|\":\"\"}%(\ %M\ %)%#LightlineLeft_active_1_2#%#LightlineMiddle_active#%=%#LightlineRight_active_2_3#%#LightlineRight_active_2#%(\ %{&ff}\ %)%{1||1?\"|\":\"\"}%(\ %{&fenc!=#\"\"?&fenc:&enc}\ %)%{1?\"|\":\"\"}%(\ %{&ft!=#\"\"?&ft:\"no\ ft\"}\ %)%#LightlineRight_active_1_2#%#LightlineRight_active_1#%(\ %3p%%\ %)%#LightlineRight_active_0_1#%#LightlineRight_active_0#%(\ %3l:%-2v\ %)
-setlocal suffixesadd=.py
+setlocal suffixesadd=
 setlocal swapfile
 setlocal synmaxcol=3000
-if &syntax != 'python'
-setlocal syntax=python
+if &syntax != 'sh'
+setlocal syntax=sh
 endif
-setlocal tabstop=8
+setlocal tabstop=2
 setlocal tagcase=
 setlocal tags=
 setlocal textwidth=0
@@ -121,15 +113,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-3,14fold
-3
-normal! zo
-let s:l = 39 - ((22 * winheight(0) + 16) / 33)
+let s:l = 1 - ((0 * winheight(0) + 16) / 33)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-39
-normal! 09|
+1
+normal! 0
 let &so = s:so_save | let &siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :
