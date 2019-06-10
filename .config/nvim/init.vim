@@ -322,8 +322,8 @@ nnoremap <space><space> <c-^>
 set updatetime=300
 autocmd CursorHold * silent call CocActionAsync('highlight')
 
-augroup QuickNotes
-    autocmd!
-    autocmd BufWinLeave * execute "mkview! " . expand('<afile>:p:h') . "/." . expand('<afile>:t') . ".view"
-    autocmd BufWinEnter * execute "silent! source " . expand('%:p:h') . "/." . expand('%:t') . ".view"
-augroup END
+" augroup QuickNotes
+"     autocmd!
+"     autocmd BufWinLeave * execute "mkview! " . expand('<afile>:p:h') . "/." . expand('<afile>:t') . ".view"
+"     autocmd BufWinEnter * execute "silent! source " . expand('%:p:h') . "/." . expand('%:t') . ".view"
+" augroup END
