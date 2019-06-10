@@ -13,6 +13,28 @@ import i3ipc
 SOCKET_FILE = '/tmp/i3_focus_last'
 MAX_WIN_HISTORY = 15
 
+DEBUG = False
+
+if DEBUG:
+    import code
+    import traceback
+    import signal
+
+    def debug(sig, frame):
+        """Interrupt running process, and provide a python prompt for
+        interactive debugging."""
+        d = {'_frame': frame}  # Allow access to frame object.
+        d.update(frame.f_globals)  # Unless shadowed by global
+        d.update(frame.f_locals)
+
+        i = code.InteractiveConsole(d)
+        message = "Signal received : entering python shell.\nTraceback:\n"
+        message += ''.join(traceback.format_stack(frame))
+        i.interact(message)
+
+    def listen():
+        signal.signal(signal.SIGUSR1, debug)  # Register handler
+
 
 class FocusWatcher:
     def __init__(self):
@@ -37,6 +59,9 @@ class FocusWatcher:
                 del self.window_list[window_id]
 
     def on_workspace_focus(self, i3conn, event):
+        if DEBUG:
+            print("hello")
+
         subprocess.run(
             [
                 "dunstify", "-t", "2000",
@@ -46,7 +71,9 @@ class FocusWatcher:
 
     def on_window_focus(self, i3conn, event):
         with self.window_list_lock:
-            if self.window_list > 0:
+            if DEBUG:
+                print("on_window_focus")
+            if self.window_list:
                 previous_focus = next(reversed(self.window_list))
                 result = subprocess.run(
                     ['check_layout.sh'], stdout=subprocess.PIPE
@@ -58,6 +85,8 @@ class FocusWatcher:
             window_id = event.container.props.id
             key = 0
             subprocess.run(["setxkbmap", "-option", ""])
+            if DEBUG:
+                print("on_window_focus2")
             if window_id in self.window_list:
                 key = self.window_list[window_id]
                 if key == 0:
@@ -100,8 +129,12 @@ class FocusWatcher:
 
         def read(conn):
             data = conn.recv(1024)
+            if DEBUG:
+                print("reading0")
             if data == b'switch':
                 with self.window_list_lock:
+                    if DEBUG:
+                        print("reading")
                     tree = self.i3.get_tree()
                     windows = set(w.id for w in tree.leaves())
                     for k, window_id in enumerate(reversed(self.window_list)):
@@ -124,9 +157,10 @@ class FocusWatcher:
                 callback(key.fileobj)
 
     def run(self):
-        t_i3 = threading.Thread(target=self.launch_i3)
-        t_server = threading.Thread(target=self.launch_server)
-        for t in (t_i3, t_server):
+        threads = []
+        threads.append(threading.Thread(target=self.launch_i3))
+        # t_server = threading.Thread(target=self.launch_server)
+        for t in threads:
             t.start()
 
 
@@ -140,6 +174,8 @@ if __name__ == '__main__':
         default=False
     )
     args = parser.parse_args()
+    if DEBUG:
+        listen()
 
     if not args.switch:
         focus_watcher = FocusWatcher()
@@ -147,5 +183,7 @@ if __name__ == '__main__':
     else:
         client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         client_socket.connect(SOCKET_FILE)
+        if DEBUG:
+            print("sending")
         client_socket.send(b'switch')
         client_socket.close()
