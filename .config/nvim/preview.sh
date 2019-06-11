@@ -17,8 +17,8 @@ fn_pdf="/tmp/${filename}.pdf"
 wid=$(xdotool search --name "${fn_pdf}")
 
 if test -z "$wid"; then
-    setsid zathura ${fn_pdf}
-    xdotool search --name "${fn}" windowactivate
+  setsid zathura ${fn_pdf}
+  xdotool search --name "${fn}" windowactivate
 else
-    xdotool key --window $wid 'R'
+  xdotool key --window $wid 'R'
 fi
