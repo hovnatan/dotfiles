@@ -1,3 +1,4 @@
+# vim: set sw=4:
 [global]
     font = "Cantarell 11"
     markup = yes
@@ -27,6 +28,8 @@
     frame_width = 2
     frame_color = "#d79921"
     dmenu = /usr/bin/rofi -dmenu -p dunst:
+    hide_duplicatate_count = true
+    stack_duplicates = false
 
 [shortcuts]
     close = ctrl+space
