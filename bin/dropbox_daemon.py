@@ -20,7 +20,7 @@ while True:
             conseq_idle -= 1
         else:
             conseq_idle = CONSEQ_IDLE
-        if conseq_idle == 0:
+        if conseq_idle <= 0:
             subprocess.call([DROPBOX_CMDLINE, 'stop'])
             break
         time.sleep(1)

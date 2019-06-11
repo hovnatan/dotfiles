@@ -13,4 +13,6 @@ while True:
     status = subprocess.check_output([DROPBOX_CMDLINE,
                                       'status']).decode(sys.stdout.encoding)
     if re.search("Up to date", status):
+        subprocess.call([DROPBOX_CMDLINE, 'stop'])
         break
+    time.sleep(1)
