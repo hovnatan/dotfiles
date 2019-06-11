@@ -5,7 +5,6 @@ import socket
 import selectors
 import subprocess
 import threading
-from argparse import ArgumentParser
 import collections
 
 import i3ipc
@@ -165,25 +164,8 @@ class FocusWatcher:
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument(
-        '--switch',
-        dest='switch',
-        action='store_true',
-        help='Switch to the previous window',
-        default=False
-    )
-    args = parser.parse_args()
     if DEBUG:
         listen()
 
-    if not args.switch:
-        focus_watcher = FocusWatcher()
-        focus_watcher.run()
-    else:
-        client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        client_socket.connect(SOCKET_FILE)
-        if DEBUG:
-            print("sending")
-        client_socket.send(b'switch')
-        client_socket.close()
+    focus_watcher = FocusWatcher()
+    focus_watcher.run()
