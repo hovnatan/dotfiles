@@ -97,6 +97,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'svermeulen/vim-cutlass'
   Plug 'svermeulen/vim-subversive'
   Plug 'jreybert/vimagit'
+  Plug 'michaeljsmith/vim-indent-object'
 call plug#end()
 
 let g:slime_target = 'tmux'
