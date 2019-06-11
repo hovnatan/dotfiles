@@ -42,6 +42,7 @@ set diffopt+=vertical
 set splitbelow
 set splitright
 set foldmethod=indent
+set viewoptions-=options
 
 nnoremap j gj
 nnoremap gj j
@@ -100,7 +101,15 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'svermeulen/vim-subversive'
   Plug 'jreybert/vimagit'
   Plug 'michaeljsmith/vim-indent-object'
+  Plug 'zhimsel/vim-stay'
+  Plug 'Konfekt/FastFold'
+  Plug 'tmhedberg/SimpylFold'
 call plug#end()
+
+nmap zuz <Plug>(FastFoldUpdate)
+let g:fastfold_savehook = 1
+let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
+let g:fastfold_fold_movement_commands = [']z', '[z', 'zj', 'zk']
 
 let g:slime_target = 'tmux'
 let g:slime_python_ipython = 1
@@ -324,12 +333,3 @@ nnoremap <space><space> <c-^>
 
 set updatetime=300
 autocmd CursorHold * silent call CocActionAsync('highlight')
-
-set viewoptions-=options
-autocmd BufWinLeave * mkview
-autocmd BufWinEnter * silent! loadview
-" augroup QuickNotes
-"     autocmd!
-"     autocmd BufWinLeave * execute "mkview! " . expand('<afile>:p:h') . "/." . expand('<afile>:t') . ".view"
-"     autocmd BufWinEnter * execute "silent! source " . expand('%:p:h') . "/." . expand('%:t') . ".view"
-" augroup END
