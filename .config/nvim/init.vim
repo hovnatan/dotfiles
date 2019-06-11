@@ -41,6 +41,8 @@ set showmatch
 set diffopt+=vertical
 set splitbelow
 set splitright
+set foldmethod=indent
+
 nnoremap j gj
 nnoremap gj j
 nnoremap k gk
