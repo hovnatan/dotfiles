@@ -18,9 +18,6 @@ bindcode Mod4+40 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
 bindcode Mod1+40 exec rofi -show combi
 bindcode Mod1+Shift+40 exec rofi -show drun
 
-# bindcode 64 exec --no-startup-id touch /tmp/ff
-# bindcode --release 64 exec --no-startup-id rm /tmp/ff
-
 # change focus, h j k l
 bindcode Mod1+43 focus left
 bindcode Mod1+44 focus down
@@ -201,8 +198,6 @@ bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
 bindsym $mod+Tab workspace back_and_forth
-# bindsym $mod+Tab exec --no-startup-id ~/.config/i3/i3_custom_ipc.py --switch
-# bindsym --release $mod+Tab exec --no-startup-id i3-nagbar dd
 bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
 exec --no-startup-id setxkbmap -option ""
