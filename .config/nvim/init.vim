@@ -325,6 +325,9 @@ nnoremap <space><space> <c-^>
 set updatetime=300
 autocmd CursorHold * silent call CocActionAsync('highlight')
 
+set viewoptions-=options
+autocmd BufWinLeave * mkview
+autocmd BufWinEnter * silent! loadview
 " augroup QuickNotes
 "     autocmd!
 "     autocmd BufWinLeave * execute "mkview! " . expand('<afile>:p:h') . "/." . expand('<afile>:t') . ".view"
