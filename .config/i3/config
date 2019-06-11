@@ -202,7 +202,7 @@ bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
 exec --no-startup-id setxkbmap -option ""
 exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"
-exec --no-startup-id dropbox start
+exec --no-startup-id dropbox.py
 exec --no-startup-id redshift-gtk
 exec --no-startup-id libinput-gestures
 exec_always --no-startup-id ~/.config/i3/i3_custom_ipc_server.py
