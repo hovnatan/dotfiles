@@ -41,7 +41,7 @@ set showmatch
 set diffopt+=vertical
 set splitbelow
 set splitright
-set foldmethod=indent
+set foldmethod=syntax
 set viewoptions-=options
 
 nnoremap j gj
@@ -192,7 +192,6 @@ inoremap <silent><expr> <c-space> coc#refresh()
 nmap <silent> [c <Plug>(coc-diagnostic-prev)
 nmap <silent> ]c <Plug>(coc-diagnostic-next)
 
-" Remap keys for gotos
 nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
@@ -209,9 +208,9 @@ function! s:show_documentation()
   endif
 endfunction
 
-nmap <leader>crn <Plug>(coc-rename)
-vmap <leader>cfs  <Plug>(coc-format-selected)
-nmap <leader>cfs  <Plug>(coc-format-selected)
+nmap <leader>rn <Plug>(coc-rename)
+xmap <leader>f  <Plug>(coc-format-selected)
+nmap <leader>f  <Plug>(coc-format-selected)
 
 augroup mygroup
   autocmd!
@@ -221,11 +220,10 @@ augroup mygroup
   autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
 augroup end
 
-vmap <leader>ca  <Plug>(coc-codeaction-selected)
-nmap <leader>ca  <Plug>(coc-codeaction-selected)
-nmap <leader>cac  <Plug>(coc-codeaction)
-nmap <leader>cqf  <Plug>(coc-fix-current)
-command! -nargs=0 Format :call CocAction('format')
+xmap <leader>a  <Plug>(coc-codeaction-selected)
+nmap <leader>a  <Plug>(coc-codeaction-selected)
+nmap <leader>ac  <Plug>(coc-codeaction)
+nmap <leader>qf  <Plug>(coc-fix-current)
 command! -nargs=? Fold :call CocAction('fold', <f-args>)
 
 
@@ -333,3 +331,24 @@ nnoremap <space><space> <c-^>
 
 set updatetime=300
 autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" # Function to permanently delete views created by 'mkview'
+function! MyDeleteView()
+    let path = fnamemodify(bufname('%'),':p')
+    " vim's odd =~ escaping for /
+    let path = substitute(path, '=', '==', 'g')
+    if empty($HOME)
+    else
+        let path = substitute(path, '^'.$HOME, '\~', '')
+    endif
+    let path = substitute(path, '/', '=+', 'g') . '='
+    " view directory
+    let path = &viewdir.'/'.path
+    call delete(path)
+    echo "Deleted: ".path
+endfunction
+
+" # Command Delview (and it's abbreviation 'delview')
+command Delview call MyDeleteView()
+" Lower-case user commands: http://vim.wikia.com/wiki/Replace_a_builtin_command_using_cabbrev
+cabbrev delview <c-r>=(getcmdtype()==':' && getcmdpos()==1 ? 'Delview' : 'delview')<CR>
