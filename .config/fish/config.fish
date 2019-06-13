@@ -49,6 +49,8 @@ if test -d ~/anaconda3/bin
   source (conda info --root)/etc/fish/conf.d/conda.fish
 end
 
+[ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
+
 abbr r   "ranger"
 abbr z   "zathura"
 abbr zd  "zathura -c ~/.config/zathura_lt"
@@ -62,5 +64,5 @@ abbr ta  "tmux_attach_deattached.sh"
 abbr tl  "tmux list-sessions"
 abbr rgh "rg --hidden"
 abbr mpvhq "mpv --profile=hq"
-
-[ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
+abbr mpvnr "mpv --no-resume-playback"
+abbr mpvhqnr "mpv --no-resume-playback --profile=hq"
