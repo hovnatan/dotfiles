@@ -8,7 +8,10 @@ import sys
 
 DROPBOX_CMDLINE = pathlib.Path.home() / "Dropbox/scripts/dropbox.py"
 
-subprocess.call([DROPBOX_CMDLINE, 'start'])
+status = subprocess.check_output([DROPBOX_CMDLINE,
+                                  'start']).decode(sys.stdout.encoding)
+if not status or re.search("already running", status):
+    sys.exit(5)
 while True:
     status = subprocess.check_output([DROPBOX_CMDLINE,
                                       'status']).decode(sys.stdout.encoding)
