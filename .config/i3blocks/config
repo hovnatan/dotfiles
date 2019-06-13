@@ -36,10 +36,10 @@ interval=30
 #instance=/mnt/data
 interval=30
 
-[dropbox]
-command=$SCRIPT_DIR/dropbox_daemon_status.sh
-#instance=/mnt/data
-interval=30
+#[dropbox]
+#command=$SCRIPT_DIR/dropbox_daemon_status.sh
+##instance=/mnt/data
+#interval=30
 
 [wifi_contrib]
 command=$SCRIPT_DIR/wifi_contrib

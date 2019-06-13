@@ -16,7 +16,7 @@ bindcode Mod4+40 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
 
 # start run (a program launcher), 40=d
 bindcode Mod1+40 exec rofi -show combi
-bindcode Mod1+Shift+40 exec --no-startup-id dropbox_single.py
+bindcode Mod1+Shift+40 exec --no-startup-id dropbox_toggle.py
 
 # change focus, h j k l
 bindcode Mod1+43 focus left
@@ -202,7 +202,7 @@ bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
 exec --no-startup-id setxkbmap -option ""
 exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"
-exec --no-startup-id dropbox_daemon.py
+exec --no-startup-id ~/Dropbox/scripts/dropbox.py start
 exec --no-startup-id redshift-gtk
 exec --no-startup-id libinput-gestures
 exec_always --no-startup-id ~/.config/i3/i3_custom_ipc_server.py
