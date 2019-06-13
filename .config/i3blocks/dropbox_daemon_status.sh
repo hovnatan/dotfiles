@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 case $BLOCK_BUTTON in
-    1) dropbox_daemon.py ;;
+    1) dropbox_daemon.py & ;;
     3) pkill -f dropbox_daemon.py ;;
 esac
 
