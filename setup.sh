@@ -49,8 +49,6 @@ ln -s ~/.dotfiles/.config/i3blocks/ ~/.config/i3blocks
 #rm -rf ~/.config/i3status
 #ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
 
-ln -sf ~/.dotfiles/.config/zathura ~/.config/zathura
-ln -sf ~/.dotfiles/.config/zathura_lt/ ~/.config/zathura_lt
 rm -rf ~/.local/share/zathura/bookmarks
 rm -rf ~/.local/share/zathura/history
 mkdir -p ~/.local/share/zathura
