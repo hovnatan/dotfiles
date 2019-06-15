@@ -20,7 +20,7 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
 #    bind -M insert -m default jk backward-char force-repaint
 end
 
-#set -u fish_term24bit 1
+set -u fish_term24bit 1
 
 set -g fish_key_bindings hybrid_bindings
 
@@ -30,9 +30,14 @@ set -U fish_cursor_visual block
 
 set -u fish_color_cwd brcyan
 if [ $TMUX ]
-  set -u fish_color_prompt_bg yellow
+  set light_dark (cat ~/.my_colors)
+  if test "$light_dark" = "light" 
+    set -u fish_color_prompt_bg bdae93
+  else
+    set -u fish_color_prompt_bg 665c54
+  end
 else
-  set -u fish_color_prompt_bg red
+  set -u fish_color_prompt_bg 83a598
 end
 set -u fish_color_command normal
 set -u fish_color_error normal
