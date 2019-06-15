@@ -17,12 +17,3 @@ color13 = #8f3f71
 color6 = #689d6a
 color14 = #427b58
 color7 = #7c6f64
-
-[options]
-font = DejaVuSansMono Nerd Font Mono 11
-allow_bold = on
-search_wrap = true
-scroll_on_output = false
-scroll_on_keystroke = true
-clickable_url = yes
-browser = xdg-open
