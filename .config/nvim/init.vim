@@ -87,6 +87,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
   Plug 'tpope/vim-vinegar'
+  Plug 'jiangmiao/auto-pairs'
   Plug 'jpalardy/vim-slime'
   Plug 'hanschen/vim-ipython-cell'
   Plug 'morhetz/gruvbox'
@@ -104,7 +105,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'zhimsel/vim-stay'
   Plug 'Konfekt/FastFold'
   Plug 'tmhedberg/SimpylFold'
+  Plug 'andymass/vim-matchup'
 call plug#end()
+
+let g:AutoPairsFlyMode = 1
 
 nmap zuz <Plug>(FastFoldUpdate)
 let g:fastfold_savehook = 1
