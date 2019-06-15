@@ -1,7 +1,7 @@
 #!/bin/sh
 
 xrdb -load ~/.Xresources
-xrdb -override ~/.dotfiles/.Xresources_grb_light
+xrdb -override ~/.dotfiles/.Xresources_grb_$(cat ~/.my_colors)
 
 for f in /etc/X11/xinit/xinitrc.d/?*.sh; do
     [ -x "$f" ] && . "$f"
