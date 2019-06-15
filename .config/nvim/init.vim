@@ -260,6 +260,10 @@ let g:gruvbox_contrast_dark = 'medium'
 " let g:gruvbox_color_column = 'dark0'
 let g:gruvbox_hls_cursor = 'red'
 colorscheme gruvbox
+" if filereadable(expand("~/.vimrc_background"))
+"   let base16colorspace=256
+"   source ~/.vimrc_background
+" endif
 set background=light
 " set background=dark
 
