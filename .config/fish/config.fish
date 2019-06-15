@@ -37,7 +37,7 @@ if [ $TMUX ]
     set -u fish_color_prompt_bg 665c54
   end
 else
-  set -u fish_color_prompt_bg 83a598
+  set -u fish_color_prompt_bg red
 end
 set -u fish_color_command normal
 set -u fish_color_error normal
