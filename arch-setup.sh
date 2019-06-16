@@ -2,13 +2,17 @@
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-sudo pacman -Sy networkmanager os-prober openssh pepper-flash opencv ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp htop intel-gpu-tools cmake libva-intel-driver libva-utils intel-media-driver terminus-font ttf-ubuntu-font-family ttf-hack ttf-dejavu xorg fortune-mod workrave base-devel feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk ccache boost eigen3 xf86-video-intel rofi dunst zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift chromium i3-wm i3status perl-anyevent-i3 qt5-styleplugins python-gobject aws-cli unzip xautolock imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso ttf-liberation libreoffice-fresh inkscape gimp hunspell-en_US hplip avahi cups lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks texlive-core texlive-langextra pandoc xorg-xinit otf-font-awesome pdfgrep xbindkeys gdb cppcheck valgrind perf llvm ripgrep cython aria2 tk libjpeg-turbo ctags time autojump yarn autopep8 ttf-freefont ttf-arphic-uming ttf-baekmuk noto-fonts-emoji ranger w3m atool elinks odt2txt mediainfo highlight ffmpegthumbnailer atool noto-fonts-emoji yapf vte3 pandoc-citeproc clang luarocks
+sudo pacman -Sy networkmanager os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod workrave feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift chromium i3-wm i3status perl-anyevent-i3 qt5-styleplugins python-gobject aws-cli unzip xautolock imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso libreoffice-fresh inkscape gimp hunspell-en_US hplip avahi cups lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks texlive-core texlive-langextra pandoc xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time autojump yarn ranger w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool yapf vte3 pandoc-citeproc luarocks
 
-sudo pacman -Sy ipython python-pip python-sh python-language-server python-ipdb
+sudo pacman -Sy base-devel clang llvm cmake gdb valgrind perf cppcheck ccache eigen3 boost
+
+sudo pacman -Sy ipython python-pip python-sh python-language-server python-ipdb cython autopep8
 
 sudo pacman -Sy python-numpy python-matplotlib python-scipy python-scikit-learn python-pandas
 
-sudo pacman -Sy python-pytorch
+sudo pacman -Sy opencv python-pytorch
+
+sudo pacman -Sy ttf-ubuntu-font-family ttf-hack ttf-dejavu ttf-freefont terminus-font ttf-arphic-uming ttf-baekmuk noto-fonts-emoji ttf-liberation otf-font-awesome
 
 # latex language server
 sudo luarocks install --server=http://luarocks.org/dev digestif
@@ -40,10 +44,10 @@ makepkg -si
 cd ~/.dotfiles
 git clone https://github.com/hastinbe/i3-volume.git
 
-cd ~/Downloads	
-git clone --recursive https://github.com/hovnatan/termite	
-cd termite	
-make	
+cd ~/Downloads
+git clone --recursive https://github.com/hovnatan/termite
+cd termite
+make
 sudo make install
 
 # change tar.gz to tar and specify makeflags to correct number of cores
@@ -65,7 +69,7 @@ sudo mkinitcpio -p linux
 # where offset can be get from
 # sudo filefrag -v /swapfile | awk '{ if($1=="0:"){print $4} }'
 # sudo nvim /etc/mkinitcpio.conf
-# add in HOOKS resume before filesystems 
+# add in HOOKS resume before filesystems
 # sudo mkinitcpio -p linux
 # sudo grub-mkconfig -o /boot/grub/grub.cfg
 # sudo nvim /etc/systemd/sleep.conf
