@@ -70,6 +70,9 @@ set undofile
 set undodir=$HOME/.vimundo  
 set undolevels=1000         
 set undoreload=10000        
+
+let g:undotree_SetFocusWhenToggle = 1
+
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
   Plug 'junegunn/limelight.vim'
@@ -106,8 +109,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'Konfekt/FastFold'
   Plug 'tmhedberg/SimpylFold'
   Plug 'andymass/vim-matchup'
-  Plug 'kamykn/spelunker.vim'
+  Plug 'mbbill/undotree'
 call plug#end()
+
+nnoremap <F5> :UndotreeToggle<cr>
 
 let g:AutoPairsFlyMode = 1
 
@@ -287,9 +292,11 @@ hi CocInfoSign guifg=#b57614
 hi CocWarningSign guifg=#b57614
 
 au FileType markdown,mkd,md,text
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
+                \ setlocal spell
 au FileType tex,latex
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
+                \ setlocal spell
 au FileType json
       \ set conceallevel=0
 au FileType cpp
