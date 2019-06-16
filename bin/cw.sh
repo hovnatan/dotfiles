@@ -11,3 +11,5 @@ killall -USR1 termite
 echo -n "set -U _reload_color_config ""$COLOR" | fish
 
 color_switcher.sh ~/.config/zathura/zathurarc ~/.config/zathura/option ~/.config/zathura/colors/$COLOR
+
+color_switcher.sh ~/.dotfiles/.config/gtk-3.0/settings.ini ~/.dotfiles/.config/gtk-3.0/settings_option ~/.dotfiles/.config/gtk-3.0/colors/$COLOR
