@@ -66,12 +66,17 @@ syntax on
 nnoremap <S-h> gT
 nnoremap <S-l> gt
 set clipboard+=unnamedplus
-set undofile                
-set undodir=$HOME/.vimundo  
-set undolevels=1000         
-set undoreload=10000        
+set undofile
+set undodir=$HOME/.vimundo
+set undolevels=1000
+set undoreload=10000
 
 let g:undotree_SetFocusWhenToggle = 1
+
+let g:strip_whitespace_on_save = 1
+let g:strip_whitespace_confirm = 0
+let g:strip_whitelines_at_eof = 1
+let g:show_spaces_that_precede_tabs = 1
 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
@@ -110,6 +115,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tmhedberg/SimpylFold'
   Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
+  Plug 'ntpeters/vim-better-whitespace'
 call plug#end()
 
 nnoremap <F5> :UndotreeToggle<cr>
@@ -149,7 +155,7 @@ nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 
 let g:coc_global_extensions = [ 'coc-git', 'coc-emoji', 'coc-python',
       \ 'coc-prettier', 'coc-json', 'coc-word',
-      \ 'coc-vimtex', 'coc-highlight', 'coc-lists' ] 
+      \ 'coc-vimtex', 'coc-highlight', 'coc-lists' ]
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',
@@ -315,7 +321,7 @@ let g:netrw_winsize   = 20
 let g:netrw_liststyle = 3
 let g:netrw_altv      = 1
 let g:netrw_cursor    = 1
-let g:netrw_browsex_viewer="xdg-open" 
+let g:netrw_browsex_viewer="xdg-open"
 autocmd FileType netrw setl bufhidden=delete
 
 tnoremap <Esc> <C-\><C-n>
