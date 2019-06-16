@@ -179,7 +179,7 @@ client.placeholder      $base00 $base00 $base05 $base00 $base00
 client.background       $base07
 
 hide_edge_borders smart
-default_border pixel 1 
+default_border pixel 1
 
 bindsym XF86MonBrightnessUp exec xbacklight -inc 10
 bindsym XF86MonBrightnessDown exec xbacklight -dec 10
@@ -208,7 +208,7 @@ exec --no-startup-id libinput-gestures
 exec_always --no-startup-id ~/.config/i3/i3_custom_ipc_server.py
 bindsym $mod+space exec --no-startup-id key_layout_switch.sh && pkill -RTMIN+10 i3blocks
 
-exec --no-startup-id workrave 
+exec --no-startup-id workrave
 for_window [class="Workrave"] floating enable
 exec --no-startup-id dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:'normal'
 bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh

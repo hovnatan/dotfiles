@@ -9,4 +9,3 @@ rofi.padding:               0
 rofi.separator-style:       none
 rofi.hide-scrollbar:        true
 rofi.line-margin:           0
-rofi.theme: gruvbox-light.rasi

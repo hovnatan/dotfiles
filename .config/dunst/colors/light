@@ -1,0 +1,14 @@
+[urgency_low]
+    timeout = 5
+    background = "#1d2021"
+    foreground = "#ebdbb2"
+
+[urgency_normal]
+    timeout = 20
+    background = "#1d2021"
+    foreground = "#ebdbb2"
+
+[urgency_critical]
+    timeout = 0
+    background = "#1d2021"
+    foreground = "#ebdbb2"
