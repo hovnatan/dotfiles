@@ -19,3 +19,6 @@ color_switcher.sh ~/.dotfiles/.config/dunst/dunstrc ~/.dotfiles/.config/dunst/op
 killall dunst
 
 i3-msg reload
+
+rm ~/.chrome_theme
+ln -sf ~/.dotfiles/chrome_$COLOR ~/.chrome_theme
