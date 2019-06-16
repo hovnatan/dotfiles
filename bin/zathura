@@ -1,4 +1,0 @@
-#!/bin/bash
-
-light_dark=$(cat ~/.my_colors)
-/usr/bin/zathura -c "~/.dotfiles/.config/zathura_""$light_dark" "$@"
