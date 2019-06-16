@@ -106,6 +106,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'Konfekt/FastFold'
   Plug 'tmhedberg/SimpylFold'
   Plug 'andymass/vim-matchup'
+  Plug 'kamykn/spelunker.vim'
 call plug#end()
 
 let g:AutoPairsFlyMode = 1
@@ -264,7 +265,7 @@ let g:gruvbox_contrast_dark = 'medium'
 " let g:gruvbox_color_column = 'dark0'
 let g:gruvbox_hls_cursor = 'red'
 colorscheme gruvbox
-let background = readfile(expand("~/.my_colors"))
+let &background=readfile(expand("~/.my_colors"))[0]
 
 let g:tex_flavor='latex'
 let g:vimtex_view_method='zathura'
@@ -286,11 +287,9 @@ hi CocInfoSign guifg=#b57614
 hi CocWarningSign guifg=#b57614
 
 au FileType markdown,mkd,md,text
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
-                \ setlocal spell
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
 au FileType tex,latex
-                \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
-                \ setlocal spell
+                \ let b:dispatch = '~/.config/nvim/preview.sh %:p'
 au FileType json
       \ set conceallevel=0
 au FileType cpp
