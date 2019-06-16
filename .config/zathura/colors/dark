@@ -1,0 +1,7 @@
+set recolor-darkcolor "#ebdbb2"
+set recolor-lightcolor "#282828"
+set default-bg "#282828"
+set statusbar-bg "#282828"
+set statusbar-fg "#ebdbb2"
+map r recolor
+set selection-clipboard clipboard
