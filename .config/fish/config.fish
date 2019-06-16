@@ -31,7 +31,7 @@ set -U fish_cursor_visual block
 set -u fish_color_cwd brcyan
 if [ $TMUX ]
   set light_dark (cat ~/.my_colors)
-  if test "$light_dark" = "light" 
+  if test "$light_dark" = "light"
     set -u fish_color_prompt_bg bdae93
   else
     set -u fish_color_prompt_bg 665c54
@@ -39,12 +39,21 @@ if [ $TMUX ]
 else
   set -u fish_color_prompt_bg red
 end
+
 set -u fish_color_command normal
 set -u fish_color_error normal
 set -u fish_color_param normal
 
 function bell_on_prompt --on-event fish_prompt
     echo -e -n "\a"
+end
+
+function reload-color-config --on-variable _reload_color_config
+  if test "$_reload_color_config" = "light"
+    set -u fish_color_prompt_bg bdae93
+  else
+    set -u fish_color_prompt_bg 665c54
+  end
 end
 
 set -U fish_user_paths ~/.dotfiles/bin
