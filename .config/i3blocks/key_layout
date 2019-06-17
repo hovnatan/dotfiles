@@ -3,12 +3,4 @@ case $BLOCK_BUTTON in
     1) key_layout_switch.sh ;;  # left click, switch
 esac
 LNG=$(check_layout.sh)
-case $LNG in
-  "us")
-    CLR=\#79740e ;; # green
-  "am")
-    CLR=\#af3a03 ;; # red
-esac
 echo "$LNG"
-echo "$LNG"
-echo "$CLR"

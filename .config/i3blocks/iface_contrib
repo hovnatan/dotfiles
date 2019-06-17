@@ -5,12 +5,9 @@ case $BLOCK_BUTTON in
     3) nmcli dev disconnect "$ETH_INTERFACE" > /dev/null ; sleep 1 ;;
 esac
 
-echo eth # full text
-echo eth # short text
 STATUS=$(nmcli c show --active | grep ethernet | awk '{ print $1 }')
 if [ -z "$STATUS" ]; then
-  echo \#af3a03
+  echo noeth
   exit
 fi
-
-echo \#79740e
+echo eth
