@@ -19,18 +19,14 @@
     separator_height = 2
     padding = 8
     horizontal_padding = 8
-    separator_color = "#585858"
     startup_notification = false
     icon_position = left
     max_icon_size = 128
     icon_path=/usr/share/icons/Gruvbox/scalable/devices:/usr/share/icons/Gruvbox/scalable/status:/usr/share/icons/Gruvbox/scalable/places:/usr/share/icons/Gruvbox/scalable/notifications:/usr/share/icons/Gruvbox/scalable/mimetypes:/usr/share/icons/Gruvbox/scalable/emblems:/usr/share/icons/Gruvbox/scalable/categories:/usr/share/icons/Gruvbox/scalable/apps:/usr/share/icons/Gruvbox/scalable/actions
     frame_width = 2
-#frame_color = "#d79921"
     dmenu = /usr/bin/rofi -dmenu -p dunst:
     hide_duplicatate_count = true
     stack_duplicates = false
-    background = "#1d2021"
-    foreground = "#ebdbb2"
 
 [shortcuts]
     close = ctrl+space
