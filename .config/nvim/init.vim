@@ -259,6 +259,7 @@ nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
 nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
 nnoremap <silent> <space>h  :<C-u>CocList mru<cr>
 nnoremap <silent> <space>b  :<C-u>CocList buffers<cr>
+nnoremap <silent> <space>f  :<C-u>CocList files<cr>
 nnoremap <silent> <space>l  :<C-u>CocList <cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
 nnoremap <silent> <space>g  :<C-u>CocList grep<cr>

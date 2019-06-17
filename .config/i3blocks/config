@@ -55,3 +55,6 @@ command=$SCRIPT_DIR/battery
 #instance=1
 interval=30
 
+[last_ws]
+command=$SCRIPT_DIR/last_workspaces.sh
+signal=10

@@ -63,7 +63,8 @@ class FocusWatcher:
         prev_name = str(event.old.name)
         if not prev_name.isdigit():
             return
-        self.workspace_list.append(prev_name)
+        self.workspace_list.append(prev_name[-1])
+        subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
 
     def on_window_focus(self, i3conn, event):
         with self.window_list_lock:
@@ -125,6 +126,8 @@ class FocusWatcher:
 
         def read(conn):
             data = conn.recv(1024)
+            if DEBUG:
+                print(f"Received {data.decode()}")
             if data == b'switch':
                 # with self.window_list_lock:
                 #     if DEBUG:
@@ -141,11 +144,20 @@ class FocusWatcher:
                 #             break
                 pass
             elif data == b'last_ws':
-                last_ws = str(self.workspace_list)
-                conn.send(last_ws)
+                last_ws = '.'.join(
+                    [str(k) for k in reversed(self.workspace_list)]
+                )
+                if last_ws:
+                    conn.send(last_ws.encode())
+                else:
+                    conn.send("nws".encode())
             elif not data:
+                if DEBUG:
+                    print(f"Closing connection.")
                 selector.unregister(conn)
                 conn.close()
+            else:
+                conn.send("Unrecognized command.".encode())
 
         selector.register(self.listening_socket, selectors.EVENT_READ, accept)
 
@@ -157,7 +169,7 @@ class FocusWatcher:
     def run(self):
         threads = []
         threads.append(threading.Thread(target=self.launch_i3))
-        t_server = threading.Thread(target=self.launch_server)
+        threads.append(threading.Thread(target=self.launch_server))
         for t in threads:
             t.start()
 
