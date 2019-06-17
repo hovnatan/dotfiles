@@ -7,8 +7,6 @@ esac
 
 if [ -z $WIFI_INTERFACE] || [ "$(cat /sys/class/net/$WIFI_INTERFACE/operstate)" != 'up' ]; then
     echo "wifi"
-    echo "wifi"
-    echo "#af3a03"
     exit
 fi
 
@@ -17,11 +15,3 @@ QUALITY="$(grep $WIFI_INTERFACE /proc/net/wireless | awk '{ print int($3 * 100 /
 SSID="$(iw dev ${WIFI_INTERFACE} link | grep SSID | cut -d " " -f 2-)"
 echo "wifi: $SSID $QUALITY%"
 echo "wifi: $SSID $QUALITY%"
-
-if [[ $QUALITY -ge 80 ]]; then
-    echo "#79740e"
-elif [[ $QUALITY -ge 60 ]]; then
-    echo "#b57614"
-else
-    echo "#af3a03"
-fi
