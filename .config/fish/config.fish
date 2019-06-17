@@ -65,6 +65,8 @@ end
 
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
 
+abbr c   "cd"
+abbr n   "nvim"
 abbr r   "ranger"
 abbr z   "zathura"
 abbr zd  "zathura -c ~/.config/zathura_lt"
@@ -78,6 +80,7 @@ abbr gd  "git diff"
 abbr ta  "tmux_attach_deattached.sh"
 abbr tl  "tmux list-sessions"
 abbr rgh "rg --hidden"
+abbr rgah "rga --hidden"
 abbr mpvhq "mpv --profile=hq"
 abbr mpvnr "mpv --no-resume-playback"
 abbr mpvhqnr "mpv --no-resume-playback --profile=hq"
