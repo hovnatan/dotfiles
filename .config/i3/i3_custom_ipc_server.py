@@ -10,7 +10,6 @@ import collections
 import i3ipc
 
 SOCKET_FILE = '/tmp/i3_focus_last'
-MAX_WIN_HISTORY = 15
 
 DEBUG = False
 
@@ -50,6 +49,7 @@ class FocusWatcher:
         self.listening_socket.listen(1)
         self.window_list = collections.OrderedDict()
         self.window_list_lock = threading.Lock()
+        self.workspace_list = collections.deque(maxlen=3)
 
     def on_window_close(self, i3conn, event):
         with self.window_list_lock:
@@ -60,13 +60,10 @@ class FocusWatcher:
     def on_workspace_focus(self, i3conn, event):
         if DEBUG:
             print("hello")
-
-        subprocess.run(
-            [
-                "dunstify", "-t", "2000",
-                str(event.old.name) + " was previous workspace"
-            ]
-        )
+        prev_name = str(event.old.name)
+        if not prev_name.isdigit():
+            return
+        self.workspace_list.append(prev_name)
 
     def on_window_focus(self, i3conn, event):
         with self.window_list_lock:
@@ -128,22 +125,24 @@ class FocusWatcher:
 
         def read(conn):
             data = conn.recv(1024)
-            if DEBUG:
-                print("reading0")
             if data == b'switch':
-                with self.window_list_lock:
-                    if DEBUG:
-                        print("reading")
-                    tree = self.i3.get_tree()
-                    windows = set(w.id for w in tree.leaves())
-                    for k, window_id in enumerate(reversed(self.window_list)):
-                        if k == 0:
-                            continue
-                        if window_id not in windows:
-                            del self.window_list[window_id]
-                        else:
-                            self.i3.command('[con_id=%s] focus' % window_id)
-                            break
+                # with self.window_list_lock:
+                #     if DEBUG:
+                #         print("reading")
+                #     tree = self.i3.get_tree()
+                #     windows = set(w.id for w in tree.leaves())
+                #     for k, window_id in enumerate(reversed(self.window_list)):
+                #         if k == 0:
+                #             continue
+                #         if window_id not in windows:
+                #             del self.window_list[window_id]
+                #         else:
+                #             self.i3.command('[con_id=%s] focus' % window_id)
+                #             break
+                pass
+            elif data == b'last_ws':
+                last_ws = str(self.workspace_list)
+                conn.send(last_ws)
             elif not data:
                 selector.unregister(conn)
                 conn.close()
@@ -158,7 +157,7 @@ class FocusWatcher:
     def run(self):
         threads = []
         threads.append(threading.Thread(target=self.launch_i3))
-        # t_server = threading.Thread(target=self.launch_server)
+        t_server = threading.Thread(target=self.launch_server)
         for t in threads:
             t.start()
 
