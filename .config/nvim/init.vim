@@ -95,7 +95,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
   Plug 'tpope/vim-vinegar'
-  Plug 'jiangmiao/auto-pairs'
   Plug 'jpalardy/vim-slime'
   Plug 'hanschen/vim-ipython-cell'
   Plug 'morhetz/gruvbox'
@@ -295,8 +294,8 @@ endfor
 
 au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
 
-hi CocInfoSign guifg=#b57614
-hi CocWarningSign guifg=#b57614
+" hi CocInfoSign guifg=#b57614
+" hi CocWarningSign guifg=#b57614
 
 au FileType markdown,mkd,md,text
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
