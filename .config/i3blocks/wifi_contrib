@@ -13,5 +13,5 @@ fi
 QUALITY="$(grep $WIFI_INTERFACE /proc/net/wireless | awk '{ print int($3 * 100 / 70) }')"
 
 SSID="$(iw dev ${WIFI_INTERFACE} link | grep SSID | cut -d " " -f 2-)"
-echo "wifi: $SSID $QUALITY%"
-echo "wifi: $SSID $QUALITY%"
+echo "$SSID $QUALITY%"
+echo "$SSID $QUALITY%"

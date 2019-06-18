@@ -43,6 +43,7 @@ interval=30
 #interval=30
 
 [wifi_contrib]
+label=
 command=$SCRIPT_DIR/wifi_contrib
 interval=30
 
