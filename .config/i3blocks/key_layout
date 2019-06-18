@@ -3,4 +3,8 @@ case $BLOCK_BUTTON in
     1) key_layout_switch.sh ;;  # left click, switch
 esac
 LNG=$(check_layout.sh)
-echo "$LNG"
+if [ "$LNG" == "am" ]; then
+  echo 🇦🇲
+else
+  echo 🇺🇸
+fi
