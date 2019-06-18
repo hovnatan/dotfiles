@@ -119,8 +119,6 @@ call plug#end()
 
 nnoremap <F5> :UndotreeToggle<cr>
 
-let g:AutoPairsFlyMode = 1
-
 nmap zuz <Plug>(FastFoldUpdate)
 let g:fastfold_savehook = 1
 let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
