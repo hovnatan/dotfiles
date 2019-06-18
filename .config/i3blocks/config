@@ -11,6 +11,7 @@ command=date +'%m/%d %a'; [[ -z "${BLOCK_BUTTON}" ]] || chromium calendar.google
 interval=300
 
 [key_layout]
+label=⌨
 command=$SCRIPT_DIR/key_layout
 interval=once
 signal=10
