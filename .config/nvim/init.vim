@@ -111,7 +111,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'zhimsel/vim-stay'
   Plug 'Konfekt/FastFold'
-  Plug 'tmhedberg/SimpylFold'
   Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
@@ -126,12 +125,6 @@ let g:fastfold_fold_movement_commands = [']z', '[z', 'zj', 'zk']
 
 let g:slime_target = 'tmux'
 let g:slime_python_ipython = 1
-
-autocmd FileType python nnoremap <buffer> <F6> :IPythonCellExecuteCell<CR>
-autocmd FileType python inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR>
-
-autocmd FileType python nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR>
-autocmd FileType python inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR>
 
 let g:ipython_cell_delimit_cells_by = 'tags'
 
@@ -306,7 +299,13 @@ au FileType json
 au FileType cpp
                 \ set iskeyword-=.
 au FileType python
-                \ set iskeyword-=.
+                \ set iskeyword-=. |
+                \ nnoremap <buffer> <F6> :IPythonCellExecuteCell<CR> |
+                \ inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR> |
+                \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
+                \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
+                \ set foldmethod=indent
+
 au BufWritePost *.sh silent! !chmod +x %:p
 
 aug i3config_ft_detection
