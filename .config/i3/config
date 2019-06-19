@@ -174,7 +174,7 @@ set_from_resource $base0F i3wm.base0F
 bar {
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     position top
-    font pango:DejaVu Sans Mono, Font Awesome 5 Free 11
+    font pango:DejaVu Sans Mono, FontAwesome 11
 
     colors {
         background $base00
