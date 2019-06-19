@@ -240,6 +240,7 @@ class FocusWatcher:
         threads = []
         threads.append(threading.Thread(target=self.launch_i3))
         threads.append(threading.Thread(target=self.launch_server))
+        threads[-1].daemon = True
         for t in threads:
             t.start()
 
