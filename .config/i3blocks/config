@@ -20,9 +20,8 @@ command=$SCRIPT_DIR/load_average
 interval=10
 
 [volume]
+command=$SCRIPT_DIR/volume
 label=♪
-instance=Master
-#instance=PCM
 interval=once
 signal=10
 

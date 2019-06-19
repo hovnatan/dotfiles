@@ -1,0 +1,12 @@
+#!/bin/bash
+
+volumepath="$HOME"/.dotfiles/i3-volume
+volumestep=5
+
+case $BLOCK_BUTTON in
+  3) $volumepath/volume -m ;;
+  4) $volumepath/volume -i $volumestep ;;
+  5)  $volumepath/volume -d $volumestep ;;
+esac
+
+echo $($volumepath/volume -g)%
