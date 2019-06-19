@@ -42,7 +42,7 @@ cd yay
 makepkg -si
 
 cd ~/.dotfiles
-git clone https://github.com/hovnatan/i3-volume.git
+git clone git@github.com:hovnatan/i3-volume.git
 
 cd ~/Downloads
 git clone --recursive https://github.com/hovnatan/termite

@@ -9,4 +9,4 @@ case $BLOCK_BUTTON in
   5)  $volumepath/volume -d $volumestep ;;
 esac
 
-echo $($volumepath/volume -g)%
+echo $($volumepath/volume -g)
