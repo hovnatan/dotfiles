@@ -40,20 +40,16 @@ if DEBUG:
         signal.signal(signal.SIGUSR1, debug)  # Register handler
 
 
-class LRU(collections.OrderedDict):
+class SizedAndUpdatedOrderedDict(collections.OrderedDict):
     'Limit size, evicting the least recently looked-up key when full'
 
     def __init__(self, maxsize=4, *args, **kwds):
         self.maxsize = maxsize
         super().__init__(*args, **kwds)
 
-    def __getitem__(self, key):
-        value = super().__getitem__(key)
-        self.move_to_end(key)
-        return value
-
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
+        self.move_to_end(key)
         if len(self) > self.maxsize:
             oldest = next(iter(self))
             del self[oldest]
@@ -77,7 +73,7 @@ class FocusWatcher:
         self.window_list = collections.OrderedDict()
         self.window_list_lock = threading.Lock()
         self.workspace_list_lock = threading.RLock()
-        self.workspace_list = LRU(maxsize=4)
+        self.workspace_list = SizedAndUpdatedOrderedDict(maxsize=4)
         self.mode_ws = False
         self.ws_index = 0
         self.workspace_current_lock = threading.RLock()
