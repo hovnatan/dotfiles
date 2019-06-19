@@ -33,6 +33,9 @@ if DEBUG:
         message += ''.join(traceback.format_stack(frame))
         i.interact(message)
 
+    # f = open("/tmp/ipc_server.log", "w")
+    # sys.stdout = f
+
     def listen():
         signal.signal(signal.SIGUSR1, debug)  # Register handler
 
@@ -63,6 +66,7 @@ class FocusWatcher:
         self.i3.on("window::close", self.on_window_close)
         self.i3.on("workspace::focus", self.on_workspace_focus)
         self.i3.on("mode", self.on_mode_change)
+        self.i3.on('ipc_shutdown', self.on_shutdown)
         self.listening_socket = socket.socket(
             socket.AF_UNIX, socket.SOCK_STREAM
         )
@@ -78,6 +82,13 @@ class FocusWatcher:
         self.ws_index = 0
         self.workspace_current_lock = threading.RLock()
         self.current_ws = -1
+
+    def on_shutdown(self, i3conn):
+        try:
+            sh.pkill("-f", "i3_custom_ipc_client.py")
+        except sh.ErrorReturnCode:
+            pass
+        sys.exit(0)
 
     def on_window_close(self, i3conn, event):
         with self.window_list_lock:
@@ -209,6 +220,7 @@ class FocusWatcher:
             #         conn.send("nws".encode())
             elif data == b'next_ws':
                 self.workspace_back()
+                conn.send("OK".encode())
             elif not data:
                 if DEBUG:
                     print(f"Closing connection.")
@@ -239,7 +251,7 @@ if __name__ == '__main__':
     for line in res.splitlines():
         if "python3" in line and str(os.getpid()) not in line:
             print("I3 IPC server already running")
-            sys.exit(1)
+            os.exit(1)
 
     try:
         sh.pkill("-f", "i3_custom_ipc_client.py")
