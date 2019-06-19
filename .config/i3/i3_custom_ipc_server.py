@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import socket
 import selectors
 import subprocess
 import threading
 import collections
+
+import sh
 
 import i3ipc
 
@@ -34,12 +37,32 @@ if DEBUG:
         signal.signal(signal.SIGUSR1, debug)  # Register handler
 
 
+class LRU(collections.OrderedDict):
+    'Limit size, evicting the least recently looked-up key when full'
+
+    def __init__(self, maxsize=4, *args, **kwds):
+        self.maxsize = maxsize
+        super().__init__(*args, **kwds)
+
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        if len(self) > self.maxsize:
+            oldest = next(iter(self))
+            del self[oldest]
+
+
 class FocusWatcher:
     def __init__(self):
         self.i3 = i3ipc.Connection()
         self.i3.on('window::focus', self.on_window_focus)
         self.i3.on("window::close", self.on_window_close)
         self.i3.on("workspace::focus", self.on_workspace_focus)
+        self.i3.on("mode", self.on_mode_change)
         self.listening_socket = socket.socket(
             socket.AF_UNIX, socket.SOCK_STREAM
         )
@@ -49,7 +72,12 @@ class FocusWatcher:
         self.listening_socket.listen(1)
         self.window_list = collections.OrderedDict()
         self.window_list_lock = threading.Lock()
-        self.workspace_list = collections.deque(maxlen=3)
+        self.workspace_list_lock = threading.RLock()
+        self.workspace_list = LRU(maxsize=4)
+        self.mode_ws = False
+        self.ws_index = 0
+        self.workspace_current_lock = threading.RLock()
+        self.current_ws = -1
 
     def on_window_close(self, i3conn, event):
         with self.window_list_lock:
@@ -57,14 +85,42 @@ class FocusWatcher:
             if window_id in self.window_list:
                 del self.window_list[window_id]
 
+    def on_mode_change(self, i3conn, event):
+        with self.workspace_list_lock:
+            if event.change != "ws_change":
+                if self.mode_ws:
+                    self.mode_ws = False
+                    with self.workspace_current_lock:
+                        self.workspace_list[self.current_ws] = True
+                return
+            self.mode_ws = True
+            self.ws_index = 1
+            self.workspace_back()
+
+    def workspace_back(self):
+        with self.workspace_list_lock:
+            curr_length = len(self.workspace_list)
+            if curr_length < 2:
+                return
+            k = self.ws_index % curr_length
+            for check_k, ws in enumerate(reversed(self.workspace_list)):
+                if check_k != k:
+                    continue
+                self.i3.command(f"workspace {ws}")
+                break
+            self.ws_index += 1
+
     def on_workspace_focus(self, i3conn, event):
-        if DEBUG:
-            print("hello")
-        prev_name = str(event.old.name)
-        if not prev_name.isdigit():
-            return
-        self.workspace_list.append(prev_name[-1])
-        subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
+        with self.workspace_current_lock:
+            self.current_ws = str(event.current.name)
+            if DEBUG:
+                print(f"hello ws {self.current_ws}")
+            with self.workspace_list_lock:
+                if self.mode_ws:
+                    return
+                if not self.current_ws.isdigit():
+                    return
+                self.workspace_list[self.current_ws] = True
 
     def on_window_focus(self, i3conn, event):
         with self.window_list_lock:
@@ -143,14 +199,16 @@ class FocusWatcher:
                 #             self.i3.command('[con_id=%s] focus' % window_id)
                 #             break
                 pass
-            elif data == b'last_ws':
-                last_ws = '.'.join(
-                    [str(k) for k in reversed(self.workspace_list)]
-                )
-                if last_ws:
-                    conn.send(last_ws.encode())
-                else:
-                    conn.send("nws".encode())
+            # elif data == b'last_ws':
+            #     last_ws = '.'.join(
+            #         [str(k) for k in reversed(self.workspace_list)]
+            #     )
+            #     if last_ws:
+            #         conn.send(last_ws.encode())
+            #     else:
+            #         conn.send("nws".encode())
+            elif data == b'next_ws':
+                self.workspace_back()
             elif not data:
                 if DEBUG:
                     print(f"Closing connection.")
@@ -175,6 +233,18 @@ class FocusWatcher:
 
 
 if __name__ == '__main__':
+    res = sh.grep(
+        sh.ps("aux", cols=1000), "--color=never", "i3_custom_ipc_server.py"
+    )
+    for line in res.splitlines():
+        if "python3" in line and str(os.getpid()) not in line:
+            print("I3 IPC server already running")
+            sys.exit(1)
+
+    try:
+        sh.pkill("-f", "i3_custom_ipc_client.py")
+    except sh.ErrorReturnCode:
+        pass
     if DEBUG:
         listen()
 

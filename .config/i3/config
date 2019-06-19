@@ -116,6 +116,14 @@ mode "resize" {
 }
 bindcode $mod+27 mode "resize"
 
+mode "ws_change" {
+  bindcode 46 mode "default"
+  bindcode 41 mode "default"
+  bindsym space mode "default"
+  bindsym $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
+}
+bindsym $mod+Tab mode "ws_change"
+
 mode "move" {
         bindsym --release h exec --no-startup-id xdotool key Left
         bindsym --release j exec --no-startup-id xdotool key Down
@@ -197,7 +205,7 @@ bindsym XF86AudioPause exec playerctl pause
 bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
-bindsym $mod+Tab workspace back_and_forth
+# bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
 exec --no-startup-id setxkbmap -option ""
