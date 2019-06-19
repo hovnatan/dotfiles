@@ -12,7 +12,7 @@ sudo pacman -Sy python-numpy python-matplotlib python-scipy python-scikit-learn 
 
 sudo pacman -Sy opencv python-pytorch
 
-sudo pacman -Sy ttf-ubuntu-font-family ttf-hack ttf-dejavu ttf-freefont terminus-font ttf-arphic-uming ttf-baekmuk noto-fonts-emoji ttf-liberation otf-font-awesome
+sudo pacman -Sy ttf-ubuntu-font-family ttf-hack ttf-dejavu ttf-freefont terminus-font ttf-arphic-uming ttf-baekmuk noto-fonts-emoji ttf-liberation awesome-terminal-fonts
 
 # latex language server
 sudo luarocks install --server=http://luarocks.org/dev digestif
