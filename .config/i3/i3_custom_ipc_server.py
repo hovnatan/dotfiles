@@ -13,6 +13,7 @@ import sh
 import i3ipc
 
 SOCKET_FILE = '/tmp/i3_focus_last'
+NUM_WORKSPACES_TO_FOLLOW = 3
 
 DEBUG = False
 
@@ -73,7 +74,9 @@ class FocusWatcher:
         self.window_list = collections.OrderedDict()
         self.window_list_lock = threading.Lock()
         self.workspace_list_lock = threading.RLock()
-        self.workspace_list = SizedAndUpdatedOrderedDict(maxsize=4)
+        self.workspace_list = SizedAndUpdatedOrderedDict(
+            maxsize=NUM_WORKSPACES_TO_FOLLOW
+        )
         self.mode_ws = False
         self.ws_index = 0
         self.workspace_current_lock = threading.RLock()
