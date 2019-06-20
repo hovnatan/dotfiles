@@ -40,6 +40,8 @@ systemctl --user enable pulseaudio
 git clone https://aur.archlinux.org/yay.git
 cd yay
 makepkg -si
+rm -rf ~/.config/yay
+ln -sf ~/.dotfiles/.config/yay/ ~/.config/yay
 
 cd ~/.dotfiles
 git clone git@github.com:hovnatan/i3-volume.git
