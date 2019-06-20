@@ -115,6 +115,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'ntpeters/vim-better-whitespace'
 call plug#end()
 
+let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
+
 nnoremap <F5> :UndotreeToggle<cr>
 
 nmap zuz <Plug>(FastFoldUpdate)
