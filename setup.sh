@@ -5,7 +5,7 @@ cd ~
 rm -rf ~/.tmux.conf
 ln -s ~/.dotfiles/.tmux.conf .tmux.conf
 rm -rf ~/.tmux/plugins/tpm
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm 
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 
 rm -rf ~/.config/redshift.conf
 ln -s ~/.dotfiles/.config/redshift.conf ~/.config/redshift.conf
@@ -63,7 +63,7 @@ ln -s ~/.dotfiles/.config/termite ~/.config/termite
 # mkdir ~/.terminfo
 # cd ~/.terminfo
 # wget https://raw.githubusercontent.com/thestinger/termite/master/termite.terminfo
-# cd ~ 
+# cd ~
 
 rm -rf ~/.config/rofi/
 ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
@@ -118,7 +118,7 @@ git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
 ln -sf ~/.dotfiles/.config/qt5ct/ ~/.config/qt5ct
 
-#cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf 
+#cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf
 sudo gpasswd -a $USER lp
 sudo gpasswd -a $USER input
 
@@ -140,7 +140,7 @@ git clone https://github.com/salimundo/Pop-gruvbox.git
 cd ~
 
 #gruvbox theme
-#yay -S oomox 
+#yay -S oomox
 #git clone https://github.com/Yethiel/gruvmox-colors.git
 #cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
 cd ~/.dotfiles
