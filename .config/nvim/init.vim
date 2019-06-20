@@ -74,9 +74,8 @@ set undoreload=10000
 let g:undotree_SetFocusWhenToggle = 1
 
 let g:strip_whitespace_on_save = 1
-let g:strip_whitespace_confirm = 0
+let g:strip_whitespace_confirm = 1
 let g:strip_whitelines_at_eof = 1
-let g:show_spaces_that_precede_tabs = 1
 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
