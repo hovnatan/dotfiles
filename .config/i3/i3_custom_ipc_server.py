@@ -98,7 +98,8 @@ class FocusWatcher:
                 if self.mode_ws:
                     self.mode_ws = False
                     with self.workspace_current_lock:
-                        self.workspace_list[self.current_ws] = True
+                        if self.current_ws != -1:
+                            self.workspace_list[self.current_ws] = True
                 return
             self.mode_ws = True
             self.ws_index = 1
