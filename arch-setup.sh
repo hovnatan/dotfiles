@@ -6,7 +6,7 @@ sudo pacman -Sy networkmanager os-prober openssh pepper-flash ethtool lsb-releas
 
 sudo pacman -Sy base-devel clang llvm cmake gdb valgrind perf cppcheck ccache eigen3 boost
 
-sudo pacman -Sy ipython python-pip python-sh python-language-server python-ipdb cython autopep8
+sudo pacman -Sy ipython python-pip python-sh python-language-server python-ipdb cython autopep8 python-pynput
 
 sudo pacman -Sy python-numpy python-matplotlib python-scipy python-scikit-learn python-pandas
 
