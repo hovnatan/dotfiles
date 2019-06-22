@@ -11,6 +11,7 @@ import collections
 import sh
 
 import i3ipc
+from pynput import keyboard
 
 SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 3
@@ -107,6 +108,13 @@ class FocusWatcher:
             self.mode_ws = True
             self.ws_index = 1
             self.workspace_back()
+            listener = keyboard.Listener(on_release=self.on_release)
+            listener.start()
+
+    def on_release(self, key):
+        if key == keyboard.Key.alt:
+            self.i3.command("mode default")
+            return False
 
     def workspace_back(self):
         with self.workspace_list_lock:
@@ -252,7 +260,7 @@ if __name__ == '__main__':
     for line in res.splitlines():
         if "python3" in line and str(os.getpid()) not in line:
             print("I3 IPC server already running")
-            os.exit(1)
+            sys.exit(1)
 
     try:
         sh.pkill("-f", "i3_custom_ipc_client.py")

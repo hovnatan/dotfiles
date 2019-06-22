@@ -117,22 +117,6 @@ mode "resize" {
 bindcode $mod+27 mode "resize"
 
 mode "ws_change" {
-  bindcode 38 mode "default"
-  bindcode 39 mode "default"
-  bindcode 40 mode "default"
-  bindcode 41 mode "default"
-  bindcode 42 mode "default"
-  bindcode 43 mode "default"
-  bindcode 44 mode "default"
-  bindcode 45 mode "default"
-  bindcode 46 mode "default"
-  bindcode 47 mode "default"
-  bindcode 48 mode "default"
-  bindcode 49 mode "default"
-  bindcode 50 mode "default"
-
-  bindcode 64 mode "default"
-  bindsym space mode "default"
   bindsym $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
 }
 bindsym $mod+Tab mode "ws_change"
