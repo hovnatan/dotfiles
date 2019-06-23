@@ -222,7 +222,7 @@ bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 exec --no-startup-id dunst
 
 exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh --name dropdown
-for_window [instance="dropdown"] floating enable, resize set 1024 768, move scratchpad
+for_window [instance="dropdown"] floating enable, resize set 960 720, move scratchpad
 bindcode $mod+31 [instance="dropdown"] scratchpad show, move position center
 
 bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
@@ -250,6 +250,6 @@ for_window [title=".*Google Play Music.*"] move to workspace $ws10
 #exec --no-startup-id xbindkeys
 
 floating_minimum_size 50 x 50
-floating_maximum_size 1024 x 768
+floating_maximum_size 960 x 720
 
 focus_follows_mouse no
