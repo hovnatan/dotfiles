@@ -57,7 +57,7 @@ sudo nvim /etc/makepkg.conf
 # uncomment color
 sudo nvim /etc/pacman.conf
 wget https://www.dropbox.com/download?dl=packages/dropbox.py
-yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz
+yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal
 sudo mkinitcpio -p linux
 
 #yay -S interception-caps2esc
