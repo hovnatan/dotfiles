@@ -2,7 +2,7 @@
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-sudo pacman -Sy networkmanager os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod workrave feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift chromium i3-wm i3status perl-anyevent-i3 qt5-styleplugins python-gobject aws-cli unzip xautolock imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso libreoffice-fresh inkscape gimp hunspell-en_US hplip avahi cups lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks texlive-core texlive-langextra pandoc xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time autojump yarn ranger w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool yapf vte3 pandoc-citeproc luarocks tcl tk libimagequant
+sudo pacman -Sy networkmanager os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod workrave feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift chromium i3-wm i3status perl-anyevent-i3 qt5-styleplugins python-gobject aws-cli unzip xautolock imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso libreoffice-fresh inkscape gimp hunspell-en_US hplip avahi cups lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks texlive-core texlive-langextra pandoc xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time autojump yarn ranger w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool yapf pandoc-citeproc luarocks tcl tk libimagequant
 
 sudo pacman -Sy base-devel clang llvm cmake gdb valgrind perf cppcheck ccache eigen3 boost
 
@@ -46,19 +46,19 @@ ln -sf ~/.dotfiles/.config/yay/ ~/.config/yay
 cd ~/.dotfiles
 git clone git@github.com:hovnatan/i3-volume.git
 
-cd ~/Downloads
-git clone --recursive https://github.com/hovnatan/termite
-cd termite
-make
-sudo make install
-
 # change tar.gz to tar and specify makeflags to correct number of cores
 sudo nvim /etc/makepkg.conf
 # uncomment color
 sudo nvim /etc/pacman.conf
 wget https://www.dropbox.com/download?dl=packages/dropbox.py
-yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal
+yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng
 sudo mkinitcpio -p linux
+
+cd ~/Downloads
+git clone --recursive https://github.com/hovnatan/termite
+cd termite
+make
+sudo make install
 
 #yay -S interception-caps2esc
 #sudo cp ~/.dotfiles/udevmon.yaml /etc/
