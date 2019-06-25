@@ -63,6 +63,7 @@ import_miniconda
 conda install pytorch torchvision opencv pillow
 conda update --all
 ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
+# run conda init fish for fish shell integration
 
 #yay -S interception-caps2esc
 #sudo cp ~/.dotfiles/udevmon.yaml /etc/
