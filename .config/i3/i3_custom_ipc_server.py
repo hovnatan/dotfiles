@@ -113,7 +113,7 @@ class FocusWatcher:
             self.workspace_back()
 
     def on_release(self, key):
-        if key == keyboard.Key.alt:
+        if key != keyboard.Key.tab:
             self.i3.command("mode default")
             return False
 
