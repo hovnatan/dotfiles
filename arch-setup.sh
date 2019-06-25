@@ -60,7 +60,7 @@ cd ~/Downloads
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash ./Miniconda3-latest-Linux-x86_64.sh
 import_miniconda
-conda install pytorch torchvision opencv pillow
+conda install pytorch torchvision opencv pillow yapf pylint jedi ipython
 conda update --all
 ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # run conda init fish for fish shell integration
