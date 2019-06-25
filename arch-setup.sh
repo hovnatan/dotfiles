@@ -60,6 +60,10 @@ cd termite
 make
 sudo make install
 
+cd ~/Downloads
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash ./Miniconda3-latest-Linux-x86_64.sh
+
 #yay -S interception-caps2esc
 #sudo cp ~/.dotfiles/udevmon.yaml /etc/
 #sudo systemctl enable udevmon.service
