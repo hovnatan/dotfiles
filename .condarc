@@ -3,3 +3,4 @@ channels:
   - fastai
   - conda-forge
   - defaults
+channel_priority: strict
