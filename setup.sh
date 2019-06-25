@@ -168,6 +168,8 @@ ln -s .Xdefaults .Xresources
 
 ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/
 
+ln -s ~/.dotfiles/.condarc ~/.condarc
+
 #for printer discovery
 #sudo systemctl start avahi-daemon.service
 #for printing
