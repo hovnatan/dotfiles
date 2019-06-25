@@ -39,6 +39,8 @@ set wildmenu
 set lazyredraw
 set showmatch
 set diffopt+=vertical
+set diffopt+=algorithm:patience
+set diffopt+=indent-heuristic
 set splitbelow
 set splitright
 set foldmethod=syntax
@@ -365,3 +367,12 @@ endfunction
 command Delview call MyDeleteView()
 " Lower-case user commands: http://vim.wikia.com/wiki/Replace_a_builtin_command_using_cabbrev
 cabbrev delview <c-r>=(getcmdtype()==':' && getcmdpos()==1 ? 'Delview' : 'delview')<CR>
+
+function! s:DiffWithSaved()
+  let filetype=&ft
+  diffthis
+  vnew | r # | normal! 1Gdd
+  diffthis
+  exe "setlocal bt=nofile bh=wipe nobl noswf ro ft=" . filetype
+endfunction
+com! DiffSaved call s:DiffWithSaved()
