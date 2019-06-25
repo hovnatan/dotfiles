@@ -105,7 +105,9 @@ class FocusWatcher:
                         if self.current_ws != -1:
                             self.workspace_list[self.current_ws] = True
                 return
-            keyboard.Listener(on_release=self.on_release).start()
+            keyboard.Listener(
+                on_release=self.on_release, on_press=self.on_release
+            ).start()
             self.mode_ws = True
             self.ws_index = 1
             self.workspace_back()
