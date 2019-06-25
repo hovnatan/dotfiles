@@ -10,12 +10,11 @@ bindsym Mod1+Return exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh
 #bindsym Mod1+Shift+Return exec --no-startup-id kitty
 bindsym Mod1+Shift+Return exec --no-startup-id termite
 
-# kill focused window # Alt+Shift+q, Win+d
-bindcode Mod1+Shift+24 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
-bindcode Mod4+40 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
+# kill focused window # Alt+d
+bindcode Mod1+40 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
 
 # start run (a program launcher), 40=d
-bindcode Mod1+40 exec rofi -show combi
+bindcode Mod4+40 exec rofi -show combi
 bindcode Mod1+Shift+40 exec --no-startup-id dropbox_toggle.py
 
 # change focus, h j k l
