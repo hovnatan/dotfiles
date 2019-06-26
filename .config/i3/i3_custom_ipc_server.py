@@ -63,7 +63,6 @@ class FocusWatcher:
         self.i3.on('window::focus', self.on_window_focus)
         self.i3.on("window::close", self.on_window_close)
         self.i3.on("workspace::focus", self.on_workspace_focus)
-        self.i3.on("mode", self.on_mode_change)
         self.i3.on('ipc_shutdown', self.on_shutdown)
         self.listening_socket = socket.socket(
             socket.AF_UNIX, socket.SOCK_STREAM
@@ -79,6 +78,7 @@ class FocusWatcher:
             maxsize=NUM_WORKSPACES_TO_FOLLOW
         )
         self.mode_ws = False
+        self.mode_ws_lock = threading.RLock()
         self.ws_index = 0
         self.workspace_current_lock = threading.RLock()
         self.current_ws = -1
@@ -96,51 +96,50 @@ class FocusWatcher:
             if window_id in self.window_list:
                 del self.window_list[window_id]
 
-    def on_mode_change(self, i3conn, event):
-        with self.workspace_list_lock:
-            if event.change != "ws_change":
-                if self.mode_ws:
-                    self.mode_ws = False
-                    with self.workspace_current_lock:
-                        if self.current_ws != -1:
-                            self.workspace_list[self.current_ws] = True
-                return
-            keyboard.Listener(
-                on_release=self.on_release, on_press=self.on_release
-            ).start()
-            self.mode_ws = True
-            self.ws_index = 1
-            self.workspace_back()
-
-    def on_release(self, key):
+    def on_press_or_release(self, key):
         if key != keyboard.Key.tab:
-            self.i3.command("mode default")
+            with self.mode_ws_lock:
+                self.mode_ws = False
+                with self.workspace_current_lock:
+                    if self.current_ws != -1:
+                        with self.workspace_list_lock:
+                            self.workspace_list[self.current_ws] = True
             return False
+        return True
 
     def workspace_back(self):
-        with self.workspace_list_lock:
-            curr_length = len(self.workspace_list)
-            if curr_length < 2:
-                return
-            k = self.ws_index % curr_length
-            for check_k, ws in enumerate(reversed(self.workspace_list)):
-                if check_k != k:
-                    continue
-                self.i3.command(f"workspace {ws}")
-                break
-            self.ws_index += 1
+        with self.mode_ws_lock:
+            if not self.mode_ws:
+                self.mode_ws = True
+                self.ws_index = 1
+                keyboard.Listener(
+                    on_release=self.on_press_or_release,
+                    on_press=self.on_press_or_release
+                ).start()
+            with self.workspace_list_lock:
+                curr_length = len(self.workspace_list)
+                if curr_length < 2:
+                    return
+                k = self.ws_index % curr_length
+                for check_k, ws in enumerate(reversed(self.workspace_list)):
+                    if check_k != k:
+                        continue
+                    self.i3.command(f"workspace {ws}")
+                    break
+                self.ws_index += 1
 
     def on_workspace_focus(self, i3conn, event):
         with self.workspace_current_lock:
             self.current_ws = str(event.current.name)
             if DEBUG:
                 print(f"hello ws {self.current_ws}")
-            with self.workspace_list_lock:
+            with self.mode_ws_lock:
                 if self.mode_ws:
                     return
-                if not self.current_ws.isdigit():
-                    return
-                self.workspace_list[self.current_ws] = True
+                with self.workspace_list_lock:
+                    if not self.current_ws.isdigit():
+                        return
+                    self.workspace_list[self.current_ws] = True
 
     def on_window_focus(self, i3conn, event):
         with self.window_list_lock:
