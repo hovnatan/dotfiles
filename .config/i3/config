@@ -114,10 +114,7 @@ mode "resize" {
 }
 bindcode $mod+27 mode "resize"
 
-mode "ws_change" {
-  bindsym $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
-}
-bindsym $mod+Tab mode "ws_change"
+bindsym $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
 
 mode "move" {
         bindsym --release h exec --no-startup-id xdotool key Left
