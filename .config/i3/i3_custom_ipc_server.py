@@ -100,10 +100,10 @@ class FocusWatcher:
         if key != keyboard.Key.tab:
             with self.mode_ws_lock:
                 self.mode_ws = False
-                with self.workspace_current_lock:
-                    if self.current_ws != -1:
-                        with self.workspace_list_lock:
-                            self.workspace_list[self.current_ws] = True
+            with self.workspace_current_lock:
+                if self.current_ws != -1:
+                    with self.workspace_list_lock:
+                        self.workspace_list[self.current_ws] = True
             return False
         return True
 
@@ -116,30 +116,30 @@ class FocusWatcher:
                     on_release=self.on_press_or_release,
                     on_press=self.on_press_or_release
                 ).start()
-            with self.workspace_list_lock:
-                curr_length = len(self.workspace_list)
-                if curr_length < 2:
-                    return
-                k = self.ws_index % curr_length
-                for check_k, ws in enumerate(reversed(self.workspace_list)):
-                    if check_k != k:
-                        continue
-                    self.i3.command(f"workspace {ws}")
-                    break
-                self.ws_index += 1
+        with self.workspace_list_lock:
+            curr_length = len(self.workspace_list)
+            if curr_length < 2:
+                return
+            k = self.ws_index % curr_length
+            for check_k, ws in enumerate(reversed(self.workspace_list)):
+                if check_k != k:
+                    continue
+                self.i3.command(f"workspace {ws}")
+                break
+            self.ws_index += 1
 
     def on_workspace_focus(self, i3conn, event):
         with self.workspace_current_lock:
             self.current_ws = str(event.current.name)
             if DEBUG:
                 print(f"hello ws {self.current_ws}")
+            if not self.current_ws.isdigit():
+                return
             with self.mode_ws_lock:
                 if self.mode_ws:
                     return
-                with self.workspace_list_lock:
-                    if not self.current_ws.isdigit():
-                        return
-                    self.workspace_list[self.current_ws] = True
+            with self.workspace_list_lock:
+                self.workspace_list[self.current_ws] = True
 
     def on_window_focus(self, i3conn, event):
         with self.window_list_lock:
