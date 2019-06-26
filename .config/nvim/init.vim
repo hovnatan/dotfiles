@@ -45,6 +45,7 @@ set splitbelow
 set splitright
 set foldmethod=syntax
 set viewoptions-=options
+set inccommand=nosplit
 
 nnoremap j gj
 nnoremap gj j
@@ -115,6 +116,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
+  Plug 'easymotion/vim-easymotion'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
