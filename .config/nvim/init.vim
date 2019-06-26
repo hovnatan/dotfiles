@@ -117,6 +117,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
   Plug 'easymotion/vim-easymotion'
+  Plug 'machakann/vim-swap'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
