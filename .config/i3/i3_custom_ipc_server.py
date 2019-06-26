@@ -83,7 +83,8 @@ class FocusWatcher:
         self.workspace_current_lock = threading.RLock()
         self.current_ws = -1
 
-    def on_shutdown(self, i3conn):
+    @staticmethod
+    def on_shutdown(i3conn):
         try:
             sh.pkill("-f", "i3_custom_ipc_client.py")
         except sh.ErrorReturnCode:
