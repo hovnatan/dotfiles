@@ -97,8 +97,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
   Plug 'tpope/vim-vinegar'
-  Plug 'jpalardy/vim-slime'
-  Plug 'hanschen/vim-ipython-cell'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
@@ -118,6 +116,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'ntpeters/vim-better-whitespace'
   Plug 'easymotion/vim-easymotion'
   Plug 'machakann/vim-swap'
+  Plug 'kassio/neoterm'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
