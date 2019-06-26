@@ -47,9 +47,9 @@ set foldmethod=syntax
 set viewoptions-=options
 set inccommand=nosplit
 
-nnoremap j gj
+nnoremap <expr> j (v:count == 0 ? 'gj' : 'j')
 nnoremap gj j
-nnoremap k gk
+nnoremap <expr> k (v:count == 0 ? 'gk' : 'k')
 nnoremap gk k
 nnoremap gV `[v`]
 cnoremap <C-p> <Up>
@@ -342,6 +342,11 @@ nnoremap M D
 nmap s <plug>(SubversiveSubstitute)
 nmap ss <plug>(SubversiveSubstituteLine)
 nmap S <plug>(SubversiveSubstituteToEndOfLine)
+
+inoremap ;1 <c-o>ma
+inoremap ;2 <c-o>mb
+inoremap ;3 <c-o>mc
+inoremap ;4 <c-o>md
 
 nnoremap <S-Tab> :bnext<cr>
 nnoremap <space><space> <c-^>
