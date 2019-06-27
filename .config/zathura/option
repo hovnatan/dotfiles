@@ -12,4 +12,3 @@ map <C-D> toggle_page_mode
 map <C-n> toggle_statusbar
 map r recolor
 set selection-clipboard clipboard
-set continuous-hist-save true
