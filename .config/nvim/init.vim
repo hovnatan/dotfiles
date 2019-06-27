@@ -47,7 +47,6 @@ set foldmethod=syntax
 set viewoptions-=options
 set inccommand=nosplit
 set cursorline
-set cursorcolumn
 
 nnoremap <expr> j (v:count == 0 ? 'gj' : 'j')
 nnoremap gj j
