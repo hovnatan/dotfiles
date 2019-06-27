@@ -1,6 +1,17 @@
 #!/bin/bash
 
-COLOR=$1
+if [ $# -eq 0 ]
+then
+  currenttime=$(date +%H:%M)
+  if [[ "$currenttime" > "19:00" ]] || [[ "$currenttime" < "06:30" ]]; then
+    COLOR="dark"
+  else
+    COLOR="light"
+  fi
+else
+  COLOR=$1
+fi
+
 echo -n "$COLOR" > ~/.my_colors
 
 xrdb -override ~/.dotfiles/.Xresources_grb_"$COLOR"
