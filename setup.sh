@@ -170,6 +170,9 @@ ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/
 
 ln -s ~/.dotfiles/.condarc ~/.condarc
 
+mkdir ~/.config/mps-youtube
+ln -s ~/.dotfiles/.config/mps-youtube/config ~/.config/mps-youtube/config
+
 #for printer discovery
 #sudo systemctl start avahi-daemon.service
 #for printing
