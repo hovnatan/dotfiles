@@ -245,6 +245,7 @@ for_window [title=".*SuperAnnotate Slack.*"] move to workspace $ws10
 for_window [title="WhatsApp"] move to workspace $ws10
 for_window [title="Messenger" instance="www.messenger.com"] move to workspace $ws10
 for_window [title=".*Google Play Music.*"] move to workspace $ws10
+for_window [title="Subscriptions - YouTube"] move to workspace $ws10
 
 #exec --no-startup-id xbindkeys
 
@@ -257,4 +258,5 @@ bindcode Mod4+54 exec dex /usr/share/applications/chromium.desktop
 bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop
 bindcode Mod4+39 exec dex ~/.local/share/applications/chrome-slack.desktop
 bindcode Mod4+58 exec dex ~/.local/share/applications/chrome-fbmessenger.desktop
+bindcode Mod4+29 exec dex ~/.local/share/applications/chrome-youtube.desktop
 bindcode Mod4+Shift+58 exec dex ~/.local/share/applications/chrome-googlemusic.desktop
