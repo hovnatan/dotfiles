@@ -384,3 +384,8 @@ function! s:DiffWithSaved()
   exe "setlocal bt=nofile bh=wipe nobl noswf ro ft=" . filetype
 endfunction
 com! DiffSaved call s:DiffWithSaved()
+
+command! TT :vs | terminal
+augroup TerminalStuff
+  autocmd TermOpen * setlocal nonumber norelativenumber signcolumn=no | startinsert
+augroup END
