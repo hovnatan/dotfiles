@@ -170,11 +170,8 @@ ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/
 
 ln -s ~/.dotfiles/.condarc ~/.condarc
 
-mkdir ~/.config/mps-youtube
-ln -s ~/.dotfiles/.config/mps-youtube/config ~/.config/mps-youtube/config
-ln -s ~/Dropbox/scripts/mps-youtube/input_history ~/.config/mps-youtube/
-ln -s ~/Dropbox/scripts/mps-youtube/play_history.m3u  ~/.config/mps-youtube/
-ln -s ~/Dropbox/scripts/mps-youtube/playlists/  ~/.config/mps-youtube/
+rm -rf ~/.config/mps-youtube
+ln -s ~/Dropbox/scripts/mps-youtube ~/.config/mps-youtube
 
 #for printer discovery
 #sudo systemctl start avahi-daemon.service
