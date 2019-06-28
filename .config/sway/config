@@ -2,144 +2,243 @@ input * xkb_layout "us,am"
 input * xkb_variant ",phonetic-alt"
 input * xkb_options "ctrl:nocaps,grp:alt_space_toggle"
 
-font pango:DejaVu Sans Mono 8
+exec xrdb -load ~/.Xresources
+
+input "1267:32:Elan_Touchpad" {
+    tap enabled
+}
 
 set $mod Mod1
-bindsym $mod+Tab workspace back_and_forth
-set $left h
-set $down j
-set $up k
-set $right l
 
+font pango:DejaVu Sans Mono 11
 
-output * bg /usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png fill
-exec swayidle -w \
-         timeout 300 'swaylock -f -c 000000' \
-         timeout 600 'swaymsg "output * dpms off"' \
-              resume 'swaymsg "output * dpms on"' \
-         before-sleep 'swaylock -f -c 000000'
+floating_modifier Mod1
 
-bindsym $mod+Return exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh
-bindsym $mod+Shift+q kill
-bindcode Mod1+40 exec rofi -show combi
-bindcode Mod1+Shift+40 exec rofi -show drun
+bindsym Mod1+Return exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh
+#bindsym Mod1+Shift+Return exec --no-startup-id kitty
+bindsym Mod1+Shift+Return exec --no-startup-id termite
 
-floating_modifier $mod normal
-bindsym $mod+Shift+c reload
-bindcode $mod+Shift+26 exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -b 'Yes, exit sway' 'swaymsg exit'
-bindsym $mod+$left focus left
-bindsym $mod+$down focus down
-bindsym $mod+$up focus up
-bindsym $mod+$right focus right
+# kill focused window # Alt+d
+bindcode Mod1+40 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
 
-bindsym $mod+Left focus left
-bindsym $mod+Down focus down
-bindsym $mod+Up focus up
-bindsym $mod+Right focus right
+# start run (a program launcher), 40=d
+bindcode Mod4+40 exec rofi -show combi
+bindcode Mod1+Shift+40 exec --no-startup-id dropbox_toggle.py
 
-bindsym $mod+Shift+$left move left
-bindsym $mod+Shift+$down move down
-bindsym $mod+Shift+$up move up
-bindsym $mod+Shift+$right move right
-# ditto, with arrow keys
-bindsym $mod+Shift+Left move left
-bindsym $mod+Shift+Down move down
-bindsym $mod+Shift+Up move up
-bindsym $mod+Shift+Right move right
+# change focus, h j k l
+bindcode Mod1+43 focus left
+bindcode Mod1+44 focus down
+bindcode Mod1+45 focus up
+bindcode Mod1+46 focus right
+
+# move focused window, h j k l
+bindcode Mod1+Shift+43 move left
+bindcode Mod1+Shift+44 move down
+bindcode Mod1+Shift+45 move up
+bindcode Mod1+Shift+46 move right
+
+# alternatively, you can use the cursor keys:
+bindsym Mod1+Shift+Left move left
+bindsym Mod1+Shift+Down move down
+bindsym Mod1+Shift+Up move up
+bindsym Mod1+Shift+Right move right
+
+# 55=v, 41=f
+bindcode $mod+Shift+55 split h
+bindcode $mod+55 split v
+bindcode $mod+41 fullscreen toggle
+
+# change container layout (stacked, tabbed, toggle split)
+bindcode $mod+39 layout stacking
+bindcode $mod+25 layout tabbed
+bindcode $mod+26 layout toggle split
+
+# toggle tiling / floating
+bindsym Mod4+Shift+space floating toggle
+
+# change focus between tiling / floating windows
+bindsym Mod4+space focus mode_toggle
+bindcode $mod+38 focus parent
+bindcode $mod+52 focus child
+
+set $ws1 "1"
+set $ws2 "2"
+set $ws3 "3"
+set $ws4 "4"
+set $ws5 "5"
+set $ws6 "6"
+set $ws7 "7"
+set $ws8 "8"
+set $ws9 "9"
+set $ws10 "10"
+
 # switch to workspace
-bindsym $mod+1 workspace 1
-bindsym $mod+2 workspace 2
-bindsym $mod+3 workspace 3
-bindsym $mod+4 workspace 4
-bindsym $mod+5 workspace 5
-bindsym $mod+6 workspace 6
-bindsym $mod+7 workspace 7
-bindsym $mod+8 workspace 8
-bindsym $mod+9 workspace 9
-bindsym $mod+0 workspace 10
+bindcode $mod+10 workspace $ws1
+bindcode $mod+11 workspace $ws2
+bindcode $mod+12 workspace $ws3
+bindcode $mod+13 workspace $ws4
+bindcode $mod+14 workspace $ws5
+bindcode $mod+15 workspace $ws6
+bindcode $mod+16 workspace $ws7
+bindcode $mod+17 workspace $ws8
+bindcode $mod+18 workspace $ws9
+bindcode $mod+19 workspace $ws10
+bindcode $mod+49 exec --no-startup-id ~/.dotfiles/.config/i3/grave.sh
+
 # move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace 1
-bindsym $mod+Shift+2 move container to workspace 2
-bindsym $mod+Shift+3 move container to workspace 3
-bindsym $mod+Shift+4 move container to workspace 4
-bindsym $mod+Shift+5 move container to workspace 5
-bindsym $mod+Shift+6 move container to workspace 6
-bindsym $mod+Shift+7 move container to workspace 7
-bindsym $mod+Shift+8 move container to workspace 8
-bindsym $mod+Shift+9 move container to workspace 9
-bindsym $mod+Shift+0 move container to workspace 10
-# Note: workspaces can have any name you want, not just numbers.
-# We just use 1-10 as the default.
-#
-# Layout stuff:
-#
-bindsym $mod+Shift+v splith
-bindsym $mod+v splitv
+bindcode $mod+Shift+10 move container to workspace $ws1
+bindcode $mod+Shift+11 move container to workspace $ws2
+bindcode $mod+Shift+12 move container to workspace $ws3
+bindcode $mod+Shift+13 move container to workspace $ws4
+bindcode $mod+Shift+14 move container to workspace $ws5
+bindcode $mod+Shift+15 move container to workspace $ws6
+bindcode $mod+Shift+16 move container to workspace $ws7
+bindcode $mod+Shift+17 move container to workspace $ws8
+bindcode $mod+Shift+18 move container to workspace $ws9
+bindcode $mod+Shift+19 move container to workspace $ws10
 
-# Switch the current container between different layout styles
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
+bindsym Mod4+Right workspace next
+bindsym Mod4+Left workspace prev
 
-# Make the current focus fullscreen
-bindsym $mod+f fullscreen
+bindcode $mod+Shift+27 reload
+bindcode $mod+Shift+26 exec "swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your X session.' -B 'Yes, exit sway' 'swaymsg exit'"
 
-# Toggle the current focus between tiling and floating mode
-bindsym $mod+Shift+space floating toggle
-
-# move focus to the parent container
-bindsym $mod+a focus parent
-#
-# Scratchpad:
-#
-bindsym $mod+Shift+minus move scratchpad
-bindsym $mod+minus scratchpad show
-
-#
-# Resizing containers:
-#
 mode "resize" {
-    # left will shrink the containers width
-    # right will grow the containers width
-    # up will shrink the containers height
-    # down will grow the containers height
-    bindsym $left resize shrink width 10px
-    bindsym $down resize grow height 10px
-    bindsym $up resize shrink height 10px
-    bindsym $right resize grow width 10px
+        bindsym h resize shrink width 5 px or 5 ppt
+        bindsym j resize grow height 5 px or 5 ppt
+        bindsym k resize shrink height 5 px or 5 ppt
+        bindsym l resize grow width 5 px or 5 ppt
 
-    # ditto, with arrow keys
-    bindsym Left resize shrink width 10px
-    bindsym Down resize grow height 10px
-    bindsym Up resize shrink height 10px
-    bindsym Right resize grow width 10px
+        # same bindings, but for the arrow keys
+        bindsym Left resize shrink width 10 px or 10 ppt
+        bindsym Down resize grow height 10 px or 10 ppt
+        bindsym Up resize shrink height 10 px or 10 ppt
+        bindsym Right resize grow width 10 px or 10 ppt
 
-    # return to default mode
-    bindsym Return mode "default"
-    bindsym Escape mode "default"
+        # back to normal: Enter or Escape or $mod+r
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+        bindsym $mod+r mode "default"
 }
-bindsym $mod+r mode "resize"
+bindcode $mod+27 mode "resize"
 
-#
-# Status Bar:
-#
-# Read `man 5 sway-bar` for more information about this section.
+bindsym $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
+
+mode "move" {
+        bindsym --release h exec --no-startup-id xdotool key Left
+        bindsym --release j exec --no-startup-id xdotool key Down
+        bindsym --release k exec --no-startup-id xdotool key Up
+        bindsym --release l exec --no-startup-id xdotool key Right
+
+        bindsym --release Shift+h exec --no-startup-id xdotool key Left Left
+        bindsym --release Shift+j exec --no-startup-id xdotool key Down Down
+        bindsym --release Shift+k exec --no-startup-id xdotool key Up Up
+        bindsym --release Shift+l exec --no-startup-id xdotool key Right Right
+
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+bindsym $mod+Shift+m mode "move"
+
+
+include ~/.config/sway_local
+
 bar {
-    position top
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
-    font pango:DejaVu Sans Mono, Awesome 16
+    position top
+    font pango:DejaVu Sans Mono, FontAwesome 16
 
     colors {
-        statusline #ffffff
-        background #323232
-        inactive_workspace #32323200 #32323200 #5c5c5c
+        background $base00
+        separator  $base01
+        statusline $base04
+
+        # State             Border  BG      Text
+        focused_workspace   $base05 $base0D $base00
+        active_workspace    $base05 $base03 $base00
+        inactive_workspace  $base03 $base01 $base05
+        urgent_workspace    $base08 $base08 $base00
+        binding_mode        $base00 $base0A $base00
     }
 }
 
-include ~/.config/sway_local
-#output eDP-1 disable
-exec --no-startup-id dropbox start
-exec --no-startup-id libinput-gestures
-exec --no-startup-id workrave
+# Basic color configuration using the Base16 variables for windows and borders.
+# Property Name         Border  BG      Text    Indicator Child Border
+client.focused          $base05 $base0D $base00 $base0D $base0C
+client.focused_inactive $base01 $base01 $base05 $base03 $base01
+client.unfocused        $base01 $base00 $base05 $base01 $base01
+client.urgent           $base08 $base08 $base00 $base08 $base08
+client.placeholder      $base00 $base00 $base05 $base00 $base00
+client.background       $base07
+
 hide_edge_borders smart
-default_border pixel 1 
+default_border pixel 1
+
+bindsym XF86MonBrightnessUp exec xbacklight -inc 10
+bindsym XF86MonBrightnessDown exec xbacklight -dec 10
+
+## Volume control
+set $volumepath ~/.dotfiles/i3-volume
+set $volumestep 5
+
+bindsym XF86AudioRaiseVolume exec --no-startup-id $volumepath/volume -y -np -i $volumestep -u "RTMIN+10" -t i3blocks
+bindsym XF86AudioLowerVolume exec --no-startup-id $volumepath/volume -y -np -d $volumestep -u "RTMIN+10" -t i3blocks
+bindsym XF86AudioMute        exec --no-startup-id $volumepath/volume -y -mn -u "RTMIN+10" -t i3blocks
+bindcode Mod4+19 exec --no-startup-id $volumepath/volume -y -np -i $volumestep -u "RTMIN+10" -t i3blocks
+bindcode Mod4+18 exec --no-startup-id $volumepath/volume -y -np -d $volumestep -u "RTMIN+10" -t i3blocks
+bindcode Mod4+17 exec --no-startup-id $volumepath/volume -y -mn -u "RTMIN+10" -t i3blocks
+
+bindsym XF86AudioPlay exec playerctl play
+bindsym XF86AudioPause exec playerctl pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+
+# bindsym $mod+Tab workspace back_and_forth
+bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
+bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
+exec --no-startup-id setxkbmap -option ""
+exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"
+exec --no-startup-id ~/Dropbox/scripts/dropbox.py start
+exec_always --no-startup-id libinput-gestures
+exec_always --no-startup-id ~/.config/i3/i3_custom_ipc_server.py
+bindsym $mod+space exec --no-startup-id key_layout_switch.sh && pkill -RTMIN+10 i3blocks
+
+exec --no-startup-id dunst
+
+exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh --name dropdown
+for_window [instance="dropdown"] floating enable, resize set 960 720, move scratchpad
+bindcode $mod+31 [instance="dropdown"] scratchpad show, move position center
+
+bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
+bindsym --release $mod+Sys_Req exec scrot -s -e 'mv $f ~/tmp/'
+bindcode Mod4+33 exec --no-startup-id monitor_setup.sh
+
+bindcode $mod+Shift+20 move scratchpad
+bindcode $mod+20 scratchpad show
+
+bindcode $mod+58 exec --no-startup-id i3-input -F 'mark %s' -l 1 -P 'Mark: '
+bindcode $mod+42 exec --no-startup-id i3-input -F '[con_mark="%s"] focus' -l 1 -P 'Goto: '
+show_marks yes
+
+workspace_auto_back_and_forth yes
+
+exec --no-startup-id clipster -d
+bindcode $mod+54 exec --no-startup-id clipster -s
+bindcode $mod+Shift+54 exec --no-startup-id clipster -p -s
+exec --no-startup-id ~/.dotfiles/xautolock_start.sh
+
+for_window [title=".*SuperAnnotate Slack.*"] move to workspace $ws10
+for_window [title="WhatsApp"] move to workspace $ws10
+for_window [title="Messenger" instance="www.messenger.com"] move to workspace $ws10
+for_window [title=".*Google Play Music.*"] move to workspace $ws10
+
+floating_minimum_size 50 x 50
+floating_maximum_size 960 x 720
+
+focus_follows_mouse no
+
+bindcode Mod4+54 exec dex /usr/share/applications/chromium.desktop
+bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop
+bindcode Mod4+39 exec dex ~/.local/share/applications/chrome-slack.desktop
+bindcode Mod4+58 exec dex ~/.local/share/applications/chrome-fbmessenger.desktop
+bindcode Mod4+Shift+58 exec dex ~/.local/share/applications/chrome-googlemusic.desktop
