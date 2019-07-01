@@ -2,6 +2,7 @@ input * xkb_layout "us,am"
 input * xkb_variant ",phonetic-alt"
 input * xkb_options "ctrl:nocaps,grp:alt_space_toggle"
 
+#output eDP-1 scale 1.5
 exec xrdb -load ~/.Xresources
 
 input "1267:32:Elan_Touchpad" {
@@ -146,7 +147,7 @@ include ~/.config/sway_local
 bar {
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     position top
-    font pango:DejaVu Sans Mono, FontAwesome 16
+    font pango:DejaVu Sans Mono, FontAwesome 11
 
     colors {
         background $base00
