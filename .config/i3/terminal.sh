@@ -38,4 +38,4 @@ fi
 cd "$CWD"
 #~/opt/xst/xst $@ -e tmux
 #kitty $@ tmux
-termite $@ -e tmux
+termite $@ -e tmux &
