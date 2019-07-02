@@ -62,7 +62,7 @@ aria2c -x 8 -s 8 https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 bash ./Miniconda3-latest-Linux-x86_64.sh
 conda update --all
 import_miniconda
-conda install pytorch torchvision opencv pillow yapf pylint jedi ipython
+conda install pytorch torchvision opencv pillow yapf pylint jedi ipython rope
 ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # run conda init fish for fish shell integration
 
