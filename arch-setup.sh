@@ -64,7 +64,10 @@ conda update --all
 import_miniconda
 conda install pytorch torchvision opencv pillow yapf pylint jedi ipython rope
 ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
-# run conda init fish for fish shell integration
+# run import_miniconda fish shell integration
+# for bash
+# run source /opt/miniconda3/etc/profile.d/conda.sh
+# conda activate
 
 #yay -S interception-caps2esc
 #sudo cp ~/.dotfiles/udevmon.yaml /etc/
