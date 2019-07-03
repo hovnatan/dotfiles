@@ -27,6 +27,7 @@ ln -s ~/.dotfiles/.config/mpv ~/.config/mpv
 ln -s ~/Dropbox/scripts/mpv/watch_later/ ~/.config/mpv/
 wget https://gist.githubusercontent.com/Hakkin/5489e511bd6c8068a0fc09304c9c5a82/raw/7a19f7cdb6dd0b1c6878b41e13b244e2503c15fc/autosave.lua -P ~/.config/mpv/scripts/
 wget https://raw.githubusercontent.com/vayan/autosub-mpv/master/autosub.lua -P ~/.config/mpv/scripts/
+wget https://repo.or.cz/q3cpma-dotfiles.git/blob_plain/HEAD:/.config/mpv/scripts/redshift_toggle.lua -P ~/.config/mpv/scripts
 xdg-mime default mpv.desktop 'video/x-m4v' 'video/x-matroska' 'video/x-msvideo'
 
 rm -rf ~/.gitconfig
