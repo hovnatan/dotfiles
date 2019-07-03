@@ -390,3 +390,10 @@ command! TT :vs | terminal
 augroup TerminalStuff
   autocmd TermOpen * setlocal nonumber norelativenumber signcolumn=no | startinsert
 augroup END
+
+onoremap ' `
+onoremap ` '
+vnoremap ' `
+vnoremap ` '
+nnoremap ' `
+nnoremap ` '
