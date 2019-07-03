@@ -1,75 +1,101 @@
-fortune
+# If you come from bash you might have to change your $PATH.
+export PATH=$HOME/.dotfiles/bin:$PATH
 
-HISTSIZE=1000
-SAVEHIST=1000
-HISTFILE=~/.zsh_history
-setopt hist_ignore_dups
-setopt append_history # Allow multiple terminal sessions to all append to one zsh command history
-setopt inc_append_history
+# Path to your oh-my-zsh installation.
+export ZSH="/home/hovnatan/.oh-my-zsh"
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-export FZF_COMPLETION_TRIGGER=''
-bindkey '^E' fzf-completion
-bindkey '^I' $fzf_default_completion
+# Set name of the theme to load --- if set to "random", it will
+# load a random theme each time oh-my-zsh is loaded, in which case,
+# to know which specific one was loaded, run: echo $RANDOM_THEME
+# See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
+ZSH_THEME="robbyrussell"
 
-autoload -Uz compinit promptinit
-compinit
-promptinit
+# Set list of themes to pick from when loading at random
+# Setting this variable when ZSH_THEME=random will cause zsh to load
+# a theme from this variable instead of looking in ~/.oh-my-zsh/themes/
+# If set to an empty array, this variable will have no effect.
+# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
 
-# This will set the default prompt to the walters theme
-PROMPT='%B%(?..[%?] )%b%n@%m%u %% '
-RPROMPT="%F{${1:-cyan}}%~%f"
+# Uncomment the following line to use case-sensitive completion.
+# CASE_SENSITIVE="true"
 
-autoload -Uz compinit
-compinit
+# Uncomment the following line to use hyphen-insensitive completion.
+# Case-sensitive completion must be off. _ and - will be interchangeable.
+# HYPHEN_INSENSITIVE="true"
 
-function update_title() {
-  local a
-  # escape '%' in $1, make nonprintables visible
-  a=${(V)1//\%/\%\%}
-  a=$(print -n "%20>...>$a")
-  # remove newlines
-  a=${a//$'\n'/}
-  if [[ -n "$TMUX" ]]; then
-    print -n "\ek${(%)a}\e\\"
-  elif [[ "$TERM" =~ "screen*" ]]; then
-    print -n "\ek${(%)a}\e\\"
-  elif [[ "$TERM" =~ "xterm*" ]]; then
-    print -n "\e]0;${(%)a}\a"
-  elif [[ "$TERM" =~ "^rxvt-unicode.*" ]]; then
-    printf '\33]2;%s:%s\007' ${(%)a}
-  fi
-}
+# Uncomment the following line to disable bi-weekly auto-update checks.
+# DISABLE_AUTO_UPDATE="true"
 
-function update_title1() {
-  if [[ -n "$TMUX" ]]; then
-    print -n "\ek${(%)1}\e\\"
-  elif [[ "$TERM" =~ "screen*" ]]; then
-    print -n "\ek${(%)1}\e\\"
-  elif [[ "$TERM" =~ "xterm*" ]]; then
-    print -n "\e]0;${(%)1}\a"
-  elif [[ "$TERM" =~ "^rxvt-unicode.*" ]]; then
-    printf '\33]2;%s:%s\007' ${(%)1}
-  fi
-}
+# Uncomment the following line to automatically update without prompting.
+# DISABLE_UPDATE_PROMPT="true"
 
-# called just before the prompt is printed
-function _zsh_title__precmd() {
-  update_title1 "%20<...<%~"
-}
+# Uncomment the following line to change how often to auto-update (in days).
+# export UPDATE_ZSH_DAYS=13
 
-# called just before a command is executed
-function _zsh_title__preexec() {
-  local -a cmd; cmd=(${(z)1})             # Re-parse the command line
+# Uncomment the following line if pasting URLs and other text is messed up.
+# DISABLE_MAGIC_FUNCTIONS=true
 
-  # Construct a command that will output the desired job number.
-  case $cmd[1] in
-    fg)	cmd="${(z)jobtexts[${(Q)cmd[2]:-%+}]}" ;;
-    %*)	cmd="${(z)jobtexts[${(Q)cmd[1]:-%+}]}" ;;
-  esac
-  update_title "$cmd"
-}
+# Uncomment the following line to disable colors in ls.
+# DISABLE_LS_COLORS="true"
 
-autoload -Uz add-zsh-hook
-add-zsh-hook precmd _zsh_title__precmd
-add-zsh-hook preexec _zsh_title__preexec
+# Uncomment the following line to disable auto-setting terminal title.
+# DISABLE_AUTO_TITLE="true"
+
+# Uncomment the following line to enable command auto-correction.
+ENABLE_CORRECTION="true"
+
+# Uncomment the following line to display red dots whilst waiting for completion.
+# COMPLETION_WAITING_DOTS="true"
+
+# Uncomment the following line if you want to disable marking untracked files
+# under VCS as dirty. This makes repository status check for large repositories
+# much, much faster.
+# DISABLE_UNTRACKED_FILES_DIRTY="true"
+
+# Uncomment the following line if you want to change the command execution time
+# stamp shown in the history command output.
+# You can set one of the optional three formats:
+# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+# or set a custom format using the strftime function format specifications,
+# see 'man strftime' for details.
+# HIST_STAMPS="mm/dd/yyyy"
+
+# Would you like to use another custom folder than $ZSH/custom?
+# ZSH_CUSTOM=/path/to/new-custom-folder
+
+# Which plugins would you like to load?
+# Standard plugins can be found in ~/.oh-my-zsh/plugins/*
+# Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
+plugins=(git zsh-autosuggestions)
+
+source $ZSH/oh-my-zsh.sh
+
+# User configuration
+
+# export MANPATH="/usr/local/man:$MANPATH"
+
+# You may need to manually set your language environment
+# export LANG=en_US.UTF-8
+
+# Preferred editor for local and remote sessions
+# if [[ -n $SSH_CONNECTION ]]; then
+#   export EDITOR='vim'
+# else
+#   export EDITOR='mvim'
+# fi
+
+# Compilation flags
+# export ARCHFLAGS="-arch x86_64"
+
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+#
+# Example aliases
+# alias zshconfig="mate ~/.zshrc"
+# alias ohmyzsh="mate ~/.oh-my-zsh"
+#
+source /usr/share/fzf/key-bindings.zsh
