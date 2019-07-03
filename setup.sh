@@ -20,6 +20,8 @@ ln -s ~/Dropbox/scripts/view/ ~/.local/share/nvim/view
 
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
+wget https://raw.githubusercontent.com/edc/bass/master/functions/__bass.py -P ~/.config/fish/functions/
+wget https://raw.githubusercontent.com/edc/bass/master/functions/bass.fish -P ~/.config/fish/functions/
 chsh -s `which fish`
 
 rm -rf ~/.config/mpv
