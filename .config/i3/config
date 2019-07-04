@@ -219,6 +219,8 @@ bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh
 bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 
 exec --no-startup-id dunst
+bindcode Mod4+57 exec --no-startup-id killall -SIGUSR1 dunst
+bindcode Mod4+Shift+57 exec --no-startup-id killall -SIGUSR2 dunst
 
 exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh --name dropdown
 for_window [instance="dropdown"] floating enable, resize set 960 720, move scratchpad
