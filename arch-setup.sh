@@ -60,9 +60,12 @@ sudo make install
 cd ~/Downloads
 aria2c -x 8 -s 8 https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash ./Miniconda3-latest-Linux-x86_64.sh
+ln -s ~/.dotfiles/.condarc ~/.condarc
 conda update --all
 import_miniconda
 conda install pytorch torchvision opencv pillow yapf pylint jedi ipython rope boost tbb tbb-devel cmake gxx_linux-64 conda-build Cython
+# conda env export | cut -f 1 -d '=' > ~/.dotfiles/conda_environment.yml
+# conda env update --file ~/.dotfiles/conda_environment.yml
 ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # run import_miniconda fish shell integration
 # for bash
