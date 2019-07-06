@@ -11,16 +11,20 @@ dependencies:
   - backcall
   - binutils_impl_linux-64
   - binutils_linux-64
+  - boost
+  - boost-cpp
   - bzip2
   - ca-certificates
   - cairo
   - certifi
   - cffi
   - chardet
+  - cmake
   - conda
   - conda-package-handling
   - cryptography
   - cudatoolkit
+  - curl
   - cython
   - dbus
   - decorator
@@ -51,12 +55,15 @@ dependencies:
   - jasper
   - jedi
   - jpeg
+  - krb5
   - lame
   - lazy-object-proxy
   - libarchive
   - libblas
   - libcblas
+  - libcurl
   - libdrm-cos6-x86_64
+  - libedit
   - libffi
   - libgcc-ng
   - libgfortran-ng
@@ -66,9 +73,11 @@ dependencies:
   - libpng
   - libselinux-cos6-x86_64
   - libsepol-cos6-x86_64
+  - libssh2
   - libstdcxx-ng
   - libtiff
   - libuuid
+  - libuv
   - libwebp
   - libx11-common-cos6-x86_64
   - libx11-cos6-x86_64
@@ -115,10 +124,13 @@ dependencies:
   - qt
   - readline
   - requests
+  - rhash
   - ruamel_yaml
   - setuptools
   - six
   - sqlite
+  - tbb
+  - tbb-devel
   - tk
   - torchvision
   - tqdm
