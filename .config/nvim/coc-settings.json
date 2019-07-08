@@ -29,5 +29,9 @@
   "git.changeRemovedSign.hlGroup": "GitGutterChangeDelete",
   "git.changeRemovedSign.text": "",
   "git.enableGutters": true,
-  "suggest.detailMaxLength": 200
+  "suggest.detailMaxLength": 200,
+  "list.insertMappings": {
+    "<C-t>": "action:vsplit",
+    "<C-w>": "command:wincmd k"
+  }
 }
