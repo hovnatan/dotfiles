@@ -33,6 +33,6 @@
   "list.insertMappings": {
     "<C-s>": "action:vsplit",
     "<C-w>": "command:wincmd k",
-    "<C-v>": "prompt:paste"
+    "<C-v>": "eval:@@"
   }
 }
