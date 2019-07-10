@@ -9,6 +9,7 @@ dependencies:
   - asn1crypto
   - astroid
   - backcall
+  - beautifulsoup4
   - binutils_impl_linux-64
   - binutils_linux-64
   - boost
@@ -21,6 +22,7 @@ dependencies:
   - chardet
   - cmake
   - conda
+  - conda-build
   - conda-package-handling
   - cryptography
   - cudatoolkit
@@ -30,6 +32,7 @@ dependencies:
   - decorator
   - expat
   - ffmpeg
+  - filelock
   - fontconfig
   - freetype
   - gcc_impl_linux-64
@@ -37,6 +40,7 @@ dependencies:
   - gettext
   - giflib
   - glib
+  - glob2
   - gmp
   - gnutls
   - graphite2
@@ -49,11 +53,13 @@ dependencies:
   - icu
   - idna
   - intel-openmp
+  - ipdb
   - ipython
   - ipython_genutils
   - isort
   - jasper
   - jedi
+  - jinja2
   - jpeg
   - krb5
   - lame
@@ -67,9 +73,12 @@ dependencies:
   - libffi
   - libgcc-ng
   - libgfortran-ng
+  - libglu
   - libiconv
   - liblapack
   - liblapacke
+  - liblief
+  - libopenblas
   - libpng
   - libselinux-cos6-x86_64
   - libsepol-cos6-x86_64
@@ -88,10 +97,12 @@ dependencies:
   - libxxf86vm-cos6-x86_64
   - lz4-c
   - lzo
+  - markupsafe
   - mccabe
   - mesa-dri-drivers-cos6-x86_64
   - mesa-dri1-drivers-cos6-x86_64
   - mesa-libgl-cos6-x86_64
+  - mesa-libgl-devel-cos6-x86_64
   - mkl
   - ncurses
   - nettle
@@ -103,15 +114,19 @@ dependencies:
   - openh264
   - openssl
   - parso
+  - patchelf
   - pcre
   - pexpect
   - pickleshare
   - pillow
   - pip
   - pixman
+  - pkginfo
   - prompt_toolkit
+  - psutil
   - pthread-stubs
   - ptyprocess
+  - py-lief
   - pycosat
   - pycparser
   - pygments
@@ -121,13 +136,17 @@ dependencies:
   - python
   - python-libarchive-c
   - pytorch
+  - pytz
+  - pyyaml
   - qt
   - readline
   - requests
   - rhash
+  - rope
   - ruamel_yaml
   - setuptools
   - six
+  - soupsieve
   - sqlite
   - tbb
   - tbb-devel
@@ -156,5 +175,7 @@ dependencies:
   - yapf
   - zlib
   - zstd
+  - pip:
+    - unknown
 prefix: /home/hovnatan/miniconda3
 
