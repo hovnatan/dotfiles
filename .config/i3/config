@@ -262,4 +262,5 @@ bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop
 bindcode Mod4+39 exec dex ~/.local/share/applications/chrome-slack.desktop
 bindcode Mod4+58 exec dex ~/.local/share/applications/chrome-fbmessenger.desktop
 bindcode Mod4+29 exec dex ~/.local/share/applications/chrome-youtube.desktop
+bindcode Mod4+42 exec dex ~/.local/share/applications/chrome-gitter.desktop
 bindcode Mod4+Shift+58 exec dex ~/.local/share/applications/chrome-googlemusic.desktop
