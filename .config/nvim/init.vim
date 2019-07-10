@@ -324,9 +324,11 @@ au FileType tex,latex
 au FileType json
       \ set conceallevel=0
 au FileType cpp
-                \ set iskeyword-=.
+                \ set iskeyword-=. |
+                \ set iskeyword-=-
 au FileType python
                 \ set iskeyword-=. |
+                \ set iskeyword-=- |
                 \ nnoremap <buffer> <F6> :IPythonCellExecuteCell<CR> |
                 \ inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR> |
                 \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
