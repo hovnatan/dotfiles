@@ -418,3 +418,5 @@ vnoremap ' `
 vnoremap ` '
 nnoremap ' `
 nnoremap ` '
+
+" call CocAction('toggleSource', 'tmuxcomplete')
