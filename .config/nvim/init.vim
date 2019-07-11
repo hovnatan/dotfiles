@@ -117,7 +117,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'ntpeters/vim-better-whitespace'
   Plug 'easymotion/vim-easymotion'
   Plug 'machakann/vim-swap'
-  Plug 'kassio/neoterm'
+  Plug 'jpalardy/vim-slime'
+  Plug 'hovnatan/vim-ipython-cell'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
@@ -130,6 +131,7 @@ let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
 let g:fastfold_fold_movement_commands = [']z', '[z', 'zj', 'zk']
 
 let g:slime_target = 'tmux'
+" tmux target pane should be the last digit of $TMUX + :
 let g:slime_python_ipython = 1
 
 let g:ipython_cell_delimit_cells_by = 'tags'
