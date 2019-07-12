@@ -17,6 +17,10 @@
 load="$(cut -d ' ' -f1 /proc/loadavg)"
 cpus="$(nproc)"
 
+case $BLOCK_BUTTON in
+  1) $HOME/.dotfiles/.config/i3/terminal.sh htop ;;
+esac
+
 # full text
 echo "$load"
 
