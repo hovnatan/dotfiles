@@ -2,7 +2,7 @@
 
 grub-mkconfig -o /boot/grub/grub.cfg
 
-sudo pacman -Sy networkmanager os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod workrave feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift i3-wm i3status perl-anyevent-i3 qt5-styleplugins python-gobject aws-cli unzip xautolock imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso libreoffice-fresh inkscape gimp hunspell-en_US hplip avahi cups lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks texlive-core texlive-langextra pandoc xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time autojump yarn ranger w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool yapf pandoc-citeproc luarocks tcl tk libimagequant dex mps-youtube fwupd
+sudo pacman -Sy networkmanager os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod workrave feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift i3-wm i3status perl-anyevent-i3 qt5-styleplugins python-gobject aws-cli unzip xautolock imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso libreoffice-fresh inkscape gimp hunspell-en_US hplip avahi cups lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks texlive-core texlive-langextra pandoc xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time autojump yarn ranger w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool yapf pandoc-citeproc luarocks tcl tk libimagequant dex mps-youtube fwupd vlc
 
 sudo pacman -Sy base-devel clang llvm cmake gdb valgrind perf strace cppcheck ccache eigen3 boost
 
@@ -64,7 +64,7 @@ bash ./Miniconda3-latest-Linux-x86_64.sh
 ln -s ~/.dotfiles/.condarc ~/.condarc
 conda update --all
 import_miniconda
-conda install pytorch torchvision opencv pillow yapf pylint jedi ipython rope boost tbb tbb-devel cmake gxx_linux-64 conda-build Cython ipdb sortedcontainers neovim
+conda install pytorch torchvision opencv pillow yapf pylint jedi ipython rope boost tbb tbb-devel cmake conda-build Cython ipdb sortedcontainers neovim
 
 conda install binutils_impl_linux-64 binutils_linux-64 gxx_linux-64 gcc_linux-64 libx11-common-cos6-x86_64 libx11-cos6-x86_64 libxdamage-cos6-x86_64 libxfixes-cos6-x86_64 libxxf86vm-cos6-x86_64 mesa-dri-drivers-cos6-x86_64 mesa-dri1-drivers-cos6-x86_64 mesa-libgl-cos6-x86_64 mesa-libgl-devel-cos6-x86_64 libselinux-cos6-x86_64
 # conda env export | cut -f 1 -d '=' > ~/.dotfiles/conda_environment.yml
