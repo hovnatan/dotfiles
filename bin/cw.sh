@@ -3,7 +3,7 @@
 if [ $# -eq 0 ]
 then
   currenttime=$(date +%H:%M)
-  if [[ "$currenttime" > "19:00" ]] || [[ "$currenttime" < "06:30" ]]; then
+  if [[ "$currenttime" > "19:00" ]] || [[ "$currenttime" < "07:30" ]]; then
     COLOR="dark"
   else
     COLOR="light"
