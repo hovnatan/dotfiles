@@ -70,7 +70,7 @@ abbr gs  "git status"
 abbr gp  "git push"
 abbr gP  "git pull"
 abbr gpp  "git pull"
-abbr ga  "git add"
+abbr ga  "git add -u"
 abbr gc  "git commit -m"
 abbr gd  "git diff"
 abbr gah 'git stash; and git pull --rebase; and git stash pop'
