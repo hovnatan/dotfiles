@@ -21,6 +21,9 @@ cpus="$(nproc)"
 # full text
 echo "$load"
 
+# short text
+echo "$load"
+
 # color if load is too high
 awk -v cpus=$cpus -v cpuload=$load '
     BEGIN {
@@ -31,4 +34,4 @@ awk -v cpus=$cpus -v cpuload=$load '
     }
 '
 
-[[ -z "${BLOCK_BUTTON}" ]] || termite -e htop > /dev/null &
+[[ -z "${BLOCK_BUTTON}" ]] || i3-msg "exec --no-startup-id termite -e htop"
