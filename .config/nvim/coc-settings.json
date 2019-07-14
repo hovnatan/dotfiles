@@ -9,6 +9,12 @@
     "digestif": {
       "command": "digestif",
       "filetypes": ["tex", "plaintex", "context"]
+    },
+    "bash": {
+      "command": "bash-language-server",
+      "args": ["start"],
+      "filetypes": ["sh"],
+      "ignoredRootPaths": ["~"]
     }
   },
   "python.linting.pylintUseMinimalCheckers" : true,
