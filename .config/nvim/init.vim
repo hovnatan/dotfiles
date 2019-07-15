@@ -94,6 +94,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-unimpaired'
   Plug 'tpope/vim-git'
   Plug 'tpope/vim-fugitive'
+  Plug 'jreybert/vimagit'
   Plug 'tpope/vim-surround'
   Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
@@ -108,7 +109,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'bronson/vim-visual-star-search'
   Plug 'svermeulen/vim-cutlass'
   Plug 'svermeulen/vim-subversive'
-  Plug 'jreybert/vimagit'
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'zhimsel/vim-stay'
   Plug 'Konfekt/FastFold'
@@ -146,8 +146,7 @@ nnoremap <leader>ga :<C-u>CocCommand git.chunkStage<CR>
 nnoremap <leader>gu :<C-u>CocCommand git.chunkUndo<CR>
 
 nnoremap <leader>gb :Gblame<CR>
-nnoremap <leader>gs :Magit<CR>
-nnoremap <leader>gP :! git push<CR>
+nnoremap <leader>gs :MagitOnly<CR>
 
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 
