@@ -88,6 +88,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'vim-scripts/neat.vim'
   Plug 'lervag/vimtex'
   Plug 'tpope/vim-dispatch'
+  Plug 'junegunn/vim-peekaboo'
   Plug 'radenling/vim-dispatch-neovim'
   Plug 'tpope/vim-commentary'
   Plug 'tpope/vim-endwise'
@@ -106,9 +107,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'wellle/tmux-complete.vim'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
-  Plug 'bronson/vim-visual-star-search'
-  Plug 'svermeulen/vim-cutlass'
-  Plug 'svermeulen/vim-subversive'
+  Plug 'nelstrom/vim-visual-star-search'
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'zhimsel/vim-stay'
   Plug 'Konfekt/FastFold'
@@ -153,7 +152,9 @@ nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 
 let g:coc_global_extensions = [ 'coc-git', 'coc-emoji', 'coc-python',
       \ 'coc-prettier', 'coc-json', 'coc-word',
-      \ 'coc-vimtex', 'coc-highlight', 'coc-lists' ]
+      \ 'coc-vimtex', 'coc-highlight', 'coc-lists',
+      \ 'coc-tabnine'
+      \ ]
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',
@@ -357,17 +358,6 @@ tnoremap <C-v><Esc> <Esc>
 nnoremap <leader>t <C-W>T<CR>
 nnoremap <C-W>t :tab split<CR>
 
-nnoremap gm m
-nnoremap m d
-xnoremap m d
-
-nnoremap mm dd
-nnoremap M D
-
-nmap s <plug>(SubversiveSubstitute)
-nmap ss <plug>(SubversiveSubstituteLine)
-nmap S <plug>(SubversiveSubstituteToEndOfLine)
-
 inoremap ;1 <c-o>ma
 inoremap ;2 <c-o>mb
 inoremap ;3 <c-o>mc
@@ -413,12 +403,5 @@ command! TT :vs | terminal
 augroup TerminalStuff
   autocmd TermOpen * setlocal nonumber norelativenumber signcolumn=no | startinsert
 augroup END
-
-onoremap ' `
-onoremap ` '
-vnoremap ' `
-vnoremap ` '
-nnoremap ' `
-nnoremap ` '
 
 " call CocAction('toggleSource', 'tmuxcomplete')
