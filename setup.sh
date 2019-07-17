@@ -17,6 +17,7 @@ curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 nvim -c 'PlugInstall | qa'
 ln -s ~/Dropbox/scripts/view/ ~/.local/share/nvim/view
+ln -s ~/.dotfiles/.config/TabNine/ ~/.config/
 
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
