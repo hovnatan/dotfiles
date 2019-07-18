@@ -8,5 +8,4 @@ sudo modprobe xhci_pci
 
 sleep 2
 
-setxkbmap -option ""
-setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"
+setkmap.sh us

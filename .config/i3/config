@@ -204,8 +204,7 @@ bindsym XF86AudioPrev exec playerctl previous
 # bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
 bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
-exec --no-startup-id setxkbmap -option ""
-exec --no-startup-id setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"
+exec --no-startup-id setkmap.sh us
 exec --no-startup-id ~/Dropbox/scripts/dropbox.py start
 exec --no-startup-id redshift-gtk
 bindcode Mod4+Shift+27 exec --no-startup-id pkill -x -USR1 redshift

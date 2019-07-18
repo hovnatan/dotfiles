@@ -6,8 +6,7 @@ then
   echo "$X"
   if [ "$X" -gt 30 ] ; then
     nohup ~/.dotfiles/.config/i3/lock.sh >/dev/null 2>&1 &
-    setxkbmap -option ""
-    setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"
+    setkmap.sh us
     if ! [ -z "$1" ] ;
     then
       # Turn the screen off after a delay.
