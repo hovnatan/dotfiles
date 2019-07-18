@@ -157,36 +157,17 @@ class FocusWatcher:
                     self.window_list[previous_focus] = 0
             window_id = event.container.props.id
             key = 0
-            subprocess.run(["setxkbmap", "-option", ""])
             if DEBUG:
                 print("on_window_focus2")
             if window_id in self.window_list:
                 key = self.window_list[window_id]
                 if key == 0:
-                    subprocess.run(
-                        [
-                            "setxkbmap", "-layout", "us,am", "-variant",
-                            ",phonetic-alt", "-option",
-                            "ctrl:nocaps,grp:rctrl_switch"
-                        ]
-                    )
+                    subprocess.run(["setkmap.sh", "us"])
                 else:
-                    subprocess.run(
-                        [
-                            "setxkbmap", "-layout", "am,us", "-variant",
-                            "phonetic-alt,", "-option",
-                            "ctrl:nocaps,grp:rctrl_switch"
-                        ]
-                    )
+                    subprocess.run(["setkmap.sh", "am"])
                 del self.window_list[window_id]
             else:
-                subprocess.run(
-                    [
-                        "setxkbmap", "-layout", "us,am", "-variant",
-                        ",phonetic-alt", "-option",
-                        "ctrl:nocaps,grp:rctrl_switch"
-                    ]
-                )
+                subprocess.run(["setkmap.sh", "us"])
             self.window_list[window_id] = key
             subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
 
