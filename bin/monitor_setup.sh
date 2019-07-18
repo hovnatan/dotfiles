@@ -32,5 +32,4 @@ fi
 echo "${monitor_mode}" > "$DATA_FILE"
 ${HOME}/.dotfiles/xautolock_start.sh &
 
-setxkbmap -option ""
-setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "ctrl:nocaps,grp:rctrl_switch"
+setkmap.sh us
