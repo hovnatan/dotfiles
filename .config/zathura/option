@@ -4,6 +4,8 @@ set statusbar-home-tilde true
 set guioptions ''
 map d scroll half-down
 map u scroll half-up
+map D navigate next
+map U navigate previous
 map <PageDown> scroll half-down
 map <PageUp> scroll half-up
 map <S-PageDown> navigate next
