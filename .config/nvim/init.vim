@@ -47,6 +47,7 @@ set foldmethod=manual
 set viewoptions-=options
 set inccommand=nosplit
 set cursorline
+set nowrapscan
 
 nnoremap <expr> j (v:count == 0 ? 'gj' : 'j')
 nnoremap gj j
