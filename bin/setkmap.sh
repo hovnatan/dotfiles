@@ -7,4 +7,3 @@ if [ $1 = "us" ]; then
  else
    setxkbmap -layout "am,us" -variant "phonetic-alt," -option "ctrl:nocaps,grp:rctrl_switch"
  fi
-
