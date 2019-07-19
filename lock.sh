@@ -3,11 +3,10 @@
 if ! pgrep -x "i3lock" > /dev/null ;
 then
   eval $(xdotool getmouselocation --shell)
-  echo "$X"
-  if [ "$X" -gt 30 ] ; then
+  if [ "$X" -gt 30 ] || [ "$1" != "autolock" ] ; then
     nohup ~/.dotfiles/.config/i3/lock.sh >/dev/null 2>&1 &
     setkmap.sh us
-    if ! [ -z "$1" ] ;
+    if [ "$1" != "sleep" ] ;
     then
       # Turn the screen off after a delay.
       sleep 3

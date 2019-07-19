@@ -202,8 +202,8 @@ bindsym XF86AudioNext exec playerctl next
 bindsym XF86AudioPrev exec playerctl previous
 
 # bindsym $mod+Tab workspace back_and_forth
-bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh dummy
-bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh && systemctl suspend
+bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh lock
+bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh sleep && systemctl suspend
 exec --no-startup-id ~/Dropbox/scripts/dropbox.py start
 exec --no-startup-id redshift-gtk
 bindcode Mod4+Shift+27 exec --no-startup-id pkill -x -USR1 redshift
