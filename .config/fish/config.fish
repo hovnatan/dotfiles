@@ -62,6 +62,7 @@ set -U fish_user_paths ~/.dotfiles/bin
 
 abbr c   "cd"
 abbr n   "nvim"
+abbr np   "nvim --noplugin"
 abbr nf "nvim (fzf)"
 abbr r   "ranger"
 abbr z   "zathura"

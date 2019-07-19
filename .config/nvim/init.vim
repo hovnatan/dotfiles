@@ -100,6 +100,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
   Plug 'tpope/vim-vinegar'
+  Plug 'tpope/vim-jdaddy'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
@@ -403,5 +404,30 @@ command! TT :vs | terminal
 augroup TerminalStuff
   autocmd TermOpen * setlocal nonumber norelativenumber signcolumn=no | startinsert
 augroup END
+
+" file is large from 10mb
+let g:LargeFile = 1024 * 1024 * 10
+augroup LargeFile
+  au!
+  autocmd BufReadPre * let f=getfsize(expand("<afile>")) | if f > g:LargeFile || f == -2 | call LargeFile() | endif
+augroup END
+
+function! LargeFile()
+ " save memory when other file is viewed
+ setlocal bufhidden=unload
+ " is read-only (write with :w new_filename)
+ setlocal buftype=nowrite
+ " no undo possible
+ setlocal undolevels=-1
+ " display message
+ set noloadplugins
+
+ set lazyredraw
+ set noswapfile
+ set eventignore=all
+ set nohidden
+ set syntax=off
+ autocmd VimEnter *  echo "The file is larger than " . (g:LargeFile / 1024 / 1024) . " MB, so some options are changed (see .vimrc for details)."
+endfunction
 
 " call CocAction('toggleSource', 'tmuxcomplete')
