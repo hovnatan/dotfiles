@@ -42,7 +42,6 @@ bindcode $mod+55 split v
 bindcode $mod+41 fullscreen toggle
 
 # change container layout (stacked, tabbed, toggle split)
-bindcode $mod+39 layout stacking
 bindcode $mod+25 layout tabbed
 bindcode $mod+26 layout toggle split
 
