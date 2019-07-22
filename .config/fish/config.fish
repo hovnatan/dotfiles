@@ -61,6 +61,7 @@ set -U fish_user_paths ~/.dotfiles/bin
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
 
 abbr c   "cd"
+abbr cp  "rsync -avP"
 abbr n   "nvim"
 abbr np   "nvim --noplugin"
 abbr nf "nvim (fzf)"
