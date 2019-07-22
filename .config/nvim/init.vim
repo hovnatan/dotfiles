@@ -317,8 +317,12 @@ endfor
 
 au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
 
-" hi CocInfoSign guifg=#b57614
-" hi CocWarningSign guifg=#b57614
+if &background == "light"
+ hi CocInfoSign guifg=#b57614
+ hi CocWarningSign guifg=#b57614
+ else
+
+endif
 
 au FileType markdown,mkd,md,text
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
