@@ -47,7 +47,7 @@ set foldmethod=manual
 set viewoptions-=options
 set inccommand=nosplit
 set cursorline
-set nowrapscan
+set wrapscan
 
 nnoremap <expr> j (v:count == 0 ? 'gj' : 'j')
 nnoremap gj j
@@ -442,3 +442,6 @@ function! LargeFile()
 endfunction
 
 " call CocAction('toggleSource', 'tmuxcomplete')
+if exists('$TMUX')
+  autocmd BufReadPost,FileReadPost,BufNewFile * call system("tmux rename-window  " . expand("%"))
+endif
