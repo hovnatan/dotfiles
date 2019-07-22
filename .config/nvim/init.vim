@@ -443,5 +443,5 @@ endfunction
 
 " call CocAction('toggleSource', 'tmuxcomplete')
 if exists('$TMUX')
-  autocmd BufReadPost,FileReadPost,BufNewFile * call system("tmux rename-window  " . expand("%"))
+  autocmd BufReadPost,FileReadPost,BufNewFile * call system("tmux rename-window \"nvim " . expand("%") . "\"")
 endif
