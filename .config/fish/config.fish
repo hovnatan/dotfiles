@@ -51,8 +51,10 @@ end
 function reload-color-config --on-variable _reload_color_config
   if test "$_reload_color_config" = "light"
     set -u fish_color_prompt_bg bdae93
+    set -u fish_color_autosuggestion bdae93
   else
     set -u fish_color_prompt_bg 665c54
+    set -u fish_color_autosuggestion 665c54
   end
 end
 
@@ -61,7 +63,7 @@ set -U fish_user_paths ~/.dotfiles/bin
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
 
 abbr c   "cd"
-abbr cp  "rsync -avP"
+abbr cp  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr np   "nvim --noplugin"
 abbr nf "nvim (fzf)"
