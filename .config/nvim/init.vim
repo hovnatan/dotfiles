@@ -105,7 +105,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
-  Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
+  Plug 'neoclide/coc.nvim', {'branch': 'release'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'kana/vim-textobj-user'
   Plug 'kana/vim-textobj-lastpat'
@@ -152,9 +152,10 @@ nnoremap <leader>gp :! git push<CR>
 
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 
-let g:coc_global_extensions = [ 'coc-git', 'coc-emoji', 'coc-python',
+let g:coc_global_extensions = [ 'coc-emoji', 'coc-python',
       \ 'coc-prettier', 'coc-json', 'coc-word',
       \ 'coc-vimtex', 'coc-highlight', 'coc-lists',
+      \ 'coc-git',
       \ 'coc-tabnine'
       \ ]
 call textobj#user#plugin('line', {
