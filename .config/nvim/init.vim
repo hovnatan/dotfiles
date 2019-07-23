@@ -155,8 +155,8 @@ nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 let g:coc_global_extensions = [ 'coc-emoji', 'coc-python',
       \ 'coc-prettier', 'coc-json', 'coc-word',
       \ 'coc-vimtex', 'coc-highlight', 'coc-lists',
-      \ 'coc-git',
-      \ 'coc-tabnine'
+      \ 'coc-tabnine',
+      \ 'coc-git'
       \ ]
 call textobj#user#plugin('line', {
 \   '-': {
@@ -444,5 +444,5 @@ endfunction
 
 " call CocAction('toggleSource', 'tmuxcomplete')
 if exists('$TMUX')
-  autocmd BufReadPost,FileReadPost,BufNewFile * call system("tmux rename-window \"nvim " . expand("%") . "\"")
+  autocmd BufEnter,BufNewFile,WinEnter * call system("tmux rename-window \"nvim " . expand("%") . "\"")
 endif
