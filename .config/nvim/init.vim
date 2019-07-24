@@ -121,6 +121,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'jpalardy/vim-slime'
   Plug 'hovnatan/vim-ipython-cell'
   Plug 'majutsushi/tagbar'
+  Plug 'moll/vim-bbye'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
@@ -448,3 +449,5 @@ endfunction
 if exists('$TMUX')
   autocmd BufEnter,BufNewFile,WinEnter * call system("tmux rename-window \"nvim " . expand("%") . "\"")
 endif
+
+nnoremap <Leader>q :Bdelete<CR>
