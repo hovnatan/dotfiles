@@ -21,6 +21,8 @@ ln -s ~/.dotfiles/.config/TabNine/ ~/.config/
 
 mkdir ~/.config/pudb
 ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
+# to debug python export PYTHONBREAKPOINT=pudb.remote.set_trace then set breakpoint() in code
+# to redirect port to local machine ssh -Y -L 16913:127.0.0.1:6913 192.168.4.201
 
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
