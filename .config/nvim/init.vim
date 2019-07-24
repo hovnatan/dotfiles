@@ -120,11 +120,13 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'machakann/vim-swap'
   Plug 'jpalardy/vim-slime'
   Plug 'hovnatan/vim-ipython-cell'
+  Plug 'majutsushi/tagbar'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
 
 nnoremap <F5> :UndotreeToggle<cr>
+nnoremap <F8> :TagbarToggle<CR>
 
 nmap zuz <Plug>(FastFoldUpdate)
 let g:fastfold_savehook = 1
