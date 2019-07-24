@@ -19,6 +19,9 @@ nvim -c 'PlugInstall | qa'
 ln -s ~/Dropbox/scripts/view/ ~/.local/share/nvim/view
 ln -s ~/.dotfiles/.config/TabNine/ ~/.config/
 
+mkdir ~/.config/pudb
+ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
+
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
 wget https://raw.githubusercontent.com/edc/bass/master/functions/__bass.py -P ~/.config/fish/functions/
