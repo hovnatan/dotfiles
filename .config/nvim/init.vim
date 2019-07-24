@@ -418,7 +418,7 @@ augroup TerminalStuff
 augroup END
 
 " file is large from 10mb
-let g:LargeFile = 1024 * 1024 * 10
+let g:LargeFile = 1024 * 1024 * 100
 augroup LargeFile
   au!
   autocmd BufReadPre * let f=getfsize(expand("<afile>")) | if f > g:LargeFile || f == -2 | call LargeFile() | endif
