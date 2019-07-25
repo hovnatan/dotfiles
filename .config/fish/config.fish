@@ -18,6 +18,7 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     bind -M insert \cd forward-word
     fzf_key_bindings
 #    bind -M insert -m default jk backward-char force-repaint
+#    bind -m insert \e force-repaint
 end
 
 set -u fish_term24bit 1
