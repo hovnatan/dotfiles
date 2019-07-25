@@ -122,6 +122,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'hovnatan/vim-ipython-cell'
   Plug 'majutsushi/tagbar'
   Plug 'moll/vim-bbye'
+  Plug 'wsdjeg/vim-fetch'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
