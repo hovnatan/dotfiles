@@ -81,6 +81,7 @@ abbr gah 'git stash; and git pull --rebase; and git stash pop'
 abbr gm  "nvim -c MagitOnly"
 abbr ta  "tmux_attach_deattached.sh"
 abbr tl  "tmux list-sessions"
+abbr prg "pdfgrep -ri "
 abbr rgh "rg --hidden"
 abbr rgah "rga --hidden"
 abbr mpvhq "mpv --profile=hq"
