@@ -2,8 +2,10 @@
 
 import socket
 import sys
+import os
 
-DEBUG = False
+DEBUG = "DEBUG_I3_IPC" in os.environ
+
 SOCKET_FILE = '/tmp/i3_focus_last'
 
 if __name__ == '__main__':
