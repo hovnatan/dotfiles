@@ -375,10 +375,10 @@ tnoremap <C-v><Esc> <Esc>
 nnoremap <leader>t <C-W>T<CR>
 nnoremap <C-W>t :tab split<CR>
 
-inoremap ;1 <c-o>ma
-inoremap ;2 <c-o>mb
-inoremap ;3 <c-o>mc
-inoremap ;4 <c-o>md
+inoremap ;1 <C-o>ma
+inoremap ;2 <C-o>mb
+inoremap ;3 <C-o>mc
+inoremap ;4 <C-o>md
 
 nnoremap <S-Tab> :bnext<cr>
 nnoremap <space><space> <c-^>
