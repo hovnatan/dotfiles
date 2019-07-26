@@ -16,7 +16,7 @@ from pynput import keyboard
 SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 3
 
-DEBUG = False
+DEBUG = "DEBUG_I3_IPC" in os.environ
 
 if DEBUG:
     import code
