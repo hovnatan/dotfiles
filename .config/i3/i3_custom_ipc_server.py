@@ -211,6 +211,10 @@ class FocusWatcher:
             elif data == b'next_ws':
                 self.workspace_back()
                 conn.send("OK".encode())
+            elif data == b'debug':
+                with self.window_list_lock:
+                    all_winds = str(self.window_list)
+                conn.send(all_winds.encode())
             elif not data:
                 if DEBUG:
                     print(f"Closing connection.")
