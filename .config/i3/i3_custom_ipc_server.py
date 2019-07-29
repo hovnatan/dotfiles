@@ -52,7 +52,7 @@ class SizedAndUpdatedOrderedDict(collections.OrderedDict):
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
         self.move_to_end(key)
-        if len(self) > self.maxsize:
+        if self.maxsize != 0 and len(self) > self.maxsize:
             oldest = next(iter(self))
             del self[oldest]
 
@@ -71,8 +71,17 @@ class FocusWatcher:
             os.remove(SOCKET_FILE)
         self.listening_socket.bind(SOCKET_FILE)
         self.listening_socket.listen(1)
-        self.window_list = collections.OrderedDict()
-        self.window_list_lock = threading.Lock()
+
+        self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
+        self.window_list_lock = threading.RLock()
+        self.mode_w = False
+        self.mode_w_lock = threading.RLock()
+        self.w_index = 0
+        self.window_current_lock = threading.RLock()
+        self.current_w = -1
+        self.ws_window_list = set()
+        self.ws_w_curr_length = -1
+
         self.workspace_list_lock = threading.RLock()
         self.workspace_list = SizedAndUpdatedOrderedDict(
             maxsize=NUM_WORKSPACES_TO_FOLLOW
@@ -97,7 +106,7 @@ class FocusWatcher:
             if window_id in self.window_list:
                 del self.window_list[window_id]
 
-    def on_press_or_release(self, key):
+    def on_press_or_release_tab(self, key):
         if key != keyboard.Key.tab:
             with self.mode_ws_lock:
                 self.mode_ws = False
@@ -108,14 +117,63 @@ class FocusWatcher:
             return False
         return True
 
+    def on_press_or_release_grave(self, key):
+        if DEBUG:
+            print("Key", key, type(key))
+        try:
+            char = key.char
+        except AttributeError:
+            char = 'a'
+        if char != '`':
+            if DEBUG:
+                print("Grave closing")
+
+            with self.mode_w_lock:
+                self.mode_w = False
+            with self.window_current_lock:
+                if self.current_w != -1:
+                    with self.window_list_lock:
+                        self.window_list[self.current_w
+                                        ] = self.window_list[self.current_w]
+            return False
+        return True
+
+    def latest_window_on_ws(self):
+        with self.mode_w_lock:
+            if not self.mode_w:
+                self.ws_window_list = set()
+                for x in self.i3.get_tree().find_focused().workspace(
+                ).descendents():
+                    if not x.window:
+                        continue
+                    self.ws_window_list.add(x.id)
+                self.ws_w_curr_length = len(self.ws_window_list)
+                if self.ws_w_curr_length < 2:
+                    return
+                self.mode_w = True
+                self.w_index = 1
+                keyboard.Listener(
+                    on_release=self.on_press_or_release_grave,
+                    on_press=self.on_press_or_release_grave
+                ).start()
+        with self.window_list_lock:
+            k = self.w_index % self.ws_w_curr_length
+            for check_k, window in enumerate(reversed(self.window_list)):
+                if check_k != k:
+                    continue
+                if window in self.ws_window_list:
+                    self.i3.command('[con_id="%d"] focus' % window)
+                    break
+            self.w_index += 1
+
     def workspace_back(self):
         with self.mode_ws_lock:
             if not self.mode_ws:
                 self.mode_ws = True
                 self.ws_index = 1
                 keyboard.Listener(
-                    on_release=self.on_press_or_release,
-                    on_press=self.on_press_or_release
+                    on_release=self.on_press_or_release_tab,
+                    on_press=self.on_press_or_release_tab
                 ).start()
         with self.workspace_list_lock:
             curr_length = len(self.workspace_list)
@@ -143,6 +201,12 @@ class FocusWatcher:
                 self.workspace_list[self.current_ws] = True
 
     def on_window_focus(self, i3conn, event):
+        window_id = event.container.props.id
+        with self.window_current_lock:
+            self.current_w = window_id
+        with self.mode_w_lock:
+            if self.mode_w:
+                return
         with self.window_list_lock:
             if DEBUG:
                 print("on_window_focus")
@@ -155,7 +219,6 @@ class FocusWatcher:
                     self.window_list[previous_focus] = 1
                 else:
                     self.window_list[previous_focus] = 0
-            window_id = event.container.props.id
             key = 0
             if DEBUG:
                 print("on_window_focus2")
@@ -210,6 +273,9 @@ class FocusWatcher:
             #         conn.send("nws".encode())
             elif data == b'next_ws':
                 self.workspace_back()
+                conn.send("OK".encode())
+            elif data == b'next_w_on_ws':
+                self.latest_window_on_ws()
                 conn.send("OK".encode())
             elif data == b'debug':
                 with self.window_list_lock:
