@@ -76,7 +76,8 @@ bindcode $mod+16 workspace $ws7
 bindcode $mod+17 workspace $ws8
 bindcode $mod+18 workspace $ws9
 bindcode $mod+19 workspace $ws10
-bindcode $mod+49 exec --no-startup-id ~/.dotfiles/.config/i3/grave.sh
+bindcode $mod+49 exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_w_on_ws
+bindsym  $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
 
 # move focused container to workspace
 bindcode $mod+Shift+10 move container to workspace $ws1
@@ -114,8 +115,6 @@ mode "resize" {
         bindsym $mod+r mode "default"
 }
 bindcode $mod+27 mode "resize"
-
-bindsym $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
 
 mode "move" {
         bindsym --release h exec --no-startup-id xdotool key Left
