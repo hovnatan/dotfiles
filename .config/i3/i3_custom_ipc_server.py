@@ -118,23 +118,23 @@ class FocusWatcher:
         return True
 
     def on_press_or_release_grave(self, key):
-        if DEBUG:
-            print("Key", key, type(key))
         try:
             char = key.char
         except AttributeError:
             char = 'a'
-        if char != '`':
+        if char != '`' and char != '՝':
             if DEBUG:
-                print("Grave closing")
+                print("Grave closing ", char)
 
             with self.mode_w_lock:
                 self.mode_w = False
             with self.window_current_lock:
                 if self.current_w != -1:
                     with self.window_list_lock:
-                        self.window_list[self.current_w
-                                        ] = self.window_list[self.current_w]
+                        c_w = self.window_list[self.current_w]
+                        if DEBUG:
+                            print("WL c", c_w)
+            self.keyboard_layout_setup(self.current_w)
             return False
         return True
 
@@ -148,6 +148,11 @@ class FocusWatcher:
                         continue
                     self.ws_window_list.add(x.id)
                 self.ws_w_curr_length = len(self.ws_window_list)
+                if DEBUG:
+                    print(
+                        "Current ws windows", self.ws_window_list,
+                        self.window_list
+                    )
                 if self.ws_w_curr_length < 2:
                     return
                 self.mode_w = True
@@ -158,10 +163,12 @@ class FocusWatcher:
                 ).start()
         with self.window_list_lock:
             k = self.w_index % self.ws_w_curr_length
-            for check_k, window in enumerate(reversed(self.window_list)):
-                if check_k != k:
-                    continue
+            check_k = 0
+            for window in reversed(self.window_list):
                 if window in self.ws_window_list:
+                    if check_k != k:
+                        check_k += 1
+                        continue
                     self.i3.command('[con_id="%d"] focus' % window)
                     break
             self.w_index += 1
@@ -200,16 +207,10 @@ class FocusWatcher:
             with self.workspace_list_lock:
                 self.workspace_list[self.current_ws] = True
 
-    def on_window_focus(self, i3conn, event):
-        window_id = event.container.props.id
-        with self.window_current_lock:
-            self.current_w = window_id
-        with self.mode_w_lock:
-            if self.mode_w:
-                return
+    def keyboard_layout_setup(self, window_id):
+        if DEBUG:
+            print("Keyboard setup with", window_id)
         with self.window_list_lock:
-            if DEBUG:
-                print("on_window_focus")
             if self.window_list:
                 previous_focus = next(reversed(self.window_list))
                 result = subprocess.run(
@@ -220,8 +221,6 @@ class FocusWatcher:
                 else:
                     self.window_list[previous_focus] = 0
             key = 0
-            if DEBUG:
-                print("on_window_focus2")
             if window_id in self.window_list:
                 key = self.window_list[window_id]
                 if key == 0:
@@ -233,6 +232,15 @@ class FocusWatcher:
                 subprocess.run(["setkmap.sh", "us"])
             self.window_list[window_id] = key
             subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
+
+    def on_window_focus(self, i3conn, event):
+        window_id = event.container.props.id
+        with self.window_current_lock:
+            self.current_w = window_id
+        with self.mode_w_lock:
+            if self.mode_w:
+                return
+        self.keyboard_layout_setup(window_id)
 
     def launch_i3(self):
         self.i3.main()
