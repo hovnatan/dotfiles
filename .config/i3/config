@@ -221,7 +221,7 @@ bindcode Mod4+57 exec --no-startup-id dunstify -t 1000 "Notifications off" && sl
 bindcode Mod4+Shift+57 exec --no-startup-id killall -SIGUSR2 dunst && dunstify -t 1000 "Notifications on"
 
 exec --no-startup-id termite --name dropdown -e "tmux new-session"
-for_window [instance="dropdown"] floating enable, resize set 960 720, move scratchpad
+for_window [instance="dropdown"] floating enable, resize set 1280 720, move scratchpad
 bindcode $mod+31 [instance="dropdown"] scratchpad show, move position center
 
 bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
@@ -251,7 +251,7 @@ for_window [title="Subscriptions - YouTube"] move to workspace $ws10
 #exec --no-startup-id xbindkeys
 
 floating_minimum_size 50 x 50
-floating_maximum_size 960 x 720
+floating_maximum_size 1280 x 720
 
 focus_follows_mouse no
 
