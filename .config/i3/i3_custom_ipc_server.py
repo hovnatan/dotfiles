@@ -14,7 +14,7 @@ import i3ipc
 from pynput import keyboard
 
 SOCKET_FILE = '/tmp/i3_focus_last'
-NUM_WORKSPACES_TO_FOLLOW = 3
+NUM_WORKSPACES_TO_FOLLOW = 10
 
 DEBUG = "DEBUG_I3_IPC" in os.environ
 
