@@ -62,7 +62,11 @@ def pudb_stringifier(value):
         return text_type("ndarray %s %s") % (value.dtype, value.shape)
     elif HAVE_PYTORCH and isinstance(value, torch.Tensor):
         dtype = str(value.dtype)[6:]
-        return text_type("tTensor %s %s") % (dtype, tuple(value.size()))
+        shape = tuple(value.size())
+        if shape:
+            return text_type("tTensor %s %s") % (dtype, shape)
+        else:
+            return text_type("tTensor %s %s %s") % (dtype, shape, value.item())
 
     elif isinstance(value, STR_SAFE_TYPES):
         try:
