@@ -122,6 +122,8 @@ cd ~
 ssh-keygen -t rsa
 #echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
 #chmod 644 ~/.ssh/config
+touch ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
 
 # To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'. with xclip -i ~/.ssh/id_rsa.pub
 
