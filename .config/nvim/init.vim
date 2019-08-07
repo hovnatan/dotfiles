@@ -38,9 +38,7 @@ set shortmess=at
 set wildmenu
 set lazyredraw
 set showmatch
-set diffopt+=vertical
-set diffopt+=algorithm:patience
-set diffopt+=indent-heuristic
+set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
 set splitbelow
 set splitright
 set foldmethod=manual
