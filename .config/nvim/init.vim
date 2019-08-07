@@ -21,7 +21,7 @@ set showcmd
 if has('mouse')
   set mouse=a
 endif
-command! MakeTags !ctags -R .
+command! MakeTags !ptags
 set ttyfast
 set nostartofline
 set nobackup
