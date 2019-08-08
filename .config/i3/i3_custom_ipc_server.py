@@ -60,6 +60,8 @@ class SizedAndUpdatedOrderedDict(collections.OrderedDict):
 class FocusWatcher:
     def __init__(self):
         self.i3 = i3ipc.Connection()
+        if DEBUG:
+            print("Connection to I3 established.")
         self.i3.on('window::focus', self.on_window_focus)
         self.i3.on("window::close", self.on_window_close)
         self.i3.on("workspace::focus", self.on_workspace_focus)
@@ -71,6 +73,8 @@ class FocusWatcher:
             os.remove(SOCKET_FILE)
         self.listening_socket.bind(SOCKET_FILE)
         self.listening_socket.listen(1)
+        if DEBUG:
+            print("Connection to socket established.")
 
         self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
         self.window_list_lock = threading.RLock()
@@ -101,6 +105,8 @@ class FocusWatcher:
         sys.exit(0)
 
     def on_window_close(self, i3conn, event):
+        if DEBUG:
+            print("Connection to socket established.")
         with self.window_list_lock:
             window_id = event.container.id
             if window_id in self.window_list:
@@ -235,6 +241,8 @@ class FocusWatcher:
 
     def on_window_focus(self, i3conn, event):
         window_id = event.container.props.id
+        if DEBUG:
+            print(f"window focus on {window_id}")
         with self.window_current_lock:
             self.current_w = window_id
         with self.mode_w_lock:
@@ -243,6 +251,8 @@ class FocusWatcher:
         self.keyboard_layout_setup(window_id)
 
     def launch_i3(self):
+        if DEBUG:
+            print("i3 started")
         self.i3.main()
 
     def launch_server(self):
