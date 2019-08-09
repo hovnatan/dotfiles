@@ -75,10 +75,6 @@ ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # run source /opt/miniconda3/etc/profile.d/conda.sh
 # conda activate
 
-#yay -S interception-caps2esc
-#sudo cp ~/.dotfiles/udevmon.yaml /etc/
-#sudo systemctl enable udevmon.service
-
 # hibernate
 # sudo fallocate -l 25G /swapfile
 # sudo chmod 0600 /swapfile
