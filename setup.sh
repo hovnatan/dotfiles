@@ -190,7 +190,11 @@ ln -s ~/Dropbox/scripts/mps-youtube ~/.config/mps-youtube
 #sudo systemctl start org.cups.cupsd.service
 #then visit http://localhost:631 to add printer
 
+mkdir -p ~/.config/pulse
+ln -s ~/.dotfiles/.config/pulse/daemon.conf ~/.config/pulse/
+ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
 #for pulseaudio switching comment load-module module-switch-on-port-available in /etc/pulse/default.pa
+# less /proc/asound/card0/pcm0p/sub0/hw_params
 
 #for running iso executables with root uncomment allow_other in /etc/fuse.conf then run e.g.,
 # fuseiso xxx.iso ~/iso -o allow_other
