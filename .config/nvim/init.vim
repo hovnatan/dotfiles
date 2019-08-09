@@ -265,11 +265,11 @@ nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
 nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
 nnoremap <silent> <space>h  :<C-u>CocList mru<cr>
 nnoremap <silent> <space>b  :<C-u>CocList buffers<cr>
-nnoremap <silent> <space>f  :<C-u>CocList files<cr>
-nnoremap <silent> <leader>gf  :<C-u>CocList gfiles<cr>
+nnoremap <silent> <space>f  :<C-u>CocList gfiles<cr>
+nnoremap <silent> <space>d  :<C-u>CocList files<cr>
 nnoremap <silent> <space>l  :<C-u>CocList <cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
-nnoremap <silent> <space>g  :<C-u>CocList grep<cr>
+nnoremap <silent> <space>r  :<C-u>CocList grep<cr>
 nnoremap <silent> <space>j  :<C-u>CocNext<CR>
 nnoremap <silent> <space>k  :<C-u>CocPrev<CR>
 nnoremap <silent> <space>p  :<C-u>CocListResume<CR>
@@ -279,8 +279,8 @@ nnoremap <expr><C-b> coc#util#has_float() ? coc#util#float_scroll(0) : "\<C-b>"
 
 nnoremap <silent> <space>w  :exe 'CocList -I --normal --input='.expand('<cword>').' words'<CR>
 
-vnoremap <leader>g :<C-u>call <SID>GrepFromSelected(visualmode())<CR>
-nnoremap <leader>g :<C-u>set operatorfunc=<SID>GrepFromSelected<CR>g@
+vnoremap <leader>rg :<C-u>call <SID>GrepFromSelected(visualmode())<CR>
+nnoremap <leader>rg :<C-u>set operatorfunc=<SID>GrepFromSelected<CR>g@
 
 function! s:GrepFromSelected(type)
   let saved_unnamed_register = @@
