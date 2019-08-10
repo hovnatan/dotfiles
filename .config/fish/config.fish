@@ -7,6 +7,15 @@ set -x FZF_CTRL_T_COMMAND "fd -L -p -H . \$dir"
 set -x FZF_DEFAULT_COMMAND $FZF_CTRL_T_COMMAND
 set -x EDITOR nvim
 
+function forward-word-or-exit
+    set -l cmd (commandline)
+    if test -n "$cmd"
+        commandline -f forward-word
+    else
+        exit
+    end
+end
+
 function hybrid_bindings --description "Vi-style bindings that inherit emacs-style bindings in all modes"
     for mode in default insert visual
         fish_default_key_bindings -M $mode
@@ -14,8 +23,8 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     fish_vi_key_bindings --no-erase
     bind \cp up-or-search
     bind \cn down-or-search
-    bind \cd forward-word
-    bind -M insert \cd forward-word
+    bind \cd forward-word-or-exit
+    bind -M insert \cd forward-word-or-exit
     fzf_key_bindings
 #    bind -M insert -m default jk backward-char force-repaint
 #    bind -m insert \e force-repaint
