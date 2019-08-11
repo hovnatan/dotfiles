@@ -7,6 +7,7 @@ import selectors
 import subprocess
 import threading
 import collections
+import logging
 
 import sh
 
@@ -15,6 +16,18 @@ from pynput import keyboard
 
 SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 10
+
+format_str = '[%(asctime)s-%(levelname)-8s-%(filename)-20s:%(lineno)-5s] %(message)s'
+formatter = logging.Formatter(format_str)
+
+logger = logging.getLogger(__name__)
+logger_handler = logging.StreamHandler(sys.stderr)
+logger_handler.setFormatter(formatter)
+f = open("/tmp/ipc_server.log", "w")
+logger_handler2 = logging.StreamHandler(f)
+logger_handler2.setFormatter(formatter)
+logger.addHandler(logger_handler)
+logger.addHandler(logger_handler2)
 
 if False:
     import code
@@ -37,10 +50,6 @@ if False:
         signal.signal(signal.SIGUSR1, debug)  # Register handler
 
 
-f = open("/tmp/ipc_server.log", "w")
-sys.stdout = f
-
-
 class SizedAndUpdatedOrderedDict(collections.OrderedDict):
     'Limit size, evicting the least recently looked-up key when full'
 
@@ -57,11 +66,9 @@ class SizedAndUpdatedOrderedDict(collections.OrderedDict):
 
 
 class FocusWatcher:
-    def __init__(self, debug=False):
-        self.debug = debug
+    def __init__(self):
         self.i3 = i3ipc.Connection()
-        if self.debug:
-            print("Connection to I3 established.")
+        logger.debug("Connection to I3 established.")
         self.i3.on('window::focus', self.on_window_focus)
         self.i3.on("window::close", self.on_window_close)
         self.i3.on("workspace::focus", self.on_workspace_focus)
@@ -73,8 +80,7 @@ class FocusWatcher:
             os.remove(SOCKET_FILE)
         self.listening_socket.bind(SOCKET_FILE)
         self.listening_socket.listen(1)
-        if self.debug:
-            print("Connection to socket established.")
+        logger.debug("Connection to socket established.")
 
         self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
         self.window_list_lock = threading.RLock()
@@ -105,8 +111,7 @@ class FocusWatcher:
         sys.exit(0)
 
     def on_window_close(self, i3conn, event):
-        if self.debug:
-            print("Connection to socket established.")
+        logger.debug("Connection to socket established.")
         with self.window_list_lock:
             window_id = event.container.id
             if window_id in self.window_list:
@@ -129,17 +134,10 @@ class FocusWatcher:
         except AttributeError:
             char = 'a'
         if char != '`' and char != '՝':
-            if self.debug:
-                print("Grave closing ", char)
+            logger.debug("Grave closing %s", char)
 
             with self.mode_w_lock:
                 self.mode_w = False
-            with self.window_current_lock:
-                if self.current_w != -1:
-                    with self.window_list_lock:
-                        c_w = self.window_list[self.current_w]
-                        if self.debug:
-                            print("WL c", c_w)
             self.keyboard_layout_setup(self.current_w)
             return False
         return True
@@ -154,11 +152,10 @@ class FocusWatcher:
                         continue
                     self.ws_window_list.add(x.id)
                 self.ws_w_curr_length = len(self.ws_window_list)
-                if self.debug:
-                    print(
-                        "Current ws windows", self.ws_window_list,
-                        self.window_list
-                    )
+                logger.debug(
+                    "Current ws windows %s %s", self.ws_window_list,
+                    self.window_list
+                )
                 if self.ws_w_curr_length < 2:
                     return
                 self.mode_w = True
@@ -203,8 +200,7 @@ class FocusWatcher:
     def on_workspace_focus(self, i3conn, event):
         with self.workspace_current_lock:
             self.current_ws = str(event.current.name)
-            if self.debug:
-                print(f"hello ws {self.current_ws}")
+            logger.debug("hello ws %s", self.current_ws)
             if not self.current_ws.isdigit():
                 return
             with self.mode_ws_lock:
@@ -214,8 +210,7 @@ class FocusWatcher:
                 self.workspace_list[self.current_ws] = True
 
     def keyboard_layout_setup(self, window_id):
-        if self.debug:
-            print("Keyboard setup with", window_id)
+        logger.debug("Keyboard setup with %s", window_id)
         with self.window_list_lock:
             if self.window_list:
                 previous_focus = next(reversed(self.window_list))
@@ -241,8 +236,7 @@ class FocusWatcher:
 
     def on_window_focus(self, i3conn, event):
         window_id = event.container.props.id
-        if self.debug:
-            print(f"window focus on {window_id}")
+        logger.debug("window focus on %s", window_id)
         with self.window_current_lock:
             self.current_w = window_id
         with self.mode_w_lock:
@@ -251,8 +245,7 @@ class FocusWatcher:
         self.keyboard_layout_setup(window_id)
 
     def launch_i3(self):
-        if self.debug:
-            print("i3 started")
+        logger.debug("i3 started")
         self.i3.main()
 
     def launch_server(self):
@@ -264,8 +257,7 @@ class FocusWatcher:
 
         def read(conn):
             data = conn.recv(1024)
-            if self.debug:
-                print(f"Received {data.decode()}")
+            logger.debug("Received %s", data.decode())
             if data == b'switch':
                 # with self.window_list_lock:
                 #     if DEBUG:
@@ -302,11 +294,12 @@ class FocusWatcher:
                     all_ws = str(self.workspace_list)
                 conn.send((all_winds + " " + all_ws).encode())
             elif data == b'set_debug':
-                self.debug = True
+                logger.setLevel(logging.DEBUG)
+                logger_handler.setLevel(logging.DEBUG)
+                logger_handler2.setLevel(logging.DEBUG)
                 conn.send("debug flag set".encode())
             elif not data:
-                if self.debug:
-                    print(f"Closing connection.")
+                logger.debug("Closing connection.")
                 selector.unregister(conn)
                 conn.close()
             else:
