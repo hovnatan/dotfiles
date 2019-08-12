@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import time
 import sys
 import socket
 import selectors
@@ -16,6 +17,7 @@ from pynput import keyboard
 
 SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 10
+TIME_TO_SYNC = 0.25
 
 format_str = '[%(asctime)s-%(levelname)-8s-%(filename)-20s:%(lineno)-5s] %(message)s'
 formatter = logging.Formatter(format_str)
@@ -197,17 +199,24 @@ class FocusWatcher:
                 break
             self.ws_index += 1
 
-    def on_workspace_focus(self, i3conn, event):
-        with self.workspace_current_lock:
-            self.current_ws = str(event.current.name)
-            logger.debug("hello ws %s", self.current_ws)
-            if not self.current_ws.isdigit():
+    def wait_then_ws_setup(self, cws):
+        time.sleep(TIME_TO_SYNC)
+        with self.mode_ws_lock:
+            if self.mode_ws:
                 return
-            with self.mode_ws_lock:
-                if self.mode_ws:
-                    return
-            with self.workspace_list_lock:
-                self.workspace_list[self.current_ws] = True
+        with self.workspace_list_lock:
+            self.workspace_list[cws] = True
+
+    def on_workspace_focus(self, i3conn, event):
+        cws = str(event.current.name)
+        logger.debug("hello ws %s", cws)
+        if not cws.isdigit():
+            return
+        with self.workspace_current_lock:
+            self.current_ws = cws
+        threading.Thread(
+            target=self.wait_then_ws_setup, args=(cws, ), daemon=True
+        ).start()
 
     def keyboard_layout_setup(self, window_id):
         logger.debug("Keyboard setup with %s", window_id)
@@ -234,15 +243,25 @@ class FocusWatcher:
             self.window_list[window_id] = key
             subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
 
+    def wait_then_kb_layout_setup(self, window_id):
+        time.sleep(TIME_TO_SYNC)
+        with self.mode_w_lock:
+            if self.mode_w:
+                return
+        with self.window_current_lock:
+            if window_id == self.current_w:
+                self.keyboard_layout_setup(window_id)
+
     def on_window_focus(self, i3conn, event):
         window_id = event.container.props.id
         logger.debug("window focus on %s", window_id)
         with self.window_current_lock:
             self.current_w = window_id
-        with self.mode_w_lock:
-            if self.mode_w:
-                return
-        self.keyboard_layout_setup(window_id)
+        threading.Thread(
+            target=self.wait_then_kb_layout_setup,
+            args=(window_id, ),
+            daemon=True
+        ).start()
 
     def launch_i3(self):
         logger.debug("i3 started")
