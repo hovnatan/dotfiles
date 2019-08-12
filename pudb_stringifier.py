@@ -60,6 +60,8 @@ STR_SAFE_TYPES = get_str_safe_types()
 def pudb_stringifier(value):
     if HAVE_NUMPY and isinstance(value, numpy.ndarray):
         return text_type("ndarray %s %s") % (value.dtype, value.shape)
+    elif HAVE_NUMPY and numpy.issubdtype(value, numpy.number):
+        return text_type("%s") % value
     elif HAVE_PYTORCH and isinstance(value, torch.Tensor):
         dtype = str(value.dtype)[6:]
         shape = tuple(value.size())
