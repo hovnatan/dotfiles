@@ -3,6 +3,7 @@
 import os
 import time
 import sys
+import queue
 import socket
 import selectors
 import subprocess
@@ -84,6 +85,8 @@ class FocusWatcher:
         self.listening_socket.listen(1)
         logger.debug("Connection to socket established.")
 
+        self.window_queue = queue.Queue()
+        self.ws_queue = queue.Queue()
         self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
         self.window_list_lock = threading.RLock()
         self.mode_w = False
@@ -198,6 +201,12 @@ class FocusWatcher:
                 self.i3.command(f"workspace {ws}")
                 break
             self.ws_index += 1
+
+    def ws_thread(self):
+        pass
+
+    def w_thread(self):
+        pass
 
     def wait_then_ws_setup(self, cws):
         time.sleep(TIME_TO_SYNC)
@@ -335,6 +344,8 @@ class FocusWatcher:
         threads = []
         threads.append(threading.Thread(target=self.launch_i3))
         threads.append(threading.Thread(target=self.launch_server, daemon=True))
+        threads.append(threading.Thread(target=self.ws_thread, daemon=True))
+        threads.append(threading.Thread(target=self.w_thread, daemon=True))
         for t in threads:
             t.start()
 
