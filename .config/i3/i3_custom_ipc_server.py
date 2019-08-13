@@ -117,8 +117,11 @@ class FocusWatcher:
 
     def on_window_close(self, i3conn, event):
         logger.debug("Connection to socket established.")
+        window_id = event.container.id
+        with self.window_current_lock:
+            if self.current_w == window_id:
+                self.current_w = None
         with self.window_list_lock:
-            window_id = event.container.id
             if window_id in self.window_list:
                 del self.window_list[window_id]
 
