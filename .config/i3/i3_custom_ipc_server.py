@@ -85,8 +85,8 @@ class FocusWatcher:
         self.listening_socket.listen(1)
         logger.debug("Connection to socket established.")
 
-        self.window_queue = queue.Queue()
-        self.ws_queue = queue.Queue()
+        self.w_queue = queue.SimpleQueue()
+        self.ws_queue = queue.SimpleQueue()
         self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
         self.window_list_lock = threading.RLock()
         self.mode_w = False
@@ -203,18 +203,30 @@ class FocusWatcher:
             self.ws_index += 1
 
     def ws_thread(self):
-        pass
+        while True:
+            ws, t = self.ws_queue.get()
+            ct = time.time()
+            time.sleep(max(0.0, TIME_TO_SYNC - (ct - t)))
+            with self.mode_ws_lock:
+                if self.mode_ws:
+                    continue
+            with self.workspace_current_lock:
+                if self.current_ws != ws:
+                    continue
+            with self.workspace_list_lock:
+                self.workspace_list[ws] = True
 
     def w_thread(self):
-        pass
-
-    def wait_then_ws_setup(self, cws):
-        time.sleep(TIME_TO_SYNC)
-        with self.mode_ws_lock:
-            if self.mode_ws:
-                return
-        with self.workspace_list_lock:
-            self.workspace_list[cws] = True
+        while True:
+            w, t = self.w_queue.get()
+            ct = time.time()
+            time.sleep(max(0.0, TIME_TO_SYNC - (ct - t)))
+            with self.mode_w_lock:
+                if self.mode_w:
+                    continue
+            with self.window_current_lock:
+                if w == self.current_w:
+                    self.keyboard_layout_setup(w)
 
     def on_workspace_focus(self, i3conn, event):
         cws = str(event.current.name)
@@ -223,9 +235,7 @@ class FocusWatcher:
             return
         with self.workspace_current_lock:
             self.current_ws = cws
-        threading.Thread(
-            target=self.wait_then_ws_setup, args=(cws, ), daemon=True
-        ).start()
+        self.ws_queue.put((cws, time.time()))
 
     def keyboard_layout_setup(self, window_id):
         logger.debug("Keyboard setup with %s", window_id)
@@ -252,25 +262,12 @@ class FocusWatcher:
             self.window_list[window_id] = key
             subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
 
-    def wait_then_kb_layout_setup(self, window_id):
-        time.sleep(TIME_TO_SYNC)
-        with self.mode_w_lock:
-            if self.mode_w:
-                return
-        with self.window_current_lock:
-            if window_id == self.current_w:
-                self.keyboard_layout_setup(window_id)
-
     def on_window_focus(self, i3conn, event):
         window_id = event.container.props.id
         logger.debug("window focus on %s", window_id)
         with self.window_current_lock:
             self.current_w = window_id
-        threading.Thread(
-            target=self.wait_then_kb_layout_setup,
-            args=(window_id, ),
-            daemon=True
-        ).start()
+        self.w_queue.put((window_id, time.time()))
 
     def launch_i3(self):
         logger.debug("i3 started")

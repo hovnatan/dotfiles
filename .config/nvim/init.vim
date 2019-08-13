@@ -68,7 +68,7 @@ runtime plugins/matchit.vim
 syntax on
 nnoremap <S-h> gT
 nnoremap <S-l> gt
-set clipboard+=unnamedplus
+" set clipboard+=unnamedplus
 set undofile
 set undodir=$HOME/.vimundo
 set undolevels=1000
