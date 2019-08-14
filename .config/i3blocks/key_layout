@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 case $BLOCK_BUTTON in
-    1) key_layout_switch.sh ;;  # left click, switch
+    1) xkb-switch -n ;;  # left click, switch
 esac
-LNG=$(check_layout.sh)
-if [ "$LNG" == "am" ]; then
-  echo 🇦🇲
-else
+LNG=$(xkb-switch -p)
+if [ "$LNG" == "us" ]; then
   echo 🇺🇸
+else
+  echo 🇦🇲
 fi

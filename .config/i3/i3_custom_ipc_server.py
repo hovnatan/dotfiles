@@ -32,26 +32,6 @@ logger_handler2.setFormatter(formatter)
 logger.addHandler(logger_handler)
 logger.addHandler(logger_handler2)
 
-if False:
-    import code
-    import traceback
-    import signal
-
-    def debug(sig, frame):
-        """Interrupt running process, and provide a python prompt for
-        interactive debugging."""
-        d = {'_frame': frame}  # Allow access to frame object.
-        d.update(frame.f_globals)  # Unless shadowed by global
-        d.update(frame.f_locals)
-
-        i = code.InteractiveConsole(d)
-        message = "Signal received : entering python shell.\nTraceback:\n"
-        message += ''.join(traceback.format_stack(frame))
-        i.interact(message)
-
-    def listen():
-        signal.signal(signal.SIGUSR1, debug)  # Register handler
-
 
 class SizedAndUpdatedOrderedDict(collections.OrderedDict):
     'Limit size, evicting the least recently looked-up key when full'
@@ -69,7 +49,9 @@ class SizedAndUpdatedOrderedDict(collections.OrderedDict):
 
 
 class FocusWatcher:
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
+        self.set_debug(debug)
         self.i3 = i3ipc.Connection()
         logger.debug("Connection to I3 established.")
         self.i3.on('window::focus', self.on_window_focus)
@@ -96,6 +78,8 @@ class FocusWatcher:
         self.current_w = -1
         self.ws_window_list = set()
         self.ws_w_curr_length = -1
+        self.current_key = "us"
+        self.current_key_lock = threading.RLock()
 
         self.workspace_list_lock = threading.RLock()
         self.workspace_list = SizedAndUpdatedOrderedDict(
@@ -243,27 +227,15 @@ class FocusWatcher:
     def keyboard_layout_setup(self, window_id):
         logger.debug("Keyboard setup with %s", window_id)
         with self.window_list_lock:
-            if self.window_list:
-                previous_focus = next(reversed(self.window_list))
-                result = subprocess.run(
-                    ['check_layout.sh'], stdout=subprocess.PIPE
-                )
-                if result.stdout.decode() == "am":
-                    self.window_list[previous_focus] = 1
-                else:
-                    self.window_list[previous_focus] = 0
-            key = 0
+            key = "us"
             if window_id in self.window_list:
                 key = self.window_list[window_id]
-                if key == 0:
-                    subprocess.run(["setkmap.sh", "us"])
-                else:
-                    subprocess.run(["setkmap.sh", "am"])
-                del self.window_list[window_id]
             else:
-                subprocess.run(["setkmap.sh", "us"])
+                logger.debug("Setting last %s to us", window_id)
             self.window_list[window_id] = key
-            subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
+            with self.current_key_lock:
+                if key != self.current_key:
+                    subprocess.run(["xkb-switch", "-s", key])
 
     def on_window_focus(self, i3conn, event):
         window_id = event.container.props.id
@@ -275,6 +247,12 @@ class FocusWatcher:
     def launch_i3(self):
         logger.debug("i3 started")
         self.i3.main()
+
+    def set_debug(self, debug=False):
+        if debug:
+            logger.setLevel(logging.DEBUG)
+            logger_handler.setLevel(logging.DEBUG)
+            logger_handler2.setLevel(logging.DEBUG)
 
     def launch_server(self):
         selector = selectors.DefaultSelector()
@@ -322,9 +300,7 @@ class FocusWatcher:
                     all_ws = str(self.workspace_list)
                 conn.send((all_winds + " " + all_ws).encode())
             elif data == b'set_debug':
-                logger.setLevel(logging.DEBUG)
-                logger_handler.setLevel(logging.DEBUG)
-                logger_handler2.setLevel(logging.DEBUG)
+                self.set_debug(True)
                 conn.send("debug flag set".encode())
             elif not data:
                 logger.debug("Closing connection.")
@@ -340,12 +316,29 @@ class FocusWatcher:
                 callback = key.data
                 callback(key.fileobj)
 
+    def kb_watch_thread(self):
+        result = subprocess.Popen(['xkb-switch', '-W'], stdout=subprocess.PIPE)
+        while True:
+            line = result.stdout.readline().decode().rstrip()
+            logger.debug("Keyboard switch to %s received.", line)
+            with self.current_key_lock:
+                self.current_key = line
+            with self.window_list_lock:
+                for window in reversed(self.window_list):
+                    self.window_list[window] = line
+                    logger.debug("Keyboard for %s switch to %s.", window, line)
+                    break
+            subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
+
     def run(self):
         threads = []
         threads.append(threading.Thread(target=self.launch_i3))
         threads.append(threading.Thread(target=self.launch_server, daemon=True))
         threads.append(threading.Thread(target=self.ws_thread, daemon=True))
         threads.append(threading.Thread(target=self.w_thread, daemon=True))
+        threads.append(
+            threading.Thread(target=self.kb_watch_thread, daemon=True)
+        )
         for t in threads:
             t.start()
 
@@ -364,5 +357,6 @@ if __name__ == '__main__':
     except sh.ErrorReturnCode:
         pass
 
-    focus_watcher = FocusWatcher()
+    debug = True if len(sys.argv) > 1 else False
+    focus_watcher = FocusWatcher(debug)
     focus_watcher.run()
