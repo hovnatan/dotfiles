@@ -34,6 +34,7 @@ except ImportError:
     HAVE_PYTORCH = 0
 
 from pudb.py3compat import string_types, text_type
+from pathlib import Path
 
 
 class WatchEvalError(object):
@@ -69,6 +70,8 @@ def pudb_stringifier(value):
             return text_type("tTensor %s %s") % (dtype, shape)
         else:
             return text_type("tTensor %s %s %s") % (dtype, shape, value.item())
+    elif isinstance(value, Path):
+        return text_type("Path %s") % value
 
     elif isinstance(value, STR_SAFE_TYPES):
         try:
