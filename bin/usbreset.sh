@@ -8,4 +8,4 @@ sudo modprobe xhci_pci
 
 sleep 2
 
-setkmap.sh us
+xkb-switch -s us

@@ -5,7 +5,7 @@ then
   eval $(xdotool getmouselocation --shell)
   if [ "$X" -gt 30 ] || [ "$1" != "autolock" ] ; then
     nohup ~/.dotfiles/.config/i3/lock.sh >/dev/null 2>&1 &
-    setkmap.sh us
+    xkb-switch -s us
     if [ "$1" != "sleep" ] ;
     then
       # Turn the screen off after a delay.
