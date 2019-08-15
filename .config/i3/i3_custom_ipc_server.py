@@ -19,6 +19,7 @@ from pynput import keyboard
 SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 10
 TIME_TO_SYNC = 0.25
+DEFAULT_KEYBOARD_LAYOUT = "us"
 
 format_str = '[%(asctime)s-%(levelname)-8s-%(filename)-20s:%(lineno)-5s] %(message)s'
 formatter = logging.Formatter(format_str)
@@ -227,7 +228,7 @@ class FocusWatcher:
     def keyboard_layout_setup(self, window_id):
         logger.debug("Keyboard setup with %s", window_id)
         with self.window_list_lock:
-            key = "us"
+            key = DEFAULT_KEYBOARD_LAYOUT
             if window_id in self.window_list:
                 key = self.window_list[window_id]
             else:
