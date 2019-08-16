@@ -1,11 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
-sudo rmmod ehci_pci
-sudo rmmod xhci_pci
+$HOME/.dotfiles/bin/usbmodreset.sh
 
-sudo modprobe ehci_pci
-sudo modprobe xhci_pci
+sleep 5
 
-sleep 2
-
-xkb-switch -s us
+$HOME/.dotfiles/bin/setkmap.sh
