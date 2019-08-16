@@ -150,7 +150,7 @@ nnoremap <leader>gu :<C-u>CocCommand git.chunkUndo<CR>
 
 nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gm :MagitOnly<CR>
-nnoremap <leader>gp :! git push<CR>
+nnoremap <leader>gp :Gpush<CR>
 
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 
