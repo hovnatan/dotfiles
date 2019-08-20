@@ -231,6 +231,7 @@ endfunction
 nmap <leader>rn <Plug>(coc-rename)
 xmap <leader>f  <Plug>(coc-format-selected)
 nmap <leader>f  <Plug>(coc-format-selected)
+nmap <leader>x  <Plug>(coc-cursors-operator)
 
 augroup mygroup
   autocmd!
