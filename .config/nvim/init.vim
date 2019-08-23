@@ -81,6 +81,8 @@ let g:strip_whitespace_confirm = 1
 let g:strip_whitelines_at_eof = 1
 
 call plug#begin('~/.local/share/nvim/site/plugged')
+  Plug 'inkarkat/vim-ingo-library'
+  Plug 'inkarkat/vim-EnhancedJumps'
   Plug 'sheerun/vim-polyglot'
   Plug 'junegunn/limelight.vim'
   Plug 'junegunn/goyo.vim'
@@ -466,3 +468,8 @@ if exists('$TMUX')
 endif
 
 nnoremap <Leader>q :Bdelete<CR>
+
+nmap g<C-o>      <Plug>EnhancedJumpsOlder
+nmap g<C-i>      <Plug>EnhancedJumpsNewer
+nmap <C-o>       <Plug>EnhancedJumpsLocalOlder
+nmap <C-i>       <Plug>EnhancedJumpsLocalNewer
