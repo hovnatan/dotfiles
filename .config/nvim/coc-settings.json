@@ -24,6 +24,7 @@
   "python.autoComplete.showAdvancedMembers" : false,
   "python.terminal.activateEnvironment" : false,
   "coc.preferences.formatOnSaveFiletypes": ["python", "cpp"],
+  "coc.preferences.jumpCommand": "tab drop" ,
   "git.addedSign.hlGroup": "GitGutterAdd",
   "git.addedSign.text": "",
   "git.changedSign.hlGroup": "GitGutterChange",
