@@ -391,14 +391,14 @@ nnoremap <silent> <C-l> :call WinMove('l')<cr>
 function! WinMove(key)
   let t:curwin = winnr()
   exec "wincmd ".a:key
-  if (t:curwin == winnr())
-    if (match(a:key,'[jk]'))
-      wincmd v
-    else
-      wincmd s
-    endif
-    exec "wincmd ".a:key
-  endif
+  " if (t:curwin == winnr())
+  "   if (match(a:key,'[jk]'))
+  "     wincmd v
+  "   else
+  "     wincmd s
+  "   endif
+  "   exec "wincmd ".a:key
+  " endif
 endfunction
 
 set updatetime=300
@@ -475,3 +475,9 @@ nmap g<C-o>      <Plug>EnhancedJumpsOlder
 nmap g<C-i>      <Plug>EnhancedJumpsNewer
 nmap <C-o>       <Plug>EnhancedJumpsLocalOlder
 nmap <C-i>       <Plug>EnhancedJumpsLocalNewer
+
+if !exists('g:lasttab')
+  let g:lasttab = 1
+endif
+nmap <Leader>tl :exe "tabn ".g:lasttab<CR>
+au TabLeave * let g:lasttab = tabpagenr()
