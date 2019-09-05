@@ -481,3 +481,5 @@ if !exists('g:lasttab')
 endif
 nmap <Leader>tl :exe "tabn ".g:lasttab<CR>
 au TabLeave * let g:lasttab = tabpagenr()
+
+nnoremap <expr> gp '`[' . strpart(getregtype(), 0, 1) . '`]'
