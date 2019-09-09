@@ -124,6 +124,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'majutsushi/tagbar'
   Plug 'moll/vim-bbye'
   Plug 'wsdjeg/vim-fetch'
+  Plug 'roman/golden-ratio'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
