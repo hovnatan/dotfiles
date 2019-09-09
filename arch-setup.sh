@@ -76,7 +76,7 @@ ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # conda activate
 
 # for indexed png
-# pip install numpngw
+# pip install png
 
 # hibernate
 # sudo fallocate -l 25G /swapfile
