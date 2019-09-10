@@ -46,16 +46,11 @@ END {
 		total=mem_total/1024/1024
 	}
 
-	pct=0
-	if (total > 0) {
-		pct=used/total*100
-	}
-
 	# full text
-	printf("%.1fG/%.1fG (%.f%%)\n", used, total, pct)
+	printf("%.1fG\n", free)
 
 	# short text
-	printf("%.f%%\n", pct)
+	printf("%.1fG\n", free)
 
 	# color
 	if (pct > 90) {
