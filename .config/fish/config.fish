@@ -77,7 +77,14 @@ abbr cp  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr np   "nvim --noplugin"
 abbr nf "nvim (fzf)"
-abbr r   "ranger --choosedir="$HOME/.rangerdir"; cd (cat $HOME/.rangerdir)"
+
+function ranger_fm
+  if not set -q RANGER_LEVEL
+    ranger --choosedir="$HOME/.rangerdir"; cd (cat $HOME/.rangerdir)
+  end
+end
+abbr r   ranger_fm
+
 abbr z   "zathura"
 abbr g   "grep"
 abbr gs  "git status"
