@@ -2,10 +2,13 @@ set nocompatible
 set hidden
 set backspace=indent,eol,start
 set t_Co=256
+
 set tabstop=2
 set shiftwidth=2
-set scrolloff=5
+set softtabstop=2
 set expandtab
+
+set scrolloff=5
 set termguicolors
 set autoindent
 set smartindent
