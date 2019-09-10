@@ -21,16 +21,17 @@ interval=10
 
 [volume]
 command=$SCRIPT_DIR/volume
-label=♪
+label=♪ 
 interval=once
 signal=10
 
 [memory]
-#label=mem
+command=$SCRIPT_DIR/memory.sh
 separator=false
 interval=30
 
 [disk]
+command=$SCRIPT_DIR/disk.sh
 #label=HOME
 #instance=/mnt/data
 interval=30
@@ -41,7 +42,7 @@ interval=30
 #interval=30
 
 [wifi_contrib]
-label=
+label= 
 command=$SCRIPT_DIR/wifi_contrib
 interval=30
 
@@ -50,7 +51,7 @@ command=$SCRIPT_DIR/iface_contrib
 interval=30
 
 [battery]
-label=
+label= 
 command=$SCRIPT_DIR/battery
 #instance=1
 interval=30
