@@ -75,12 +75,14 @@ set -U fish_user_paths ~/.dotfiles/bin
 abbr c   "cd"
 abbr cp  "rsync -a --info=progress2"
 abbr n   "nvim"
-abbr np   "nvim --noplugin"
+abbr np  "nvim --noplugin"
 abbr nf "nvim (fzf)"
 
 function ranger_fm
   if not set -q RANGER_LEVEL
     ranger --choosedir="$HOME/.rangerdir"; cd (cat $HOME/.rangerdir)
+  else
+    exit
   end
 end
 abbr r   ranger_fm
