@@ -117,7 +117,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'kana/vim-textobj-user'
-  Plug 'kana/vim-textobj-lastpat'
   Plug 'nelstrom/vim-visual-star-search'
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'zhimsel/vim-stay'
