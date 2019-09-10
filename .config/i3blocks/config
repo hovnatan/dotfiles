@@ -15,15 +15,16 @@ command=$SCRIPT_DIR/key_layout
 interval=once
 signal=10
 
-[load_average]
-command=$SCRIPT_DIR/load_average
-interval=10
-
 [volume]
 command=$SCRIPT_DIR/volume
 label=♪ 
 interval=once
 signal=10
+
+[load_average]
+command=$SCRIPT_DIR/load_average
+interval=10
+separator=false
 
 [memory]
 command=$SCRIPT_DIR/memory.sh
