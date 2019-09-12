@@ -23,6 +23,7 @@
   "python.formatting.yapfArgs" : ["--style=facebook"],
   "python.autoComplete.showAdvancedMembers" : false,
   "python.terminal.activateEnvironment" : false,
+  "python.jediEnabled": true,
   "coc.preferences.formatOnSaveFiletypes": ["python", "cpp"],
   "coc.preferences.jumpCommand": "tab drop",
   "git.addedSign.hlGroup": "GitGutterAdd",
