@@ -21,23 +21,18 @@ set title
 set ruler
 set number
 set showcmd
-if has('mouse')
-  set mouse=a
-endif
-command! MakeTags !ptags
+set mouse=a
 set ttyfast
 set nostartofline
 set nobackup
 set autowrite
-set shortmess=atI
+set shortmess=atIc
 set modeline
 set modelines=3
 set whichwrap=b,s,h,l,<,>,[,]
 set visualbell t_vb=
 set novisualbell
 set iskeyword=@,48-57,_,192-255,-,.
-nn <F9> :silent Dispatch!<CR>
-set shortmess=at
 set wildmenu
 set lazyredraw
 set showmatch
@@ -50,6 +45,22 @@ set inccommand=nosplit
 set cursorline
 set wrapscan
 set switchbuf=usetab
+set listchars=tab:▸\ ,eol:¬
+set history=200
+set clipboard+=unnamedplus
+set undofile
+set undodir=$HOME/.vimundo
+set undolevels=1000
+set undoreload=10000
+set colorcolumn=80
+set nobackup
+set nowritebackup
+set cmdheight=1
+set shortmess+=c
+set signcolumn=yes
+set conceallevel=1
+
+nn <F9> :silent Dispatch!<CR>
 
 nnoremap <expr> j (v:count == 0 ? 'gj' : 'j')
 nnoremap gj j
@@ -65,18 +76,12 @@ xnoremap & :&&<CR>
 let mapleader=","
 noremap \ ,
 inoremap jk <esc>
-set history=200
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
 syntax on
 nnoremap <S-h> gT
 nnoremap <S-l> gt
-set clipboard+=unnamedplus
-set undofile
-set undodir=$HOME/.vimundo
-set undolevels=1000
-set undoreload=10000
 
 let g:undotree_SetFocusWhenToggle = 1
 
@@ -127,7 +132,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'majutsushi/tagbar'
   Plug 'moll/vim-bbye'
   Plug 'wsdjeg/vim-fetch'
-  Plug 'roman/golden-ratio'
 call plug#end()
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
@@ -197,13 +201,6 @@ function! CurrentLineI()
   \ : 0
 endfunction
 
-set colorcolumn=80
-
-set nobackup
-set nowritebackup
-set cmdheight=1
-set shortmess+=c
-set signcolumn=yes
 inoremap <silent><expr> <TAB>
       \ pumvisible() ? "\<C-n>" :
       \ <SID>check_back_space() ? "\<TAB>" :
@@ -256,6 +253,8 @@ nmap <leader>qf  <Plug>(coc-fix-current)
 
 
 command! -nargs=? Fold :call CocAction('fold', <f-args>)
+
+command! MakeTags !ptags
 
 
 let g:lightline = {
@@ -318,7 +317,6 @@ let &background=readfile(expand("~/.my_colors"))[0]
 let g:tex_flavor='latex'
 let g:vimtex_view_method='zathura'
 let g:vimtex_quickfix_mode=0
-set conceallevel=1
 let g:tex_conceal='abdmg'
 
 set spelllang=en_us
