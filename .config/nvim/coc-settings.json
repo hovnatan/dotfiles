@@ -25,7 +25,7 @@
   "python.terminal.activateEnvironment" : false,
   "python.jediEnabled": true,
   "coc.preferences.formatOnSaveFiletypes": ["python", "cpp"],
-  "coc.preferences.jumpCommand": "tab drop",
+  "coc.preferences.jumpCommand": "edit",
   "git.addedSign.hlGroup": "GitGutterAdd",
   "git.addedSign.text": "",
   "git.changedSign.hlGroup": "GitGutterChange",
