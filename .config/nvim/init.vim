@@ -372,8 +372,8 @@ autocmd FileType netrw setl bufhidden=delete
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
 
-nnoremap <leader>t <C-W>T<CR>
-nnoremap <C-W>t :tab split<CR>
+nnoremap <leader>t <C-w>T<CR>
+nnoremap <leader>T :tab split<CR>
 
 inoremap ;1 <C-o>ma
 inoremap ;2 <C-o>mb
@@ -466,7 +466,7 @@ nmap <C-i>       <Plug>EnhancedJumpsLocalNewer
 if !exists('g:lasttab')
   let g:lasttab = 1
 endif
-nmap <Leader>tl :exe "tabn ".g:lasttab<CR>
+nmap <space>t :exe "tabn ".g:lasttab<CR>
 au TabLeave * let g:lasttab = tabpagenr()
 
 nnoremap <expr> gp '`[' . strpart(getregtype(), 0, 1) . '`]'
