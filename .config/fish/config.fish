@@ -96,6 +96,7 @@ abbr gpp  "git pull"
 abbr ga  "git add -u"
 abbr gc  "git commit -m"
 abbr gca  "git commit --amend --no-edit"
+abbr gaca  "git add -u; git commit --amend --no-edit"
 abbr gd  "git diff"
 abbr gah 'git stash; and git pull --rebase; and git stash pop'
 abbr gm  "nvim -c MagitOnly"
