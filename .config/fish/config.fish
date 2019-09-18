@@ -73,7 +73,7 @@ set -U fish_user_paths ~/.dotfiles/bin
 [ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
 
 abbr c   "cd"
-abbr cp  "rsync -a --info=progress2"
+abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr np  "nvim --noplugin"
 abbr nf "nvim (fzf)"
@@ -122,4 +122,3 @@ set -gx HOMEBREW_REPOSITORY "/home/linuxbrew/.linuxbrew/Homebrew";
 set -g fish_user_paths "/home/linuxbrew/.linuxbrew/bin" "/home/linuxbrew/.linuxbrew/sbin" $fish_user_paths;
 set -q MANPATH; or set MANPATH ''; set -gx MANPATH "/home/linuxbrew/.linuxbrew/share/man" $MANPATH;
 set -q INFOPATH; or set INFOPATH ''; set -gx INFOPATH "/home/linuxbrew/.linuxbrew/share/info" $INFOPATH;
-
