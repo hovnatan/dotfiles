@@ -75,6 +75,11 @@ ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # run source /opt/miniconda3/etc/profile.d/conda.sh
 # conda activate
 
+# homebrew
+# cd ~
+# git clone https://github.com/Homebrew/brew
+# set -x PATH ~/brew/bin $PATH
+
 # for indexed png
 # pip install png
 
