@@ -13,7 +13,7 @@ sudo pacman -Sy ttf-ubuntu-font-family ttf-hack ttf-dejavu ttf-freefont terminus
 # latex language server
 sudo luarocks install --server=http://luarocks.org/dev digestif
 
-sudo pip3 install pysnooper
+sudo pip3 install pysnooper neovim-remote
 
 sudo ln -s /etc/fonts/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d
 sudo ln -s /etc/fonts/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d
