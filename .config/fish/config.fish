@@ -77,6 +77,7 @@ abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr np  "nvim --noplugin"
 abbr nf "nvim (fzf)"
+abbr nvr "nvr -p"
 
 function ranger_fm
   if not set -q RANGER_LEVEL
