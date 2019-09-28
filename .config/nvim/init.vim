@@ -111,6 +111,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-projectionist'
   Plug 'tpope/vim-vinegar'
   Plug 'tpope/vim-jdaddy'
+  Plug 'tpope/vim-rhubarb'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
