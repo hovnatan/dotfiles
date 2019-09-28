@@ -105,7 +105,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-unimpaired'
   Plug 'tpope/vim-git'
   Plug 'tpope/vim-fugitive'
-  Plug 'jreybert/vimagit'
   Plug 'tpope/vim-surround'
   Plug 'tpope/vim-repeat'
   Plug 'tpope/vim-projectionist'
@@ -161,7 +160,6 @@ nnoremap <leader>ga :<C-u>CocCommand git.chunkStage<CR>
 nnoremap <leader>gu :<C-u>CocCommand git.chunkUndo<CR>
 
 nnoremap <leader>gb :Gblame<CR>
-nnoremap <leader>gm :MagitOnly<CR>
 nnoremap <leader>gp :Gpush<CR>
 
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
