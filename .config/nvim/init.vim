@@ -160,6 +160,7 @@ nnoremap <leader>ga :<C-u>CocCommand git.chunkStage<CR>
 nnoremap <leader>gu :<C-u>CocCommand git.chunkUndo<CR>
 
 nnoremap <leader>gb :Gblame<CR>
+nnoremap <leader>gm :Gstatus<CR><C-w>T
 nnoremap <leader>gp :Gpush<CR>
 
 nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
