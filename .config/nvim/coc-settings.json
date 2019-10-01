@@ -40,7 +40,6 @@
   "suggest.detailMaxLength": 200,
   "list.insertMappings": {
     "<C-s>": "action:vsplit",
-    "<C-t>": "action:tabe",
     "<C-w>": "command:wincmd k",
     "<C-v>": "eval:@@"
   }
