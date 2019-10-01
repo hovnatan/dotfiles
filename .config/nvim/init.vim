@@ -80,8 +80,10 @@ cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
 syntax on
-nnoremap <S-h> gT
-nnoremap <S-l> gt
+" nnoremap <S-h> gT
+" nnoremap <S-l> gt
+nnoremap <S-l> :bnext<CR>
+nnoremap <S-h> :bprevious<CR>
 
 let g:undotree_SetFocusWhenToggle = 1
 
@@ -130,7 +132,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'jpalardy/vim-slime'
   Plug 'hovnatan/vim-ipython-cell'
   Plug 'majutsushi/tagbar'
-  Plug 'moll/vim-bbye'
   Plug 'wsdjeg/vim-fetch'
 call plug#end()
 
@@ -456,8 +457,6 @@ endfunction
 if exists('$TMUX')
   autocmd BufEnter,BufNewFile,WinEnter * call system("tmux rename-window \"nvim " . expand("%") . "\"")
 endif
-
-nnoremap <Leader>q :Bdelete<CR>
 
 nmap g<C-o>      <Plug>EnhancedJumpsOlder
 nmap g<C-i>      <Plug>EnhancedJumpsNewer
