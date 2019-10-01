@@ -7,7 +7,7 @@ font pango:DejaVu Sans Mono 11
 floating_modifier Mod1
 
 bindsym Mod1+Return exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh
-bindcode Mod4+43 exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh htop
+bindcode Mod4+43 exec --no-startup-id termite -e htop
 #bindsym Mod1+Shift+Return exec --no-startup-id kitty
 bindsym Mod1+Shift+Return exec --no-startup-id termite
 
@@ -255,7 +255,8 @@ floating_maximum_size 1280 x 720
 
 focus_follows_mouse no
 
-bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
+bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
+#bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
 bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop
 bindcode Mod4+39 exec dex ~/.local/share/applications/chrome-slack.desktop
 bindcode Mod4+58 exec dex ~/.local/share/applications/chrome-fbmessenger.desktop
