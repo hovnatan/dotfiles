@@ -119,8 +119,9 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kana/vim-textobj-user'
   " Plug 'nelstrom/vim-visual-star-search'
   Plug 'michaeljsmith/vim-indent-object'
-  Plug 'zhimsel/vim-stay'
+  Plug 'zhimsel/vim-stay' " remember states
   Plug 'Konfekt/FastFold'
+  Plug 'tmhedberg/SimpylFold'
   Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
@@ -131,7 +132,12 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'majutsushi/tagbar'
   Plug 'moll/vim-bbye'
   Plug 'wsdjeg/vim-fetch'
+  Plug 'liuchengxu/vim-which-key'
 call plug#end()
+
+nnoremap <silent> <leader> :WhichKey ','<CR>
+nnoremap <silent> g :WhichKey 'g'<CR>
+nnoremap <silent> <space> :WhichKey '<space>'<CR>
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
 
