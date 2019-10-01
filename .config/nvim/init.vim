@@ -132,12 +132,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'majutsushi/tagbar'
   Plug 'moll/vim-bbye'
   Plug 'wsdjeg/vim-fetch'
-  Plug 'liuchengxu/vim-which-key'
 call plug#end()
-
-nnoremap <silent> <leader> :WhichKey ','<CR>
-nnoremap <silent> g :WhichKey 'g'<CR>
-nnoremap <silent> <space> :WhichKey '<space>'<CR>
 
 let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
 
@@ -222,7 +217,7 @@ inoremap <silent><expr> <c-space> coc#refresh()
 nmap <silent> [c <Plug>(coc-diagnostic-prev)
 nmap <silent> ]c <Plug>(coc-diagnostic-next)
 
-nmap <silent> gd :call CocAction('jumpDefinition', 'tabe')<CR>
+nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
