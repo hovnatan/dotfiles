@@ -40,7 +40,7 @@ set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
 set splitbelow
 set splitright
 set foldmethod=indent
-set foldlevelstart=99
+" set foldlevelstart=99
 set viewoptions-=options
 set inccommand=nosplit
 set cursorline
@@ -122,7 +122,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kana/vim-textobj-user'
   " Plug 'nelstrom/vim-visual-star-search'
   Plug 'michaeljsmith/vim-indent-object'
-  " Plug 'zhimsel/vim-stay' " remember states
+  Plug 'zhimsel/vim-stay' " remember states
   Plug 'Konfekt/FastFold'
   Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
