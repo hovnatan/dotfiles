@@ -100,7 +100,7 @@ abbr gca  "git commit --amend --no-edit"
 abbr gaca  "git add -u; git commit --amend --no-edit"
 abbr gd  "git diff"
 abbr gah 'git stash; and git pull --rebase; and git stash pop'
-abbr gm  "nvim -c \"Gstatus<CR><C-w>T\""
+abbr gm 'nvim (git rev-parse --show-toplevel)/.git/index'
 abbr ta  "tmux_attach_deattached.sh"
 abbr tl  "tmux list-sessions"
 abbr prg "pdfgrep -ri "
