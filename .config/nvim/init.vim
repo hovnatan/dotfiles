@@ -39,7 +39,8 @@ set showmatch
 set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
 set splitbelow
 set splitright
-set foldmethod=manual
+set foldmethod=indent
+set foldlevelstart=99
 set viewoptions-=options
 set inccommand=nosplit
 set cursorline
