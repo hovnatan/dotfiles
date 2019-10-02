@@ -124,7 +124,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'zhimsel/vim-stay' " remember states
   Plug 'Konfekt/FastFold'
-  Plug 'tmhedberg/SimpylFold'
   Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
