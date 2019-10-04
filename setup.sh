@@ -26,8 +26,7 @@ ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
 
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
-wget https://raw.githubusercontent.com/edc/bass/master/functions/__bass.py -P ~/.config/fish/functions/
-wget https://raw.githubusercontent.com/edc/bass/master/functions/bass.fish -P ~/.config/fish/functions/
+curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
 chsh -s `which fish`
 
 rm -rf ~/.config/mpv
