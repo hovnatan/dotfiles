@@ -103,6 +103,7 @@ abbr gah 'git stash; and git pull --rebase; and git stash pop'
 abbr gm 'nvim (git rev-parse --show-toplevel)/.git/index'
 abbr ta  "tmux_attach_deattached.sh"
 abbr tl  "tmux list-sessions"
+abbr tc "tmux capture-pane -pJ -S - | nvim -R '+set ft=log|set nowrap|set foldlevel=99|DisableWhitespace' --"
 abbr prg "pdfgrep -ri "
 abbr rgh "rg --hidden"
 abbr rgah "rga --hidden"
