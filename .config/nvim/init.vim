@@ -513,6 +513,8 @@ endfunction
 
 nnoremap <silent> * :call <SID>VStarsearch_searchCWord()<CR>:set hls<CR>
 vnoremap <silent> * :<C-u>call <SID>VStarsearch_searchVWord()<CR>:set hls<CR>
+nmap <silent> # *
+vmap <silent> # *
 
 let &cpo = s:savedCpo
 autocmd BufReadPost fugitive://* set bufhidden=delete
