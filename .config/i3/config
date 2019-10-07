@@ -225,6 +225,7 @@ for_window [instance="dropdown"] floating enable, resize set 1280 720, move scra
 bindcode $mod+31 [instance="dropdown"] scratchpad show, move position center
 
 bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
+bindsym Shift+Print exec --no-startup-id scrot -u -e 'mv $f ~/tmp/'
 bindsym --release $mod+Sys_Req exec scrot -s -e 'mv $f ~/tmp/'
 bindcode Mod4+33 exec --no-startup-id monitor_setup.sh
 
