@@ -16,6 +16,7 @@ set cindent
 set showmatch
 set smartcase
 set ignorecase
+set wildignorecase
 set ls=2
 set title
 set ruler
