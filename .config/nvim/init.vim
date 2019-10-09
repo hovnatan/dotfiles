@@ -94,6 +94,7 @@ let g:strip_whitespace_confirm = 1
 let g:strip_whitelines_at_eof = 1
 
 call plug#begin('~/.local/share/nvim/site/plugged')
+  Plug 'kshenoy/vim-signature'
   Plug 'inkarkat/vim-ingo-library'
   Plug 'inkarkat/vim-EnhancedJumps'
   Plug 'sheerun/vim-polyglot'
@@ -279,6 +280,7 @@ nnoremap <silent> <space>b  :<C-u>CocList buffers<cr>
 nnoremap <silent> <space>f  :<C-u>CocList gfiles<cr>
 nnoremap <silent> <space>d  :<C-u>CocList files<cr>
 nnoremap <silent> <space>l  :<C-u>CocList <cr>
+nnoremap <silent> <space>m  :<C-u>CocList marks<cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
 nnoremap <silent> <space>r  :<C-u>CocList grep<cr>
 nnoremap <silent> <space>j  :<C-u>CocNext<CR>
