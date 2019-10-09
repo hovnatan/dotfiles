@@ -94,6 +94,7 @@ let g:strip_whitespace_confirm = 1
 let g:strip_whitelines_at_eof = 1
 
 call plug#begin('~/.local/share/nvim/site/plugged')
+  Plug 'bling/vim-bufferline'
   Plug 'kshenoy/vim-signature'
   Plug 'inkarkat/vim-ingo-library'
   Plug 'inkarkat/vim-EnhancedJumps'
