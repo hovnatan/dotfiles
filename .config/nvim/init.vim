@@ -94,7 +94,6 @@ let g:strip_whitespace_confirm = 1
 let g:strip_whitelines_at_eof = 1
 
 call plug#begin('~/.local/share/nvim/site/plugged')
-  Plug 'bling/vim-bufferline'
   Plug 'kshenoy/vim-signature'
   Plug 'inkarkat/vim-ingo-library'
   Plug 'inkarkat/vim-EnhancedJumps'
@@ -121,6 +120,9 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
+  Plug 'bling/vim-bufferline'
+  " Plug 'vim-airline/vim-airline'
+  " Plug 'vim-airline/vim-airline-themes'
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'kana/vim-textobj-user'
@@ -261,7 +263,9 @@ command! -nargs=? Fold :call CocAction('fold', <f-args>)
 
 command! MakeTags !ptags
 
-
+" let g:airline#extensions#tabline#enabled = 1
+" let g:airline_powerline_fonts = 1
+" let g:airline_theme='gruvbox'
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
