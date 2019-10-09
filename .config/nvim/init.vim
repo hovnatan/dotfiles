@@ -120,7 +120,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
-  Plug 'bling/vim-bufferline'
+  " Plug 'bling/vim-bufferline'
   " Plug 'vim-airline/vim-airline'
   " Plug 'vim-airline/vim-airline-themes'
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
