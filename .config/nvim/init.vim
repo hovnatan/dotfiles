@@ -176,7 +176,6 @@ nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
 let g:coc_global_extensions = [ 'coc-emoji', 'coc-python',
       \ 'coc-prettier', 'coc-json', 'coc-word',
       \ 'coc-vimtex', 'coc-highlight', 'coc-lists',
-      \ 'coc-tabnine',
       \ 'coc-git'
       \ ]
 call textobj#user#plugin('line', {
