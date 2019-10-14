@@ -59,7 +59,7 @@ set nobackup
 set nowritebackup
 set cmdheight=1
 set shortmess+=c
-set signcolumn=auto:3
+set signcolumn=yes:1
 set conceallevel=1
 
 nn <F9> :silent Dispatch!<CR>
