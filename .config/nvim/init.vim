@@ -261,6 +261,7 @@ nmap <leader>qf  <Plug>(coc-fix-current)
 command! -nargs=? Fold :call CocAction('fold', <f-args>)
 
 command! MakeTags !ptags
+command! Nw noa w
 
 " let g:airline#extensions#tabline#enabled = 1
 " let g:airline_powerline_fonts = 1
