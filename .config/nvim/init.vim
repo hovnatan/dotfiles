@@ -42,7 +42,7 @@ set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
 set splitbelow
 set splitright
 set foldmethod=indent
-" set foldlevelstart=99
+set nofoldenable
 set viewoptions-=options
 set inccommand=nosplit
 set cursorline
@@ -364,7 +364,8 @@ au FileType python
                 \ nnoremap <buffer> <F6> :IPythonCellExecuteCell<CR> |
                 \ inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR> |
                 \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
-                \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR>
+                \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
+                \ set foldenable
 
 au BufWritePost *.sh silent! !chmod +x %:p
 
