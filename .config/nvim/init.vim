@@ -365,7 +365,7 @@ au FileType python
                 \ inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR> |
                 \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
                 \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
-                \ set foldenable
+                \ setlocal foldenable
 
 au BufWritePost *.sh silent! !chmod +x %:p
 
