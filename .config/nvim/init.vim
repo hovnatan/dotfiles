@@ -34,6 +34,7 @@ set whichwrap=b,s,h,l,<,>,[,]
 set visualbell t_vb=
 set novisualbell
 set iskeyword=@,48-57,_,192-255,-,.
+set isfname-==
 set wildmenu
 set lazyredraw
 set showmatch
