@@ -90,8 +90,7 @@ nnoremap <S-h> :bprevious<CR>
 
 let g:undotree_SetFocusWhenToggle = 1
 
-let g:strip_whitespace_on_save = 1
-let g:strip_whitespace_confirm = 1
+let g:better_whitespace_enabled=0
 let g:strip_whitelines_at_eof = 1
 
 call plug#begin('~/.local/share/nvim/site/plugged')
@@ -141,8 +140,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'majutsushi/tagbar'
   Plug 'wsdjeg/vim-fetch'
 call plug#end()
-
-let g:better_whitespace_filetypes_blacklist=['c', 'cpp', 'python', 'markdown']
 
 nnoremap <F5> :UndotreeToggle<cr>
 nnoremap <F8> :TagbarToggle<CR>
