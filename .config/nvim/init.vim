@@ -102,6 +102,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'junegunn/goyo.vim'
   Plug 'vim-scripts/neat.vim'
   Plug 'lervag/vimtex'
+  Plug 'tpope/vim-abolish'
   Plug 'tpope/vim-dispatch'
   Plug 'junegunn/vim-peekaboo'
   Plug 'radenling/vim-dispatch-neovim'
@@ -137,12 +138,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'machakann/vim-swap'
   Plug 'jpalardy/vim-slime'
   Plug 'hovnatan/vim-ipython-cell'
-  Plug 'majutsushi/tagbar'
   Plug 'wsdjeg/vim-fetch'
 call plug#end()
 
 nnoremap <F5> :UndotreeToggle<cr>
-nnoremap <F8> :TagbarToggle<CR>
 
 nmap zuz <Plug>(FastFoldUpdate)
 let g:fastfold_savehook = 1
