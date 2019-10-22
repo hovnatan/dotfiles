@@ -131,3 +131,4 @@ abbr .... "../../.."
 # set -q INFOPATH; or set INFOPATH ''; set -gx INFOPATH "/home/linuxbrew/.linuxbrew/share/info" $INFOPATH;
 
 set -x NVIM_LISTEN_ADDRESS /tmp/nvimsocket
+set -x CUDA_HOME /usr/local/cuda-10.1
