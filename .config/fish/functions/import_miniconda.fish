@@ -3,4 +3,5 @@ function import_miniconda
   bass source /home/hovnatan/miniconda3/etc/conda/activate.d/activate-gcc_linux-64.sh
   bass source /home/hovnatan/miniconda3/etc/conda/activate.d/activate-gxx_linux-64.sh
   bass source /home/hovnatan/miniconda3/etc/conda/activate.d/activate-binutils_linux-64.sh
+  bass source /home/hovnatan/miniconda3/etc/conda/activate.d/nvcc_linux-64_activate.sh
 end
