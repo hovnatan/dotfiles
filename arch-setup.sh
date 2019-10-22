@@ -81,7 +81,7 @@ ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # set -x PATH ~/brew/bin $PATH
 
 # for indexed png
-# pip install png
+# pip install pypng
 
 # hibernate
 # sudo fallocate -l 25G /swapfile
