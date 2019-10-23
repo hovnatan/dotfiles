@@ -4,6 +4,7 @@
 # Inspired by https://gist.github.com/viking/5851049 but with support for tmux
 
 CWD=''
+CMD_L="tmux new-session"
 
 # Get window ID
 ID=$(xdpyinfo | grep focus | cut -f4 -d " ")
@@ -20,8 +21,6 @@ if [ -n "$PID" ]; then
     SSH_ARGS=$(pstree -a $SSH_PID)
     CMD_L=$(echo $SSH_ARGS | grep -oP ".*([0-9]{1,3}\.){3}[0-9]{1,3} (tmux)?")
   else
-    CMD_L="tmux new-session"
-
     # chaning to current dir
     TMUX_PID=$(echo $TREE | grep -oP "(?<=tmux: client\()[0-9]+(?=\))")
     if [ ! -z "$TMUX_PID" ];
