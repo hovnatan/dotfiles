@@ -17,3 +17,5 @@ do
   nohup termite -e "ssh -t -Y $1 $tmux_command $session" >/dev/null 2>&1 &
   sleep 0.5
 done
+
+i3-msg layout tabbed
