@@ -32,4 +32,4 @@ fi
 echo "${monitor_mode}" > "$DATA_FILE"
 ${HOME}/.dotfiles/xautolock_start.sh &
 
-xkb-switch -s us
+setkmap.sh
