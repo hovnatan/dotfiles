@@ -19,7 +19,7 @@ if [ -n "$PID" ]; then
 	if [ ! -z "$SSH_PID" ];
   then
     SSH_ARGS=$(pstree -a $SSH_PID)
-    CMD_L=$(echo $SSH_ARGS | grep -oP ".*([0-9]{1,3}\.){3}[0-9]{1,3} (tmux)?")
+    CMD_L=$(echo $SSH_ARGS | grep -oP ".*([0-9]{1,3}\.){3}[0-9]{1,3}( +tmux)?")
   else
     # chaning to current dir
     TMUX_PID=$(echo $TREE | grep -oP "(?<=tmux: client\()[0-9]+(?=\))")

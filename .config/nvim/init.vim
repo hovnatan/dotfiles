@@ -38,7 +38,7 @@ set isfname-==
 set wildmenu
 set lazyredraw
 set showmatch
-set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
+set diffopt=vertical
 set splitbelow
 set splitright
 set foldmethod=indent
