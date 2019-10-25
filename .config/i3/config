@@ -244,14 +244,6 @@ bindcode $mod+54 exec --no-startup-id clipster -s
 bindcode $mod+Shift+54 exec --no-startup-id clipster -p -s
 exec --no-startup-id ~/.dotfiles/xautolock_start.sh
 
-for_window [title=".*armenia | SuperAnnotate.*"] move to workspace $ws10
-for_window [title="WhatsApp"] move to workspace $ws10
-for_window [title="Messenger" instance="www.messenger.com"] move to workspace $ws10
-for_window [title=".*Google Play Music.*"] move to workspace $ws10
-for_window [title="Subscriptions - YouTube"] move to workspace $ws10
-
-#exec --no-startup-id xbindkeys
-
 floating_minimum_size 50 x 50
 floating_maximum_size 1280 x 720
 
