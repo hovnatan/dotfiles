@@ -106,4 +106,10 @@ ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # sudo pacman -Rns (pacman -Qtdq)
 # remove cache
 # yay -Sc
+
 # wget https://github.com/peci1/nvidia-htop/raw/master/nvidia-htop.py
+
+# enabel timesync
+sudo systemctl enable systemd-timesyncd.service
+# set timezone
+# timedatectl set-timezone (curl https://ipapi.co/timezone)
