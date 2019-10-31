@@ -386,10 +386,8 @@ tnoremap <C-v><Esc> <Esc>
 nnoremap <leader>T <C-w>T<CR>
 nnoremap <leader>t :tab split<CR>
 
-inoremap ;1 <C-o>ma
-inoremap ;2 <C-o>mb
-inoremap ;3 <C-o>mc
-inoremap ;4 <C-o>md
+let g:dispatch_no_maps = 1
+imap ;; <C-o>m.
 
 nnoremap <S-Tab> :bnext<cr>
 nnoremap <space><space> <c-^>
