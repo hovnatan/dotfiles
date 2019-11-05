@@ -141,6 +141,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'jpalardy/vim-slime'
   Plug 'hovnatan/vim-ipython-cell'
   Plug 'wsdjeg/vim-fetch'
+  " Plug 'vim-scripts/repeatable-motions.vim'
 call plug#end()
 
 nnoremap <F5> :UndotreeToggle<cr>
@@ -392,6 +393,11 @@ imap ;; <C-o>m.
 
 nnoremap <S-Tab> :bnext<cr>
 nnoremap <space><space> <c-^>
+
+" map <C-j> <Plug>RepeatMotionUp
+" map <Down> <Plug>RepeatMotionDown
+" map <Right> <Plug>RepeatMotionRight
+" map <Left> <Plug>RepeatMotionLeft
 
 map <C-h> <C-w>h
 map <C-j> <C-w>j
