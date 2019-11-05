@@ -41,7 +41,7 @@ set showmatch
 set diffopt=vertical
 set splitbelow
 set splitright
-set foldmethod=indent
+set foldmethod=syntax
 set nofoldenable
 set viewoptions-=options
 set inccommand=nosplit
@@ -130,6 +130,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kana/vim-textobj-user'
   " Plug 'nelstrom/vim-visual-star-search'
   Plug 'michaeljsmith/vim-indent-object'
+  Plug 'jeetsukumaran/vim-indentwise'
   Plug 'zhimsel/vim-stay' " remember states
   Plug 'Konfekt/FastFold'
   Plug 'andymass/vim-matchup'
@@ -359,9 +360,10 @@ au FileType python
                 \ inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR> |
                 \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
                 \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
-                \ setlocal foldenable
+                \ setlocal foldenable |
+                \ setlocal foldmethod=indent |
+                \ setlocal foldignore=
 autocmd FileType git 
-      \ set foldmethod=syntax |
       \ setlocal foldenable
 
 
