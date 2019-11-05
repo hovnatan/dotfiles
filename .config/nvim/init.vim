@@ -361,8 +361,7 @@ au FileType python
                 \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
                 \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
                 \ setlocal foldenable |
-                \ setlocal foldmethod=indent |
-                \ setlocal foldignore=
+                \ setlocal foldmethod=indent
 autocmd FileType git 
       \ setlocal foldenable
 
