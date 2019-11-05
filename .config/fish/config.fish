@@ -70,8 +70,6 @@ end
 
 set -U fish_user_paths ~/.dotfiles/bin
 
-[ -f /usr/share/autojump/autojump.fish ]; and source /usr/share/autojump/autojump.fish
-
 abbr c   "cd"
 abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
