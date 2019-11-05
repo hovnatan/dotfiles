@@ -531,4 +531,4 @@ nmap <silent> # *
 vmap <silent> # *
 
 let &cpo = s:savedCpo
-autocmd BufReadPost fugitive://* set bufhidden=delete
+" autocmd BufReadPost fugitive://* set bufhidden=delete
