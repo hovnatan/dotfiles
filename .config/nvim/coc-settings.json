@@ -26,6 +26,12 @@
   "python.terminal.activateEnvironment" : false,
   "python.jediEnabled": true,
   "coc.preferences.jumpCommand": "edit",
+  "git.addedSign.hlGroup": "GitGutterAdd",
+  "git.changedSign.hlGroup": "GitGutterChange",
+  "git.removedSign.hlGroup": "GitGutterDelete",
+  "git.topRemovedSign.hlGroup": "GitGutterDelete",
+  "git.changeRemovedSign.hlGroup": "GitGutterChangeDelete",
+  "git.enableGutters": true,
   "suggest.detailMaxLength": 200,
   "list.insertMappings": {
     "<C-s>": "action:vsplit",
