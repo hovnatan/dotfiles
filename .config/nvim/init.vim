@@ -112,6 +112,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-git'
   Plug 'tpope/vim-fugitive'
   Plug 'rbong/vim-flog'
+  Plug 'airblade/vim-gitgutter'
   Plug 'tommcdo/vim-fubitive'
   Plug 'tpope/vim-rhubarb'
   Plug 'tpope/vim-surround'
@@ -160,12 +161,12 @@ let g:ipython_cell_delimit_cells_by = 'tags'
 
 let g:polyglot_disabled = ['latex']
 
-nmap [g <Plug>(coc-git-prevchunk)
-nmap ]g <Plug>(coc-git-nextchunk)
-nmap <leader>gi <Plug>(coc-git-chunkinfo)
-nmap <leader>gc <Plug>(coc-git-commit)
-nnoremap <leader>ga :<C-u>CocCommand git.chunkStage<CR>
-nnoremap <leader>gu :<C-u>CocCommand git.chunkUndo<CR>
+nmap [g <Plug>(GitGutterPrevHunk)
+nmap ]g <Plug>(GitGutterNextHunk)
+nmap <leader>gi <Plug>(GitGutterPreviewHunk)
+nmap <leader>ga <Plug>(GitGutterStageHunk)
+nmap <leader>gu <Plug>(GitGutterUndoHunk)
+let g:gitgutter_map_keys = 0
 
 nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gm :Gstatus<CR><C-w>T
@@ -175,8 +176,7 @@ nnoremap <Esc><Esc> :<C-u>set hlsearch!<CR>
 
 let g:coc_global_extensions = [ 'coc-emoji', 'coc-python',
       \ 'coc-prettier', 'coc-json', 'coc-word',
-      \ 'coc-vimtex', 'coc-highlight', 'coc-lists',
-      \ 'coc-git'
+      \ 'coc-vimtex', 'coc-highlight', 'coc-lists'
       \ ]
 call textobj#user#plugin('line', {
 \   '-': {
