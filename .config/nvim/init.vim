@@ -161,12 +161,12 @@ let g:ipython_cell_delimit_cells_by = 'tags'
 
 let g:polyglot_disabled = ['latex']
 
+let g:gitgutter_map_keys = 0
 nmap [g <Plug>(GitGutterPrevHunk)
 nmap ]g <Plug>(GitGutterNextHunk)
 nmap <leader>gi <Plug>(GitGutterPreviewHunk)
 nmap <leader>ga <Plug>(GitGutterStageHunk)
 nmap <leader>gu <Plug>(GitGutterUndoHunk)
-let g:gitgutter_map_keys = 0
 
 nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gm :Gstatus<CR><C-w>T
