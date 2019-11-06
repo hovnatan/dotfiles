@@ -24,7 +24,7 @@
   "python.formatting.yapfArgs" : ["--style=facebook"],
   "python.autoComplete.showAdvancedMembers" : false,
   "python.terminal.activateEnvironment" : false,
-  "python.jediEnabled": false,
+  "python.jediEnabled": true,
   "coc.preferences.jumpCommand": "edit",
   "git.addedSign.hlGroup": "GitGutterAdd",
   "git.changedSign.hlGroup": "GitGutterChange",
