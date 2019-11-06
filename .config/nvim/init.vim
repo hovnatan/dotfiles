@@ -171,7 +171,7 @@ nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gm :Gstatus<CR><C-w>T
 nnoremap <leader>gp :Gpush<CR>
 
-nnoremap <Esc><Esc> :<C-u>nohlsearch<CR>
+nnoremap <Esc><Esc> :<C-u>set hlsearch!<CR>
 
 let g:coc_global_extensions = [ 'coc-emoji', 'coc-python',
       \ 'coc-prettier', 'coc-json', 'coc-word',
