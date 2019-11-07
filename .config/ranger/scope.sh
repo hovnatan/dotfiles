@@ -83,6 +83,8 @@ handle_extension() {
             lynx -dump -- "${FILE_PATH}" && exit 5
             elinks -dump "${FILE_PATH}" && exit 5
             ;; # Continue with next handler on failure
+        json)
+          jq "${FILE_PATH}" && exit 5
     esac
 }
 
@@ -110,10 +112,10 @@ handle_image() {
             exit 7;;
 
         # Video
-        video/*)
-            # Thumbnail
-            # ffmpegthumbnailer -i "${FILE_PATH}" -o "${IMAGE_CACHE_PATH}" -s 0 && exit 6
-            # exit 1;;
+        # video/*)
+        #     # Thumbnail
+        #     ffmpegthumbnailer -i "${FILE_PATH}" -o "${IMAGE_CACHE_PATH}" -s 0 && exit 6
+        #     exit 1;;
         # PDF
         # application/pdf)
         #     pdftoppm -f 1 -l 1 \
