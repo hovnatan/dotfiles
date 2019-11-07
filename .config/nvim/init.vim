@@ -83,10 +83,10 @@ cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
 syntax on
-" nnoremap <S-h> gT
-" nnoremap <S-l> gt
-nnoremap <S-l> :bnext<CR>
-nnoremap <S-h> :bprevious<CR>
+nnoremap <S-h> gT
+nnoremap <S-l> gt
+" nnoremap <S-l> :bnext<CR>
+" nnoremap <S-h> :bprevious<CR>
 
 let g:undotree_SetFocusWhenToggle = 1
 
