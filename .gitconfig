@@ -24,5 +24,5 @@
   # from https://blog.jez.io/cli-code-review/; usage in fish, e.g., eval REVIEW_BASE=HEAD~2 git review
   files = !git diff --name-only $(git merge-base HEAD \"$REVIEW_BASE\")
   stat = !git diff --stat $(git merge-base HEAD \"$REVIEW_BASE\")
-  review = !nvim -p $(git files) +\"tabdo Gdiff $REVIEW_BASE\" +\"let g:gitgutter_diff_base = '$REVIEW_BASE'\"
-  reviewone = !nvim -p +\"tabdo Gdiff $REVIEW_BASE\" +\"let g:gitgutter_diff_base = '$REVIEW_BASE'\"
+  review = !nvim -p $(git files) +\"tabdo Gdiff $REVIEW_BASE\"
+  reviewone = !nvim -p +\"tabdo Gdiff $REVIEW_BASE\"
