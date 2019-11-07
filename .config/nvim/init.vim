@@ -174,7 +174,7 @@ nnoremap <leader>gp :Gpush<CR>
 nnoremap <Esc><Esc> :<C-u>set hlsearch!<CR>
 
 let g:coc_global_extensions = [ 'coc-emoji', 'coc-python',
-      \ 'coc-prettier', 'coc-json', 'coc-word',
+      \ 'coc-json', 'coc-word',
       \ 'coc-vimtex', 'coc-highlight', 'coc-lists',
       \ 'coc-git'
       \ ]
@@ -350,7 +350,9 @@ au FileType tex,latex
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell
 au FileType json
-      \ set conceallevel=0
+      \ set conceallevel=0 |
+      \ nn <F8> :%!python -m json.tool<CR>
+
 au FileType cpp
                 \ set iskeyword-=. |
                 \ set iskeyword-=-
