@@ -113,3 +113,6 @@ ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 sudo systemctl enable systemd-timesyncd.service
 # set timezone
 # timedatectl set-timezone (curl https://ipapi.co/timezone)
+
+# to cleanup repo
+# java -jar bfg-1.13.0.jar -b 32K ~/work/repo
