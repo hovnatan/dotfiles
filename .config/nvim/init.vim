@@ -267,7 +267,7 @@ let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
-      \             [ 'cocstatus', 'readonly', 'absolutepath', 'modified' ] ]
+      \             [ 'cocstatus', 'readonly', 'relativepath', 'modified' ] ]
       \ },
       \ 'component_function': {
       \   'cocstatus': 'coc#status'
