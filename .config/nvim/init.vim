@@ -274,14 +274,18 @@ function! GetFilepath_T()
 	return ret
 endfunction
 
+function! GetCocDiag()
+  return getbufvar(1, 'coc_diagnostic_info')
+endfunction
+
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
-      \             [ 'cocstatus', 'readonly', 'tpath', 'modified' ] ]
+      \             [ 'cocdiag', 'readonly', 'tpath', 'modified' ] ]
       \ },
       \ 'component_function': {
-      \   'cocstatus': 'coc#status',
+      \   'cocdiag': 'coc#status',
       \   'tpath': 'GetFilepath_T'
       \ },
       \ }
