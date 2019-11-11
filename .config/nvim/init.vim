@@ -291,12 +291,16 @@ let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
-      \             [ 'cocdiag', 'readonly', 'tpath', 'modified' ] ]
+      \             [ 'readonly', 'tpath', 'modified' ] ],
+      \   'right': [ [ 'lineinfo' ],
+      \            [ 'percent' ],
+      \            [ 'cocdiag', 'fileformat', 'fileencoding', 'filetype' ] ]
       \ },
       \ 'inactive': {
-      \   'left': [ ['cocdiag', 'readonly', 'tpath', 'modified' ] ],
+      \   'left': [ ['readonly', 'tpath', 'modified' ] ],
       \   'right': [ [ 'lineinfo' ],
-      \            [ 'percent' ] ]
+      \            [ 'percent' ],
+      \            ['cocdiag'] ]
       \ },
       \ 'component_function': {
       \   'cocdiag': 'CocDiagnostic',
