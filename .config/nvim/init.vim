@@ -122,9 +122,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
-  " Plug 'bling/vim-bufferline'
-  " Plug 'vim-airline/vim-airline'
-  " Plug 'vim-airline/vim-airline-themes'
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'kana/vim-textobj-user'
@@ -260,17 +257,32 @@ command! -nargs=? Fold :call CocAction('fold', <f-args>)
 command! MakeTags !ptags
 command! Nw noa w
 
-" let g:airline#extensions#tabline#enabled = 1
-" let g:airline_powerline_fonts = 1
-" let g:airline_theme='gruvbox'
+function! GetFilepath_T()
+  " from https://github.com/Lokaltog/vim-powerline/blob/09c0cea859a2e0989eea740655b35976d951a84e/autoload/Powerline/Functions.vim
+	let dirsep = has('win32') && ! &shellslash ? '\' : '/'
+	let filepath = expand('%:p:~')
+
+  let fpath = split(filepath, dirsep)
+  let len_p = len(fpath) 
+  if len_p > 2
+    let fpath_shortparts = map(fpath[1:-3], 'v:val[0]')
+    let ret = extend(extend([fpath[0]], fpath_shortparts), [fpath[-2], fpath[-1]])
+    let ret = join(ret, dirsep)
+  else
+    let ret = filepath
+  endif
+	return ret
+endfunction
+
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
-      \             [ 'cocstatus', 'readonly', 'relativepath', 'modified' ] ]
+      \             [ 'cocstatus', 'readonly', 'tpath', 'modified' ] ]
       \ },
       \ 'component_function': {
-      \   'cocstatus': 'coc#status'
+      \   'cocstatus': 'coc#status',
+      \   'tpath': 'GetFilepath_T'
       \ },
       \ }
 
