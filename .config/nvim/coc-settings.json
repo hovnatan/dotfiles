@@ -26,6 +26,7 @@
   "python.terminal.activateEnvironment" : false,
   "python.jediEnabled": true,
   "coc.preferences.jumpCommand": "edit",
+  "git.enableGlobalStatus": false,
   "git.addedSign.hlGroup": "GitGutterAdd",
   "git.changedSign.hlGroup": "GitGutterChange",
   "git.removedSign.hlGroup": "GitGutterDelete",
