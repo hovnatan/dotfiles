@@ -274,8 +274,17 @@ function! GetFilepath_T()
 	return ret
 endfunction
 
-function! GetCocDiag()
-  return getbufvar(1, 'coc_diagnostic_info')
+function! CocDiagnostic() abort
+  let info = get(b:, 'coc_diagnostic_info', {})
+  if empty(info) | return '' | endif
+  let msgs = []
+  if get(info, 'error', 0)
+    call add(msgs, 'E' . info['error'])
+  endif
+  if get(info, 'warning', 0)
+    call add(msgs, 'W' . info['warning'])
+  endif
+  return join(msgs, ' ')
 endfunction
 
 let g:lightline = {
@@ -284,8 +293,13 @@ let g:lightline = {
       \   'left': [ [ 'mode', 'paste' ],
       \             [ 'cocdiag', 'readonly', 'tpath', 'modified' ] ]
       \ },
+      \ 'inactive': {
+      \   'left': [ ['cocdiag', 'readonly', 'tpath', 'modified' ] ],
+      \   'right': [ [ 'lineinfo' ],
+      \            [ 'percent' ] ]
+      \ },
       \ 'component_function': {
-      \   'cocdiag': 'coc#status',
+      \   'cocdiag': 'CocDiagnostic',
       \   'tpath': 'GetFilepath_T'
       \ },
       \ }
