@@ -567,3 +567,4 @@ vmap <silent> # *
 
 let &cpo = s:savedCpo
 " autocmd BufReadPost fugitive://* set bufhidden=delete
+nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
