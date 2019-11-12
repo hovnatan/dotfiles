@@ -294,7 +294,7 @@ let g:lightline = {
       \             [ 'tpath', 'readonly', 'modified', 'cocdiag'] ],
       \   'right': [ [ 'lineinfo' ],
       \            [ 'percent' ],
-      \            [ 'fileformat', 'fileencoding', 'filetype' ] ]
+      \            [ 'filetype' ] ]
       \ },
       \ 'inactive': {
       \   'left': [ ['tpath', 'readonly', 'modified', 'cocdiag' ] ],
