@@ -26,7 +26,6 @@ set showcmd
 set mouse=a
 set ttyfast
 set nostartofline
-set nobackup
 set autowrite
 set shortmess=atIc
 set modeline
@@ -39,7 +38,6 @@ set iskeyword=@,48-57,_,192-255,-,.
 set isfname-==
 set wildmenu
 set lazyredraw
-set showmatch
 set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
 set splitbelow
 set splitright
@@ -61,7 +59,6 @@ set colorcolumn=80
 set nobackup
 set nowritebackup
 set cmdheight=1
-set shortmess+=c
 set signcolumn=yes:1
 set conceallevel=1
 
