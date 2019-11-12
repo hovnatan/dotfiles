@@ -31,7 +31,8 @@ set autowrite
 set shortmess=atIc
 set modeline
 set modelines=3
-set whichwrap=b,s,h,l,<,>,[,]
+set whichwrap=b,s,<,>,[,]
+set nowrap
 set visualbell t_vb=
 set novisualbell
 set iskeyword=@,48-57,_,192-255,-,.
