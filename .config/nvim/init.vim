@@ -286,14 +286,19 @@ function! CocDiagnostic() abort
   return join(msgs, ' ')
 endfunction
 
+function! GitMessTruncated() abort
+  return substitute(FugitiveStatusline()[5:-3], "(", ":", "")
+endfunction
+
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
       \             [ 'tpath', 'readonly', 'modified', 'cocdiag'] ],
       \   'right': [ [ 'lineinfo' ],
-      \            [ 'percent' ],
-      \            [ 'filetype' ] ]
+      \              [ 'percent' ],
+      \              [ 'git'] 
+      \            ]
       \ },
       \ 'inactive': {
       \   'left': [ ['tpath', 'readonly', 'modified', 'cocdiag' ] ],
@@ -302,7 +307,8 @@ let g:lightline = {
       \ },
       \ 'component_function': {
       \   'cocdiag': 'CocDiagnostic',
-      \   'tpath': 'GetFilepath_T'
+      \   'tpath': 'GetFilepath_T',
+      \   'git': 'GitMessTruncated'
       \ },
       \ }
 
