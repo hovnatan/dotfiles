@@ -84,13 +84,6 @@ runtime plugins/matchit.vim
 syntax on
 nnoremap <S-h> gT
 nnoremap <S-l> gt
-" nnoremap <S-l> :bnext<CR>
-" nnoremap <S-h> :bprevious<CR>
-
-let g:undotree_SetFocusWhenToggle = 1
-
-let g:better_whitespace_enabled=0
-let g:strip_whitelines_at_eof = 1
 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kshenoy/vim-signature'
@@ -124,10 +117,9 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'kana/vim-textobj-user'
-  " Plug 'nelstrom/vim-visual-star-search'
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'jeetsukumaran/vim-indentwise'
-  Plug 'zhimsel/vim-stay' " remember states
+  Plug 'zhimsel/vim-stay' " automatically remember states
   Plug 'Konfekt/FastFold'
   Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
@@ -137,10 +129,12 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'jpalardy/vim-slime'
   Plug 'hovnatan/vim-ipython-cell'
   Plug 'wsdjeg/vim-fetch'
-  " Plug 'vim-scripts/repeatable-motions.vim'
 call plug#end()
 
 nnoremap <F5> :UndotreeToggle<cr>
+let g:undotree_SetFocusWhenToggle = 1
+let g:undotree_WindowLayout = 2
+
 
 nmap zuz <Plug>(FastFoldUpdate)
 let g:fastfold_savehook = 1
