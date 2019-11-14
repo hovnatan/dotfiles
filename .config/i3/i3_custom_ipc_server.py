@@ -239,7 +239,7 @@ class FocusWatcher:
                     subprocess.run(["xkb-switch", "-s", key])
 
     def on_window_focus(self, i3conn, event):
-        window_id = event.container.props.id
+        window_id = event.container.id
         logger.debug("window focus on %s", window_id)
         with self.window_current_lock:
             self.current_w = window_id
