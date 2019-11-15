@@ -1,5 +1,7 @@
 {
   "diagnostic.maxWindowHeight": 25,
+  "highlight.colors.enable": false,
+  "highlight.document.enable": true,
   "languageserver": {
     "clangd": {
       "command": "clangd",

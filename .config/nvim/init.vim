@@ -121,7 +121,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'jeetsukumaran/vim-indentwise'
   Plug 'zhimsel/vim-stay' " automatically remember states
   Plug 'Konfekt/FastFold'
-  Plug 'andymass/vim-matchup'
+  " Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
   Plug 'easymotion/vim-easymotion'
