@@ -129,8 +129,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'jpalardy/vim-slime'
   Plug 'hovnatan/vim-ipython-cell'
   Plug 'wsdjeg/vim-fetch'
+  Plug 'majutsushi/tagbar'
 call plug#end()
 
+nnoremap <F8> :TagbarToggle<CR>
 nnoremap <F5> :UndotreeToggle<cr>
 let g:undotree_SetFocusWhenToggle = 1
 let g:undotree_WindowLayout = 2
@@ -383,7 +385,7 @@ au FileType tex,latex
                 \ setlocal spell
 au FileType json
       \ set conceallevel=0 |
-      \ nn <F8> :%!python -m json.tool<CR>
+      \ nn <F4> :%!python -m json.tool<CR>
 
 au FileType cpp
                 \ set iskeyword-=. |
