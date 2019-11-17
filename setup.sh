@@ -176,6 +176,7 @@ ln -s ~/.dotfiles/.config/sway ~/.config/sway
 ln -s .Xdefaults .Xresources
 
 # ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/
+ln -s ~/.dotfiles/.config/chrome-flags.conf ~/.config/
 
 ln -s ~/.dotfiles/.condarc ~/.condarc
 
