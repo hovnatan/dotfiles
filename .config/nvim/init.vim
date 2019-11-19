@@ -399,6 +399,9 @@ au FileType python
                 \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
                 \ setlocal foldenable |
                 \ setlocal foldmethod=indent
+au FileType javascript
+                \ set iskeyword-=. |
+                \ set iskeyword-=-
 autocmd FileType git 
       \ setlocal foldenable
 
