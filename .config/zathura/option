@@ -1,4 +1,4 @@
-set font "Cantarell 11"
+set font "Noto Sans 11"
 set adjust-open width
 set statusbar-home-tilde true
 set window-title-basename true
