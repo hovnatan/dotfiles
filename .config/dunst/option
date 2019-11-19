@@ -1,5 +1,5 @@
 [global]
-    font = "Cantarell 11"
+    font = "Noto Sans 11"
     markup = yes
     format = "<b>%s</b>\n%b"
     sort = yes
