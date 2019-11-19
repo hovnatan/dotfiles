@@ -2,7 +2,7 @@ exec --no-startup-id monitor_setup.sh a
 
 set $mod Mod1
 
-font pango:sans 11
+font pango:sans-serif 11
 
 floating_modifier Mod1
 
@@ -154,7 +154,7 @@ set_from_resource $base0F i3wm.base0F
 bar {
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     position top
-    font pango:sans 11
+    font pango:sans-serif 11
 
     colors {
         background $base00
