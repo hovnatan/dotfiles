@@ -8,7 +8,7 @@ sudo pacman -Sy base-devel clang llvm cmake gdb valgrind perf strace cppcheck cc
 
 sudo pacman -Sy ipython python-pip python-sh python-language-server python-ipdb cython autopep8 python-pynput python-pyperclip
 
-sudo pacman -Sy ttf-croscore awesome-terminal-fonts # noto-fonts noto-fonts-emoji ttf-liberation
+sudo pacman -Sy ttf-croscore ttf-font-awesome awesome-terminal-fonts # noto-fonts noto-fonts-emoji ttf-liberation
 
 # latex language server
 sudo luarocks install --server=http://luarocks.org/dev digestif
