@@ -27,6 +27,7 @@ set mouse=a
 set ttyfast
 set nostartofline
 set autowrite
+set autoread
 set shortmess=atIc
 set modeline
 set modelines=3
