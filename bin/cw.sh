@@ -1,15 +1,18 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]
+if [ $# -eq 1 ]
 then
+  COLOR=$1
+elif [ -n "$BACKGROUND_COLOR" ]
+then
+  COLOR=$BACKGROUND_COLOR
+else
   currenttime=$(date +%H:%M)
   if [[ "$currenttime" > "19:00" ]] || [[ "$currenttime" < "07:30" ]]; then
     COLOR="dark"
   else
     COLOR="light"
   fi
-else
-  COLOR=$1
 fi
 
 echo -n "$COLOR" > ~/.my_colors
