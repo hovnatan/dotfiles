@@ -378,12 +378,14 @@ if &background == "light"
 
 endif
 
-au FileType markdown,mkd,md,text
+au FileType markdown,text
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
-                \ setlocal spell
+                \ setlocal spell |
+                \ setlocal textwidth=80
 au FileType tex,latex
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
-                \ setlocal spell
+                \ setlocal spell |
+                \ setlocal textwidth=80
 au FileType json
       \ set conceallevel=0 |
       \ nn <F4> :%!python -m json.tool<CR>
