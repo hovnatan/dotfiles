@@ -6,7 +6,7 @@
     "clangd": {
       "command": "clangd",
       "rootPatterns": ["compile_flags.txt", "compile_commands.json", ".vim/", ".git/", ".hg/"],
-      "filetypes": ["c", "cpp", "objc", "objcpp"]
+      "filetypes": ["c", "cpp", "cc", "objc", "h", "hpp", "objcpp"]
     },
     "digestif": {
       "command": "digestif",
