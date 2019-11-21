@@ -47,7 +47,7 @@ bindcode $mod+25 layout tabbed
 bindcode $mod+26 layout toggle split
 
 # toggle tiling / floating
-bindsym Mod4+Shift+space floating toggle
+bindsym $mod+Shift+space floating toggle
 
 # change focus between tiling / floating windows
 bindsym Mod4+space focus mode_toggle
