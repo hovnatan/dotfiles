@@ -37,12 +37,6 @@ wget https://www.dropbox.com/download?dl=packages/dropbox.py
 yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng dragon-drag-and-drop-git google-chrome ptags xkb-switch-git flacon freeoffice freetype2-cleartype
 sudo ln -s /usr/bin/google-chrome-stable /usr/bin/chromium
 
-sudo ln -s /etc/fonts/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d
-sudo ln -s /etc/fonts/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d
-sudo ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d
-#Uncomment  export FREETYPE_PROPERTIES="truetype:interpreter-version=38"
-sudo nvim  /etc/profile.d/freetype2.sh
-
 #win fonts
 #wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-win10.tar.gz
 #tar xf ttf-ms-win10.tar.gz
