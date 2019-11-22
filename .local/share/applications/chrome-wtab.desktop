@@ -4,4 +4,4 @@ Version=1.0
 Terminal=false
 Type=Application
 Name=Chromium
-Exec=/usr/bin/chromium
+Exec=chromium

@@ -4,4 +4,4 @@ Version=1.0
 Terminal=false
 Type=Application
 Name=YouTube
-Exec=/usr/bin/chromium --app=https://www.youtube.com/feed/subscriptions
+Exec=chromium --app=https://www.youtube.com/feed/subscriptions

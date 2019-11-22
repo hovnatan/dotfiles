@@ -4,4 +4,4 @@ Version=1.0
 Terminal=false
 Type=Application
 Name=Gitter
-Exec=/usr/bin/chromium --app=https://gitter.im/neoclide/coc.nvim
+Exec=chromium --app=https://gitter.im/neoclide/coc.nvim
