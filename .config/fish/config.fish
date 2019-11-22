@@ -68,8 +68,6 @@ function reload-color-config --on-variable _reload_color_config
   end
 end
 
-set -U fish_user_paths ~/.dotfiles/bin
-
 abbr c   "cd"
 abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
