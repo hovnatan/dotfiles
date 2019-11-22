@@ -87,7 +87,6 @@ nnoremap <S-h> gT
 nnoremap <S-l> gt
 
 call plug#begin('~/.local/share/nvim/site/plugged')
-  Plug 'kshenoy/vim-signature'
   Plug 'inkarkat/vim-ingo-library'
   Plug 'inkarkat/vim-EnhancedJumps'
   Plug 'sheerun/vim-polyglot'
@@ -138,6 +137,9 @@ nnoremap <F5> :UndotreeToggle<cr>
 let g:undotree_SetFocusWhenToggle = 1
 let g:undotree_WindowLayout = 2
 
+let g:better_whitespace_filetypes_blacklist=['git', 'diff', 'gitcommit', 'unite', 'qf', 'help']
+let g:better_whitespace_enabled=0
+let g:strip_whitespace_on_save=1
 
 nmap zuz <Plug>(FastFoldUpdate)
 let g:fastfold_savehook = 1
@@ -405,7 +407,7 @@ au FileType python
 au FileType javascript
                 \ set iskeyword-=. |
                 \ set iskeyword-=-
-autocmd FileType git 
+autocmd FileType git
       \ setlocal foldenable
 
 
