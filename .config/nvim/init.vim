@@ -427,7 +427,8 @@ let g:netrw_liststyle = 3
 let g:netrw_altv      = 1
 let g:netrw_cursor    = 1
 let g:netrw_browsex_viewer="xdg-open"
-autocmd FileType netrw setl bufhidden=delete
+let g:netrw_fastbrowse = 0
+let g:netrw_altfile = 1
 
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
