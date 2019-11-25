@@ -1,5 +1,5 @@
 {
-  "coc.preferences.formatOnSaveFiletypes": ["python", "cpp"],
+  "coc.preferences.formatOnSaveFiletypes": ["python", "cpp", "javascript", "xhtml", "html", "css", "Markdown"],
   "coc.preferences.jumpCommand": "edit",
   "diagnostic.maxWindowHeight": 25,
   "highlight.colors.enable": false,
@@ -22,6 +22,7 @@
       "ignoredRootPaths": ["~"]
     }
   },
+  "html.filetypes":["html", "handlebars", "xhtml"],
   "python.linting.pylintUseMinimalCheckers" : true,
   "python.linting.pylintArgs": ["--generated-members=numpy.* ,torch.* ,cv2.* , cv.*, sh.*",
     "--disable=C0103,C0111,C0301,C0330,R0902,R0903,R0912,R0913,R0914,R0915"],
