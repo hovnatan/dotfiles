@@ -78,12 +78,6 @@ ln -s ~/.dotfiles/.config/termite ~/.config/termite
 rm -rf ~/.config/rofi/
 ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
 
-sudo cp /home/hovnatan/.dotfiles/etc/systemd/system/wakelock.service /etc/systemd/system/wakelock.service
-sudo systemctl enable /etc/systemd/system/wakelock.service
-sudo mkdir -p /usr/local/share/kbd/keymaps
-sudo cp ~/.dotfiles/usr/local/share/kbd/keymaps/caps_control.kmap /usr/local/share/kbd/keymaps/
-sudo cp ~/.dotfiles/vconsole.conf /etc/
-
 ln -sf ~/.dotfiles/.profile ~/.profile
 #ln -s ~/.dotfiles/wc.profile ~/.local_profile
 

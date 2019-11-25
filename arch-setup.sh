@@ -110,3 +110,9 @@ sudo systemctl enable systemd-timesyncd.service
 
 # to cleanup repo
 # java -jar bfg-1.13.0.jar -b 32K ~/work/repo
+
+sudo cp ~/.dotfiles/etc/systemd/system/wakelock.service /etc/systemd/system/wakelock.service
+sudo systemctl enable /etc/systemd/system/wakelock.service
+sudo mkdir -p /usr/local/share/kbd/keymaps
+sudo cp ~/.dotfiles/usr/local/share/kbd/keymaps/caps_control.kmap /usr/local/share/kbd/keymaps/
+sudo cp ~/.dotfiles/vconsole.conf /etc/
