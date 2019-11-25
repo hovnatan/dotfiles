@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sessions=$(ssh -Y $1 'tmux list-sessions')
+sessions=$(ssh -Y $SSH_AUTH_KEY $1 'tmux list-sessions')
 
 if [ -z $2 ]
 then
@@ -14,7 +14,7 @@ sessions=$(echo "$sessions" | cut -d: -f1)
 
 for session in $sessions;
 do
-  nohup termite -e "ssh -t -Y $1 $tmux_command $session" >/dev/null 2>&1 &
+  nohup termite -e "ssh -t -Y $SSH_AUTH_KEY $1 $tmux_command $session" >/dev/null 2>&1 &
   sleep 0.5
 done
 
