@@ -1,16 +1,20 @@
 #!/bin/sh
 
-options='-width 90'
+options='-width -130'
 
-selected=$(\
-        cat ~/.local/share/zathura/history | grep -Po '\[\K[^\]]*' \
+pdfs=$(cat ~/.local/share/zathura/history | grep -Po '\[\K[^\]]*')
+index=$(echo "$pdfs" \
         | sed "s|^$HOME|~|" \
-        | rofi -dmenu -i \
+        | grep -o -P '.{0,125}$' \
+        | rofi -dmenu -i -p 'zathura history' -format i \
         ${options}
         )
 
 # exit if nothing is selected
-[[ -z $selected ]] && exit
+[[ -z $index ]] && exit
+
+((++index))
+selected=$(echo "$pdfs" | sed -n "$index"p)
 
 zathura "$selected"
 
