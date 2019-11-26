@@ -6,6 +6,6 @@ function setup_ssh_agent --description 'Setup SSH agent'
 
   if ! set -q SSH_AUTH_SOCK
     set -l vals (cat "$XDG_RUNTIME_DIR/ssh-agent.env")
-    eval "$vals"
+    eval "$vals" > /dev/null
   end
 end
