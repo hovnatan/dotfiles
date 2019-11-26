@@ -1,9 +1,8 @@
 rofi.combi-modi:            drun,window
 rofi.show-icons:            false
 rofi.modi:                  combi
-rofi.lines:                 10
+rofi.lines:                 15
 rofi.line-padding:          10
-rofi.matching:              fuzzy
 rofi.bw:                    0
 rofi.padding:               0
 rofi.separator-style:       none
