@@ -266,9 +266,12 @@ function! GetFilepath_T()
   let fpath = split(filepath, dirsep)
   let len_p = len(fpath)
   if len_p > 2
-    let fpath_shortparts = map(fpath[1:-3], 'v:val[0]')
-    let ret = extend(extend([fpath[0]], fpath_shortparts), [fpath[-2], fpath[-1]])
+    let fpath_shortparts = map(fpath[0:-3], 'v:val[0]')
+    let ret = extend(fpath_shortparts, [fpath[-2], fpath[-1]])
     let ret = join(ret, dirsep)
+    if fpath[0] != '~'
+      let ret = '/' . ret
+    endif
   else
     let ret = filepath
   endif
