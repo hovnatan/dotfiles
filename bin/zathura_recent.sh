@@ -1,9 +1,10 @@
 #!/bin/sh
 
-options='-width 100'
+options='-width 90'
 
 selected=$(\
         cat ~/.local/share/zathura/history | grep -Po '\[\K[^\]]*' \
+        | sed "s|^$HOME|~|" \
         | rofi -dmenu -i -markup-rows \
         ${options}
         )
