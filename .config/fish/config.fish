@@ -1,7 +1,6 @@
 if status --is-login
   source ~/.profile
-  eval (ssh-agent -c)
-  ssh-add ~/.ssh/google_compute_engine
+  setup_ssh_agent
 end
 
 set -x FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
