@@ -4,8 +4,9 @@ set statusbar-home-tilde true
 set window-title-basename true
 set guioptions ''
 map d scroll half-down
-map m scroll half-down
+map i scroll half-down
 map u scroll half-up
+map f scroll half-up
 map D navigate next
 map U navigate previous
 map <PageDown> scroll half-down
