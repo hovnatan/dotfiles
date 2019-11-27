@@ -168,7 +168,7 @@ nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gm :Gstatus<CR><C-w>T
 nnoremap <leader>gp :Gpush<CR>
 
-nnoremap <Esc><Esc> :<C-u>set hlsearch!<CR>
+nnoremap <Esc><Esc> :<C-u>let v:hlsearch=!v:hlsearch<CR>
 
 let g:coc_global_extensions = [ 'coc-emoji', 'coc-python',
       \ 'coc-json', 'coc-word',
@@ -418,7 +418,6 @@ au FileType javascript
 autocmd FileType git
       \ setlocal foldenable
 
-
 au BufWritePost *.sh silent! !chmod +x %:p
 
 aug i3config_ft_detection
@@ -585,3 +584,5 @@ vmap <silent> # *
 let &cpo = s:savedCpo
 " autocmd BufReadPost fugitive://* set bufhidden=delete
 nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
+
+" au VimEnter * let g:volatile_ftypes += ['git']
