@@ -411,7 +411,9 @@ au FileType python
                 \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
                 \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
                 \ setlocal foldenable |
-                \ setlocal foldmethod=indent
+                \ setlocal foldmethod=indent |
+                \ Abolish true True |
+                \ Abolish false False
 au FileType javascript
                 \ set iskeyword-=. |
                 \ set iskeyword-=-
