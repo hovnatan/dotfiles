@@ -53,14 +53,6 @@ cd termite
 make
 sudo make install
 
-# homebrew
-# cd ~
-# git clone https://github.com/Homebrew/brew
-# set -x PATH ~/brew/bin $PATH
-
-# for indexed png
-# pip install pypng
-
 # hibernate
 # sudo fallocate -l 25G /swapfile
 # sudo chmod 0600 /swapfile
