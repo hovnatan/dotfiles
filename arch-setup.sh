@@ -36,15 +36,6 @@ sudo nvim /etc/pacman.conf
 wget https://www.dropbox.com/download?dl=packages/dropbox.py
 yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng dragon-drag-and-drop-git google-chrome ptags xkb-switch-git flacon freeoffice freetype2-cleartype
 
-#win fonts
-#wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-win10.tar.gz
-#tar xf ttf-ms-win10.tar.gz
-#cd ttf-ms-win10
-#mv ~/fonts/* .
-#makepkg -Acs
-#sudo pacman -U ttf-ms-win10 ttf-ms-win10-other
-
-
 sudo mkinitcpio -p linux
 
 cd ~/Downloads
@@ -75,8 +66,6 @@ sudo make install
 # sudo pacman -Rns (pacman -Qtdq)
 # remove cache
 # yay -Sc
-
-# wget https://github.com/peci1/nvidia-htop/raw/master/nvidia-htop.py
 
 # enabel timesync
 sudo systemctl enable systemd-timesyncd.service
