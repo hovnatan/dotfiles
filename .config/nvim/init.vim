@@ -398,7 +398,7 @@ au FileType tex,latex
                 \ setlocal textwidth=80
 au FileType json
       \ set conceallevel=0 |
-      \ nn <F4> :%!python -m json.tool<CR>
+      \ nn <buffer> <F4> :%!python -m json.tool<CR>
 
 au FileType cpp
                 \ set iskeyword-=. |
