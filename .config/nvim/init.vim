@@ -64,6 +64,7 @@ set nowritebackup
 set cmdheight=1
 set signcolumn=yes:1
 set conceallevel=1
+set foldlevel=99
 
 nn <F9> :silent Dispatch!<CR>
 
@@ -132,6 +133,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'hovnatan/vim-ipython-cell'
   Plug 'wsdjeg/vim-fetch'
   Plug 'majutsushi/tagbar'
+  Plug 'tmhedberg/SimpylFold'
 call plug#end()
 
 nnoremap <F8> :TagbarToggle<CR>
@@ -303,14 +305,16 @@ let g:lightline = {
       \   'left': [ [ 'mode', 'paste' ],
       \             [ 'tpath', 'readonly', 'modified', 'cocdiag'] ],
       \   'right': [ [ 'lineinfo' ],
-      \              [ 'percent' ],
       \              [ 'git']
       \            ]
       \ },
       \ 'inactive': {
       \   'left': [ ['tpath', 'readonly', 'modified', 'cocdiag' ] ],
       \   'right': [ [ 'lineinfo' ],
-      \            [ 'percent' ] ]
+      \            ]
+      \ },
+      \ 'component': {
+      \   'lineinfo': '%3l(%L):%-2v'
       \ },
       \ 'component_function': {
       \   'cocdiag': 'CocDiagnostic',
@@ -411,7 +415,6 @@ au FileType python
                 \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
                 \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
                 \ setlocal foldenable |
-                \ setlocal foldmethod=indent |
                 \ Abolish -buffer true True |
                 \ Abolish -buffer false False
 au FileType javascript
