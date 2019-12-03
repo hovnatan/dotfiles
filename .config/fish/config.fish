@@ -117,6 +117,7 @@ abbr htop "htop -u hovnatan"
 abbr p "python"
 abbr hm "history merge"
 abbr rfc "source ~/.config/fish/config.fish"
+abbr pdfgrep "pdfgrep --cache -ri --page-range 1"
 abbr ... "../.."
 abbr .... "../../.."
 
