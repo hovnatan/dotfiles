@@ -62,7 +62,7 @@ set colorcolumn=80
 set nobackup
 set nowritebackup
 set cmdheight=1
-set signcolumn=yes:1
+set signcolumn=yes
 set conceallevel=1
 set foldlevel=99
 
