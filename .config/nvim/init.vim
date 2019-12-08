@@ -134,7 +134,32 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'wsdjeg/vim-fetch'
   Plug 'majutsushi/tagbar'
   Plug 'tmhedberg/SimpylFold'
+  Plug 'kshenoy/vim-signature'
 call plug#end()
+
+let g:SignatureMap = {
+  \ 'Leader'             :  "m",
+  \ 'PlaceNextMark'      :  "m,",
+  \ 'ToggleMarkAtLine'   :  "m.",
+  \ 'PurgeMarksAtLine'   :  "m-",
+  \ 'DeleteMark'         :  "dm",
+  \ 'PurgeMarks'         :  "m<Space>",
+  \ 'PurgeMarkers'       :  "m<BS>",
+  \ 'GotoNextLineAlpha'  :  "",
+  \ 'GotoPrevLineAlpha'  :  "",
+  \ 'GotoNextSpotAlpha'  :  "",
+  \ 'GotoPrevSpotAlpha'  :  "",
+  \ 'GotoNextLineByPos'  :  "",
+  \ 'GotoPrevLineByPos'  :  "",
+  \ 'GotoNextSpotByPos'  :  "",
+  \ 'GotoPrevSpotByPos'  :  "",
+  \ 'GotoNextMarker'     :  "",
+  \ 'GotoPrevMarker'     :  "",
+  \ 'GotoNextMarkerAny'  :  "",
+  \ 'GotoPrevMarkerAny'  :  "",
+  \ 'ListBufferMarks'    :  "m/",
+  \ 'ListBufferMarkers'  :  "m?"
+  \ }
 
 nnoremap <F8> :TagbarToggle<CR>
 nnoremap <F5> :UndotreeToggle<cr>
