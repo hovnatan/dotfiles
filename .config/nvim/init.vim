@@ -100,6 +100,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-abolish'
   Plug 'tpope/vim-dispatch'
   Plug 'junegunn/vim-peekaboo'
+  Plug 'Yilin-Yang/vim-markbar'
   Plug 'radenling/vim-dispatch-neovim'
   Plug 'tpope/vim-commentary'
   Plug 'tpope/vim-endwise'
