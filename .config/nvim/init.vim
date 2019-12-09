@@ -162,6 +162,21 @@ let g:SignatureMap = {
   \ 'ListBufferMarkers'  :  "m?"
   \ }
 
+nmap <Leader>m <Plug>ToggleMarkbar
+let g:markbar_marks_to_display = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+let g:markbar_peekaboo_marks_to_display = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+let g:markbar_width = 50
+let g:markbar_context_indent_block = '  '
+let g:markbar_num_lines_context = 3
+
+
+function! FBaseNameLineAndCol(mark_data) abort
+    return printf('%s [l: %4d, c: %4d]', a:mark_data['filename'], a:mark_data['line'], a:mark_data['column'])
+endfunction
+
+let g:markbar_file_mark_format_string = '%s'
+let g:markbar_file_mark_arguments = [ function('FBaseNameLineAndCol') ]
+
 nnoremap <F8> :TagbarToggle<CR>
 nnoremap <F5> :UndotreeToggle<cr>
 let g:undotree_SetFocusWhenToggle = 1
