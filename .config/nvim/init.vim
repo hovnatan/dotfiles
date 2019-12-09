@@ -120,6 +120,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'itchyny/lightline.vim'
   Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
   Plug 'wellle/tmux-complete.vim'
+  Plug 'wellle/targets.vim'
   Plug 'kana/vim-textobj-user'
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'jeetsukumaran/vim-indentwise'
@@ -166,8 +167,8 @@ nmap <Leader>m <Plug>ToggleMarkbar
 let g:markbar_marks_to_display = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 let g:markbar_peekaboo_marks_to_display = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 let g:markbar_width = 50
-let g:markbar_context_indent_block = '  '
-let g:markbar_num_lines_context = 3
+let g:markbar_context_indent_block = ''
+let g:markbar_num_lines_context = 7
 
 
 function! FBaseNameLineAndCol(mark_data) abort
