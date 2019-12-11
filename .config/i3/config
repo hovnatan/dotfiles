@@ -152,9 +152,9 @@ set_from_resource $base0F i3wm.base0F
 
 # Basic bar configuration using the Base16 variables.
 bar {
-    # mode hide
-    # hidden_state hide
-    # modifier Mod4
+    mode hide
+    hidden_state hide
+    modifier Mod4
 
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     position top
@@ -256,6 +256,7 @@ floating_maximum_size 1280 x 720
 focus_follows_mouse no
 
 bindcode Mod4+52 exec zathura_recent.sh
+bindcode Mod4+Shift+52 exec zathura_duplicate.sh
 bindcode Mod4+Shift+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
 bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
 bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop
@@ -266,4 +267,4 @@ bindcode Mod4+42 exec dex ~/.local/share/applications/chrome-gitter.desktop
 bindcode Mod4+Shift+58 exec dex ~/.local/share/applications/chrome-googlemusic.desktop
 
 exec --no-startup-id setkmap.sh
-exec --no-startup-id unclutter -b
+exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
