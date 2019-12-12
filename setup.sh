@@ -17,7 +17,6 @@ curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 nvim -c 'PlugInstall | qa'
 ln -s ~/Dropbox/scripts/view/ ~/.local/share/nvim/view
-ln -s ~/.dotfiles/.config/TabNine/ ~/.config/
 
 mkdir ~/.config/pudb
 ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
@@ -158,13 +157,6 @@ rm -rf ~/.config/ranger
 ln -s ~/.dotfiles/.config/ranger/ ~/.config/ranger
 rm -rf ~/.local/share/ranger
 ln -s ~/Dropbox/scripts/ranger ~/.local/share/ranger
-
-mkdir -p ~/.config/QtProject/qtcreator/styles
-mkdir -p ~/.config/QtProject/qtcreator/themes
-ln -s ~/.dotfiles/.config/QtProject/qtcreator/themes/gruvbox-medium.creatortheme.creatortheme ~/.config/QtProject/qtcreator/themes
-ln -s ~/.dotfiles/.config/QtProject/qtcreator/themes/gruvbox-light-medium.creatortheme ~/.config/QtProject/qtcreator/themes
-ln -s ~/.dotfiles/.config/QtProject/qtcreator/styles/gruvbox-dark-medium.xml ~/.config/QtProject/qtcreator/styles
-ln -s ~/.dotfiles/.config/QtProject/qtcreator/styles/gruvbox-light-medium.xml ~/.config/QtProject/qtcreator/styles
 
 ln -s ~/.dotfiles/.config/sway ~/.config/sway
 ln -s .Xdefaults .Xresources
