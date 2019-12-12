@@ -117,7 +117,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
-  Plug 'neoclide/coc.nvim', {'do': './install.sh nightly'}
+  Plug 'neoclide/coc.nvim', {'do': 'yarn install --frozen-lockfile'}
   Plug 'wellle/tmux-complete.vim'
   Plug 'wellle/targets.vim'
   Plug 'kana/vim-textobj-user'
