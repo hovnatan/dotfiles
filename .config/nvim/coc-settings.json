@@ -32,6 +32,7 @@
   "git.topRemovedSign.hlGroup": "GitGutterDelete",
   "git.changeRemovedSign.hlGroup": "GitGutterChangeDelete",
   "git.enableGutters": true,
+  "coc.source.issues.enable": false,
   "suggest.detailMaxLength": 200,
   "list.insertMappings": {
     "<C-s>": "action:vsplit",
