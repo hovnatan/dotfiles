@@ -35,7 +35,7 @@ set whichwrap=b,s,<,>,[,]
 set nowrap
 set visualbell t_vb=
 set novisualbell
-set iskeyword=@,48-57,_,192-255,-,.
+set iskeyword=@,48-57,_,192-255
 set isfname-==
 set wildmenu
 set lazyredraw
@@ -43,7 +43,8 @@ set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
 set splitbelow
 set splitright
 set foldmethod=syntax
-set nofoldenable
+set foldenable
+set foldlevel=99
 set viewoptions-=options
 set inccommand=nosplit
 set cursorline
@@ -64,7 +65,6 @@ set nowritebackup
 set cmdheight=1
 set signcolumn=yes
 set conceallevel=1
-set foldlevel=99
 
 nn <F9> :silent Dispatch!<CR>
 
@@ -431,24 +431,13 @@ au FileType json
       \ set conceallevel=0 |
       \ nn <buffer> <F4> :%!python -m json.tool<CR>
 
-au FileType cpp
-                \ set iskeyword-=. |
-                \ set iskeyword-=-
 au FileType python
-                \ set iskeyword-=. |
-                \ set iskeyword-=- |
                 \ nnoremap <buffer> <F6> :IPythonCellExecuteCell<CR> |
                 \ inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR> |
                 \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
                 \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
-                \ setlocal foldenable |
                 \ Abolish -buffer true True |
                 \ Abolish -buffer false False
-au FileType javascript
-                \ set iskeyword-=. |
-                \ set iskeyword-=-
-autocmd FileType git
-      \ setlocal foldenable
 
 au BufWritePost *.sh silent! !chmod +x %:p
 
