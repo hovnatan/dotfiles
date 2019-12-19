@@ -555,7 +555,7 @@ endif
 nmap <space>t :exe "tabn ".g:lasttab<CR>
 au TabLeave * let g:lasttab = tabpagenr()
 
-nnoremap <expr> gp '`[' . strpart(getregtype(), 0, 1) . '`]'
+nnoremap <expr> <space>v '`[' . strpart(getregtype(), 0, 1) . '`]'
 
 
 " from https://www.vim.org/scripts/script.php?script_id=4335
