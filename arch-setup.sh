@@ -80,3 +80,7 @@ sudo systemctl enable /etc/systemd/system/wakelock.service
 sudo mkdir -p /usr/local/share/kbd/keymaps
 sudo cp ~/.dotfiles/usr/local/share/kbd/keymaps/caps_control.kmap /usr/local/share/kbd/keymaps/
 sudo cp ~/.dotfiles/vconsole.conf /etc/
+
+
+# terminal fun
+# yay -S asciiquarium sl cmatrix
