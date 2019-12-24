@@ -6,6 +6,7 @@ rm -rf ~/.tmux.conf
 ln -s ~/.dotfiles/.tmux.conf .tmux.conf
 rm -rf ~/.tmux/plugins/tpm
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+"$HOME/.tmux/plugins/tpm/bin/install_plugins"
 
 rm -rf ~/.config/redshift.conf
 ln -s ~/.dotfiles/.config/redshift.conf ~/.config/redshift.conf
