@@ -354,16 +354,16 @@ nnoremap <silent> <space>a  :<C-u>CocList diagnostics<cr>
 nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
 nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
 nnoremap <silent> <space>h  :<C-u>CocList --number-select --no-sort mru<cr>
-nnoremap <silent> <space>b  :<C-u>CocList --number-select --no-sort buffers<cr>
+nnoremap <silent> <space>b  :<C-u>CocList --number-select buffers<cr>
 nnoremap <silent> <space>f  :<C-u>CocList --number-select gfiles<cr>
-nnoremap <silent> <space>d  :<C-u>CocList files<cr>
+nnoremap <silent> <space>d  :<C-u>CocList --number-select files<cr>
 nnoremap <silent> <space>l  :<C-u>CocList <cr>
 nnoremap <silent> <space>m  :<C-u>CocList marks<cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
 nnoremap <silent> <space>r  :<C-u>CocList grep<cr>
-nnoremap <silent> <space>j  :<C-u>CocNext<CR>
-nnoremap <silent> <space>k  :<C-u>CocPrev<CR>
-nnoremap <silent> <space>p  :<C-u>CocListResume<CR>
+nnoremap <silent> <space>j  :<C-u>CocNext<cr>
+nnoremap <silent> <space>k  :<C-u>CocPrev<cr>
+nnoremap <silent> <space>p  :<C-u>CocListResume<cr>
 
 nnoremap <expr><C-f> coc#util#has_float() ? coc#util#float_scroll(1) : "\<C-f>"
 nnoremap <expr><C-b> coc#util#has_float() ? coc#util#float_scroll(0) : "\<C-b>"
