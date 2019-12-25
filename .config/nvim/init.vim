@@ -422,7 +422,8 @@ endif
 au FileType markdown,text
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell |
-                \ setlocal textwidth=80
+                \ setlocal textwidth=80 |
+                \ let b:strip_whitespace_on_save=0
 au FileType tex,latex
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell |
