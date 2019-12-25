@@ -98,6 +98,8 @@ class FocusWatcher:
             sh.pkill("-f", "i3_custom_ipc_client.py")
         except sh.ErrorReturnCode:
             pass
+        zathura_save = sh.Command("zathura_save.sh")
+        zathura_save()
         sys.exit(0)
 
     def on_window_close(self, i3conn, event):

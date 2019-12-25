@@ -17,5 +17,3 @@ index=$(echo "$pdfs" \
 selected=$(echo "$pdfs" | sed -n "$index"p)
 
 zathura "$selected" &
-
-exit 0
