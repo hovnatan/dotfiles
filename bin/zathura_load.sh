@@ -1,6 +1,6 @@
 #!/bin/bash
 
-INPUT_FILE="$HOME/Dropbox/zathura_save"
+INPUT_FILE="$HOME/Dropbox/scripts/zathura/zathura_save"
 SYNCED=""
 while [ "$SYNCED" == "" ] ; do
   sleep 0.5
