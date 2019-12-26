@@ -17,7 +17,6 @@ mkdir -p ~/.vimundo/
 curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 nvim -c 'PlugInstall | qa'
-ln -s ~/Dropbox/scripts/view/ ~/.local/share/nvim/view
 
 mkdir ~/.config/pudb
 ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
