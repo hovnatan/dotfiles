@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OUTPUT_FILE="$HOME/Dropbox/zathura_save"
+OUTPUT_FILE="$HOME/Dropbox/scripts/zathura/zathura_save"
 mv "$OUTPUT_FILE" "$OUTPUT_FILE.bak"
 
 PIDS=$(pidof zathura)
