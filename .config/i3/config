@@ -267,5 +267,7 @@ bindcode Mod4+29 exec dex ~/.local/share/applications/chrome-youtube.desktop
 bindcode Mod4+42 exec dex ~/.local/share/applications/chrome-gitter.desktop
 bindcode Mod4+Shift+58 exec dex ~/.local/share/applications/chrome-googlemusic.desktop
 
+exec --no-startup-id xss-lock -- ~/.dotfiles/lock.sh sleep
+
 exec --no-startup-id setkmap.sh
 exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
