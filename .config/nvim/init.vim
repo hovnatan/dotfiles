@@ -400,6 +400,7 @@ let g:vimtex_quickfix_mode=0
 let g:tex_conceal='abdmg'
 
 set spelllang=en_us
+set spellfile=~/Dropbox/scripts/en.utf-8.add
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
 for d in glob('~/.config/nvim/spell/*.add', 1, 1)
     if filereadable(d) && (!filereadable(d . '.spl') || getftime(d) > getftime(d . '.spl'))
@@ -420,7 +421,7 @@ au FileType markdown,text
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell |
                 \ setlocal textwidth=80 |
-                \ setlocal formatoptions-=n |
+                \ setlocal formatlistpat+=\\\|^\\*\\s* |
                 \ let b:strip_whitespace_on_save=0
 au FileType tex,latex
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
