@@ -1,7 +1,7 @@
 #!/bin/bash
 
 OUTPUT_FILE="$HOME/Dropbox/zathura_save"
-rm -f "$OUTPUT_FILE"
+mv "$OUTPUT_FILE" "$OUTPUT_FILE.bak"
 
 PIDS=$(pidof zathura)
 for PID in $PIDS; do
@@ -12,4 +12,8 @@ for PID in $PIDS; do
   echo "$filename:$pagenumber" >> "$OUTPUT_FILE"
 done
 
-sleep 2
+SYNCED=""
+while [ "$SYNCED" == "" ] ; do
+  sleep 0.5
+  SYNCED=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$OUTPUT_FILE" | grep -- "up to date")
+done
