@@ -10,7 +10,7 @@ T='#d79921ff'  # text
 W='#cc241dbb'  # wrong
 V='#b16286bb'  # verifying
 
-i3lock -n \
+i3lock \
 -i $TMPBG \
 --insidevercolor=$C   \
 --ringvercolor=$V     \
@@ -37,5 +37,3 @@ i3lock -n \
 --timestr="%H:%M:%S"  \
 --datestr="%A, %m %Y" \
 --keylayout 2
-
-xinput --enable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
