@@ -4,7 +4,7 @@ INPUT_FILE="$HOME/Dropbox/zathura_save"
 SYNCED=""
 while [ "$SYNCED" == "" ] ; do
   sleep 0.5
-  SYNCED=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$OUTPUT_FILE" | grep -- "up to date")
+  SYNCED=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$INPUT_FILE" | grep -- "up to date")
 done
 
 IFS=:
