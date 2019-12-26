@@ -10,12 +10,9 @@ set expandtab
 
 set scrolloff=5
 set termguicolors
-set autoindent
 set smartindent
-set cindent
 set showmatch
 set smartcase
-set ignorecase
 set wildignorecase
 set ls=2
 set title
@@ -423,6 +420,7 @@ au FileType markdown,text
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell |
                 \ setlocal textwidth=80 |
+                \ setlocal formatoptions-=n |
                 \ let b:strip_whitespace_on_save=0
 au FileType tex,latex
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
@@ -439,6 +437,9 @@ au FileType python
                 \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
                 \ Abolish -buffer true True |
                 \ Abolish -buffer false False
+
+au FileType cpp
+      \ setlocal cindent
 
 au BufWritePost *.sh silent! !chmod +x %:p
 
