@@ -1,9 +1,13 @@
 #!/bin/bash
 
+PIDS=$(pidof zathura)
+if [ "$PIDS" == "" ]; then
+  exit 0
+fi
+
 OUTPUT_FILE="$HOME/Dropbox/scripts/zathura/zathura_save"
 mv "$OUTPUT_FILE" "$OUTPUT_FILE.bak"
 
-PIDS=$(pidof zathura)
 for PID in $PIDS; do
   filename=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
     org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:filename | grep -oP ".*variant.*string\s+\"\K(.*)(?=\")")

@@ -207,7 +207,7 @@ bindsym XF86AudioPrev exec playerctl previous
 
 # bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock.sh lock
-bindsym $mod+Shift+Escape exec --no-startup-id ~/.dotfiles/lock.sh sleep && systemctl suspend
+bindsym $mod+Shift+Escape exec --no-startup-id systemctl suspend
 exec --no-startup-id ~/Dropbox/scripts/dropbox.py start
 exec --no-startup-id redshift-gtk
 bindcode Mod4+Shift+27 exec --no-startup-id pkill -x -USR1 redshift
@@ -246,7 +246,7 @@ workspace_auto_back_and_forth yes
 exec --no-startup-id clipster -d
 bindcode $mod+54 exec --no-startup-id clipster -s
 bindcode $mod+Shift+54 exec --no-startup-id clipster -p -s
-exec --no-startup-id ~/.dotfiles/xautolock_start.sh
+exec --no-startup-id xset s 300
 
 # for_window [title="Messenger" instance="www.messenger.com"] move to workspace $ws10
 
@@ -267,7 +267,7 @@ bindcode Mod4+29 exec dex ~/.local/share/applications/chrome-youtube.desktop
 bindcode Mod4+42 exec dex ~/.local/share/applications/chrome-gitter.desktop
 bindcode Mod4+Shift+58 exec dex ~/.local/share/applications/chrome-googlemusic.desktop
 
-exec --no-startup-id xss-lock -- ~/.dotfiles/lock.sh sleep
+exec --no-startup-id xss-lock -l -- ~/.dotfiles/lock.sh sleep
 
 exec --no-startup-id setkmap.sh
 exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
