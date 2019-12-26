@@ -6,6 +6,7 @@ then
   if [ "$X" -gt 30 ] || [ "$1" != "autolock" ] ; then
     nohup ~/.dotfiles/.config/i3/lock.sh >/dev/null 2>&1 &
     xkb-switch -s us
+    zathura_save.sh
     if [ "$1" != "sleep" ] ;
     then
       # Turn the screen off after a delay.

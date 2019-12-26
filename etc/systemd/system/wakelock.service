@@ -3,10 +3,10 @@ Description=Lock the screen on resume from suspend
 Before=sleep.target suspend.target
 
 [Service]
-User=hovnatan
+User=%I
 Type=forking
 Environment=DISPLAY=:0
-ExecStart=/home/hovnatan/.dotfiles/lock.sh
+ExecStart=/usr/bin/loginctl lock-sessions
 
 [Install]
 WantedBy=sleep.target suspend.target
