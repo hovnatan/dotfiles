@@ -400,13 +400,13 @@ let g:vimtex_quickfix_mode=0
 let g:tex_conceal='abdmg'
 
 set spelllang=en_us
-set spellfile=~/Dropbox/scripts/en.utf-8.add
+set spellfile=~/Dropbox/scripts/nvim/spell/en.utf-8.add
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
-for d in glob('~/.config/nvim/spell/*.add', 1, 1)
-    if filereadable(d) && (!filereadable(d . '.spl') || getftime(d) > getftime(d . '.spl'))
-        exec 'mkspell! ' . fnameescape(d)
-    endif
-endfor
+" for d in glob('~/Dropbox/scripts/nvim/spell/*.add', 1, 1)
+"     if filereadable(d) && (!filereadable(d . '.spl') || getftime(d) > getftime(d . '.spl'))
+"         exec 'mkspell! ' . fnameescape(d)
+"     endif
+" endfor
 
 au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
 
