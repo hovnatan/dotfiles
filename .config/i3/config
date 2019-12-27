@@ -270,11 +270,9 @@ exec --no-startup-id xss-lock -l -- ~/.dotfiles/lock-xss.sh
 exec --no-startup-id setkmap.sh
 exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
 
-set $Locker ~/.dotfiles/lock-xss.sh lock
-
 set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown
 mode "$mode_system" {
-    bindsym l exec --no-startup-id $Locker, mode "default"
+    bindsym l exec --no-startup-id ~/.dotfiles/lock-xss.sh lock, mode "default"
     bindsym e exec --no-startup-id zathura_save.sh last && i3-msg exit, mode "default"
     bindsym s exec --no-startup-id systemctl suspend, mode "default"
     bindsym h exec --no-startup-id systemctl hibernate, mode "default"
