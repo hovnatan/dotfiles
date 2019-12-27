@@ -11,5 +11,5 @@ if [ -n "$PID" ]; then
   PAGENUMBER=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
     org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:pagenumber | grep -oP ".*variant.*uint32\s+\K(.*)")
   ((++PAGENUMBER))
-  zathura -P "$PAGENUMBER" "$FILENAME"
+  zathura -P "$PAGENUMBER" "$FILENAME" &
 fi
