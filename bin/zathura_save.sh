@@ -5,16 +5,20 @@ if [ "$PIDS" == "" ]; then
   exit 0
 fi
 OUTPUT_DIR="$HOME/Dropbox/scripts/zathura/saves"
-FILES=""
-for filename in "$OUTPUT_DIR"/*; do
-  fbase=$(basename "$filename")
-  FILES="$FILES|$fbase"
-done
-FILES="${FILES:1}"
-OUTPUT_FILE=$(echo "$FILES" | rofi -sep '|' -dmenu -p "Save to filename > ")
-if [ "$OUTPUT_FILE" == "" ]; then
-  dunstify -t 5000 "Wrong filename."
-  exit 1
+if [ "$1" == "" ]; then
+  FILES=""
+  for filename in "$OUTPUT_DIR"/*; do
+    fbase=$(basename "$filename")
+    FILES="$FILES|$fbase"
+  done
+  FILES="${FILES:1}"
+  OUTPUT_FILE=$(echo "$FILES" | rofi -sep '|' -dmenu -p "Save to filename > ")
+  if [ "$OUTPUT_FILE" == "" ]; then
+    dunstify -t 5000 "Wrong filename."
+    exit 1
+  fi
+else
+  OUTPUT_FILE="$1"
 fi
 OUTPUT_FILE="$OUTPUT_DIR/$OUTPUT_FILE"
 
