@@ -12,6 +12,7 @@ set scrolloff=5
 set termguicolors
 set smartindent
 set showmatch
+set ignorecase
 set smartcase
 set wildignorecase
 set ls=2
