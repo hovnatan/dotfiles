@@ -4,10 +4,22 @@ PIDS=$(pidof zathura)
 if [ "$PIDS" == "" ]; then
   exit 0
 fi
+OUTPUT_DIR="$HOME/Dropbox/scripts/zathura/saves"
+FILES=""
+for filename in "$OUTPUT_DIR"/*; do
+  fbase=$(basename "$filename")
+  FILES="$FILES|$fbase"
+done
+FILES="${FILES:1}"
+OUTPUT_FILE=$(echo "$FILES" | rofi -sep '|' -dmenu -p "Save to filename > ")
+if [ "$OUTPUT_FILE" == "" ]; then
+  dunstify -t 5000 "Wrong filename."
+  exit 1
+fi
+OUTPUT_FILE="$OUTPUT_DIR/$OUTPUT_FILE"
 
-OUTPUT_FILE="$HOME/Dropbox/scripts/zathura/zathura_save"
-TIMESTAMP=$(date +%s)
-mv "$OUTPUT_FILE" "$OUTPUT_FILE.$TIMESTAMP.bak"
+rm -f "$OUTPUT_FILE"
+touch "$OUTPUT_FILE"
 
 for PID in $PIDS; do
   filename=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
@@ -24,3 +36,9 @@ while [ "$SYNCED" == "" ] && [ $i -lt 10 ] ; do
   SYNCED=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$OUTPUT_FILE" | grep -- "up to date")
   ((i=i+1))
 done
+
+if [ "$SYNCED" == "" ]; then
+  dunstify -t 5000 -u c "Couldn't Dropbox sync zathura file at $OUTPUT_FILE."
+else
+  dunstify -t 5000 "Dropbox synced zathura file at $OUTPUT_FILE."
+fi
