@@ -32,6 +32,7 @@ for PID in $PIDS; do
     org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:pagenumber | grep -oP ".*variant.*uint32\s+\K(.*)")
   echo "$filename:$pagenumber" >> "$OUTPUT_FILE"
 done
+sort -o "$OUTPUT_FILE" "$OUTPUT_FILE"
 
 SYNCED=""
 i=0
