@@ -20,28 +20,12 @@ V='#b16286bb'  # verifying
 
 i3lock_options="-i $TMPBG --insidevercolor=$C --ringvercolor=$V --insidewrongcolor=$C --ringwrongcolor=$W --insidecolor=$B --ringcolor=$D --linecolor=$B --separatorcolor=$D --verifcolor=$T --wrongcolor=$T --timecolor=$T --datecolor=$T --layoutcolor=$T --keyhlcolor=$W --bshlcolor=$W --screen 1 --clock --indicator --timestr=%H:%M:%S --keylayout 2"
 
-# Run before starting the locker
-pre_lock() {
-    xinput --disable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
-    scrot $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
-    ~/.dotfiles/check-i3lock.sh &
-    xkb-switch -s us
-    # zathura_save.sh
-    #mpc pause
-    return
-}
-
-# Run after the locker exits
-post_lock() {
-    trap 'kill $(jobs -p)' EXIT
-    xinput --enable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
-    xset -dpms
-    return
-}
-
-###############################################################################
-
-pre_lock
+xinput --disable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
+scrot $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
+~/.dotfiles/check-i3lock.sh &
+xkb-switch -s us
+zathura_save.sh last &
+Z_PID=$!
 
 # We set a trap to kill the locker if we get killed, then start the locker and
 # wait for it to exit. The waiting is not that straightforward when the locker
@@ -55,6 +39,7 @@ if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
 
     # we have to make sure the locker does not inherit a copy of the lock fd
     i3lock $i3lock_options --datestr="%A %m/%d/%Y" {XSS_SLEEP_LOCK_FD}<&-
+    wait $Z_PID
 
     # now close our fd (only remaining copy) to indicate we're ready to sleep
     exec {XSS_SLEEP_LOCK_FD}<&-
@@ -71,4 +56,6 @@ else
     fi
 fi
 
-post_lock
+trap 'kill $(jobs -p)' EXIT
+xinput --enable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
+xset -dpms
