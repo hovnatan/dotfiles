@@ -256,8 +256,9 @@ floating_maximum_size 1280 x 720
 focus_follows_mouse no
 
 bindcode Mod4+52 exec zathura_recent.sh
-bindcode Mod4+Shift+52 exec zathura_duplicate.sh
+bindcode Mod4+Mod1+52 exec zathura_duplicate.sh
 bindcode Mod1+Shift+52 exec --no-startup-id zathura_load.sh
+bindcode Mod4+Shift+52 exec --no-startup-id zathura_save.sh
 bindcode Mod4+Shift+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
 bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
 bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop

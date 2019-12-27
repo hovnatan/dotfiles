@@ -5,6 +5,9 @@
 
 ## CONFIGURATION ##############################################################
 
+if pgrep -x "i3lock" ; then
+  exit 0
+fi
 
 TMPBG=/tmp/screen.png
 
@@ -23,7 +26,7 @@ pre_lock() {
     scrot $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
     ~/.dotfiles/check-i3lock.sh &
     xkb-switch -s us
-    zathura_save.sh
+    # zathura_save.sh
     #mpc pause
     return
 }
