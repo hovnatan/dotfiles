@@ -1,13 +1,19 @@
 #!/bin/bash
 
-INPUT_FILE="$HOME/Dropbox/scripts/zathura/zathura_save"
-SYNCED=""
-i=0
-while [ "$SYNCED" == "" ] && [ $i -lt 10 ] ; do
-  sleep 0.5
-  SYNCED=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$INPUT_FILE" | grep -- "up to date")
-  ((i=i+1))
+INPUT_DIR="$HOME/Dropbox/scripts/zathura/saves"
+FILES=""
+for filename in "$INPUT_DIR"/*; do
+  fbase=$(basename "$filename")
+  FILES="$FILES|$fbase"
 done
+FILES="${FILES:1}"
+INPUT_FILE=$(echo "$FILES" | rofi -sep '|' -dmenu -p "Load filename > ")
+INPUT_FILE="$INPUT_DIR/$INPUT_FILE"
+
+if [ ! -f "$INPUT_FILE" ]; then
+  dunstify -t 5000 "Wrong filename $INPUT_FILE."
+  exit 1
+fi
 
 IFS=:
 cat "$INPUT_FILE" | while read line
