@@ -30,6 +30,5 @@ else
 fi
 
 echo "${monitor_mode}" > "$DATA_FILE"
-${HOME}/.dotfiles/xautolock_start.sh &
 
 setkmap.sh

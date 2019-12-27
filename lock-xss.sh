@@ -28,7 +28,7 @@ pre_lock() {
 
 # Run after the locker exits
 post_lock() {
-    killall check-i3lock.sh
+    trap 'kill $(jobs -p)' EXIT
     xinput --enable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
     return
 }
