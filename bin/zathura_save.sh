@@ -18,7 +18,9 @@ for PID in $PIDS; do
 done
 
 SYNCED=""
-while [ "$SYNCED" == "" ] ; do
+i=0
+while [ "$SYNCED" == "" ] && [ $i -lt 10 ] ; do
   sleep 0.5
   SYNCED=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$OUTPUT_FILE" | grep -- "up to date")
+  ((i=i+1))
 done
