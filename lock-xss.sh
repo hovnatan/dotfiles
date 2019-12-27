@@ -22,6 +22,7 @@ pre_lock() {
     xinput --disable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
     scrot $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
     ~/.dotfiles/check-i3lock.sh &
+    zathura_save.sh
     #mpc pause
     return
 }

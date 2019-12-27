@@ -6,7 +6,8 @@ if [ "$PIDS" == "" ]; then
 fi
 
 OUTPUT_FILE="$HOME/Dropbox/scripts/zathura/zathura_save"
-mv "$OUTPUT_FILE" "$OUTPUT_FILE.bak"
+TIMESTAMP=$(date +%s)
+mv "$OUTPUT_FILE" "$OUTPUT_FILE.$TIMESTAMP.bak"
 
 for PID in $PIDS; do
   filename=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
