@@ -105,7 +105,6 @@ abbr tc "tmux capture-pane -pJ -S - | nvim -R '+set ft=log|set nowrap|set foldle
 abbr prg "pdfgrep -ri "
 abbr rgh "rg --hidden"
 abbr rgah "rga --hidden"
-abbr mpv "mpv --profile=$MPV_SYSTEM"
 abbr mpvhq "mpv --profile=hq"
 abbr mpvnr "mpv --no-resume-playback"
 abbr mpvhqnr "mpv --no-resume-playback --profile=hq"

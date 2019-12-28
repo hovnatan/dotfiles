@@ -1,4 +1,3 @@
-export MPV_SYSTEM=old_system
 export ETH_INTERFACE=enp0s25
 export WIFI_INTERFACE=wlp3s0
 export INTERNAL_MONITOR_OUTPUT=LVDS1
