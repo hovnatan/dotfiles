@@ -79,6 +79,8 @@ bindcode $mod+18 workspace $ws9
 bindcode $mod+19 workspace $ws10
 bindcode $mod+49 exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_w_on_ws
 bindsym  $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
+# 53=x
+bindcode $mod+53 [urgent=latest] focus
 
 # move focused container to workspace
 bindcode $mod+Shift+10 move container to workspace $ws1
