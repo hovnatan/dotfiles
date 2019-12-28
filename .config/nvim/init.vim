@@ -615,3 +615,5 @@ let &cpo = s:savedCpo
 nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
 
 " au VimEnter * let g:volatile_ftypes += ['git']
+"
+" to find out origin of a mapping use e.g., :verbose map <C-x>
