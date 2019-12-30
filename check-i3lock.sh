@@ -1,6 +1,6 @@
 #!/bin/bash
 
 while true; do
-  sleep 10
+  sleep 30
   xset dpms force off
 done
