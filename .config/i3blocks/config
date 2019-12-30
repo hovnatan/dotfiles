@@ -37,20 +37,6 @@ command=$SCRIPT_DIR/disk.sh
 #instance=/mnt/data
 interval=30
 
-#[dropbox]
-#command=$SCRIPT_DIR/dropbox_daemon_status.sh
-##instance=/mnt/data
-#interval=30
-
-[wifi_contrib]
-label= 
-command=$SCRIPT_DIR/wifi_contrib
-interval=30
-
-[iface_contrib]
-command=$SCRIPT_DIR/iface_contrib
-interval=30
-
 [battery]
 label= 
 command=$SCRIPT_DIR/battery
