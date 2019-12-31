@@ -15,7 +15,7 @@ bindsym Mod1+Shift+Return exec --no-startup-id termite
 bindcode Mod1+40 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
 
 # start run (a program launcher), 40=d
-bindcode Mod4+40 exec rofi -show combi
+bindcode Mod4+40 exec rofi -show drun
 bindcode Mod1+Shift+40 exec --no-startup-id dropbox_toggle.py
 
 # change focus, h j k l
