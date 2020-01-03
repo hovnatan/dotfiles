@@ -197,6 +197,7 @@ set $volumestep 5
 bindsym XF86AudioRaiseVolume exec --no-startup-id $volumepath/volume -y -np -i $volumestep -u "RTMIN+10" -t i3blocks
 bindsym XF86AudioLowerVolume exec --no-startup-id $volumepath/volume -y -np -d $volumestep -u "RTMIN+10" -t i3blocks
 bindsym XF86AudioMute        exec --no-startup-id $volumepath/volume -y -mn -u "RTMIN+10" -t i3blocks
+bindsym XF86AudioMicMute     exec --no-startup-id pactl set-source-mute 1 toggle
 bindcode Mod4+19 exec --no-startup-id $volumepath/volume -y -np -i $volumestep -u "RTMIN+10" -t i3blocks
 bindcode Mod4+18 exec --no-startup-id $volumepath/volume -y -np -d $volumestep -u "RTMIN+10" -t i3blocks
 bindcode Mod4+17 exec --no-startup-id $volumepath/volume -y -mn -u "RTMIN+10" -t i3blocks
