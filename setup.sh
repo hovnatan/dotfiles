@@ -10,9 +10,6 @@ rm -rf ~/.tmux/plugins/tpm
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 "$HOME/.tmux/plugins/tpm/bin/install_plugins"
 
-rm -rf ~/.config/redshift.conf
-ln -s ~/.dotfiles/.config/redshift.conf ~/.config/redshift.conf
-
 rm -rf ~/.config/nvim
 ln -s ~/.dotfiles/.config/nvim ~/.config/nvim
 mkdir -p ~/.vimundo/
@@ -31,16 +28,9 @@ curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fi
 fish -c fisher
 chsh -s `which fish`
 
-rm -rf ~/.config/mpv
-ln -s ~/.dotfiles/.config/mpv ~/.config/mpv
-
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
 nvim ~/.gitconfig
-
-rm -rf ~/.workrave
-mkdir -p ~/.workrave/
-ln -s ~/.dotfiles/.workrave/workrave.ini ~/.workrave/workrave.ini
 
 rm -rf ~/.config/htop
 mkdir ~/.config/htop
@@ -49,30 +39,12 @@ ln -s ~/.dotfiles/.config/htoprc ~/.config/htop/htoprc
 rm -rf ~/.config/feh
 ln -s ~/.dotfiles/.config/feh ~/.config/feh
 
-rm -rf ~/.config/i3
-ln -s ~/.dotfiles/.config/i3 ~/.config/i3
-rm -rf ~/.config/i3blocks
-ln -s ~/.dotfiles/.config/i3blocks ~/.config/
-
-
-
-rm -rf ~/.config/termite/
-ln -s ~/.dotfiles/.config/termite ~/.config/
-# mkdir ~/.terminfo
-# cd ~/.terminfo
-# wget https://raw.githubusercontent.com/thestinger/termite/master/termite.terminfo
-# cd ~
-
-rm -rf ~/.config/rofi/
-ln -s ~/.dotfiles/.config/rofi ~/.config/rofi
-
 ln -sf ~/.dotfiles/.profile ~/.profile
 #ln -s ~/.dotfiles/wc.profile ~/.local_profile
 
-# ln -s ~/.dotfiles/2e98525f-68b2-4efb-b129-042af121bfca.desktop ~/.local/share/file-manager/actions/2e98525f-68b2-4efb-b129-042af121bfca.desktop
-
 # modify ~/.config/mimeapps.list for image/tiff feh.desktop
 
+<<<<<<< HEAD
 ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 
 mkdir -p ~/Documents/MATLAB
@@ -99,6 +71,8 @@ ln -s ~/.dotfiles/.config/libinput-gestures.conf ~/.config
 ln -sf ~/.dotfiles/.config/clipster ~/.config/
 ln -sf ~/.dotfiles/.xinitrc  ~/.xinitrc
 
+=======
+>>>>>>> cleanup
 cd ~
 ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519
 #echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
@@ -111,44 +85,12 @@ chmod 600 ~/.ssh/authorized_keys
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
-ln -sf ~/.dotfiles/.config/qt5ct ~/.config/
-
-#cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf
-sudo gpasswd -a $USER lp
-sudo gpasswd -a $USER input
-sudo gpasswd -a $USER docker
-
-mkdir -p ~/.local/share/applications
-for filename in ~/.dotfiles/.local/share/applications/*.desktop; do
-    [ -e "$filename" ] || continue
-    basename=$(basename "$filename")
-    ln -sf $filename ~/.local/share/applications/$basename
-done
-
-cd ~/.dotfiles/issue
-./create_new_issue.sh
-cd ~
-
-mkdir -p ~/.local/share/themes
-ln -sf ~/.dotfiles/.local/share/themes/oomox-gruvmox-dark-medium-aqua/ ~/.local/share/themes/
-cd ~/.local/share/themes
-git clone https://github.com/salimundo/Pop-gruvbox.git
-cd ~
-
-#gruvbox theme
-#yay -S oomox
-#git clone https://github.com/Yethiel/gruvmox-colors.git
-#cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
-cd ~/.dotfiles
-git update-index --assume-unchanged .workrave/workrave.ini
-# git update-index --no-assume-unchanged .workrave/workrave.ini
-ln -s ~/.dotfiles/.xbindkeysrc ~/
-
 rm -rf ~/.config/ranger
 ln -s ~/.dotfiles/.config/ranger ~/.config/
 mkdir -p ~/.local/share/ranger
 ln -s ~/Dropbox/scripts/ranger/bookmarks ~/.local/share/ranger/
 
+<<<<<<< HEAD
 ln -s ~/.dotfiles/.config/sway ~/.config/sway
 ln -s ~/.dotfiles/.Xdefaults ~/.Xresources
 
@@ -184,6 +126,10 @@ ln -s ~/.dotfiles/.config/kitty ~/.config/kitty
 
 ln -sf ~/.dotfiles/.config/alacritty ~/.config/
 
+=======
+ln -s ~/.dotfiles/.condarc ~/.condarc
+
+>>>>>>> cleanup
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
@@ -191,13 +137,4 @@ ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
 mkdir -p ~/tmp
 mkdir -p ~/Downloads
 mkdir -p ~/opt
-
-#for running iso executables with root uncomment allow_other in /etc/fuse.conf then run e.g.,
-# fuseiso xxx.iso ~/iso -o allow_other
-
-# font debugging
-# env FC_DEBUG=4 pango-view --font=monospace -t xyz | grep famil
-
-# for chromecast from chromium enable chrome://flags/#load-media-router-component-extension
-
 # for sshfs sshfs -o Compression=no,reconnect home.server.com:/ ~/home_server/ -p 22

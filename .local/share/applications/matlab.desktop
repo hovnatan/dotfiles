@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Encoding=UTF-8
-Name=MATLAB
-Comment=Matlab
-Exec=/home/hovnatan/opt/Matlab2019/bin/glnxa64/MATLAB -desktop
-Terminal=false
-Categories=GNOME;GTK;Core;
