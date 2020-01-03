@@ -21,4 +21,5 @@ do
   read filename pagenumber <<< "$line"
   ((++pagenumber))
   zathura -P "$pagenumber" "$filename" &
+  sleep 0.5
 done
