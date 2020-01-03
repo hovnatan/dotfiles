@@ -7,6 +7,10 @@
   prompt = false
 [difftool "meld"]
   cmd = meld "$LOCAL" "$REMOTE"
+[difftool "fugitive"]
+  cmd = nvim -d "$LOCAL" "$MERGED" "$REMOTE"
+  trustExitCode = false
+  keepBackup = false
 [merge]
   tool = meld
 [mergetool "meld"]
