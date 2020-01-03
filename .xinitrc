@@ -1,7 +1,7 @@
 #!/bin/sh
 
 xrdb -load ~/.Xresources
-cw.sh
+cw.sh dark
 
 for f in /etc/X11/xinit/xinitrc.d/?*.sh; do
     [ -x "$f" ] && . "$f"
