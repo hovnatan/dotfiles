@@ -9,7 +9,7 @@ if pgrep -x "i3lock" ; then
   exit 0
 fi
 
-TMPBG=/tmp/screen.png
+TMPBG="/tmp/screen-$USER.png"
 
 B='#00000000'  # blank
 C='#ffffff22'  # clear ish
