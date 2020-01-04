@@ -1,4 +1,5 @@
 if status --is-login
+  umask 0077
   source ~/.profile
   setup_ssh_agent
 end
