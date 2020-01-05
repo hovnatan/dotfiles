@@ -15,7 +15,6 @@ sudo luarocks install --server=http://luarocks.org/dev digestif
 
 sudo pip3 install pysnooper neovim-remote
 
-sudo systemctl enable tlp.service
 sudo systemctl enable ntpd.service
 sudo systemctl enable NetworkManager.service
 systemctl --user enable pulseaudio
@@ -29,11 +28,6 @@ ln -sf ~/.dotfiles/.config/yay/ ~/.config/yay
 cd ~/.dotfiles
 git clone git@github.com:hovnatan/i3-volume.git
 
-# change tar.gz to tar and specify makeflags to correct number of cores
-sudo nvim /etc/makepkg.conf
-# uncomment color
-sudo nvim /etc/pacman.conf
-wget https://www.dropbox.com/download?dl=packages/dropbox.py
 yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng dragon-drag-and-drop-git google-chrome ptags xkb-switch-git flacon freeoffice freetype2-cleartype
 
 sudo mkinitcpio -p linux
@@ -85,6 +79,5 @@ sudo cp ~/.dotfiles/vconsole.conf /etc/
 # terminal fun
 # yay -S asciiquarium sl cmatrix
 
-sudo systemctl mask systemd-rfkill.service
-sudo systemctl mask systemd-rfkill.socket
-sudo systemctl enable NetworkManager-dispatcher.service
+sudo systemctl enable tlp.service tlp-sleep.service NetworkManager-dispatcher.service
+sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
