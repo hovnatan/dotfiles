@@ -9,7 +9,7 @@ if pgrep -x "i3lock" ; then
   exit 0
 fi
 
-TMPBG=/tmp/screen.png
+TMPBG="/tmp/screen-$USER.png"
 
 B='#00000000'  # blank
 C='#ffffff22'  # clear ish
@@ -21,7 +21,7 @@ V='#b16286bb'  # verifying
 i3lock_options="-i $TMPBG --insidevercolor=$C --ringvercolor=$V --insidewrongcolor=$C --ringwrongcolor=$W --insidecolor=$B --ringcolor=$D --linecolor=$B --separatorcolor=$D --verifcolor=$T --wrongcolor=$T --timecolor=$T --datecolor=$T --layoutcolor=$T --keyhlcolor=$W --bshlcolor=$W --screen 1 --clock --indicator --timestr=%H:%M:%S --keylayout 2"
 
 xinput --disable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
-scrot $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
+scrot -o $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
 ~/.dotfiles/check-i3lock.sh &
 xkb-switch -s us
 zathura_save.sh last &
