@@ -30,7 +30,6 @@ chsh -s `which fish`
 
 rm -rf ~/.config/mpv
 ln -s ~/.dotfiles/.config/mpv ~/.config/mpv
-ln -s ~/Dropbox/scripts/mpv/watch_later/ ~/.config/mpv/
 wget https://raw.githubusercontent.com/vayan/autosub-mpv/master/autosub.lua -P ~/.config/mpv/scripts/
 wget https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua -P ~/.config/mpv/scripts/
 xdg-mime default mpv.desktop 'video/x-m4v' 'video/x-matroska' 'video/x-msvideo'
@@ -55,14 +54,6 @@ rm -rf ~/.config/i3
 ln -s ~/.dotfiles/.config/i3 ~/.config/i3
 rm -rf ~/.config/i3blocks
 ln -s ~/.dotfiles/.config/i3blocks/ ~/.config/i3blocks
-#rm -rf ~/.config/i3status
-#ln -s ~/.dotfiles/.config/i3status ~/.config/i3status
-
-rm -rf ~/.local/share/zathura/bookmarks
-rm -rf ~/.local/share/zathura/history
-mkdir -p ~/.local/share/zathura
-ln -s ~/Dropbox/scripts/zathura/bookmarks ~/.local/share/zathura/bookmarks
-ln -s ~/Dropbox/scripts/zathura/history ~/.local/share/zathura/history
 
 xdg-mime default org.pwmt.zathura.desktop 'application/pdf'
 
@@ -156,7 +147,6 @@ ln -s ~/.dotfiles/.xbindkeysrc ~/
 rm -rf ~/.config/ranger
 ln -s ~/.dotfiles/.config/ranger/ ~/.config/ranger
 rm -rf ~/.local/share/ranger
-ln -s ~/Dropbox/scripts/ranger ~/.local/share/ranger
 
 ln -s ~/.dotfiles/.config/sway ~/.config/sway
 ln -s .Xdefaults .Xresources
@@ -167,9 +157,6 @@ ln -s /usr/bin/google-chrome-stable ~/.dotfiles/bin/chromium
 ln -s ~/.dotfiles/.config/chrome-flags.conf ~/.config/
 
 ln -s ~/.dotfiles/.condarc ~/.condarc
-
-rm -rf ~/.config/mps-youtube
-ln -s ~/Dropbox/scripts/mps-youtube ~/.config/mps-youtube
 
 #for printer discovery
 #sudo systemctl start avahi-daemon.service
