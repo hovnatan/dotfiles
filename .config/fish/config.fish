@@ -1,4 +1,5 @@
 if status --is-login
+  umask 0077
   source ~/.profile
   setup_ssh_agent
 end
@@ -99,6 +100,7 @@ abbr gaca "git add -u; git commit --amend --no-edit"
 abbr gd  "git diff"
 abbr gah 'git stash; and git pull --rebase; and git stash pop'
 abbr gm 'nvim (git rev-parse --show-toplevel)/.git/index'
+abbr gnof "git merge --no-commit --no-ff"
 abbr ta  "tmux_attach_deattached.sh"
 abbr tl  "tmux list-sessions"
 abbr tc "tmux capture-pane -pJ -S - | nvim -R '+set ft=log|set nowrap|set foldlevel=99|DisableWhitespace' '+norm G' --"
