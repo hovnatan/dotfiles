@@ -193,7 +193,7 @@ handle_mime() {
 
         # Video and audio
         video/* | audio/*)
-            mediainfo "${FILE_PATH}" && exit 5
+            # mediainfo "${FILE_PATH}" && exit 5
             exiftool "${FILE_PATH}" && exit 5
             exit 1;;
     esac
