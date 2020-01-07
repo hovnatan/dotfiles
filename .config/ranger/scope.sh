@@ -25,6 +25,12 @@ IFS=$'\n'
 
 # Script arguments
 FILE_PATH="${1}"         # Full path of the highlighted file
+
+FILE_SIZE=$(stat -c%s "$FILE_PATH")
+if [ $FILE_SIZE -ge 10485760 ]; then
+  exit 1
+fi
+
 PV_WIDTH="${2}"          # Width of the preview pane (number of fitting characters)
 PV_HEIGHT="${3}"         # Height of the preview pane (number of fitting characters)
 IMAGE_CACHE_PATH="${4}"  # Full path that should be used to cache image preview
@@ -193,7 +199,7 @@ handle_mime() {
 
         # Video and audio
         video/* | audio/*)
-            # mediainfo "${FILE_PATH}" && exit 5
+            mediainfo "${FILE_PATH}" && exit 5
             exiftool "${FILE_PATH}" && exit 5
             exit 1;;
     esac
