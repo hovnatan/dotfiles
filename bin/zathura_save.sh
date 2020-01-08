@@ -19,6 +19,9 @@ if [ "$1" == "" ]; then
   fi
 else
   OUTPUT_FILE="$1"
+  if [ "$2" != "" ]; then
+    OUTPUT_FILE="${OUTPUT_FILE}_$(hostname)"
+  fi
 fi
 OUTPUT_FILE="$OUTPUT_DIR/$OUTPUT_FILE"
 
