@@ -24,7 +24,7 @@ xinput --disable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p
 scrot -o $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
 ~/.dotfiles/check-i3lock.sh &
 xkb-switch -s us
-zathura_save.sh last &
+zathura_save.sh last add_hname &
 Z_PID=$!
 
 # We set a trap to kill the locker if we get killed, then start the locker and
