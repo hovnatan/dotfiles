@@ -5,7 +5,7 @@ if status --is-login
 end
 
 set -x FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
-set -x FZF_CTRL_T_COMMAND "fd -L -I -p -H -E .git . \$dir"
+set -x FZF_CTRL_T_COMMAND "fd -I -p -H -E .git . \$dir"
 set -x FZF_DEFAULT_COMMAND $FZF_CTRL_T_COMMAND
 set -x EDITOR nvim
 
