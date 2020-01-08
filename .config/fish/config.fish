@@ -131,3 +131,4 @@ abbr .... "../../.."
 
 set -x NVIM_LISTEN_ADDRESS /tmp/nvimsocket
 set -x REVIEW_BASE master
+set -U Z_CMD "j"
