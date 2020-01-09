@@ -3,6 +3,7 @@ exec --no-startup-id monitor_setup.sh a
 set $mod Mod1
 
 font pango:sans-serif 11
+workspace_layout tabbed
 
 floating_modifier Mod1
 
