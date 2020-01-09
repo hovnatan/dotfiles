@@ -30,7 +30,7 @@ IFS=:
 while read line
 do
   read PID WS <<< "$line"
-  if [[ " ${WSS[@]} " =~ " ${WS} " ]]; then
+  if [[ "${WSS[@]}" =~ "${WS}" ]]; then
     continue
   fi
   WSS+=( "$WS" )
@@ -56,4 +56,26 @@ for WS in "${WSS[@]}"; do
   sort -o "$OUTPUT_FILE_WS" "$OUTPUT_FILE_WS"
 done
 
-sleep 5
+COUNT_TO_SYNC=${#WSS[@]}
+SYNCED_WS=()
+i=0
+while [ ${#SYNCED_WS[@]} != $COUNT_TO_SYNC ] && [ $i -lt 10 ] ; do
+  sleep 0.5
+  for WS in "${WSS[@]}"; do
+    if [[ " ${SYNCED_WS[@]} " =~ "${WS}" ]]; then
+      continue
+    fi
+    OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
+    STATUS=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$OUTPUT_FILE_WS" | grep -- "up to date")
+    if [ "$STATUS" != "" ]; then
+      SYNCED_WS+=( "$WS" )
+    fi
+  done
+  ((i=i+1))
+done
+
+if [ ${#SYNCED_WS[@]} != $COUNT_TO_SYNC ]; then
+  dunstify -t 5000 -u c "Couldn't Dropbox sync zathura file at $OUTPUT_FILE."
+else
+  dunstify -t 5000 "Dropbox synced zathura file at $OUTPUT_FILE."
+fi
