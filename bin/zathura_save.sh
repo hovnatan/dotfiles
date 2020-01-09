@@ -62,7 +62,7 @@ i=0
 while [ ${#SYNCED_WS[@]} != $COUNT_TO_SYNC ] && [ $i -lt 10 ] ; do
   sleep 0.5
   for WS in "${WSS[@]}"; do
-    if [[ " ${SYNCED_WS[@]} " =~ "${WS}" ]]; then
+    if [[ "${SYNCED_WS[@]}" =~ "${WS}" ]]; then
       continue
     fi
     OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
