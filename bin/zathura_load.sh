@@ -15,6 +15,8 @@ if [ ! -f "$INPUT_FILE" ]; then
   exit 1
 fi
 
+i3-msg layout tabbed
+
 IFS=:
 cat "$INPUT_FILE" | while read line
 do
