@@ -6,7 +6,7 @@ set guioptions ''
 map d scroll half-down
 map i scroll half-down
 map u scroll half-up
-map f scroll half-up
+map e scroll half-up
 map D navigate next
 map U navigate previous
 map <PageDown> scroll half-down
@@ -18,4 +18,4 @@ map <C-n> toggle_statusbar
 map r recolor
 set selection-clipboard clipboard
 set selection-notification false
-set continuous-hist-save true
+set continuous-hist-save false
