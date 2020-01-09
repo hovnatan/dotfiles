@@ -7,6 +7,7 @@ map d scroll half-down
 map i scroll half-down
 map u scroll half-up
 map e scroll half-up
+map s scroll half-up
 map D navigate next
 map U navigate previous
 map <PageDown> scroll half-down
