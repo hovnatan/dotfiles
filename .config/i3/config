@@ -188,8 +188,8 @@ client.background       $base07
 hide_edge_borders smart
 default_border pixel 2
 
-bindsym XF86MonBrightnessUp exec xbacklight -inc 10 && dunstify -t 1000 "Brightness $(xbacklight -get)"
-bindsym XF86MonBrightnessDown exec xbacklight -dec 10 && dunstify -t 1000 "Brightness $(xbacklight -get)"
+bindsym XF86MonBrightnessUp exec backlight.sh up
+bindsym XF86MonBrightnessDown exec backlight.sh down
 
 ## Volume control
 set $volumepath ~/.dotfiles/i3-volume
