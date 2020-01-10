@@ -59,7 +59,7 @@ done
 COUNT_TO_SYNC=${#WSS[@]}
 SYNCED_WS=()
 i=0
-while [ ${#SYNCED_WS[@]} != $COUNT_TO_SYNC ] && [ $i -lt 10 ] ; do
+while [ ${#SYNCED_WS[@]} != $COUNT_TO_SYNC ] && [ $i -lt 30 ] ; do
   sleep 0.5
   for WS in "${WSS[@]}"; do
     if [[ " ${SYNCED_WS[@]} " =~ " ${WS} " ]]; then
