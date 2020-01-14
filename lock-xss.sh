@@ -5,7 +5,7 @@
 
 ## CONFIGURATION ##############################################################
 
-if pgrep -x "i3lock" ; then
+if [ $(pgrep -x "i3lock") ] || [$(pgrep -x "lock-xss.sh") ] ; then
   exit 0
 fi
 
