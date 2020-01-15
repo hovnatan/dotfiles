@@ -31,6 +31,7 @@ IFS=:
 cat "$INPUT_FILE" | while read line
 do
   read filename pagenumber workspace <<< "$line"
+  pagenumber="${pagenumber#"${pagenumber%%[!0]*}"}" # remove leading zeros
   ((++pagenumber))
   zathura -P "$pagenumber" "$filename" &
   sleep 0.5

@@ -48,7 +48,8 @@ do
     org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:filename | grep -oP ".*variant.*string\s+\"\K(.*)(?=\")")
   pagenumber=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
     org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:pagenumber | grep -oP ".*variant.*uint32\s+\K(.*)")
-  echo "$filename:$pagenumber:$WS" >> "$OUTPUT_FILE_WS"
+  printf -v OUTPUT_PAGENUMBER "%05d" $pagenumber
+  echo "$filename:$OUTPUT_PAGENUMBER:$WS" >> "$OUTPUT_FILE_WS"
 done <<< "$PIDS_WS"
 
 for WS in "${WSS[@]}"; do
