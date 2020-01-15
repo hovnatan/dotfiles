@@ -32,6 +32,9 @@ cat "$INPUT_FILE" | while read line
 do
   read filename pagenumber workspace <<< "$line"
   pagenumber="${pagenumber#"${pagenumber%%[!0]*}"}" # remove leading zeros
+  if [ "$pagenumber" == "" ]; then
+    pagenumber=0
+  fi
   ((++pagenumber))
   zathura -P "$pagenumber" "$filename" &
   sleep 0.5
