@@ -6,6 +6,9 @@
 ## CONFIGURATION ##############################################################
 
 if [ $(pgrep -x "i3lock") ] || [$(pgrep -x "lock-xss.sh") ] ; then
+  if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
+    exec {XSS_SLEEP_LOCK_FD}<&-
+  fi
   exit 0
 fi
 
