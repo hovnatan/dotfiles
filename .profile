@@ -6,6 +6,8 @@ export QT_QPA_PLATFORMTHEME=gtk2
 export FREETYPE_PROPERTIES="truetype:interpreter-version=38"
 export PKGEXT='.pkg.tar.zst'
 
+export TERMINAL_APP="termite"
+
 export PATH="$HOME/.dotfiles/bin:$PATH"
 
 export MAKEFLAGS="-j7"
