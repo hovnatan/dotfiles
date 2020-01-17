@@ -169,7 +169,6 @@ ln -s ~/.dotfiles/.condarc ~/.condarc
 mkdir -p ~/.config/pulse
 ln -s ~/.dotfiles/.config/pulse/daemon.conf ~/.config/pulse/
 ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
-#for pulseaudio switching comment load-module module-switch-on-port-available in /etc/pulse/default.pa
 # less /proc/asound/card0/pcm0p/sub0/hw_params
 
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
