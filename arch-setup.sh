@@ -1,8 +1,8 @@
 #!/bin/bash
 
-sudo pacman -Sy linux-lts tp_smapi-lts acpi_call-lts
+sudo pacman -Sy linux-lts acpi_call-lts
 
-sudo pacman -Ry linux acpi_call tp_smapi
+sudo pacman -Ry linux acpi_call
 
 sudo mkinitcpio -p linux-lts
 sudo grub-mkconfig -o /boot/grub/grub.cfg
