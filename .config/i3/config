@@ -231,6 +231,8 @@ exec --no-startup-id termite --name dropdown -e "tmux new-session"
 for_window [instance="dropdown"] move scratchpad
 bindcode $mod+31 [instance="dropdown"] scratchpad show, resize set 1280 720, move position center
 
+for_window [class="Pavucontrol"] move scratchpad
+
 bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
 bindsym Shift+Print exec --no-startup-id scrot -u -e 'mv $f ~/tmp/'
 bindsym --release $mod+Sys_Req exec scrot -s -e 'mv $f ~/tmp/'
