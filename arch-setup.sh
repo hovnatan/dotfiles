@@ -11,7 +11,7 @@ sudo pacman -Sy networkmanager network-manager-applet os-prober openssh pepper-f
 
 sudo pacman -Sy base-devel clang llvm cmake gdb valgrind perf strace cppcheck ccache eigen3 boost
 
-sudo pacman -Sy ipython python-pip python-sh python-language-server python-ipdb cython autopep8 python-pynput python-pyperclip
+sudo pacman -Sy python-pip python-sh python-language-server autopep8 python-pynput python-pyperclip
 
 sudo pacman -Sy ttf-croscore ttf-font-awesome awesome-terminal-fonts # noto-fonts-cjk noto-fonts noto-fonts-emoji ttf-liberation
 
