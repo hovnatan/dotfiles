@@ -27,6 +27,7 @@
     dmenu = /usr/bin/rofi -dmenu -p dunst:
     hide_duplicatate_count = true
     stack_duplicates = false
+    browser=chromium
 
 [shortcuts]
     close = ctrl+space
