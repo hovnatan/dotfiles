@@ -32,6 +32,7 @@ color_switcher.sh ~/.config/rofi/config ~/.config/rofi/option ~/.config/rofi/col
 
 color_switcher.sh ~/.dotfiles/.config/dunst/dunstrc ~/.dotfiles/.config/dunst/option ~/.dotfiles/.config/dunst/colors/$COLOR
 killall dunst
+dunst &
 
 i3-msg reload
 
