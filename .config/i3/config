@@ -228,9 +228,7 @@ exec --no-startup-id dunst
 bindcode Mod4+57 exec --no-startup-id dunstify -t 1000 "Notifications off" && sleep 1 && killall -SIGUSR1 dunst
 bindcode Mod4+Shift+57 exec --no-startup-id killall -SIGUSR2 dunst && dunstify -t 1000 "Notifications on"
 
-exec --no-startup-id termite --name dropdown -e "tmux new-session"
-for_window [instance="dropdown"] move scratchpad
-bindcode Mod4+31 [instance="dropdown"] scratchpad show, resize set 1280 720, move position center
+bindcode Mod4+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "tmux new-session" t-scrpad
 
 for_window [instance="scrpad"] move scratchpad
 
