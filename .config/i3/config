@@ -8,7 +8,7 @@ workspace_layout tabbed
 floating_modifier Mod1
 
 bindsym Mod1+Return exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh
-bindcode Mod4+43 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh htop
+bindcode Mod4+43 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh htop htop-scrpad
 #bindsym Mod1+Shift+Return exec --no-startup-id kitty
 bindsym Mod1+Shift+Return exec --no-startup-id termite
 
@@ -237,7 +237,7 @@ for_window [instance="scrpad"] move scratchpad
 bindcode Mod4+55 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_pavucontrol.sh
 for_window [class="Pavucontrol"] move scratchpad
 
-bindcode Mod4+45 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh ipython
+bindcode Mod4+45 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh ipython ipython-scrpad
 
 bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
 bindsym Shift+Print exec --no-startup-id scrot -u -e 'mv $f ~/tmp/'
