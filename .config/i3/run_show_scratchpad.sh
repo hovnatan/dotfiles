@@ -1,7 +1,20 @@
 #!/bin/bash
 
-if ! pgrep -x "$1" ; then
-    i3-msg "exec --no-startup-id termite --name $1-scrpad -e $1"
+COMMAND=$1
+NAME=$2
+
+call_command() {
+    i3-msg "exec --no-startup-id termite --name \"$NAME\" -e $COMMAND"
     sleep 0.2
-fi
-i3-msg "[instance=\"$1-scrpad\"] scratchpad show, resize set 1280 720, move position center"
+}
+
+while true; do
+  if ! pgrep -x "$1" ; then
+    call_command
+  fi
+  i3-msg "[instance=\"$2\"] scratchpad show, resize set 1280 720, move position center"
+  if [ $? == 0 ]; then
+    break
+  fi
+  call_command
+done
