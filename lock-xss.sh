@@ -21,7 +21,7 @@ T='#d79921ff'  # text
 W='#cc241dbb'  # wrong
 V='#b16286bb'  # verifying
 
-i3lock_options="-i $TMPBG --insidevercolor=$C --ringvercolor=$V --insidewrongcolor=$C --ringwrongcolor=$W --insidecolor=$B --ringcolor=$D --linecolor=$B --separatorcolor=$D --verifcolor=$T --wrongcolor=$T --timecolor=$T --datecolor=$T --layoutcolor=$T --keyhlcolor=$W --bshlcolor=$W --screen 1 --clock --indicator --timestr=%H:%M:%S --keylayout 2"
+i3lock_options="-i $TMPBG"
 
 DEVICE_TO_DISABLE=$(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
 xinput --disable $DEVICE_TO_DISABLE
@@ -41,7 +41,7 @@ if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
     trap kill_i3lock TERM INT
 
     # we have to make sure the locker does not inherit a copy of the lock fd
-    i3lock $i3lock_options --datestr="%A %m/%d/%Y" {XSS_SLEEP_LOCK_FD}<&-
+    i3lock $i3lock_options {XSS_SLEEP_LOCK_FD}<&-
 
     # now close our fd (only remaining copy) to indicate we're ready to sleep
     exec {XSS_SLEEP_LOCK_FD}<&-
@@ -54,7 +54,7 @@ else
     if [ "$X" -gt 30 ] || [ "$1" != "" ] ; then
       trap 'kill %%' TERM INT
       sleep 1
-      i3lock -n $i3lock_options --datestr="%A %m/%d/%Y" &
+      i3lock -n $i3lock_options &
       wait $!
     fi
 fi
