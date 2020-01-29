@@ -28,7 +28,6 @@ scrot -o $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
 ~/.dotfiles/check-i3lock.sh &
 xkb-switch -s us
 zathura_save.sh last add_hname
-sleep 1
 
 # We set a trap to kill the locker if we get killed, then start the locker and
 # wait for it to exit. The waiting is not that straightforward when the locker

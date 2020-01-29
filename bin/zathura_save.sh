@@ -80,3 +80,4 @@ if [ ${#SYNCED_WS[@]} != $COUNT_TO_SYNC ]; then
 else
   dunstify -t 5000 "Dropbox synced zathura file at $OUTPUT_FILE."
 fi
+sleep 1
