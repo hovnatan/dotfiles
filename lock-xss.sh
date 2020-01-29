@@ -27,8 +27,8 @@ xinput --disable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p
 scrot -o $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
 ~/.dotfiles/check-i3lock.sh &
 xkb-switch -s us
-zathura_save.sh last add_hname &
-Z_PID=$!
+zathura_save.sh last add_hname
+sleep 1
 
 # We set a trap to kill the locker if we get killed, then start the locker and
 # wait for it to exit. The waiting is not that straightforward when the locker
@@ -42,7 +42,6 @@ if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
 
     # we have to make sure the locker does not inherit a copy of the lock fd
     i3lock $i3lock_options --datestr="%A %m/%d/%Y" {XSS_SLEEP_LOCK_FD}<&-
-    wait $Z_PID
 
     # now close our fd (only remaining copy) to indicate we're ready to sleep
     exec {XSS_SLEEP_LOCK_FD}<&-
