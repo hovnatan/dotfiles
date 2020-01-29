@@ -23,7 +23,8 @@ V='#b16286bb'  # verifying
 
 i3lock_options="-i $TMPBG --insidevercolor=$C --ringvercolor=$V --insidewrongcolor=$C --ringwrongcolor=$W --insidecolor=$B --ringcolor=$D --linecolor=$B --separatorcolor=$D --verifcolor=$T --wrongcolor=$T --timecolor=$T --datecolor=$T --layoutcolor=$T --keyhlcolor=$W --bshlcolor=$W --screen 1 --clock --indicator --timestr=%H:%M:%S --keylayout 2"
 
-xinput --disable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
+DEVICE_TO_DISABLE=$(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
+xinput --disable $DEVICE_TO_DISABLE
 scrot -o $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
 ~/.dotfiles/check-i3lock.sh &
 xkb-switch -s us
@@ -52,11 +53,12 @@ else
     eval $(xdotool getmouselocation --shell)
     if [ "$X" -gt 30 ] || [ "$1" != "" ] ; then
       trap 'kill %%' TERM INT
+      sleep 1
       i3lock -n $i3lock_options --datestr="%A %m/%d/%Y" &
       wait $!
     fi
 fi
 
 trap 'kill $(jobs -p)' EXIT
-xinput --enable $(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
+xinput --enable $DEVICE_TO_DISABLE
 xset -dpms
