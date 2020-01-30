@@ -4,13 +4,13 @@
 # option with i3lock's forking mode to delay sleep until the screen is locked.
 
 ## CONFIGURATION ##############################################################
-
-if [ $(pgrep -x "i3lock") ] || [$(pgrep -x "lock-xss.sh") ] ; then
+if [ -f /tmp/$USER-lock.file ] ; then
   if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
     exec {XSS_SLEEP_LOCK_FD}<&-
   fi
-  exit 0
+  exit
 fi
+echo $$ > /tmp/$USER-lock.file
 
 TMPBG="/tmp/screen-$USER.png"
 
@@ -53,8 +53,7 @@ else
     eval $(xdotool getmouselocation --shell)
     if [ "$X" -gt 30 ] || [ "$1" != "" ] ; then
       trap 'kill %%' TERM INT
-      sleep 1
-      i3lock -n $i3lock_options &
+      i3lock -n $i3lock_options --datestr="%A %m/%d/%Y" &
       wait $!
     fi
 fi
@@ -62,3 +61,4 @@ fi
 trap 'kill $(jobs -p)' EXIT
 xinput --enable $DEVICE_TO_DISABLE
 xset -dpms
+rm /tmp/$USER-lock.file
