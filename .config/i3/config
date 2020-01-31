@@ -8,7 +8,7 @@ workspace_layout tabbed
 floating_modifier Mod1
 
 bindsym Mod1+Return exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh
-bindcode Mod4+43 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh htop htop-scrpad
+bindcode Mod4+43 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "htop -u $USER" htop-scrpad
 #bindsym Mod1+Shift+Return exec --no-startup-id kitty
 bindsym Mod1+Shift+Return exec --no-startup-id termite
 
@@ -280,7 +280,7 @@ exec --no-startup-id xss-lock -l -- ~/.dotfiles/lock-xss.sh
 
 exec --no-startup-id setkmap.sh
 exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
-exec --no-startup-id udiskie --no-automount --no-notify --tray
+exec --no-startup-id udiskie --no-automount --tray
 
 set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown
 mode "$mode_system" {

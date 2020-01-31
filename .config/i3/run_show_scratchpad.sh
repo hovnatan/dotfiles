@@ -8,6 +8,6 @@ while true; do
   if [ $? == 0 ]; then
     break
   fi
-  i3-msg "exec --no-startup-id termite --name \"$NAME\" -e $COMMAND"
+  i3-msg "exec --no-startup-id termite --name \"$NAME\" -e \"$COMMAND\""
   sleep 0.5
 done
