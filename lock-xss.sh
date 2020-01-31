@@ -22,7 +22,6 @@ W='#cc241dbb'  # wrong
 V='#b16286bb'  # verifying
 
 i3lock_options="-i $TMPBG --insidevercolor=$C --ringvercolor=$V --insidewrongcolor=$C --ringwrongcolor=$W --insidecolor=$B --ringcolor=$D --linecolor=$B --separatorcolor=$D --verifcolor=$T --wrongcolor=$T --timecolor=$T --datecolor=$T --layoutcolor=$T --keyhlcolor=$W --bshlcolor=$W --screen 1 --clock --indicator --timestr=%H:%M:%S --keylayout 2 --datestr=\"%A %m/%d/%Y\""
-echo "$i3lock_options"
 
 DEVICE_TO_DISABLE=$(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
 xinput --disable $DEVICE_TO_DISABLE
