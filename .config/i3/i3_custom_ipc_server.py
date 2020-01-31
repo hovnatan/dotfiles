@@ -18,7 +18,7 @@ from pynput import keyboard
 
 SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 10
-TIME_TO_SYNC = 0.7
+TIME_TO_SYNC = 1.0
 DEFAULT_KEYBOARD_LAYOUT = "us"
 
 format_str = '[%(asctime)s-%(levelname)-8s-%(filename)-20s:%(lineno)-5s] %(message)s'
@@ -358,6 +358,5 @@ if __name__ == '__main__':
     except sh.ErrorReturnCode:
         pass
 
-    debug = True if len(sys.argv) > 1 else False
-    focus_watcher = FocusWatcher(debug)
+    focus_watcher = FocusWatcher(len(sys.argv) > 1)
     focus_watcher.run()
