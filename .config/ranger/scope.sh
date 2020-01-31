@@ -66,9 +66,14 @@ handle_extension() {
         # PDF
         pdf)
             # Preview as text conversion
-            pdftotext -l 10 -nopgbrk -q -- "${FILE_PATH}" - | fmt -w ${PV_WIDTH} && exit 5
+            pdftotext -l 3 -nopgbrk -q -- "${FILE_PATH}" - | fmt -w ${PV_WIDTH} && exit 5
             mutool draw -F txt -i -- "${FILE_PATH}" 1-10 | fmt -w ${PV_WIDTH} && exit 5
             exiftool "${FILE_PATH}" && exit 5
+            exit 1;;
+        # DJVU
+        djvu)
+            # Preview as text conversion
+            djvutxt -page=1,2,3 "${FILE_PATH}" | fmt -w ${PV_WIDTH} && exit 5
             exit 1;;
 
         # BitTorrent
@@ -100,7 +105,9 @@ handle_image() {
         #     convert "${FILE_PATH}" "${IMAGE_CACHE_PATH}" && exit 6
         #     exit 1;;
 
-        # Image
+        # djvu
+        image/vnd.djvu)
+            return;;
         image/*)
             local orientation
             orientation="$( identify -format '%[EXIF:Orientation]\n' -- "${FILE_PATH}" )"
