@@ -280,6 +280,7 @@ exec --no-startup-id xss-lock -l -- ~/.dotfiles/lock-xss.sh
 
 exec --no-startup-id setkmap.sh
 exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
+exec --no-startup-id udiskie --no-automount --no-notify --tray
 
 set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown
 mode "$mode_system" {
