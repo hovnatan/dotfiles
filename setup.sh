@@ -151,7 +151,7 @@ mkdir -p ~/.local/share/ranger
 ln -s ~/Dropbox/scripts/ranger/bookmarks ~/.local/share/ranger/
 
 ln -s ~/.dotfiles/.config/sway ~/.config/sway
-ln -s .Xdefaults .Xresources
+ln -s ~/.dotfiles/.Xdefaults ~/.Xresources
 
 # ln -s ~/.dotfiles/.config/chromium-flags.conf ~/.config/
 # ln -s /usr/bin/google-chrome-stable ~/.dotfiles/bin/
