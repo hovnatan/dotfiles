@@ -1,7 +1,5 @@
 #!/bin/bash
 
-sudo pacman -Sy linux-lts acpi_call-lts
-
 sudo pacman -Ry linux acpi_call
 
 sudo mkinitcpio -p linux-lts
@@ -35,8 +33,7 @@ cd ~/.dotfiles
 git clone git@github.com:hovnatan/i3-volume.git
 
 yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng dragon-drag-and-drop-git google-chrome ptags xkb-switch-git flacon freeoffice freetype2-cleartype linux-clear-bin intel-ucode-clear
-
-sudo mkinitcpio -p linux-lts
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 cd ~/Downloads
 git clone --recursive https://github.com/hovnatan/termite
@@ -61,6 +58,11 @@ sudo make install
 # HibernateDelaySec=1800
 # sudo nvim /etc/systemd/logind.conf
 # HandleLidSwitch=suspend-then-hibernate
+
+# to use last grub edit /etc/default/grub
+# GRUB_SAVEDEFAULT=true
+# GRUB_DEFAULT=saved
+# sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 # remove orphans
 # sudo pacman -Rns (pacman -Qtdq)
