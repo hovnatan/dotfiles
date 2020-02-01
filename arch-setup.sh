@@ -34,7 +34,7 @@ ln -sf ~/.dotfiles/.config/yay/ ~/.config/yay
 cd ~/.dotfiles
 git clone git@github.com:hovnatan/i3-volume.git
 
-yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng dragon-drag-and-drop-git google-chrome ptags xkb-switch-git flacon freeoffice freetype2-cleartype
+yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng dragon-drag-and-drop-git google-chrome ptags xkb-switch-git flacon freeoffice freetype2-cleartype linux-clear-bin intel-ucode-clear
 
 sudo mkinitcpio -p linux-lts
 
@@ -99,3 +99,6 @@ sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 # for rankmirrors
 # sudo sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist.backup
 # sudo sh -c 'rankmirrors -n 6 /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist'
+
+# sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
+# sudo systemctl enable disable-USB-wakeup.service
