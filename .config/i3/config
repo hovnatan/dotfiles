@@ -227,7 +227,8 @@ bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 exec --no-startup-id dunst
 bindcode Mod4+57 exec --no-startup-id dunstify -t 1000 "Notifications off" && sleep 1 && killall -SIGUSR1 dunst
 bindcode Mod4+Shift+57 exec --no-startup-id killall -SIGUSR2 dunst && dunstify -t 1000 "Notifications on"
-bindcode $mod+57 exec --no-startup-id ~/.dotfiles/bin/set_w_name.sh
+bindcode $mod+Shift+57 exec --no-startup-id ~/.dotfiles/bin/set_w_name.sh
+bindcode $mod+57 exec --no-startup-id rofi -show windowcd
 
 bindcode Mod4+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "tmux new-session" t-scrpad
 
@@ -268,7 +269,6 @@ bindcode Mod4+52 exec zathura_recent.sh
 bindcode Mod4+Mod1+52 exec zathura_duplicate.sh
 bindcode Mod1+Shift+52 exec --no-startup-id zathura_load.sh
 bindcode Mod4+Shift+52 exec --no-startup-id zathura_save.sh last add_hname
-bindcode Mod4+38 exec --no-startup-id rofi -show windowcd
 bindcode Mod4+Shift+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
 bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
 bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop

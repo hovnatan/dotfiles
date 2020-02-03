@@ -6,6 +6,9 @@ FPID=$(echo $FOCUSED | awk '{print $3}')
 FNME=$(echo $FOCUSED | cut -f -4  -d ' ' --complement)
 if [ "$1" == "" ]; then
   NEW_NAME=$(echo "$FNME" | rofi -sep '|' -dmenu -p "New name > ")
+  if [ "$NEW_NAME" == "" ]; then
+    exit 1
+  fi
 else
   NEW_NAME="$1"
 fi
