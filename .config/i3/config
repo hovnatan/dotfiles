@@ -268,6 +268,7 @@ bindcode Mod4+52 exec zathura_recent.sh
 bindcode Mod4+Mod1+52 exec zathura_duplicate.sh
 bindcode Mod1+Shift+52 exec --no-startup-id zathura_load.sh
 bindcode Mod4+Shift+52 exec --no-startup-id zathura_save.sh last add_hname
+bindcode Mod4+38 exec --no-startup-id rofi -show windowcd
 bindcode Mod4+Shift+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
 bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
 bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop

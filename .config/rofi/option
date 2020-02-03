@@ -1,6 +1,6 @@
 rofi.combi-modi:            drun,window
 rofi.show-icons:            false
-rofi.modi:                  combi
+rofi.modi:                  combi,windowcd
 rofi.lines:                 15
 rofi.line-padding:          10
 rofi.bw:                    0
