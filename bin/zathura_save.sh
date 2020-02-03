@@ -1,7 +1,7 @@
 #!/bin/bash
 
-PIDS_WS=$(python ~/.dotfiles/bin/zathura_get_windows.py)
-if [ "$PIDS_WS" == "" ]; then
+PIDS_WS_NAME=$(python ~/.dotfiles/bin/zathura_get_windows.py)
+if [ "$PIDS_WS_NAME" == "" ]; then
   exit 0
 fi
 OUTPUT_DIR="$HOME/Dropbox/scripts/zathura/saves"
@@ -29,7 +29,7 @@ WSS=()
 IFS=:
 while read line
 do
-  read PID WS <<< "$line"
+  read PID WS NAME <<< "$line"
   if [[ " ${WSS[@]} " =~ " ${WS} " ]]; then
     continue
   fi
@@ -37,11 +37,11 @@ do
   OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
   rm -f "$OUTPUT_FILE_WS"
   touch "$OUTPUT_FILE_WS"
-done <<< "$PIDS_WS"
+done <<< "$PIDS_WS_NAME"
 
 while read line
 do
-  read PID WS <<< "$line"
+  read PID WS NAME <<< "$line"
   OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
 
   filename=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
@@ -49,8 +49,8 @@ do
   pagenumber=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
     org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:pagenumber | grep -oP ".*variant.*uint32\s+\K(.*)")
   printf -v OUTPUT_PAGENUMBER "%05d" $pagenumber
-  echo "$filename:$OUTPUT_PAGENUMBER:$WS" >> "$OUTPUT_FILE_WS"
-done <<< "$PIDS_WS"
+  echo "$filename:$OUTPUT_PAGENUMBER:$WS:$NAME" >> "$OUTPUT_FILE_WS"
+done <<< "$PIDS_WS_NAME"
 
 for WS in "${WSS[@]}"; do
   OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
