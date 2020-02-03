@@ -30,12 +30,14 @@ i3-msg layout tabbed
 IFS=:
 cat "$INPUT_FILE" | while read line
 do
-  read filename pagenumber workspace <<< "$line"
+  read filename pagenumber workspace name <<< "$line"
   pagenumber="${pagenumber#"${pagenumber%%[!0]*}"}" # remove leading zeros
   if [ "$pagenumber" == "" ]; then
     pagenumber=0
   fi
   ((++pagenumber))
   zathura -P "$pagenumber" "$filename" &
+  PID="$!"
   sleep 0.5
+  $HOME/.dotfiles/bin/set_w_name.sh "$name"
 done

@@ -227,6 +227,7 @@ bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 exec --no-startup-id dunst
 bindcode Mod4+57 exec --no-startup-id dunstify -t 1000 "Notifications off" && sleep 1 && killall -SIGUSR1 dunst
 bindcode Mod4+Shift+57 exec --no-startup-id killall -SIGUSR2 dunst && dunstify -t 1000 "Notifications on"
+bindcode $mod+57 exec --no-startup-id ~/.dotfiles/bin/set_w_name.sh
 
 bindcode Mod4+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "tmux new-session" t-scrpad
 
