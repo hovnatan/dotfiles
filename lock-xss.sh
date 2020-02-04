@@ -4,13 +4,14 @@
 # option with i3lock's forking mode to delay sleep until the screen is locked.
 
 ## CONFIGURATION ##############################################################
-if [ -f /tmp/$USER-lock.file ] ; then
+LOCK_FILE="$HOME/tmp/$USER-lock.file"
+if [[ -f "$LOCK_FILE" ]] ; then
   if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
     exec {XSS_SLEEP_LOCK_FD}<&-
   fi
   exit
 fi
-echo $$ > /tmp/$USER-lock.file
+echo $$ > "$LOCK_FILE"
 
 TMPBG="/tmp/screen-$USER.png"
 
@@ -63,4 +64,4 @@ fi
 trap 'kill $(jobs -p)' EXIT
 xinput --enable $DEVICE_TO_DISABLE
 xset -dpms
-rm /tmp/$USER-lock.file
+rm "$LOCK_FILE"
