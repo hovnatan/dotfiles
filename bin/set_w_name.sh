@@ -12,4 +12,6 @@ if [ "$1" == "" ]; then
 else
   NEW_NAME="$1"
 fi
+FNME=${FNME//(/"\("}
+FNME=${FNME//)/"\)"}
 xdotool search -all --pid $FPID --name "$FNME" set_window -name "$NEW_NAME"
