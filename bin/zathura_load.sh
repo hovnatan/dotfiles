@@ -38,6 +38,11 @@ do
   ((++pagenumber))
   zathura -P "$pagenumber" "$filename" &
   PID="$!"
-  sleep 0.5
+  while true; do
+    sleep 0.1
+    if dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:pagenumber ; then
+      break
+    fi
+  done
   $HOME/.dotfiles/bin/set_w_name.sh "$name"
 done
