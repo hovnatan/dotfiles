@@ -203,6 +203,7 @@ bindcode Mod4+19 exec --no-startup-id $volumepath/volume -y -np -i $volumestep -
 bindcode Mod4+18 exec --no-startup-id $volumepath/volume -y -np -d $volumestep -u "RTMIN+10" -t i3blocks
 bindcode Mod4+17 exec --no-startup-id $volumepath/volume -y -mn -u "RTMIN+10" -t i3blocks
 bindcode Mod4+16 exec --no-startup-id playerctl play-pause
+bindcode Mod4+Shift+16 exec --no-startup-id ~/.dotfiles/bin/get_playing_info.sh
 bindcode Mod4+Shift+19 exec --no-startup-id playerctl next
 bindcode Mod4+Shift+18 exec --no-startup-id playerctl previous
 bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
