@@ -202,11 +202,11 @@ bindsym XF86AudioMicMute     exec --no-startup-id pactl set-source-mute 1 toggle
 bindcode Mod4+19 exec --no-startup-id $volumepath/volume -y -np -i $volumestep -u "RTMIN+10" -t i3blocks
 bindcode Mod4+18 exec --no-startup-id $volumepath/volume -y -np -d $volumestep -u "RTMIN+10" -t i3blocks
 bindcode Mod4+17 exec --no-startup-id $volumepath/volume -y -mn -u "RTMIN+10" -t i3blocks
-
-bindsym XF86AudioPlay exec playerctl play
-bindsym XF86AudioPause exec playerctl pause
-bindsym XF86AudioNext exec playerctl next
-bindsym XF86AudioPrev exec playerctl previous
+bindcode Mod4+16 exec --no-startup-id playerctl play-pause
+bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
+bindsym XF86AudioPause exec --no-startup-id  playerctl pause
+bindsym XF86AudioNext exec --no-startup-id playerctl next
+bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 
 # bindsym $mod+Tab workspace back_and_forth
 exec --no-startup-id ~/Dropbox/scripts/dropbox.py start
