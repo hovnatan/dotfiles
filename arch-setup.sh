@@ -33,7 +33,7 @@ ln -sf ~/.dotfiles/.config/yay/ ~/.config/yay
 cd ~/.dotfiles
 git clone git@github.com:hovnatan/i3-volume.git
 
-yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng dragon-drag-and-drop-git google-chrome ptags xkb-switch-git flacon freeoffice freetype2-cleartype mpv-mpris-git playerctl-git
+yay -S skype wd719x-firmware aic94xx-firmware zoom i3ipc-python-git libinput-gestures clipster xcwd-git foxitreader i3lock-color gruvbox-icon-theme python-torchvision bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz subliminal vte3-ng dragon-drag-and-drop-git google-chrome ptags xkb-switch-git flacon freeoffice freetype2-cleartype mpv-mpris-git playerctl-git lnav
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 cd ~/Downloads
