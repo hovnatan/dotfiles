@@ -309,4 +309,4 @@ exec --no-startup-id i3-msg workspace 4
 # bindcode Mod4+Shift+21 exec --no-startup-id picom-trans -c +20
 # bindcode Mod4+Shift+20 exec --no-startup-id picom-trans -c -20
 
-bindcode Mod4+26 exec --no-startup-id xkb-switch -s us && rofimoji --skin-tone neutral
+bindcode Mod4+26 exec --no-startup-id ~/.dotfiles/bin/rofimoji_kb.sh
