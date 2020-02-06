@@ -6,6 +6,7 @@
 ## CONFIGURATION ##############################################################
 LOCK_FILE="$HOME/tmp/$USER-lock.file"
 if [[ -f "$LOCK_FILE" ]] ; then
+  echo "Trying to lock already locked system." | systemd-cat
   if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
     exec {XSS_SLEEP_LOCK_FD}<&-
   fi
