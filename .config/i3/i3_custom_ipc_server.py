@@ -13,6 +13,8 @@ import logging
 
 import sh
 
+from systemd.journal import JournalHandler
+
 import i3ipc
 from pynput import keyboard
 
@@ -27,11 +29,12 @@ formatter = logging.Formatter(format_str)
 logger = logging.getLogger(__name__)
 logger_handler = logging.StreamHandler(sys.stderr)
 logger_handler.setFormatter(formatter)
-f = open("/tmp/ipc_server.log", "w")
-logger_handler2 = logging.StreamHandler(f)
-logger_handler2.setFormatter(formatter)
 logger.addHandler(logger_handler)
-logger.addHandler(logger_handler2)
+journald_handler = JournalHandler()
+journald_handler.setFormatter(logging.Formatter('[%(levelname)s] %(message)s'))
+logger.addHandler(journald_handler)
+
+logger.setLevel(logging.INFO)
 
 
 class SizedAndUpdatedOrderedDict(collections.OrderedDict):
@@ -252,10 +255,9 @@ class FocusWatcher:
     def set_debug(self, debug=False):
         if debug:
             logger.setLevel(logging.DEBUG)
-            logger_handler.setLevel(logging.DEBUG)
-            logger_handler2.setLevel(logging.DEBUG)
 
     def launch_server(self):
+        logger.info("Started i3 IPC server from hovnatan.")
         selector = selectors.DefaultSelector()
 
         def accept(sock):
