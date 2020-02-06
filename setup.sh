@@ -102,13 +102,13 @@ ln -sf ~/.dotfiles/.config/clipster/ ~/.config/
 ln -sf ~/.dotfiles/.xinitrc  ~/.xinitrc
 
 cd ~
-ssh-keygen -t rsa
+ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519
 #echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
 #chmod 644 ~/.ssh/config
 touch ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 
-# To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_rsa.pub into the field labeled 'Key'. with xclip -i ~/.ssh/id_rsa.pub
+# To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_ed25519.pub into the field labeled 'Key'. with xclip -i ~/.ssh/id_ed25519.pub
 
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
