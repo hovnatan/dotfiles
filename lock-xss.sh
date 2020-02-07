@@ -34,35 +34,37 @@ if [ "$1" == "" ]; then
   zathura_save.sh last add_hname &
 fi
 
+kill_i3lock() {
+    pkill -xu $EUID "$@" i3lock
+}
+
+on_exit() {
+    kill_i3lock
+    kill $(jobs -p)
+    xinput --enable $DEVICE_TO_DISABLE
+    xset -dpms
+    rm "$LOCK_FILE"
+}
+
+trap on_exit TERM INT EXIT
+
 # We set a trap to kill the locker if we get killed, then start the locker and
 # wait for it to exit. The waiting is not that straightforward when the locker
 # forks, so we use this polling only if we have a sleep lock to deal with.
 if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
-    kill_i3lock() {
-        pkill -xu $EUID "$@" i3lock
-    }
-
-    trap kill_i3lock TERM INT
-
     # we have to make sure the locker does not inherit a copy of the lock fd
     eval "i3lock $i3lock_options" {XSS_SLEEP_LOCK_FD}<&-
 
     # now close our fd (only remaining copy) to indicate we're ready to sleep
     exec {XSS_SLEEP_LOCK_FD}<&-
 
+    # check if i3lock still running by running pkill -0 i3lock
     while kill_i3lock -0; do
         sleep 0.5
     done
 else
     eval $(xdotool getmouselocation --shell)
     if [ "$X" -gt 30 ] || [ "$1" != "" ] ; then
-      trap 'kill %%' TERM INT
-      eval "i3lock -n $i3lock_options" &
-      wait $!
+      eval "i3lock -n $i3lock_options"
     fi
 fi
-
-trap 'kill $(jobs -p)' EXIT
-xinput --enable $DEVICE_TO_DISABLE
-xset -dpms
-rm "$LOCK_FILE"
