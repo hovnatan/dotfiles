@@ -32,7 +32,6 @@ chsh -s `which fish`
 rm -rf ~/.config/mpv
 ln -s ~/.dotfiles/.config/mpv ~/.config/mpv
 wget https://raw.githubusercontent.com/vayan/autosub-mpv/master/autosub.lua -P ~/.config/mpv/scripts/
-wget https://raw.githubusercontent.com/mpv-player/mpv/master/TOOLS/lua/autoload.lua -P ~/.config/mpv/scripts/
 xdg-mime default mpv.desktop 'video/x-m4v' 'video/x-matroska' 'video/x-msvideo'
 
 rm -rf ~/.gitconfig
