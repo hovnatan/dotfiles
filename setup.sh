@@ -159,6 +159,8 @@ ln -s ~/.dotfiles/.config/chrome-flags.conf ~/.config/
 
 ln -s ~/.dotfiles/.condarc ~/.condarc
 
+ln -s ~/.dotfiles/.config/keepassxc ~/.config/keepassxc
+
 #for printer discovery
 #sudo systemctl start avahi-daemon.service
 #for printing
