@@ -107,7 +107,7 @@ ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519
 touch ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 
-# To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_ed25519.pub into the field labeled 'Key'. with xclip -i ~/.ssh/id_ed25519.pub
+# To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_ed25519.pub into the field labeled 'Key'. with xclip -i -selection clipboard ~/.ssh/id_ed25519.pub
 
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
