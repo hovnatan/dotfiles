@@ -12,8 +12,8 @@ bindcode Mod4+43 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad
 #bindsym Mod1+Shift+Return exec --no-startup-id kitty
 bindsym Mod1+Shift+Return exec --no-startup-id termite
 
-# kill focused window # Alt+d
-bindcode Mod1+40 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
+# kill focused window # Alt+q
+bindcode Mod1+24 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
 
 # start run (a program launcher), 40=d
 bindcode Mod4+40 exec rofi -show drun
@@ -285,6 +285,7 @@ exec --no-startup-id xss-lock -l -- ~/.dotfiles/lock-xss.sh
 exec --no-startup-id setkmap.sh
 exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
 exec --no-startup-id udiskie --no-automount --tray
+exec --no-startup-id dex /usr/share/applications/org.keepassxc.KeePassXC.desktop
 
 set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown
 mode "$mode_system" {
