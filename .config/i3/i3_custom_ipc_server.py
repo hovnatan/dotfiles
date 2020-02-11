@@ -20,7 +20,7 @@ from pynput import keyboard
 
 SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 10
-TIME_TO_SYNC = 1.0
+TIME_TO_SYNC = 0.30
 DEFAULT_KEYBOARD_LAYOUT = "us"
 
 format_str = '[%(asctime)s-%(levelname)-8s-%(filename)-20s:%(lineno)-5s] %(message)s'
