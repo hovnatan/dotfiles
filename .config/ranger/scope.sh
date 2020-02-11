@@ -25,13 +25,6 @@ IFS=$'\n'
 
 # Script arguments
 FILE_PATH="${1}"         # Full path of the highlighted file
-
-# Do not show preview for larger than 10MB files
-FILE_SIZE=$(stat -c%s "$FILE_PATH")
-if [ $FILE_SIZE -ge 10485760 ]; then
-  exit 1
-fi
-
 PV_WIDTH="${2}"          # Width of the preview pane (number of fitting characters)
 PV_HEIGHT="${3}"         # Height of the preview pane (number of fitting characters)
 IMAGE_CACHE_PATH="${4}"  # Full path that should be used to cache image preview
@@ -156,6 +149,28 @@ handle_fallback() {
 
 
 MIMETYPE="$( file --dereference --brief --mime-type -- "${FILE_PATH}" )"
+
+case "${MIMETYPE}" in
+  video/*)
+    MD5SUM=($(echo -n "$FILE_PATH" | md5sum | awk '{ print $1 }'))
+    WATCH_LATER_PATH="$HOME/.config/mpv/watch_later/${MD5SUM^^}"
+    if [[ -f "$WATCH_LATER_PATH" ]]; then
+      echo "Last watched:"
+      tail -n 1 "$WATCH_LATER_PATH"
+      SUCCESS=5
+    fi
+esac
+
+# Do not show preview for larger than 10MB files
+FILE_SIZE=$(stat -c%s "$FILE_PATH")
+if [[ $FILE_SIZE -ge 10485760 ]]; then
+  if [[ -z ${SUCCESS+x} ]]; then
+    exit 1
+  else
+    exit $SUCCESS
+  fi
+fi
+
 if [[ "${PV_IMAGE_ENABLED}" == 'True' ]]; then
     handle_image "${MIMETYPE}"
 fi
