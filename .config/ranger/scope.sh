@@ -155,8 +155,10 @@ case "${MIMETYPE}" in
     MD5SUM=($(echo -n "$FILE_PATH" | md5sum | awk '{ print $1 }'))
     WATCH_LATER_PATH="$HOME/.config/mpv/watch_later/${MD5SUM^^}"
     if [[ -f "$WATCH_LATER_PATH" ]]; then
-      echo "Last watched:"
-      tail -n 1 "$WATCH_LATER_PATH"
+      MOD_TIME=$(date -r "$WATCH_LATER_PATH" "+%m/%d/%Y %H:%M:%S")
+      echo "Last watched on $MOD_TIME."
+      LAST_POSITION=$(cat "$WATCH_LATER_PATH" | grep start)
+      echo "Position: $LAST_POSITION"
       SUCCESS=5
     fi
 esac
