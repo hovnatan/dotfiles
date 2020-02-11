@@ -3,7 +3,7 @@ Description=Disable USB wakeup triggers in /proc/acpi/wakeup
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c "echo EHC1 > /proc/acpi/wakeup; echo EHC2 > /proc/acpi/wakeup; echo XHC > /proc/acpi/wakeup; echo XHCI > /proc/acpi/wakeup"
+ExecStart=/usr/bin/disable_wake_on_usb.sh
 RemainAfterExit=no
 
 [Install]

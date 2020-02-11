@@ -105,4 +105,5 @@ sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 
 # yay -S linux-clear-bin intel-ucode-clear
 # sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
+# sudo cp ~/.dotfiles/bin/disable_wake_on_usb.sh /usr/bin/
 # sudo systemctl enable disable-USB-wakeup.service
