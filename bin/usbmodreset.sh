@@ -1,7 +1,7 @@
 #!/bin/sh
 
-sudo rmmod ehci_pci
-sudo rmmod xhci_pci
+rmmod ehci_pci
+rmmod xhci_pci
 
-sudo modprobe ehci_pci
-sudo modprobe xhci_pci
+modprobe ehci_pci
+modprobe xhci_pci

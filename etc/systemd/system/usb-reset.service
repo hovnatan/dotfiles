@@ -1,0 +1,16 @@
+[Unit]
+Description=Reset USB after sleep
+After=sleep.target
+After=suspend.target
+After=hibernate.target
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/bin/usbmodreset.sh
+
+[Install]
+WantedBy=sleep.target
+WantedBy=suspend.target
+WantedBy=hibernate.target
