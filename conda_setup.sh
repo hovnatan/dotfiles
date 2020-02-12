@@ -13,6 +13,8 @@ conda install tbb tbb-devel cmake binutils_impl_linux-64 binutils_linux-64 gxx_l
 # pypng for indexed png, gitpython python wrapper for git
 pip install pypng gitpython tensorboard
 
+pip install git+git://github.com/ranger/ranger.git
+
 cp ~/miniconda3/share/fzf/shell/key-bindings.fish ~/.config/fish/functions/fzf_key_bindings.fish
 
 #also might be install sudo apt-get install -y libgl1-mesa-dev
