@@ -107,3 +107,6 @@ sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 # sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
 # sudo cp ~/.dotfiles/bin/disable_wake_on_usb.sh /usr/bin/
 # sudo systemctl enable disable-USB-wakeup.service
+# sudo cp ~/.dotfiles/etc/systemd/system/usb-reset.service /etc/systemd/system/
+# sudo cp ~/.dotfiles/bin/usbmodreset.sh /usr/bin/
+# sudo systemctl enable usb-reset.service
