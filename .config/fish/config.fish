@@ -144,5 +144,4 @@ set fish_command_timer_export_cmd_duration_str 1
 set fish_command_timer_enabled 0
 
 set -U Z_CMD "j"
-
 end
