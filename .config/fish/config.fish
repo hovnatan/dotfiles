@@ -1,10 +1,12 @@
 if status --is-login
 
-  umask 0077
-  source ~/.profile
-  setup_ssh_agent
+umask 0077
+source ~/.profile
+setup_ssh_agent
 
-else if status --is-interactive
+end
+
+if status --is-interactive
 
 set -x FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
 set -x FZF_CTRL_T_COMMAND "fd -I -p -H -E .git . \$dir"
