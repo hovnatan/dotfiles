@@ -157,6 +157,7 @@ bar {
     mode hide
     hidden_state hide
     modifier Mod4
+    position bottom
 
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     position top
