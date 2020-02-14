@@ -44,8 +44,8 @@ bindcode $mod+41 fullscreen toggle
 
 # change container layout (stacked, tabbed, toggle split)
 # 25=w, 26=e
-bindcode $mod+25 layout tabbed
-bindcode $mod+26 layout toggle split
+bindcode Mod4+25 layout tabbed
+bindcode Mod4+26 layout toggle split
 
 # toggle tiling / floating
 bindsym $mod+Shift+space floating toggle
@@ -236,10 +236,10 @@ bindcode Mod4+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad
 
 for_window [instance="scrpad"] move scratchpad
 
-bindcode Mod4+55 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_pavucontrol.sh
+bindcode Mod1+55 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_pavucontrol.sh
 for_window [class="Pavucontrol"] move scratchpad
 
-bindcode Mod4+45 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh ipython ipython-scrpad
+bindcode Mod1+45 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh ipython ipython-scrpad
 
 bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
 bindsym Shift+Print exec --no-startup-id scrot -u -e 'mv $f ~/tmp/'
@@ -273,8 +273,8 @@ bindcode Mod1+Shift+52 exec --no-startup-id zathura_load.sh
 bindcode Mod4+Shift+52 exec --no-startup-id zathura_save.sh last add_hname
 bindcode Mod4+Shift+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
 bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
-bindcode Mod4+25 exec ~/.dotfiles/bin/run_or_show.sh web.whatsapp.com "dex ~/.local/share/applications/chrome-whatsapp.desktop"
-bindcode Mod4+39 exec ~/.dotfiles/bin/run_or_show.sh superannotate.slack.com "dex ~/.local/share/applications/chrome-slack.desktop"
+bindcode Mod1+25 exec ~/.dotfiles/bin/run_or_show.sh web.whatsapp.com "dex ~/.local/share/applications/chrome-whatsapp.desktop"
+bindcode Mod1+39 exec ~/.dotfiles/bin/run_or_show.sh superannotate.slack.com "dex ~/.local/share/applications/chrome-slack.desktop"
 bindcode Mod4+58 exec dex ~/.local/share/applications/chrome-fbmessenger.desktop
 bindcode Mod4+29 exec dex ~/.local/share/applications/chrome-youtube.desktop
 bindcode Mod4+42 exec dex ~/.local/share/applications/chrome-gitter.desktop
