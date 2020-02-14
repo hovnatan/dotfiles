@@ -68,16 +68,16 @@ set $ws9 "9"
 set $ws10 "10"
 
 # switch to workspace
-bindcode $mod+10 workspace $ws1
-bindcode $mod+11 workspace $ws2
-bindcode $mod+12 workspace $ws3
-bindcode $mod+13 workspace $ws4
-bindcode $mod+14 workspace $ws5
-bindcode $mod+15 workspace $ws6
-bindcode $mod+16 workspace $ws7
-bindcode $mod+17 workspace $ws8
-bindcode $mod+18 workspace $ws9
-bindcode $mod+19 workspace $ws10
+bindcode $mod+10 workspace $ws1; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+11 workspace $ws2; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+12 workspace $ws3; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+13 workspace $ws4; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+14 workspace $ws5; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+15 workspace $ws6; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+16 workspace $ws7; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+17 workspace $ws8; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+18 workspace $ws9; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+19 workspace $ws10; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
 bindcode $mod+49 exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_w_on_ws
 bindsym  $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
 # 53=x
@@ -311,3 +311,4 @@ exec --no-startup-id i3-msg workspace 4
 # bindcode Mod4+Shift+20 exec --no-startup-id picom-trans -c -20
 
 bindcode Mod4+26 exec --no-startup-id ~/.dotfiles/bin/rofimoji_kb.sh
+bindsym --release Mod1+F11 exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh F11
