@@ -160,7 +160,6 @@ bar {
     position bottom
 
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
-    position top
     font pango:sans-serif 11
 
     colors {
