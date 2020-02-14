@@ -156,7 +156,7 @@ set_from_resource $base0F i3wm.base0F
 bar {
     mode hide
     hidden_state hide
-    modifier Mod1
+    modifier Mod4
 
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     position top
