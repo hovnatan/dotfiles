@@ -38,9 +38,9 @@ bindsym Mod1+Shift+Up move up
 bindsym Mod1+Shift+Right move right
 
 # 55=v, 41=f
-bindcode $mod+Shift+55 split h
-bindcode $mod+55 split v
-bindcode $mod+41 fullscreen toggle
+bindcode Mod4+Shift+55 split h
+bindcode Mod4+55 split v
+bindcode Mod1+41 fullscreen toggle
 
 # change container layout (stacked, tabbed, toggle split)
 # 25=w, 26=e
@@ -232,14 +232,14 @@ bindcode Mod4+57 exec --no-startup-id toggle_dunst.sh
 bindcode $mod+Shift+61 exec --no-startup-id ~/.dotfiles/bin/set_w_name.sh
 bindcode $mod+61 exec --no-startup-id rofi -show windowcd
 
-bindcode Mod4+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "tmux new-session" t-scrpad
+bindcode Mod1+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "tmux new-session" t-scrpad
 
 for_window [instance="scrpad"] move scratchpad
 
 bindcode Mod1+55 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_pavucontrol.sh
 for_window [class="Pavucontrol"] move scratchpad
 
-bindcode Mod1+45 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh ipython ipython-scrpad
+bindcode Mod4+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh ipython ipython-scrpad
 
 bindsym Print exec --no-startup-id scrot -e 'mv $f ~/tmp/'
 bindsym Shift+Print exec --no-startup-id scrot -u -e 'mv $f ~/tmp/'
@@ -310,5 +310,5 @@ exec --no-startup-id i3-msg workspace 4
 # bindcode Mod4+Shift+21 exec --no-startup-id picom-trans -c +20
 # bindcode Mod4+Shift+20 exec --no-startup-id picom-trans -c -20
 
-bindcode Mod4+26 exec --no-startup-id ~/.dotfiles/bin/rofimoji_kb.sh
+bindcode Mod1+26 exec --no-startup-id ~/.dotfiles/bin/rofimoji_kb.sh
 bindsym --release Mod1+F11 exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh F11
