@@ -273,8 +273,8 @@ bindcode Mod1+Shift+52 exec --no-startup-id zathura_load.sh
 bindcode Mod4+Shift+52 exec --no-startup-id zathura_save.sh last add_hname
 bindcode Mod4+Shift+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
 bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
-bindcode Mod4+25 exec dex ~/.local/share/applications/chrome-whatsapp.desktop
-bindcode Mod4+39 exec dex ~/.local/share/applications/chrome-slack.desktop
+bindcode Mod4+25 exec ~/.dotfiles/bin/run_or_show.sh web.whatsapp.com "dex ~/.local/share/applications/chrome-whatsapp.desktop"
+bindcode Mod4+39 exec ~/.dotfiles/bin/run_or_show.sh superannotate.slack.com "dex ~/.local/share/applications/chrome-slack.desktop"
 bindcode Mod4+58 exec dex ~/.local/share/applications/chrome-fbmessenger.desktop
 bindcode Mod4+29 exec dex ~/.local/share/applications/chrome-youtube.desktop
 bindcode Mod4+42 exec dex ~/.local/share/applications/chrome-gitter.desktop
