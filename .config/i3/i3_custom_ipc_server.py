@@ -75,6 +75,7 @@ class FocusWatcher:
         self.ws_queue = queue.SimpleQueue()
         self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
         self.window_list_lock = threading.RLock()
+        self.alt_on = False
         self.mode_w = False
         self.mode_w_lock = threading.RLock()
         self.w_index = 0
@@ -113,37 +114,46 @@ class FocusWatcher:
             if window_id in self.window_list:
                 del self.window_list[window_id]
 
-    def on_press_or_release_tab(self, key):
-        if key != keyboard.Key.tab:
-            with self.mode_ws_lock:
-                self.mode_ws = False
-            with self.workspace_current_lock:
-                if self.current_ws != -1:
-                    with self.workspace_list_lock:
-                        self.workspace_list[self.current_ws] = True
-            self.window_setup(self.current_w)
-            return False
-        return True
+    def on_press(self, key):
+        logger.debug("key %s pressed.", key)
+        if key == keyboard.Key.alt:
+            self.alt_on = True
+        elif key == keyboard.Key.tab and self.alt_on:
+            self.workspace_back()
+        else:
+            try:
+                char = key.char
+            except AttributeError:
+                pass
+            else:
+                if key.char in ['`', '՝'] and self.alt_on:
+                    self.latest_window_on_ws()
 
-    def on_press_or_release_grave(self, key):
-        try:
-            char = key.char
-        except AttributeError:
-            char = 'a'
-        if char not in ['`', '՝']:
-            logger.debug("Grave closing %s", char)
+    def on_release(self, key):
+        if key == keyboard.Key.alt:
+            self.alt_on = False
             with self.mode_w_lock:
-                self.mode_w = False
-            self.window_setup(self.current_w)
-            return False
-        return True
+                if self.mode_w:
+                    logger.debug("Grave closing.")
+                    self.window_setup(self.current_w)
+                    self.mode_w = False
+                    self.window_setup(self.current_w)
+            with self.mode_ws_lock:
+                if self.mode_ws:
+                    logger.debug("Tab closing.")
+                    with self.workspace_current_lock:
+                        if self.current_ws != -1:
+                            with self.workspace_list_lock:
+                                self.workspace_list[self.current_ws] = True
+                    self.mode_ws = False
+                    self.window_setup(self.current_w)
 
     def latest_window_on_ws(self):
         with self.mode_w_lock:
             if not self.mode_w:
                 self.ws_window_list = set()
                 for x in self.i3.get_tree().find_focused().workspace(
-                ).descendents():
+                ).descendants():
                     if not x.window:
                         continue
                     self.ws_window_list.add(x.id)
@@ -156,10 +166,6 @@ class FocusWatcher:
                     return
                 self.mode_w = True
                 self.w_index = 1
-                keyboard.Listener(
-                    on_release=self.on_press_or_release_grave,
-                    on_press=self.on_press_or_release_grave
-                ).start()
         with self.window_list_lock:
             k = self.w_index % self.ws_w_curr_length
             check_k = 0
@@ -177,10 +183,6 @@ class FocusWatcher:
             if not self.mode_ws:
                 self.mode_ws = True
                 self.ws_index = 1
-                keyboard.Listener(
-                    on_release=self.on_press_or_release_tab,
-                    on_press=self.on_press_or_release_tab
-                ).start()
         with self.workspace_list_lock:
             curr_length = len(self.workspace_list)
             if curr_length < 2:
@@ -231,15 +233,15 @@ class FocusWatcher:
     def window_setup(self, window_id):
         logger.debug("Keyboard setup with %s", window_id)
         with self.window_list_lock:
-            key = DEFAULT_KEYBOARD_LAYOUT
             if window_id in self.window_list:
                 key = self.window_list[window_id]
             else:
+                key = DEFAULT_KEYBOARD_LAYOUT
                 logger.debug("Setting last %s to us", window_id)
             self.window_list[window_id] = key
-            with self.current_key_lock:
-                if key != self.current_key:
-                    subprocess.run(["xkb-switch", "-s", key])
+        with self.current_key_lock:
+            if key != self.current_key:
+                subprocess.run(["xkb-switch", "-s", key])
 
     def on_window_focus(self, i3conn, event):
         window_id = event.container.id
@@ -297,12 +299,6 @@ class FocusWatcher:
             #         conn.send(last_ws.encode())
             #     else:
             #         conn.send("nws".encode())
-            elif data == b'next_ws':
-                self.workspace_back()
-                conn.send("OK".encode())
-            elif data == b'next_w_on_ws':
-                self.latest_window_on_ws()
-                conn.send("OK".encode())
             elif data == b'debug':
                 with self.window_list_lock:
                     all_winds = str(self.window_list)
@@ -341,6 +337,8 @@ class FocusWatcher:
             subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
 
     def run(self):
+        keyboard.Listener(on_press=self.on_press,
+                          on_release=self.on_release).start()
         threads = []
         threads.append(threading.Thread(target=self.launch_i3))
         threads.append(threading.Thread(target=self.launch_server, daemon=True))
