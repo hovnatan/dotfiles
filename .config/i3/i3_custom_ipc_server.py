@@ -248,8 +248,6 @@ class FocusWatcher:
         logger.debug(
             "window focus on %s %s", window_id, event.container.floating
         )
-        if event.container.floating == "user_on":
-            return
         with self.window_current_lock:
             self.current_w = window_id
         with self.mode_w_lock:
