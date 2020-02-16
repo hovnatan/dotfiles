@@ -20,7 +20,7 @@ from pynput import keyboard
 
 SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 10
-TIME_TO_SYNC = 0.30
+TIME_TO_SYNC = 1.00
 DEFAULT_KEYBOARD_LAYOUT = "us"
 
 format_str = '[%(asctime)s-%(levelname)-8s-%(filename)-20s:%(lineno)-5s] %(message)s'
@@ -121,6 +121,7 @@ class FocusWatcher:
                 if self.current_ws != -1:
                     with self.workspace_list_lock:
                         self.workspace_list[self.current_ws] = True
+            self.window_setup(self.current_w)
             return False
         return True
 
@@ -129,12 +130,11 @@ class FocusWatcher:
             char = key.char
         except AttributeError:
             char = 'a'
-        if char != '`' and char != '՝':
+        if char not in ['`', '՝']:
             logger.debug("Grave closing %s", char)
-
             with self.mode_w_lock:
                 self.mode_w = False
-            self.keyboard_layout_setup(self.current_w)
+            self.window_setup(self.current_w)
             return False
         return True
 
@@ -217,7 +217,7 @@ class FocusWatcher:
                     continue
             with self.window_current_lock:
                 if w == self.current_w:
-                    self.keyboard_layout_setup(w)
+                    self.window_setup(w)
 
     def on_workspace_focus(self, i3conn, event):
         cws = str(event.current.name)
@@ -228,7 +228,7 @@ class FocusWatcher:
             self.current_ws = cws
         self.ws_queue.put((cws, time.time()))
 
-    def keyboard_layout_setup(self, window_id):
+    def window_setup(self, window_id):
         logger.debug("Keyboard setup with %s", window_id)
         with self.window_list_lock:
             key = DEFAULT_KEYBOARD_LAYOUT
@@ -246,13 +246,20 @@ class FocusWatcher:
         logger.debug("window focus on %s", window_id)
         with self.window_current_lock:
             self.current_w = window_id
+        with self.mode_w_lock:
+            if self.mode_w:
+                return
+        with self.mode_ws_lock:
+            if self.mode_ws:
+                return
         self.w_queue.put((window_id, time.time()))
 
     def launch_i3(self):
         logger.debug("i3 started")
         self.i3.main()
 
-    def set_debug(self, debug=False):
+    @staticmethod
+    def set_debug(debug=False):
         if debug:
             logger.setLevel(logging.DEBUG)
 
