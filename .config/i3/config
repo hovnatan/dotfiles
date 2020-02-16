@@ -78,8 +78,8 @@ bindcode $mod+16 workspace $ws7; exec --no-startup-id ~/.dotfiles/bin/bar_show_h
 bindcode $mod+17 workspace $ws8; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
 bindcode $mod+18 workspace $ws9; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
 bindcode $mod+19 workspace $ws10; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+49 exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_w_on_ws
-bindsym  $mod+Tab exec --no-startup-id ~/.dotfiles/.config/i3/i3_custom_ipc_client.py next_ws
+bindcode $mod+49 exec --no-startup-id /bin/sh -c ""
+bindsym  $mod+Tab exec --no-startup-id /bin/sh -c ""
 # 53=x
 bindcode $mod+53 [urgent=latest] focus
 
