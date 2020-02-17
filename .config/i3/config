@@ -20,10 +20,10 @@ bindcode Mod4+40 exec rofi -show drun
 bindcode Mod1+Shift+40 exec --no-startup-id dropbox_toggle.py
 
 # change focus, h j k l
-bindcode Mod1+43 focus left
-bindcode Mod1+44 focus down
-bindcode Mod1+45 focus up
-bindcode Mod1+46 focus right
+bindcode Mod1+43 nop
+bindcode Mod1+44 nop
+bindcode Mod1+45 nop
+bindcode Mod1+46 nop
 
 # move focused window, h j k l
 bindcode Mod1+Shift+43 move left
@@ -68,16 +68,16 @@ set $ws9 "9"
 set $ws10 "10"
 
 # switch to workspace
-bindcode $mod+10 workspace $ws1
-bindcode $mod+11 workspace $ws2
-bindcode $mod+12 workspace $ws3
-bindcode $mod+13 workspace $ws4
-bindcode $mod+14 workspace $ws5
-bindcode $mod+15 workspace $ws6
-bindcode $mod+16 workspace $ws7
-bindcode $mod+17 workspace $ws8
-bindcode $mod+18 workspace $ws9
-bindcode $mod+19 workspace $ws10
+bindcode $mod+10 nop
+bindcode $mod+11 nop
+bindcode $mod+12 nop
+bindcode $mod+13 nop
+bindcode $mod+14 nop
+bindcode $mod+15 nop
+bindcode $mod+16 nop
+bindcode $mod+17 nop
+bindcode $mod+18 nop
+bindcode $mod+19 nop
 
 # alt-grave and alt-tab handled by i3ipc server
 bindcode $mod+49 nop

@@ -77,6 +77,8 @@ class FocusWatcher:
         self.window_list_lock = threading.RLock()
         self.alt_on = False
         self.mode_w = False
+        self.moving_in_windows = False
+        self.moving_in_workspaces = False
         self.mode_w_lock = threading.RLock()
         self.w_index = 0
         self.window_current_lock = threading.RLock()
@@ -121,13 +123,57 @@ class FocusWatcher:
         elif key == keyboard.Key.tab and self.alt_on:
             self.workspace_back()
         else:
+            if not self.alt_on:
+                return
             try:
-                char = key.char
+                vk = key.vk
             except AttributeError:
                 pass
             else:
-                if key.char in ['`', '՝'] and self.alt_on:
+                if vk == 96:
                     self.latest_window_on_ws()
+                elif vk == 104:
+                    self.i3.command('focus left')
+                    self.moving_in_windows = True
+                elif vk == 108:
+                    self.i3.command('focus right')
+                    self.moving_in_windows = True
+                elif vk == 106:
+                    self.i3.command('focus down')
+                    self.moving_in_windows = True
+                elif vk == 107:
+                    self.i3.command('focus up')
+                    self.moving_in_windows = True
+                elif vk == 49:
+                    self.i3.command('workspace 1')
+                    self.moving_in_workspaces = True
+                elif vk == 50:
+                    self.i3.command('workspace 2')
+                    self.moving_in_workspaces = True
+                elif vk == 51:
+                    self.i3.command('workspace 3')
+                    self.moving_in_workspaces = True
+                elif vk == 52:
+                    self.i3.command('workspace 4')
+                    self.moving_in_workspaces = True
+                elif vk == 53:
+                    self.i3.command('workspace 5')
+                    self.moving_in_workspaces = True
+                elif vk == 54:
+                    self.i3.command('workspace 6')
+                    self.moving_in_workspaces = True
+                elif vk == 55:
+                    self.i3.command('workspace 7')
+                    self.moving_in_workspaces = True
+                elif vk == 56:
+                    self.i3.command('workspace 8')
+                    self.moving_in_workspaces = True
+                elif vk == 57:
+                    self.i3.command('workspace 9')
+                    self.moving_in_workspaces = True
+                elif vk == 48:
+                    self.i3.command('workspace 10')
+                    self.moving_in_workspaces = True
 
     def on_release(self, key):
         if key == keyboard.Key.alt:
@@ -137,7 +183,7 @@ class FocusWatcher:
                     logger.debug("Grave closing.")
                     self.window_setup(self.current_w)
                     self.mode_w = False
-                    self.window_setup(self.current_w)
+                    return
             with self.mode_ws_lock:
                 if self.mode_ws:
                     logger.debug("Tab closing.")
@@ -147,6 +193,15 @@ class FocusWatcher:
                                 self.workspace_list[self.current_ws] = True
                     self.mode_ws = False
                     self.window_setup(self.current_w)
+                    return
+            if self.moving_in_windows:
+                self.window_setup(self.current_w)
+                self.moving_in_windows = False
+                return
+            if self.moving_in_workspaces:
+                self.window_setup(self.current_w)
+                self.moving_in_workspaces = False
+                return
 
     def latest_window_on_ws(self):
         with self.mode_w_lock:
@@ -250,6 +305,8 @@ class FocusWatcher:
         )
         with self.window_current_lock:
             self.current_w = window_id
+        if self.moving_in_windows:
+            return
         with self.mode_w_lock:
             if self.mode_w:
                 return
