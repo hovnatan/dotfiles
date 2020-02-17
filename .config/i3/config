@@ -78,8 +78,10 @@ bindcode $mod+16 workspace $ws7
 bindcode $mod+17 workspace $ws8
 bindcode $mod+18 workspace $ws9
 bindcode $mod+19 workspace $ws10
-bindcode $mod+49 exec --no-startup-id /bin/sh -c ""
-bindsym  $mod+Tab exec --no-startup-id /bin/sh -c ""
+
+# alt-grave and alt-tab handled by i3ipc server
+bindcode $mod+49 nop
+bindsym  $mod+Tab nop
 # 53=x
 bindcode $mod+53 [urgent=latest] focus
 
