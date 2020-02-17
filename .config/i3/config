@@ -68,16 +68,16 @@ set $ws9 "9"
 set $ws10 "10"
 
 # switch to workspace
-bindcode $mod+10 workspace $ws1; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+11 workspace $ws2; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+12 workspace $ws3; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+13 workspace $ws4; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+14 workspace $ws5; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+15 workspace $ws6; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+16 workspace $ws7; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+17 workspace $ws8; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+18 workspace $ws9; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
-bindcode $mod+19 workspace $ws10; exec --no-startup-id ~/.dotfiles/bin/bar_show_hide.sh
+bindcode $mod+10 workspace $ws1
+bindcode $mod+11 workspace $ws2
+bindcode $mod+12 workspace $ws3
+bindcode $mod+13 workspace $ws4
+bindcode $mod+14 workspace $ws5
+bindcode $mod+15 workspace $ws6
+bindcode $mod+16 workspace $ws7
+bindcode $mod+17 workspace $ws8
+bindcode $mod+18 workspace $ws9
+bindcode $mod+19 workspace $ws10
 bindcode $mod+49 exec --no-startup-id /bin/sh -c ""
 bindsym  $mod+Tab exec --no-startup-id /bin/sh -c ""
 # 53=x
@@ -157,7 +157,7 @@ bar {
     mode hide
     hidden_state hide
     modifier Mod4
-    position bottom
+    position top
 
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     font pango:sans-serif 11
