@@ -151,15 +151,15 @@ class FocusWatcher:
         if key == keyboard.Key.alt:
             self.alt_on = False
             if self.moving_in_windows:
+                self.moving_in_windows = False
                 time.sleep(TIME_TO_SYNC)
                 self.window_setup()
-                self.moving_in_windows = False
                 return
             if self.moving_in_workspaces:
+                self.moving_in_workspaces = False
                 time.sleep(TIME_TO_SYNC)
                 self.workspace_setup()
                 self.window_setup()
-                self.moving_in_workspaces = False
                 return
 
     def latest_window_on_ws(self):
