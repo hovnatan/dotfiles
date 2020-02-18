@@ -128,24 +128,23 @@ class FocusWatcher:
         logger.debug("key %s pressed.", key)
         if key == keyboard.Key.alt:
             self.alt_on = True
-        elif key == keyboard.Key.tab and self.alt_on:
-            self.workspace_back()
-        else:
-            if not self.alt_on:
-                return
-            try:
-                vk = key.vk
-            except AttributeError:
-                pass
+        elif self.alt_on:
+            if key == keyboard.Key.tab:
+                self.workspace_back()
             else:
-                if vk == 96:
-                    self.latest_window_on_ws()
-                elif vk in WINDOW_DIRECTIONS:
-                    self.moving_in_windows = True
-                    self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
-                elif vk in WORKSPACE_NAMES:
-                    self.moving_in_workspaces = True
-                    self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
+                try:
+                    vk = key.vk
+                except AttributeError:
+                    pass
+                else:
+                    if vk == 96:
+                        self.latest_window_on_ws()
+                    elif vk in WINDOW_DIRECTIONS:
+                        self.moving_in_windows = True
+                        self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
+                    elif vk in WORKSPACE_NAMES:
+                        self.moving_in_workspaces = True
+                        self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
 
     def on_release(self, key):
         if key == keyboard.Key.alt:
