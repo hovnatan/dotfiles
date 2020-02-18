@@ -158,6 +158,7 @@ class FocusWatcher:
             if self.moving_in_workspaces:
                 time.sleep(TIME_TO_SYNC)
                 self.workspace_setup()
+                self.window_setup()
                 self.moving_in_workspaces = False
                 return
 
@@ -214,12 +215,12 @@ class FocusWatcher:
         self.current_ws = cws
         if self.moving_in_windows or self.moving_in_workspaces:
             return
+        self.workspace_setup()
 
     def workspace_setup(self):
         if self.current_ws != -1:
             with self.workspace_list_lock:
                 self.workspace_list[self.current_ws] = True
-        self.window_setup()
 
     def window_setup(self):
         logger.debug("Keyboard setup with %s", self.current_w)
