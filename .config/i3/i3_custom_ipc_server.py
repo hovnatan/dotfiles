@@ -90,6 +90,7 @@ class FocusWatcher:
         self.ws_queue = queue.SimpleQueue()
         self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
         self.window_list_lock = threading.RLock()
+        self.alt_on_lock = threading.RLock()
         self.alt_on = False
         self.moving_in_windows = False
         self.moving_in_workspaces = False
@@ -126,29 +127,33 @@ class FocusWatcher:
 
     def on_press(self, key):
         logger.debug("key %s pressed.", key)
-        if key == keyboard.Key.alt:
-            self.alt_on = True
-        elif self.alt_on:
-            if key == keyboard.Key.tab:
-                self.workspace_back()
+        with self.alt_on_lock:
+            if key == keyboard.Key.alt:
+                self.alt_on = True
+                return
+            if not self.alt_on:
+                return
+        if key == keyboard.Key.tab:
+            self.workspace_back()
+        else:
+            try:
+                vk = key.vk
+            except AttributeError:
+                pass
             else:
-                try:
-                    vk = key.vk
-                except AttributeError:
-                    pass
-                else:
-                    if vk == 96:
-                        self.latest_window_on_ws()
-                    elif vk in WINDOW_DIRECTIONS:
-                        self.moving_in_windows = True
-                        self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
-                    elif vk in WORKSPACE_NAMES:
-                        self.moving_in_workspaces = True
-                        self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
+                if vk == 96:
+                    self.latest_window_on_ws()
+                elif vk in WINDOW_DIRECTIONS:
+                    self.moving_in_windows = True
+                    self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
+                elif vk in WORKSPACE_NAMES:
+                    self.moving_in_workspaces = True
+                    self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
 
     def on_release(self, key):
         if key == keyboard.Key.alt:
-            self.alt_on = False
+            with self.alt_on_lock:
+                self.alt_on = False
             if self.moving_in_windows:
                 self.moving_in_windows = False
                 time.sleep(TIME_TO_SYNC)
@@ -244,7 +249,7 @@ class FocusWatcher:
         self.window_setup()
 
     def launch_i3(self):
-        logger.debug("i3 started")
+        logger.debug("i3 started.")
         self.i3.main()
 
     @staticmethod
