@@ -1,5 +1,9 @@
 #!/bin/bash
 
+sudo apt-get update
+
+sudo apt install jq tmux
+
 wget https://github.com/neovim/neovim/releases/download/v0.4.3/nvim.appimage
 mv nvim.appimage ~/.dotfiles/bin/nvim
 chmod +x ~/.dotfiles/bin/nvim
@@ -25,3 +29,6 @@ TMPDIR=$(mktemp -d)
 cd $TMPDIR
 wget -O - ${REPO}${RELEASE} | tar zxf - --strip-component=1
 mv rg ~/.dotfiles/bin
+
+tic -x -o $HOME/.terminfo ~/.dotfiles/.terminfo/tmux.terminfo
+tic -x -o $HOME/.terminfo ~/.dotfiles/.terminfo/termite.terminfo

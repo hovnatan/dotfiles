@@ -26,7 +26,8 @@ rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
 curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
 fish -c fisher
-chsh -s `which fish`
+sudo chsh -s `which fish` $USER
+wget https://github.com/junegunn/fzf/blob/master/shell/key-bindings.fish -O ~/.config/fish/functions/fzf_key_bindings.fish
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
