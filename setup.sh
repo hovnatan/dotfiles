@@ -137,3 +137,5 @@ mkdir -p ~/tmp
 mkdir -p ~/Downloads
 mkdir -p ~/opt
 # for sshfs sshfs -o Compression=no,reconnect home.server.com:/ ~/home_server/ -p 22
+
+sudo gpasswd -a $USER docke
