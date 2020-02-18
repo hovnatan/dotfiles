@@ -90,7 +90,6 @@ class FocusWatcher:
         self.ws_queue = queue.SimpleQueue()
         self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
         self.window_list_lock = threading.RLock()
-        self.alt_on_lock = threading.RLock()
         self.alt_on = False
         self.moving_in_windows = False
         self.moving_in_workspaces = False
@@ -124,47 +123,6 @@ class FocusWatcher:
         with self.window_list_lock:
             if window_id in self.window_list:
                 del self.window_list[window_id]
-
-    def on_press(self, key):
-        logger.debug("key %s pressed.", key)
-        with self.alt_on_lock:
-            if key == keyboard.Key.alt:
-                self.alt_on = True
-                return
-            if not self.alt_on:
-                return
-        if key == keyboard.Key.tab:
-            self.workspace_back()
-        else:
-            try:
-                vk = key.vk
-            except AttributeError:
-                pass
-            else:
-                if vk == 96:
-                    self.latest_window_on_ws()
-                elif vk in WINDOW_DIRECTIONS:
-                    self.moving_in_windows = True
-                    self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
-                elif vk in WORKSPACE_NAMES:
-                    self.moving_in_workspaces = True
-                    self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
-
-    def on_release(self, key):
-        if key == keyboard.Key.alt:
-            with self.alt_on_lock:
-                self.alt_on = False
-            if self.moving_in_windows:
-                self.moving_in_windows = False
-                time.sleep(TIME_TO_SYNC)
-                self.window_setup()
-                return
-            if self.moving_in_workspaces:
-                self.moving_in_workspaces = False
-                time.sleep(TIME_TO_SYNC)
-                self.workspace_setup()
-                self.window_setup()
-                return
 
     def latest_window_on_ws(self):
         if not self.moving_in_windows:
@@ -329,16 +287,55 @@ class FocusWatcher:
             subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
 
     def run(self):
-        keyboard.Listener(on_press=self.on_press,
-                          on_release=self.on_release).start()
         threads = []
         threads.append(threading.Thread(target=self.launch_i3))
         threads.append(threading.Thread(target=self.launch_server, daemon=True))
         threads.append(
             threading.Thread(target=self.kb_watch_thread, daemon=True)
         )
+        threads.append(threading.Thread(target=self.listen_kb, daemon=True))
         for t in threads:
             t.start()
+
+    def listen_kb(self):
+        with keyboard.Events() as events:
+            for event in events:
+                key = event.key
+                if isinstance(event, keyboard.Events.Press):
+                    if key == keyboard.Key.alt:
+                        self.alt_on = True
+                        continue
+                    if not self.alt_on:
+                        continue
+                    if key == keyboard.Key.tab:
+                        self.workspace_back()
+                        continue
+                    try:
+                        vk = key.vk
+                    except AttributeError:
+                        pass
+                    else:
+                        if vk == 96:
+                            self.latest_window_on_ws()
+                        elif vk in WINDOW_DIRECTIONS:
+                            self.moving_in_windows = True
+                            self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
+                        elif vk in WORKSPACE_NAMES:
+                            self.moving_in_workspaces = True
+                            self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
+                elif key == keyboard.Key.alt:
+                    self.alt_on = False
+                    if self.moving_in_windows:
+                        self.moving_in_windows = False
+                        time.sleep(TIME_TO_SYNC)
+                        self.window_setup()
+                        continue
+                    if self.moving_in_workspaces:
+                        self.moving_in_workspaces = False
+                        time.sleep(TIME_TO_SYNC)
+                        self.workspace_setup()
+                        self.window_setup()
+                        continue
 
 
 if __name__ == '__main__':
