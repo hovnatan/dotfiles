@@ -15,7 +15,7 @@ sudo apt install gawk
 
 sudo apt-add-repository ppa:fish-shell/release-3
 sudo apt-get update
-sudo apt-get install fish
+sudo apt-get install -y fish
 
 wget https://github.com/junegunn/fzf-bin/releases/download/0.20.0/fzf-0.20.0-linux_amd64.tgz
 tar xf fzf-0.20.0-linux_amd64.tgz
@@ -32,3 +32,10 @@ mv rg ~/.dotfiles/bin
 
 tic -x -o $HOME/.terminfo ~/.dotfiles/.terminfo/tmux.terminfo
 tic -x -o $HOME/.terminfo ~/.dotfiles/.terminfo/termite.terminfo
+
+curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Using Debian, as root
+curl -sL https://deb.nodesource.com/setup_13.x | bash -
+sudo apt-get install -y nodejs
