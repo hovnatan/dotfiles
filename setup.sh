@@ -138,4 +138,8 @@ mkdir -p ~/Downloads
 mkdir -p ~/opt
 # for sshfs sshfs -o Compression=no,reconnect home.server.com:/ ~/home_server/ -p 22
 
-sudo gpasswd -a $USER docke
+sudo gpasswd -a $USER docker
+
+# useful for docker cmds
+# docker run -it --name=tuft -v ~/doker:/deploy/host tuft /bin/bash
+# rsync -a dir1/ dir2
