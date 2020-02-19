@@ -282,7 +282,7 @@ class FocusWatcher:
                     vk = None
                 if isinstance(event, keyboard.Events.Press):
                     # logger.debug("Pressed %s %s.", key, vk)
-                    if key == keyboard.Key.alt or vk == 65511:
+                    if key == keyboard.Key.alt:
                         self.alt_on = True
                         continue
                     if not self.alt_on:
@@ -298,7 +298,7 @@ class FocusWatcher:
                     elif vk in WORKSPACE_NAMES:
                         self.moving_in_workspaces = True
                         self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
-                elif key == keyboard.Key.alt or vk == 65511:
+                elif key == keyboard.Key.alt or vk == 65511:  # weird behavior: when Alt+Shift+Enter is released sometimes release of Alt is registered as 65511
                     # logger.debug("Released %s %s.", key, vk)
                     self.alt_on = False
                     if self.moving_in_windows:
