@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Depends on: xdotool, wmctrl
-
-FOCUSED=$(wmctrl -lp | grep $(xprop -root | grep _NET_ACTIVE_WINDOW | head -1 | awk '{print $5}' | sed 's/,//' | sed 's/^0x/0x0/'))
+ACTIVE=$(xprop -root | grep _NET_ACTIVE_WINDOW | head -1 | awk '{print $5}' | sed 's/,//')
+printf -v ACTIVE '0x%08x' "$ACTIVE"
+FOCUSED=$(wmctrl -lp | grep "$ACTIVE")
 FPID=$(echo $FOCUSED | awk '{print $3}')
 FNME=$(echo $FOCUSED | cut -f -4  -d ' ' --complement)
 if [[ "$1" == "" ]]; then
