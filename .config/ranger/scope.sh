@@ -148,30 +148,26 @@ handle_fallback() {
 }
 
 
-MIMETYPE="$( file --dereference --brief --mime-type -- "${FILE_PATH}" )"
-
-case "${MIMETYPE}" in
-  video/*)
-    MD5SUM=($(echo -n "$FILE_PATH" | md5sum | awk '{ print $1 }'))
-    WATCH_LATER_PATH="$HOME/.config/mpv/watch_later/${MD5SUM^^}"
-    if [[ -f "$WATCH_LATER_PATH" ]]; then
-      MOD_TIME=$(date -r "$WATCH_LATER_PATH" "+%m/%d/%Y %H:%M:%S")
-      echo "Last watched on $MOD_TIME."
-      LAST_POSITION=$(cat "$WATCH_LATER_PATH" | grep start)
-      echo "Position: $LAST_POSITION"
-      SUCCESS=5
-    fi
-esac
-
-# Do not show preview for larger than 10MB files
+# Do not show preview for larger than 10MB files except videos where mpv history is available
 FILE_SIZE=$(stat -c%s "$FILE_PATH")
 if [[ $FILE_SIZE -ge 10485760 ]]; then
-  if [[ -z ${SUCCESS+x} ]]; then
-    exit 1
-  else
-    exit $SUCCESS
-  fi
+  case "${FILE_EXTENSION_LOWER}" in
+      # Archive
+      mkv|avi|mp4)
+        MD5SUM=($(echo -n "$FILE_PATH" | md5sum | awk '{ print $1 }'))
+        WATCH_LATER_PATH="$HOME/.config/mpv/watch_later/${MD5SUM^^}"
+        if [[ -f "$WATCH_LATER_PATH" ]]; then
+          MOD_TIME=$(date -r "$WATCH_LATER_PATH" "+%m/%d/%Y %H:%M:%S")
+          echo "Last watched on $MOD_TIME."
+          LAST_POSITION=$(cat "$WATCH_LATER_PATH" | grep start)
+          echo "Position: $LAST_POSITION"
+          exit 5;;
+        fi
+  esac
+  exit 1
 fi
+
+MIMETYPE="$( file --dereference --brief --mime-type -- "${FILE_PATH}" )"
 
 if [[ "${PV_IMAGE_ENABLED}" == 'True' ]]; then
     handle_image "${MIMETYPE}"
