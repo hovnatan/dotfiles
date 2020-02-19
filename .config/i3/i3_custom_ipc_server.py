@@ -301,8 +301,13 @@ class FocusWatcher:
         with keyboard.Events() as events:
             for event in events:
                 key = event.key
+                try:
+                    vk = key.vk
+                except AttributeError:
+                    vk = None
                 if isinstance(event, keyboard.Events.Press):
-                    if key == keyboard.Key.alt:
+                    logger.debug("Pressed %s %s.", key, vk)
+                    if key == keyboard.Key.alt or vk == 65511:
                         self.alt_on = True
                         continue
                     if not self.alt_on:
@@ -310,10 +315,6 @@ class FocusWatcher:
                     if key == keyboard.Key.tab:
                         self.workspace_back()
                         continue
-                    try:
-                        vk = key.vk
-                    except AttributeError:
-                        pass
                     else:
                         if vk == 96:
                             self.latest_window_on_ws()
@@ -323,7 +324,8 @@ class FocusWatcher:
                         elif vk in WORKSPACE_NAMES:
                             self.moving_in_workspaces = True
                             self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
-                elif key == keyboard.Key.alt:
+                elif key == keyboard.Key.alt or vk == 65511:
+                    logger.debug("Released %s %s.", key, vk)
                     self.alt_on = False
                     if self.moving_in_windows:
                         self.moving_in_windows = False
