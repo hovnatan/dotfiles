@@ -174,7 +174,7 @@ class FocusWatcher:
         # logger.debug("hello ws %s", cws)
         # # if not cws.isdigit():
         # #     return
-        # self.current_ws = cws
+        self.current_ws = cws
         if self.moving_in_windows or self.moving_in_workspaces:
             return
         self.workspace_setup()
@@ -290,15 +290,14 @@ class FocusWatcher:
                     if key == keyboard.Key.tab:
                         self.workspace_back()
                         continue
-                    else:
-                        if vk == 96:
-                            self.latest_window_on_ws()
-                        elif vk in WINDOW_DIRECTIONS:
-                            self.moving_in_windows = True
-                            self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
-                        elif vk in WORKSPACE_NAMES:
-                            self.moving_in_workspaces = True
-                            self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
+                    if vk == 96:
+                        self.latest_window_on_ws()
+                    elif vk in WINDOW_DIRECTIONS:
+                        self.moving_in_windows = True
+                        self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
+                    elif vk in WORKSPACE_NAMES:
+                        self.moving_in_workspaces = True
+                        self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
                 elif key == keyboard.Key.alt or vk == 65511:
                     # logger.debug("Released %s %s.", key, vk)
                     self.alt_on = False
