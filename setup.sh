@@ -141,5 +141,7 @@ mkdir -p ~/opt
 sudo gpasswd -a $USER docker
 
 # useful for docker cmds
-# docker run -it --name=tuft -v ~/doker:/deploy/host tuft /bin/bash
-# rsync -a dir1/ dir2
+# docker run -it --name=tuft tuft /bin/bash
+# install sshd on docker, run server with service ssh start
+# find out IP sudo docker inspect -f "{{ .NetworkSettings.IPAddress }}" tuft
+# sshfs -o Compression=no -o Ciphers=aes128-ctr root@172.17.0.2:/deploy ~/tmp
