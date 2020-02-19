@@ -161,8 +161,9 @@ if [[ $FILE_SIZE -ge 10485760 ]]; then
           echo "Last watched on $MOD_TIME."
           LAST_POSITION=$(cat "$WATCH_LATER_PATH" | grep start)
           echo "Position: $LAST_POSITION"
-          exit 5;;
+          exit 5
         fi
+        ;;
   esac
   exit 1
 fi
