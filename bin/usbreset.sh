@@ -1,6 +1,6 @@
 #!/bin/sh
 
-$HOME/.dotfiles/bin/usbmodreset.sh
+sudo $HOME/.dotfiles/bin/usbmodreset.sh
 
 echo "Waiting for 5 seconds."
 sleep 5
