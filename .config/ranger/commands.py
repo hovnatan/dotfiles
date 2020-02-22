@@ -34,7 +34,7 @@ class autojump_select(Command):
         import subprocess
         import os.path
         fzf = self.fm.execute_command(
-            "cat ~/.local/share/autojump/autojump.txt | awk '{print $2}' |  fzf +m +s",
+            "cut -f2- ~/.local/share/autojump/autojump.txt |  fzf +m +s",
             universal_newlines=True,
             stdout=subprocess.PIPE
         )
