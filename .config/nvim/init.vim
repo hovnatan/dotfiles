@@ -412,13 +412,6 @@ inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
 
 au BufReadPost * if line("'\"") > 0|if line("'\"") <= line("$")|exe("norm '\"")|else|exe "norm $"|endif|endif
 
-if &background == "light"
- hi CocInfoSign guifg=#b57614
- hi CocWarningSign guifg=#b57614
- else
-
-endif
-
 au FileType markdown,text
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell |
