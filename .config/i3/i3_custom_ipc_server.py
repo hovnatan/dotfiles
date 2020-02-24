@@ -4,8 +4,6 @@ import os
 import time
 import sys
 import queue
-import socket
-import selectors
 import subprocess
 import threading
 import collections
@@ -18,7 +16,6 @@ from systemd.journal import JournalHandler
 import i3ipc
 from pynput import keyboard
 
-SOCKET_FILE = '/tmp/i3_focus_last'
 NUM_WORKSPACES_TO_FOLLOW = 10
 TIME_TO_SYNC = 0.1
 DEFAULT_KEYBOARD_LAYOUT = "us"
@@ -77,14 +74,6 @@ class FocusWatcher:
         self.i3.on("window::close", self.on_window_close)
         self.i3.on("workspace::focus", self.on_workspace_focus)
         self.i3.on('ipc_shutdown', self.on_shutdown)
-        self.listening_socket = socket.socket(
-            socket.AF_UNIX, socket.SOCK_STREAM
-        )
-        if os.path.exists(SOCKET_FILE):
-            os.remove(SOCKET_FILE)
-        self.listening_socket.bind(SOCKET_FILE)
-        self.listening_socket.listen(1)
-        # logger.debug("Connection to socket established.")
 
         self.w_queue = queue.SimpleQueue()
         self.ws_queue = queue.SimpleQueue()
@@ -215,63 +204,6 @@ class FocusWatcher:
         if debug:
             logger.setLevel(logging.DEBUG)
 
-    def launch_server(self):
-        logger.info("Started i3 IPC server from hovnatan.")
-        selector = selectors.DefaultSelector()
-
-        def accept(sock):
-            conn, addr = sock.accept()
-            selector.register(conn, selectors.EVENT_READ, read)
-
-        def read(conn):
-            data = conn.recv(1024)
-            # logger.debug("Received %s", data.decode())
-            if data == b'switch':
-                # with self.window_list_lock:
-                #     if DEBUG:
-                #         print("reading")
-                #     tree = self.i3.get_tree()
-                #     windows = set(w.id for w in tree.leaves())
-                #     for k, window_id in enumerate(reversed(self.window_list)):
-                #         if k == 0:
-                #             continue
-                #         if window_id not in windows:
-                #             del self.window_list[window_id]
-                #         else:
-                #             self.i3.command('[con_id=%s] focus' % window_id)
-                #             break
-                pass
-            # elif data == b'last_ws':
-            #     last_ws = '.'.join(
-            #         [str(k) for k in reversed(self.workspace_list)]
-            #     )
-            #     if last_ws:
-            #         conn.send(last_ws.encode())
-            #     else:
-            #         conn.send("nws".encode())
-            elif data == b'debug':
-                with self.window_list_lock:
-                    all_winds = str(self.window_list)
-                with self.workspace_list_lock:
-                    all_ws = str(self.workspace_list)
-                conn.send((all_winds + " " + all_ws).encode())
-            elif data == b'set_debug':
-                self.set_debug(True)
-                conn.send("debug flag set".encode())
-            elif not data:
-                # logger.debug("Closing connection.")
-                selector.unregister(conn)
-                conn.close()
-            else:
-                conn.send("Unrecognized command.".encode())
-
-        selector.register(self.listening_socket, selectors.EVENT_READ, accept)
-
-        while True:
-            for key, event in selector.select():
-                callback = key.data
-                callback(key.fileobj)
-
     def listen_kb_events(self):
         with keyboard.Events() as events:
             for event in events:
@@ -330,7 +262,6 @@ class FocusWatcher:
     def run(self):
         threads = []
         threads.append(threading.Thread(target=self.launch_i3))
-        threads.append(threading.Thread(target=self.launch_server, daemon=True))
         threads.append(
             threading.Thread(target=self.kb_watch_thread, daemon=True)
         )
