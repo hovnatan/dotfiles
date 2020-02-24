@@ -182,3 +182,5 @@ ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 # env FC_DEBUG=4 pango-view --font=monospace -t xyz | grep famil
 
 # for chromecast from chromium enable chrome://flags/#load-media-router-component-extension
+
+# for sshfs sshfs -o Compression=no,reconnect home.server.com:/ ~/home_server/ -p 22
