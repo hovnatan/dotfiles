@@ -2,7 +2,7 @@
 
 sudo apt-get update
 
-sudo apt install -y jq tmux python3-neovim
+sudo apt-get install -y software-properties-common jq tmux python3-neovim
 
 # wget https://github.com/neovim/neovim/releases/download/v0.4.3/nvim.appimage
 # mv nvim.appimage ~/.dotfiles/bin/nvim
@@ -10,12 +10,12 @@ sudo apt install -y jq tmux python3-neovim
 
 sudo add-apt-repository ppa:neovim-ppa/unstable
 sudo apt-get update
-sudo apt install -y neovim
+sudo apt-get install -y neovim
 
 wget https://github.com/sharkdp/fd/releases/download/v7.4.0/fd-musl_7.4.0_amd64.deb
 sudo dpkg -i fd-musl_7.4.0_amd64.deb
 
-sudo apt install gawk
+sudo apt-get install gawk
 
 sudo apt-add-repository ppa:fish-shell/release-3
 sudo apt-get update
@@ -42,8 +42,8 @@ sudo apt-get install -y nodejs
 
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-sudo apt update
-sudo apt install -y yarn
+sudo apt-get update
+sudo apt-get install -y yarn
 
-sudo apt install python3-pip
+sudo apt-get install python3-pip
 pip install pylint yapf jedi
