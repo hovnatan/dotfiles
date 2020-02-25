@@ -1,0 +1,10 @@
+xkb_keymap {
+        xkb_keycodes  { include "evdev+aliases(qwerty)" };
+        xkb_types     { include "complete"      };
+        xkb_compat    { include "complete"      };
+        xkb_symbols "my" {
+          include "pc+us+am(phonetic-alt):2+inet(evdev)+ctrl(nocaps)"
+          key <RALT> { [ ISO_First_Group, ISO_Last_Group ] };
+        };
+        xkb_geometry  { include "pc(pc105)"     };
+};
