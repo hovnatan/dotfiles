@@ -34,3 +34,9 @@ close = ctrl+space
 close_all = ctrl+shift+space
 history = ctrl+grave
 context = ctrl+shift+period
+
+[lunch]
+body = "*Book lunch*"
+timeout = 0
+urgency = critical
+
