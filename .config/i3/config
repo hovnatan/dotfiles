@@ -221,7 +221,7 @@ exec_always --no-startup-id libinput-gestures
 exec_always --no-startup-id ~/.config/i3/i3_custom_ipc_server.py
 exec --no-startup-id nm-applet --sm-disable
 exec --no-startup-id blueman-applet
-bindsym $mod+space exec --no-startup-id xkb-switch -n
+# bindsym $mod+space exec --no-startup-id xkb-switch -n
 
 exec --no-startup-id workrave
 for_window [class="Workrave"] floating enable
