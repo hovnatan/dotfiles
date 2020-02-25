@@ -9,3 +9,7 @@ rofi.separator-style:       none
 rofi.hide-scrollbar:        true
 rofi.line-margin:           0
 rofi.case-sensitive:        false
+rofi.kb-accept-entry:       Control+m,Return,KP_Enter
+rofi.kb-remove-to-eol:
+rofi.kb-row-up:             Up,Control+k,Shift+Tab,Shift+ISO_Left_Tab
+rofi.kb-row-down:           Down,Control+j
