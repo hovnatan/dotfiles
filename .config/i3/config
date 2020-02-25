@@ -251,10 +251,6 @@ bindcode Mod4+33 exec --no-startup-id monitor_setup.sh
 bindcode $mod+Shift+20 move scratchpad
 bindcode $mod+20 scratchpad show, resize set 1280 720, move position center
 
-bindcode $mod+58 exec --no-startup-id i3-input -F 'mark %s' -l 1 -P 'Mark: '
-bindcode $mod+42 exec --no-startup-id i3-input -F '[con_mark="%s"] focus' -l 1 -P 'Goto: '
-show_marks yes
-
 workspace_auto_back_and_forth yes
 
 exec --no-startup-id clipster -d
@@ -277,6 +273,7 @@ bindcode Mod4+Shift+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
 bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
 bindcode Mod1+25 exec ~/.dotfiles/bin/run_or_show.sh web.whatsapp.com "dex ~/.local/share/applications/chrome-whatsapp.desktop"
 bindcode Mod1+39 exec ~/.dotfiles/bin/run_or_show.sh superannotate.slack.com "dex ~/.local/share/applications/chrome-slack.desktop"
+bindcode Mod1+28 exec ~/.dotfiles/bin/run_or_show.sh listen.tidal.com "dex ~/.local/share/applications/chrome-tidal.desktop"
 bindcode Mod4+58 exec dex ~/.local/share/applications/chrome-fbmessenger.desktop
 bindcode Mod4+29 exec dex ~/.local/share/applications/chrome-youtube.desktop
 bindcode Mod4+42 exec dex ~/.local/share/applications/chrome-gitter.desktop
