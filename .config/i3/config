@@ -268,7 +268,7 @@ focus_follows_mouse no
 bindcode Mod4+52 exec zathura_recent.sh
 bindcode Mod4+Mod1+52 exec zathura_duplicate.sh
 bindcode Mod1+Shift+52 exec --no-startup-id zathura_load.sh
-bindcode Mod4+Shift+52 exec --no-startup-id zathura_save.sh last add_hname
+bindcode Mod4+Shift+52 exec --no-startup-id zathura_save.sh "" "" from_curr_ws
 bindcode Mod4+Shift+54 exec dex ~/.local/share/applications/chrome-wtab.desktop
 bindcode Mod4+54 exec dex ~/.local/share/applications/chrome-wotab.desktop
 bindcode Mod1+25 exec ~/.dotfiles/bin/run_or_show.sh web.whatsapp.com "dex ~/.local/share/applications/chrome-whatsapp.desktop"
@@ -286,7 +286,7 @@ exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
 exec --no-startup-id udiskie --no-automount --tray
 exec --no-startup-id dex /usr/share/applications/org.keepassxc.KeePassXC.desktop
 
-set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown
+set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown (z) zathura_save
 mode "$mode_system" {
     bindsym l exec --no-startup-id zathura_save.sh last add_hname && ~/.dotfiles/lock-xss.sh lock, mode "default"
     bindsym $mod+Escape exec --no-startup-id zathura_save.sh last add_hname && ~/.dotfiles/lock-xss.sh lock, mode "default"
@@ -295,6 +295,7 @@ mode "$mode_system" {
     bindsym h exec --no-startup-id zathura_save.sh last add_hname && systemctl hibernate, mode "default"
     bindsym r exec --no-startup-id zathura_save.sh last add_hname && systemctl reboot, mode "default"
     bindsym Shift+s exec --no-startup-id zathura_save.sh last add_hname && systemctl poweroff -i, mode "default"
+    bindsym z exec --no-startup-id zathura_save.sh last add_hname, mode "default"
 
     # back to normal: Enter or Escape
     bindsym Return mode "default"

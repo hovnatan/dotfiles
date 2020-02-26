@@ -1,8 +1,13 @@
-import i3ipc
-import sh
 import re
+import sys
+
+import sh
+
+import i3ipc
 
 PATTERN = re.compile(r'"([^"]*)"')
+
+workspace_to_use = sys.argv[1]
 
 i3 = i3ipc.Connection()
 
@@ -22,4 +27,5 @@ for con in i3.get_tree():
                 m = re.findall(PATTERN, line)
                 name = m[0]
         workspace = con.workspace().name
-        print(f"{pid}:{workspace}:{name}")
+        if workspace_to_use in ("", workspace):
+            print(f"{pid}:{workspace}:{name}")

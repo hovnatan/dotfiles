@@ -1,6 +1,13 @@
 #!/bin/bash
 
-PIDS_WS_NAME=$(python ~/.dotfiles/bin/zathura_get_windows.py)
+CURRENT_WORKSPACE=""
+if [[ "$3" != "" ]]; then
+  CURRENT_WORKSPACE=$(i3-msg -t get_workspaces \
+  | jq '.[] | select(.focused==true).name' \
+  | cut -d"\"" -f2)
+fi
+
+PIDS_WS_NAME=$(python ~/.dotfiles/bin/zathura_get_windows.py "$CURRENT_WORKSPACE")
 if [ "$PIDS_WS_NAME" == "" ]; then
   exit 0
 fi
@@ -25,57 +32,52 @@ else
 fi
 OUTPUT_FILE="$OUTPUT_DIR/$OUTPUT_FILE"
 
-WSS=()
+OUTPUT_FILE_NAMES=()
 IFS=:
 while read line
 do
   read PID WS NAME <<< "$line"
-  if [[ " ${WSS[@]} " =~ " ${WS} " ]]; then
-    continue
+  if [[ "$1" == "last" ]]; then
+    OUTPUT_FILE_NAME="${OUTPUT_FILE}_$WS"
+  else
+    OUTPUT_FILE_NAME="${OUTPUT_FILE}"
   fi
-  WSS+=( "$WS" )
-  OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
-  rm -f "$OUTPUT_FILE_WS"
-  touch "$OUTPUT_FILE_WS"
-done <<< "$PIDS_WS_NAME"
-
-while read line
-do
-  read PID WS NAME <<< "$line"
-  OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
+  if [[ ! " ${OUTPUT_FILE_NAMES[@]} " =~ " ${OUTPUT_FILE_NAME} " ]]; then
+    OUTPUT_FILE_NAMES+=( "$OUTPUT_FILE_NAME" )
+    rm -f "$OUTPUT_FILE_NAME"
+    touch "$OUTPUT_FILE_NAME"
+  fi
 
   filename=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
     org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:filename | grep -oP ".*variant.*string\s+\"\K(.*)(?=\")")
   pagenumber=$(dbus-send --print-reply --type=method_call --dest=org.pwmt.zathura.PID-$PID /org/pwmt/zathura \
     org.freedesktop.DBus.Properties.Get string:org.pwmt.zathura string:pagenumber | grep -oP ".*variant.*uint32\s+\K(.*)")
   printf -v OUTPUT_PAGENUMBER "%05d" $pagenumber
-  echo "$filename:$OUTPUT_PAGENUMBER:$WS:$NAME" >> "$OUTPUT_FILE_WS"
+  echo "$filename:$OUTPUT_PAGENUMBER:$WS:$NAME" >> "$OUTPUT_FILE_NAME"
 done <<< "$PIDS_WS_NAME"
 
-for WS in "${WSS[@]}"; do
-  OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
-  sort -o "$OUTPUT_FILE_WS" "$OUTPUT_FILE_WS"
+for OUTPUT_FILE_NAME in "${OUTPUT_FILE_NAMES[@]}"; do
+  sort -o "$OUTPUT_FILE_NAME" "$OUTPUT_FILE_NAME"
 done
 
-COUNT_TO_SYNC=${#WSS[@]}
-SYNCED_WS=()
+COUNT_TO_SYNC=${#OUTPUT_FILE_NAMES[@]}
+SYNCED_FILES=()
 i=0
-while [ ${#SYNCED_WS[@]} != $COUNT_TO_SYNC ] && [ $i -lt 30 ] ; do
+while [ ${#SYNCED_FILES[@]} != $COUNT_TO_SYNC ] && [ $i -lt 30 ] ; do
   sleep 0.5
-  for WS in "${WSS[@]}"; do
-    if [[ " ${SYNCED_WS[@]} " =~ " ${WS} " ]]; then
+  for OUTPUT_FILE_NAME in "${OUTPUT_FILE_NAMES[@]}"; do
+    if [[ " ${SYNCED_FILES[@]} " =~ " ${OUTPUT_FILE_NAMES} " ]]; then
       continue
     fi
-    OUTPUT_FILE_WS="${OUTPUT_FILE}_$WS"
-    STATUS=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$OUTPUT_FILE_WS" | grep -- "up to date")
+    STATUS=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$OUTPUT_FILE_NAME" | grep -- "up to date")
     if [ "$STATUS" != "" ]; then
-      SYNCED_WS+=( "$WS" )
+      SYNCED_FILES+=( "$OUTPUT_FILE_NAME" )
     fi
   done
   ((i=i+1))
 done
 
-if [ ${#SYNCED_WS[@]} != $COUNT_TO_SYNC ]; then
+if [ ${#SYNCED_FILES[@]} != $COUNT_TO_SYNC ]; then
   dunstify -t 5000 -u c "Couldn't Dropbox sync zathura file at $OUTPUT_FILE."
 else
   dunstify -t 5000 "Dropbox synced zathura file at $OUTPUT_FILE."
