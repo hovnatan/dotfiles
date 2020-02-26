@@ -4,13 +4,17 @@ INPUT_DIR="$HOME/Dropbox/scripts/zathura/saves"
 if [[ "$1" == "" || "$1" == "load_from_rofi" ]]; then
   FILES=""
   FILEPATHS=()
-  for FILENAME in "$INPUT_DIR"/*; do
-    FILEPATHS+=( "$FILENAME" )
-    MOD_TIME=$(date -r "$FILENAME" "+%m/%d/%Y %H:%M:%S")
-    FBASE=$(basename "$FILENAME")
-    printf -v TEXT "%-35s%37s" "$FBASE" "$MOD_TIME"
+  FILENAMES=$()
+
+  while IFS= read -r FILENAME
+  do
+    FILEPATH="$INPUT_DIR/$FILENAME"
+    FILEPATHS+=( "$FILEPATH" )
+    MOD_TIME=$(date -r "$FILEPATH" "+%m/%d/%Y %H:%M:%S")
+    printf -v TEXT "%-35s%37s" "$FILENAME" "$MOD_TIME"
     FILES="$FILES|$TEXT"
-  done
+  done <<< $(/usr/bin/ls -1t --color=no "$INPUT_DIR")
+
   FILES="${FILES:1}"
   INDEX=$(echo "$FILES" | rofi -width -75 -sep '|' -dmenu -p "Load filename > " -format i)
   if [[ $INDEX != "" ]]; then
