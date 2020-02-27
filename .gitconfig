@@ -17,6 +17,7 @@
   cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
 [core]
   editor = 'nvim'
+	hooksPath = .githooks
 [filter "gitignoredebugsaveimage"]
   #clean = "sed '/DebugSaveImage/{/noignore/!d}'"
 	#smudge = cat
