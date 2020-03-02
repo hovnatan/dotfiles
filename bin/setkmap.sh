@@ -6,4 +6,5 @@ setxkbmap -layout "us,am" -variant ",phonetic-alt" -option "grp:alt_space_toggle
 
 sleep 5
 
+pkill -9 xcape
 xcape -e "Control_L=Escape"
