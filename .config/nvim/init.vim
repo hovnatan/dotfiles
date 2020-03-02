@@ -355,6 +355,8 @@ nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
 nnoremap <silent> <space>h  :<C-u>CocList --no-sort mru<cr>
 nnoremap <silent> <space>b  :<C-u>CocList buffers<cr>
 nnoremap <silent> <space>f  :<C-u>CocList gfiles<cr>
+nnoremap <silent> <space>gp :<C-u>CocList commits<cr>
+nnoremap <silent> <space>gb :<C-u>CocList bcommits<cr>
 nnoremap <silent> <space>d  :<C-u>CocList files<cr>
 nnoremap <silent> <space>l  :<C-u>CocList <cr>
 nnoremap <silent> <space>m  :<C-u>CocList marks<cr>
