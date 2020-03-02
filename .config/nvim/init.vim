@@ -198,7 +198,7 @@ nnoremap <leader>gp :Gpush<CR>
 
 nnoremap <Esc><Esc> :<C-u>let v:hlsearch=!v:hlsearch<CR>
 
-let g:coc_global_extensions = [ 'coc-emoji', 'coc-python',
+let g:coc_global_extensions = [ 'coc-python',
       \ 'coc-json', 'coc-word',
       \ 'coc-vimtex', 'coc-highlight', 'coc-lists',
       \ 'coc-git', 'coc-css', 'coc-html', 'coc-tsserver'
