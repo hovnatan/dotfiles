@@ -269,7 +269,7 @@ floating_maximum_size 1280 x 720
 
 focus_follows_mouse no
 
-bindcode Mod4+53 exec ~/.dotfiles/bin/show_hide_tray.sh
+# bindcode Mod4+53 exec ~/.dotfiles/bin/show_hide_tray.sh
 bindcode Mod4+52 exec zathura_recent.sh
 bindcode Mod4+Mod1+52 exec zathura_duplicate.sh
 bindcode Mod1+Shift+52 exec --no-startup-id zathura_load.sh
