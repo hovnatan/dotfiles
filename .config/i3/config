@@ -156,8 +156,11 @@ set_from_resource $base0F i3wm.base0F
 
 # Basic bar configuration using the Base16 variables.
 bar {
+    mode hide
+    hidden_state hide
+    modifier Mod4
     position top
-    tray_output none
+    # tray_output none
 
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     font pango:sans-serif 11
@@ -240,6 +243,7 @@ for_window [instance="scrpad"] move scratchpad
 bindcode Mod1+55 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_pavucontrol.sh
 for_window [class="Pavucontrol"] move scratchpad
 for_window [title="Workrave"] move scratchpad
+for_window [class="KeePassXC"] move scratchpad
 
 bindcode Mod4+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh ipython ipython-scrpad
 
