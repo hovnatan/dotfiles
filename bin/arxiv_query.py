@@ -1,10 +1,14 @@
 #!/usr/bin/python3
 
 import json
+import re
 import sys
 from pathlib import Path
 
 import arxiv
+import unidecode
+
+ALPHA_NUM = re.compile(r'[\s]+')
 
 for filepath in sys.argv[1:]:
     print(f"Processing {filepath}.")
@@ -31,9 +35,14 @@ for filepath in sys.argv[1:]:
 
     if filepath.name not in folder_metadata:
         folder_metadata[filepath.name] = {
-            "title": result["title"],
-            "author": ", ".join(result["authors"]),
-            "year": published_date
+            "title":
+                ALPHA_NUM.sub(' ', unidecode.unidecode(result["title"])),
+            "author":
+                ALPHA_NUM.sub(
+                    ' ', unidecode.unidecode(", ".join(result["authors"]))
+                ),
+            "year":
+                published_date
         }
         json.dump(
             folder_metadata, open(metadata_path, "w"), indent=2, sort_keys=True
