@@ -22,7 +22,7 @@ pip3 install --user pysnooper neovim-remote arxiv
 sudo systemctl enable ntpd.service
 sudo systemctl enable NetworkManager.service
 sudo systemctl enable bluetooth
-sudo systemctl enable docker.service
+# sudo systemctl enable docker.service
 systemctl --user enable pulseaudio
 
 git clone https://aur.archlinux.org/yay.git
