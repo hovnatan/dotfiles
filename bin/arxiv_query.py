@@ -17,6 +17,15 @@ for filepath in sys.argv[1:]:
         print("Not a PDF.")
         continue
 
+    metadata_path = filepath.parent / ".metadata.json"
+    if metadata_path.exists():
+        folder_metadata = json.load(open(metadata_path))
+    else:
+        folder_metadata = {}
+    filename = filepath.name
+    if filename in folder_metadata:
+        continue
+
     result = arxiv.query(id_list=[filepath.stem])
     if not result:
         print("Couldn't query.")
@@ -26,24 +35,16 @@ for filepath in sys.argv[1:]:
     published_date = result['published'].split('-')[0]
     # print(result['title'], result['authors'], published_date)
 
-    metadata_path = filepath.parent / ".metadata.json"
-
-    if metadata_path.exists():
-        folder_metadata = json.load(open(metadata_path))
-    else:
-        folder_metadata = {}
-
-    if filepath.name not in folder_metadata:
-        folder_metadata[filepath.name] = {
-            "title":
-                ALPHA_NUM.sub(' ', unidecode.unidecode(result["title"])),
-            "author":
-                ALPHA_NUM.sub(
-                    ' ', unidecode.unidecode(", ".join(result["authors"]))
-                ),
-            "year":
-                published_date
-        }
-        json.dump(
-            folder_metadata, open(metadata_path, "w"), indent=2, sort_keys=True
-        )
+    folder_metadata[filename] = {
+        "title":
+            ALPHA_NUM.sub(' ', unidecode.unidecode(result["title"])),
+        "author":
+            ALPHA_NUM.sub(
+                ' ', unidecode.unidecode(", ".join(result["authors"]))
+            ),
+        "year":
+            published_date
+    }
+    json.dump(
+        folder_metadata, open(metadata_path, "w"), indent=2, sort_keys=True
+    )
