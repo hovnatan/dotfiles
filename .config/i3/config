@@ -234,7 +234,8 @@ exec --no-startup-id dunst
 bindcode Mod1+57 exec --no-startup-id dunstify -t 1000 "Notifications off" && sleep 1 && killall -SIGUSR1 dunst
 bindcode Mod1+Shift+57 exec --no-startup-id killall -SIGUSR2 dunst && dunstify -t 1000 "Notifications on"
 bindcode $mod+Shift+61 exec --no-startup-id ~/.dotfiles/bin/set_w_name.sh
-bindcode $mod+61 exec --no-startup-id rofi -show windowcd
+bindcode Mod1+61 exec --no-startup-id rofi -show window
+bindcode Mod4+61 exec --no-startup-id rofi -show windowcd
 
 bindcode Mod1+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "tmux new-session" t-scrpad
 
