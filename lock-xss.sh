@@ -33,7 +33,10 @@ xkb-switch -s us
 if [ "$1" == "" ]; then
   zathura_save.sh last add_hname &
 fi
-dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetUsageMode string:normal
+
+if pkill -xu $EUID -0 workrave; then
+  dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetUsageMode string:normal
+fi
 
 kill_i3lock() {
     pkill -xu $EUID "$@" i3lock
@@ -44,7 +47,9 @@ on_exit() {
     kill $(jobs -p)
     xinput --enable $DEVICE_TO_DISABLE
     xset -dpms
-    dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetUsageMode string:reading
+    if pkill -xu $EUID -0 workrave; then
+      dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetUsageMode string:reading
+    fi
     rm "$LOCK_FILE"
 }
 
