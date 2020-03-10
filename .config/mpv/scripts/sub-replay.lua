@@ -4,7 +4,7 @@
 -- Status:
 --    Experimental.
 
-TIME_SHIFT=5
+TIME_SHIFT=3
 
 function replay_previous_seconds(flag)
   if flag == true
@@ -12,7 +12,7 @@ function replay_previous_seconds(flag)
     mp.set_property("sub-visibility", "yes")
     hide_timer = mp.add_timeout(TIME_SHIFT, replay_finished)
   end
-  mp.commandv("seek", -TIME_SHIFT, "relative")
+  mp.commandv("seek", -TIME_SHIFT, "relative+exact")
 end
 
 function replay_previous_seconds_with_subtitles()
@@ -26,7 +26,7 @@ end
 
 function init()
     mp.add_key_binding("a", "replay-previous-sentence", replay_previous_seconds)
-    mp.add_key_binding("A", "replay-previous-sentence-with-subtitles", replay_previous_seconds_with_subtitles)
+    mp.add_key_binding("s", "replay-previous-sentence-with-subtitles", replay_previous_seconds_with_subtitles)
 end
 
 mp.register_event("file-loaded", init)
