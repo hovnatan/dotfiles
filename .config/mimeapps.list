@@ -1,0 +1,14 @@
+[Default Applications]
+video/x-m4v=mpv.desktop
+video/x-matroska=mpv.desktop
+video/x-msvideo=mpv.desktop
+image/tiff=feh.desktop
+image/jpeg=feh.desktop
+application/pdf=org.pwmt.zathura.desktop
+x-scheme-handler/mailto=google-chrome.desktop
+x-scheme-handler/webcal=google-chrome.desktop
+text/html=google-chrome.desktop
+x-scheme-handler/http=google-chrome.desktop
+x-scheme-handler/https=google-chrome.desktop
+x-scheme-handler/about=google-chrome.desktop
+x-scheme-handler/unknown=google-chrome.desktop

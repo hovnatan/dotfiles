@@ -32,7 +32,6 @@ chsh -s `which fish`
 rm -rf ~/.config/mpv
 ln -s ~/.dotfiles/.config/mpv ~/.config/mpv
 wget https://raw.githubusercontent.com/vayan/autosub-mpv/master/autosub.lua -P ~/.config/mpv/scripts/
-xdg-mime default mpv.desktop 'video/x-m4v' 'video/x-matroska' 'video/x-msvideo'
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
@@ -48,14 +47,12 @@ ln -s ~/.dotfiles/.config/htoprc ~/.config/htop/htoprc
 
 rm -rf ~/.config/feh
 ln -s ~/.dotfiles/.config/feh ~/.config/feh
-xdg-mime default feh.desktop 'image/tiff' 'image/jpeg' 'image/png'
 
 rm -rf ~/.config/i3
 ln -s ~/.dotfiles/.config/i3 ~/.config/i3
 rm -rf ~/.config/i3blocks
 ln -s ~/.dotfiles/.config/i3blocks/ ~/.config/i3blocks
 
-xdg-mime default org.pwmt.zathura.desktop 'application/pdf'
 
 
 rm -rf ~/.config/termite/
@@ -174,6 +171,8 @@ ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
 # less /proc/asound/card0/pcm0p/sub0/hw_params
 
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
+
+ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
 
 #for running iso executables with root uncomment allow_other in /etc/fuse.conf then run e.g.,
 # fuseiso xxx.iso ~/iso -o allow_other
