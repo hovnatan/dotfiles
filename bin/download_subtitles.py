@@ -1,4 +1,4 @@
-#/usr/bin/python3
+#!/usr/bin/python3
 
 import sys
 import json
@@ -18,7 +18,7 @@ file_path = Path(sys.argv[1])
 file_name = file_path.name
 file_dir = file_path.parent
 
-output_dir = file_dir / 'downloaded_subs'
+output_dir = file_dir / 'downloaded_subtitles'
 output_dir.mkdir(exist_ok=True, parents=True)
 
 f = File(file_path)
@@ -35,7 +35,7 @@ data = ost.search_subtitles(
 
 for i, sub in enumerate(data):
     id_subtitle_file = sub.get('IDSubtitleFile')
-    sub_file = file_path.stem + "_" + str(i) + ".str"
+    sub_file = file_path.stem + "_" + str(i) + ".srt"
 
     ost.download_subtitles(
         [id_subtitle_file],
