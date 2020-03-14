@@ -17,7 +17,7 @@ sudo pacman -Sy ttf-croscore ttf-font-awesome awesome-terminal-fonts # noto-font
 # latex language server
 sudo luarocks install --server=http://luarocks.org/dev digestif
 
-pip3 install --user pysnooper neovim-remote arxiv
+pip3 install --user pysnooper neovim-remote arxiv python-opensubtitles
 
 sudo systemctl enable ntpd.service
 sudo systemctl enable NetworkManager.service
