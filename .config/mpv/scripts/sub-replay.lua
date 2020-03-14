@@ -10,7 +10,14 @@ function replay_previous_seconds(flag)
   if flag == true
   then
     mp.set_property("sub-visibility", "yes")
-    hide_timer = mp.add_timeout(TIME_SHIFT, replay_finished)
+    START = mp.get_next_timeout()
+    if START == nil then
+      START = 0
+    end
+    if hide_timer ~= nil then
+      hide_timer:kill()
+    end
+    hide_timer = mp.add_timeout(START+TIME_SHIFT, replay_finished)
   end
   mp.commandv("seek", -TIME_SHIFT, "relative+exact")
 end
