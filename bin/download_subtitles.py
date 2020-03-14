@@ -1,3 +1,5 @@
+#/usr/bin/python3
+
 import sys
 import json
 from pathlib import Path
@@ -33,11 +35,13 @@ data = ost.search_subtitles(
 
 for i, sub in enumerate(data):
     id_subtitle_file = sub.get('IDSubtitleFile')
+    sub_file = file_path.stem + "_" + str(i) + ".str"
 
     ost.download_subtitles(
         [id_subtitle_file],
         override_filenames={
-            id_subtitle_file: file_path.stem + "_" + str(i) + ".str"
+            id_subtitle_file: sub_file,
         },
         output_directory=output_dir,
     )
+    print(output_dir / sub_file)
