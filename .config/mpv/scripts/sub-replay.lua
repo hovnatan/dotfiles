@@ -4,7 +4,7 @@
 -- Status:
 --    Experimental.
 
-TIME_SHIFT=3
+TIME_SHIFT=5
 
 function replay_previous_seconds(flag)
   if flag == true
