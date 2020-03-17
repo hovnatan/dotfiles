@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 sudo pacman -Ry linux acpi_call
 
 sudo pacman -Sy linux-lts acpi_call-lts

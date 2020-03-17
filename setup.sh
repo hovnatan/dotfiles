@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 cd ~
 
 rm -rf ~/.tmux.conf
@@ -31,7 +33,6 @@ chsh -s `which fish`
 
 rm -rf ~/.config/mpv
 ln -s ~/.dotfiles/.config/mpv ~/.config/mpv
-wget https://raw.githubusercontent.com/vayan/autosub-mpv/master/autosub.lua -P ~/.config/mpv/scripts/
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
