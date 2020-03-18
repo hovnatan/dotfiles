@@ -177,6 +177,9 @@ ln -s ~/.dotfiles/.config/yay ~/.config/yay
 rm -rf ~/.config/zathura
 ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
 
+rm -rf ~/.config/kitty
+ln -s ~/.dotfiles/.config/kitty ~/.config/kitty
+
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
