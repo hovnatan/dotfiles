@@ -174,6 +174,9 @@ ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
 rm -rf ~/.config/yay
 ln -s ~/.dotfiles/.config/yay ~/.config/yay
 
+rm -rf ~/.config/zathura
+ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
+
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
