@@ -52,12 +52,12 @@ ln -s ~/.dotfiles/.config/feh ~/.config/feh
 rm -rf ~/.config/i3
 ln -s ~/.dotfiles/.config/i3 ~/.config/i3
 rm -rf ~/.config/i3blocks
-ln -s ~/.dotfiles/.config/i3blocks/ ~/.config/i3blocks
+ln -s ~/.dotfiles/.config/i3blocks ~/.config/
 
 
 
 rm -rf ~/.config/termite/
-ln -s ~/.dotfiles/.config/termite ~/.config/termite
+ln -s ~/.dotfiles/.config/termite ~/.config/
 # mkdir ~/.terminfo
 # cd ~/.terminfo
 # wget https://raw.githubusercontent.com/thestinger/termite/master/termite.terminfo
@@ -110,7 +110,7 @@ chmod 600 ~/.ssh/authorized_keys
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
-ln -sf ~/.dotfiles/.config/qt5ct ~/.config/qt5ct
+ln -sf ~/.dotfiles/.config/qt5ct ~/.config/
 
 #cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf
 sudo gpasswd -a $USER lp
@@ -144,7 +144,7 @@ git update-index --assume-unchanged .workrave/workrave.ini
 ln -s ~/.dotfiles/.xbindkeysrc ~/
 
 rm -rf ~/.config/ranger
-ln -s ~/.dotfiles/.config/ranger/ ~/.config/ranger
+ln -s ~/.dotfiles/.config/ranger ~/.config/
 mkdir -p ~/.local/share/ranger
 ln -s ~/Dropbox/scripts/ranger/bookmarks ~/.local/share/ranger/
 
