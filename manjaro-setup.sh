@@ -27,8 +27,9 @@ git clone https://github.com/hovnatan/i3-volume.git
 
 yay -S --needed skype zoom dropbox
 yay -S --needed google-chrome freeoffice
-yay -S --needed manjaro-firmware i3ipc-python-git libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete ripgrep-all python-snakeviz vte3-ng
-yay -S --needed dragon-drag-and-drop-git ptags xkb-switch-git flacon mpv-mpris-git playerctl-git ranger-git autojump python-pynput fd
+yay -S --needed manjaro-firmware i3ipc-python-git libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete python-snakeviz vte3-ng
+yay -S --needed dragon-drag-and-drop-git xkb-switch-git flacon mpv-mpris-git playerctl-git ranger-git autojump python-pynput fd
+# yay -S --needed ptags ripgrep-all
 # sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 # hibernate

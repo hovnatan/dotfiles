@@ -95,7 +95,7 @@ ln -s ~/.dotfiles/.config/dunst/dunstrc  ~/.config/dunst/dunstrc
 
 ln -s ~/.dotfiles/.config/libinput-gestures.conf ~/.config
 
-ln -sf ~/.dotfiles/.config/clipster/ ~/.config/
+ln -sf ~/.dotfiles/.config/clipster ~/.config/
 ln -sf ~/.dotfiles/.xinitrc  ~/.xinitrc
 
 cd ~
@@ -110,7 +110,7 @@ chmod 600 ~/.ssh/authorized_keys
 cd ~/.dotfiles
 git remote set-url origin git@github.com:hovnatan/dotfiles.git
 
-ln -sf ~/.dotfiles/.config/qt5ct/ ~/.config/qt5ct
+ln -sf ~/.dotfiles/.config/qt5ct ~/.config/qt5ct
 
 #cp ~/.dotfiles/90-touchpad.conf /etc/X11/xorg.conf.d/90-touchpad.conf
 sudo gpasswd -a $USER lp
@@ -170,6 +170,9 @@ mkdir -p ~/.config/pulse
 ln -s ~/.dotfiles/.config/pulse/daemon.conf ~/.config/pulse/
 ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
 # less /proc/asound/card0/pcm0p/sub0/hw_params
+
+rm -rf ~/.config/yay
+ln -s ~/.dotfiles/.config/yay ~/.config/yay
 
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
