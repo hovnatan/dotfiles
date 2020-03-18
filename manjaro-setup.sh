@@ -48,7 +48,7 @@ yay -S --needed dragon-drag-and-drop-git xkb-switch-git flacon mpv-mpris-git pla
 # sudo grub-mkconfig -o /boot/grub/grub.cfg
 # sudo nvim /etc/systemd/sleep.conf
 # AllowSuspendThenHibernate=yes
-# HibernateDelaySec=1800
+# HibernateDelaySec=7200
 # sudo nvim /etc/systemd/logind.conf
 # HandleLidSwitch=suspend-then-hibernate
 
