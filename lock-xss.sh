@@ -12,6 +12,10 @@ if [[ -f "$LOCK_FILE" ]] ; then
   fi
   exit
 fi
+
+# find all sshfs
+# ps -eo args | grep dhcpcd | head -n -1
+
 echo $$ > "$LOCK_FILE"
 
 TMPBG="/tmp/screen-$USER.png"
