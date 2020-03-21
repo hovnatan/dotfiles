@@ -63,6 +63,7 @@ trap on_exit TERM INT EXIT
 # wait for it to exit. The waiting is not that straightforward when the locker
 # forks, so we use this polling only if we have a sleep lock to deal with.
 if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
+    killall -9 sshfs
     # we have to make sure the locker does not inherit a copy of the lock fd
     eval "i3lock $i3lock_options" {XSS_SLEEP_LOCK_FD}<&-
 
