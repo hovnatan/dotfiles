@@ -82,8 +82,9 @@ sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 # sudo sh -c 'rankmirrors -n 6 /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist'
 
 # yay -S linux-clear-bin intel-ucode-clear
+# sudo mkdir -p /opt/bin
+# sudo cp -p ~/.dotfiles/opt/bin/disable_wake_on_usb.sh /opt/bin/
 # sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
-# sudo cp ~/.dotfiles/bin/disable_wake_on_usb.sh /usr/bin/
 # sudo systemctl enable disable-USB-wakeup.service
 # sudo cp ~/.dotfiles/etc/systemd/system/usb-reset.service /etc/systemd/system/
 # sudo cp ~/.dotfiles/bin/usbmodreset.sh /usr/bin/
