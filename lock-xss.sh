@@ -32,10 +32,18 @@ i3lock_options="-i $TMPBG --insidevercolor=$C --ringvercolor=$V --insidewrongcol
 DEVICE_TO_DISABLE=$(xinput --list | sed -rn 's/.*Mouse.*Mouse.*id=([0-9]+).*/\1/p')
 xinput --disable $DEVICE_TO_DISABLE
 scrot -o $TMPBG && convert $TMPBG -scale 5% -scale 2000% $TMPBG
-~/.dotfiles/check-i3lock.sh &
+if [[ "$XSS_SLEEP_LOCK_FD" != "" ]]; then
+  ~/.dotfiles/check-i3lock.sh {XSS_SLEEP_LOCK_FD}<&- &
+else
+  ~/.dotfiles/check-i3lock.sh &
+fi
 xkb-switch -s us
 if [ "$1" == "" ]; then
-  zathura_save.sh last add_hname &
+  if [[ "$XSS_SLEEP_LOCK_FD" != "" ]]; then
+    zathura_save.sh last add_hname {XSS_SLEEP_LOCK_FD}<&- &
+  else
+    zathura_save.sh last add_hname &
+  fi
 fi
 
 if pkill -xu $EUID -0 workrave; then
@@ -63,6 +71,7 @@ trap on_exit TERM INT EXIT
 # wait for it to exit. The waiting is not that straightforward when the locker
 # forks, so we use this polling only if we have a sleep lock to deal with.
 if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
+    echo "Going to sleep." | systemd-cat
     killall -9 sshfs
     # we have to make sure the locker does not inherit a copy of the lock fd
     eval "i3lock $i3lock_options" {XSS_SLEEP_LOCK_FD}<&-

@@ -37,6 +37,7 @@ yay -S --needed dragon-drag-and-drop-git xkb-switch-git flacon mpv-mpris-git pla
 # HibernateDelaySec=7200
 # sudo nvim /etc/systemd/logind.conf
 # HandleLidSwitch=suspend-then-hibernate
+# InhibitDelayMaxSec=35
 
 # to use last grub edit /etc/default/grub
 # GRUB_SAVEDEFAULT=true
