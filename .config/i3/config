@@ -295,13 +295,16 @@ exec --no-startup-id dex /usr/share/applications/org.keepassxc.KeePassXC.desktop
 
 set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown (z) zathura_save
 mode "$mode_system" {
-    bindsym l exec --no-startup-id zathura_save.sh last add_hname && ~/.dotfiles/lock-xss.sh lock, mode "default"
-    bindsym $mod+Escape exec --no-startup-id zathura_save.sh last add_hname && ~/.dotfiles/lock-xss.sh lock, mode "default"
-    bindsym e exec --no-startup-id zathura_save.sh last add_hname && tmux kill-server && i3-msg exit, mode "default"
-    bindsym s exec --no-startup-id zathura_save.sh last add_hname && systemctl suspend, mode "default"
-    bindsym h exec --no-startup-id zathura_save.sh last add_hname && systemctl hibernate, mode "default"
+    bindsym l exec --no-startup-id ~/.dotfiles/lock-xss.sh lock, mode "default"
+    bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock-xss.sh lock, mode "default"
+
+    bindsym e exec --no-startup-id zathura_save.sh last add_hname && tmux kill-server && i3-msg exit
     bindsym r exec --no-startup-id zathura_save.sh last add_hname && systemctl reboot, mode "default"
     bindsym Shift+s exec --no-startup-id zathura_save.sh last add_hname && systemctl poweroff -i, mode "default"
+
+    bindsym s exec --no-startup-id systemctl suspend, mode "default"
+    bindsym h exec --no-startup-id systemctl hibernate, mode "default"
+
     bindsym z exec --no-startup-id zathura_save.sh last add_hname, mode "default"
 
     # back to normal: Enter or Escape
