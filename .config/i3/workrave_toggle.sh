@@ -6,7 +6,6 @@ if [[ "$?" != 0 ]]; then
   dunstify -t 1000 "Turn on Workrave"
   pkill -f -9 "bash.*workrave_toggle.sh"
 else
-  dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:quiet
   INDEX=$(echo "15 minutes|30 minutes|1 hour|2 hours" | rofi -width -75 -sep '|' -dmenu -p "Suspend Workrave for > " -format i)
   TIME=900
   case INDEX in
@@ -26,6 +25,7 @@ else
       dunstify -t 1000 "No choice."
       exit 1
   esac
+  dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:quiet
   dunstify -t 1000 "Turn off Workrave for $TIME seconds."
   sleep $TIME
   dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:normal
