@@ -20,10 +20,10 @@ bindcode Mod1+40 exec rofi -show drun
 bindcode Mod1+Shift+40 exec --no-startup-id dropbox_toggle.py
 
 # change focus, h j k l
-bindcode Mod1+43 nop
-bindcode Mod1+44 nop
-bindcode Mod1+45 nop
-bindcode Mod1+46 nop
+bindcode Mod1+43 focus left
+bindcode Mod1+44 focus down
+bindcode Mod1+45 focus up
+bindcode Mod1+46 focus right
 
 # move focused window, h j k l
 bindcode Mod1+Shift+43 move left
@@ -68,34 +68,31 @@ set $ws9 "9"
 set $ws10 "10"
 
 # switch to workspace
-bindcode $mod+10 nop
-bindcode $mod+11 nop
-bindcode $mod+12 nop
-bindcode $mod+13 nop
-bindcode $mod+14 nop
-bindcode $mod+15 nop
-bindcode $mod+16 nop
-bindcode $mod+17 nop
-bindcode $mod+18 nop
-bindcode $mod+19 nop
+bindcode Mod1+10 workspace $ws1
+bindcode Mod1+11 workspace $ws2
+bindcode Mod1+12 workspace $ws3
+bindcode Mod1+13 workspace $ws4
+bindcode Mod1+14 workspace $ws5
+bindcode Mod1+15 workspace $ws6
+bindcode Mod1+16 workspace $ws7
+bindcode Mod1+17 workspace $ws8
+bindcode Mod1+18 workspace $ws9
+bindcode Mod1+19 workspace $ws10
 
-# alt-grave and alt-tab handled by i3ipc server
-bindcode $mod+49 nop
-bindsym  $mod+Tab nop
 # 53=x
 bindcode $mod+53 [urgent=latest] focus
 
 # move focused container to workspace
-bindcode $mod+Shift+10 move container to workspace $ws1
-bindcode $mod+Shift+11 move container to workspace $ws2
-bindcode $mod+Shift+12 move container to workspace $ws3
-bindcode $mod+Shift+13 move container to workspace $ws4
-bindcode $mod+Shift+14 move container to workspace $ws5
-bindcode $mod+Shift+15 move container to workspace $ws6
-bindcode $mod+Shift+16 move container to workspace $ws7
-bindcode $mod+Shift+17 move container to workspace $ws8
-bindcode $mod+Shift+18 move container to workspace $ws9
-bindcode $mod+Shift+19 move container to workspace $ws10
+bindcode Mod1+Shift+10 move container to workspace $ws1
+bindcode Mod1+Shift+11 move container to workspace $ws2
+bindcode Mod1+Shift+12 move container to workspace $ws3
+bindcode Mod1+Shift+13 move container to workspace $ws4
+bindcode Mod1+Shift+14 move container to workspace $ws5
+bindcode Mod1+Shift+15 move container to workspace $ws6
+bindcode Mod1+Shift+16 move container to workspace $ws7
+bindcode Mod1+Shift+17 move container to workspace $ws8
+bindcode Mod1+Shift+18 move container to workspace $ws9
+bindcode Mod1+Shift+19 move container to workspace $ws10
 
 bindsym Mod4+Right workspace next
 bindsym Mod4+Left workspace prev
@@ -214,12 +211,12 @@ bindsym XF86AudioPause exec --no-startup-id  playerctl pause
 bindsym XF86AudioNext exec --no-startup-id playerctl next
 bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 
-# bindsym $mod+Tab workspace back_and_forth
+bindsym Mod1+Tab workspace back_and_forth
 exec --no-startup-id ~/Dropbox/scripts/dropbox.py start
 exec --no-startup-id redshift-gtk
 bindcode Mod4+Shift+27 exec --no-startup-id pkill -x -USR1 redshift
 exec_always --no-startup-id libinput-gestures
-exec_always --no-startup-id ~/.config/i3/i3_custom_ipc_server.py
+# exec_always --no-startup-id ~/.config/i3/i3_custom_ipc_server.py
 exec --no-startup-id nm-applet --sm-disable
 exec --no-startup-id blueman-applet
 # bindsym $mod+space exec --no-startup-id xkb-switch -n

@@ -22,6 +22,9 @@ else
     4)
       TIME=7200
       ;;
+    *)
+      dunstify -t 1000 "No choice."
+      exit 1
   esac
   dunstify -t 1000 "Turn off Workrave for $TIME seconds."
   sleep $TIME
