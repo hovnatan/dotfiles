@@ -224,9 +224,8 @@ exec --no-startup-id nm-applet --sm-disable
 exec --no-startup-id blueman-applet
 # bindsym $mod+space exec --no-startup-id xkb-switch -n
 
-exec --no-startup-id workrave
+exec --no-startup-id start_workrave.sh
 for_window [class="Workrave"] floating enable
-exec --no-startup-id dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:'normal'
 bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh
 bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 
