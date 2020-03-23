@@ -38,13 +38,7 @@ else
   ~/.dotfiles/check-i3lock.sh &
 fi
 xkb-switch -s us
-if [ "$1" == "" ]; then
-  if [[ "$XSS_SLEEP_LOCK_FD" != "" ]]; then
-    zathura_save.sh last add_hname {XSS_SLEEP_LOCK_FD}<&- &
-  else
-    zathura_save.sh last add_hname &
-  fi
-fi
+zathura_save.sh last add_hname
 
 if pkill -xu $EUID -0 workrave; then
   dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetUsageMode string:normal
