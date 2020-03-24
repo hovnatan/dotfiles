@@ -8,17 +8,17 @@ if [[ "$?" != 0 ]]; then
 else
   INDEX=$(echo "15 minutes|30 minutes|1 hour|2 hours" | rofi -width -75 -sep '|' -dmenu -p "Suspend Workrave for > " -format i)
   TIME=900
-  case INDEX in
-    1)
+  case $INDEX in
+    0)
       TIME=900
       ;;
-    2)
+    1)
       TIME=1800
       ;;
-    3)
+    2)
       TIME=3600
       ;;
-    4)
+    3)
       TIME=7200
       ;;
     *)
