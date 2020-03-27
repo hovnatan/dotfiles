@@ -76,6 +76,13 @@ sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 sudo cp -p ~/.dotfiles/etc/X11/xorg.conf.d/90-touchpad.conf /etc/X11/xorg.conf.d/
 sudo cp -p ~/.dotfiles/etc/modprobe.d/i915.conf /etc/modprobe.d/
 
+exit 0
+
+sudo mkdir -p /opt/bin
+sudo cp -p ~/.dotfiles/opt/bin/disable_wake_on_usb.sh /opt/bin/
+sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
+sudo systemctl enable disable-USB-wakeup.service
+
 # pacman best servers for armenia found by rankmirrors. Write in /etc/pacman.d/mirrorlist
 # Server = http://mirror.metalgamer.eu/archlinux/$repo/os/$arch
 # Server = http://archlinux.cu.be/$repo/os/$arch
@@ -89,10 +96,6 @@ sudo cp -p ~/.dotfiles/etc/modprobe.d/i915.conf /etc/modprobe.d/
 # sudo sh -c 'rankmirrors -n 6 /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist'
 
 # yay -S linux-clear-bin intel-ucode-clear
-# sudo mkdir -p /opt/bin
-# sudo cp -p ~/.dotfiles/opt/bin/disable_wake_on_usb.sh /opt/bin/
-# sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
-# sudo systemctl enable disable-USB-wakeup.service
 # sudo cp ~/.dotfiles/etc/systemd/system/usb-reset.service /etc/systemd/system/
 # sudo cp ~/.dotfiles/bin/usbmodreset.sh /usr/bin/
 # sudo systemctl enable usb-reset.service
