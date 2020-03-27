@@ -227,8 +227,8 @@ bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh
 bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 
 exec --no-startup-id dunst
-bindcode Mod1+57 exec --no-startup-id dunstify -t 1000 "Notifications off" && sleep 1 && killall -SIGUSR1 dunst
-bindcode Mod1+Shift+57 exec --no-startup-id killall -SIGUSR2 dunst && dunstify -t 1000 "Notifications on"
+bindcode Mod1+57 exec --no-startup-id ~/.config/i3/dunst_turnoff.sh
+bindcode Mod1+Shift+57 exec --no-startup-id ~/.config/i3/dunst_turnon.sh
 bindcode $mod+Shift+61 exec --no-startup-id ~/.dotfiles/bin/set_w_name.sh
 bindcode Mod1+61 exec --no-startup-id rofi -show window
 bindcode Mod4+61 exec --no-startup-id rofi -show windowcd
