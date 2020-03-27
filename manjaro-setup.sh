@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # sudo nvim /etc/makepkg.conf change PKGEXT to tar.zst
+# Remove keymap hook from /etc/mkinitcpio.conf HOOKS =()
 
 set -e
 
 sudo systemctl enable NetworkManager.service
 
-sudo pacman -Sy --needed networkmanager network-manager-applet os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp tlp-rdw htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod workrave feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift i3-wm i3status perl-anyevent-i3 qt5-styleplugins python-gobject aws-cli unzip imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso inkscape gimp hunspell-en_US hplip avahi cups lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks texlive-core texlive-langextra pandoc xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time yarn w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool yapf pandoc-citeproc luarocks tcl tk libimagequant dex mps-youtube fwupd vlc bash-language-server xcape lsof rsync unrar perl-image-exiftool meld libvdpau-va-gl vulkan-intel ntp jre-openjdk unclutter xss-lock pacman-contrib libappindicator-gtk3 blueman udisks2 udiskie tldr rofimoji keepassxc ntfs-3g docker trayer termite rust
+sudo pacman -Sy --needed networkmanager network-manager-applet os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp tlp-rdw htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod workrave feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift i3-wm i3status perl-anyevent-i3 qt5-styleplugins python-gobject aws-cli unzip imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso inkscape gimp hunspell-en_US hplip avahi cups lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks texlive-core texlive-langextra pandoc xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time yarn w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool yapf pandoc-citeproc luarocks tcl tk libimagequant dex mps-youtube fwupd vlc bash-language-server xcape lsof rsync unrar perl-image-exiftool meld libvdpau-va-gl vulkan-intel ntp jre-openjdk unclutter xss-lock pacman-contrib libappindicator-gtk3 blueman udisks2 udiskie tldr rofimoji keepassxc ntfs-3g docker trayer termite rust freeoffice fd
 
 sudo pacman -Sy --needed base-devel clang llvm cmake gdb valgrind perf strace cppcheck ccache eigen3 boost
 
@@ -28,10 +29,9 @@ cd ~/.dotfiles
 git clone https://github.com/hovnatan/i3-volume.git
 
 yay -S --needed freetype2-cleartype
-yay -S --needed skype zoom dropbox
-yay -S --needed google-chrome freeoffice
+yay -S --needed skypeforlinux-stable-bin zoom dropbox google-chrome
 yay -S --needed manjaro-firmware i3ipc-python-git libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete python-snakeviz
-yay -S --needed dragon-drag-and-drop-git xkb-switch-git flacon mpv-mpris-git playerctl-git ranger-git autojump python-pynput fd
+yay -S --needed dragon-drag-and-drop-git xkb-switch-git flacon mpv-mpris-git playerctl-git ranger-git autojump python-pynput
 # yay -S --needed ptags ripgrep-all
 # sudo grub-mkconfig -o /boot/grub/grub.cfg
 
