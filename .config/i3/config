@@ -313,6 +313,8 @@ bindsym $mod+Escape mode "$mode_system"
 
 exec --no-startup-id i3-msg workspace 3
 
+exec --no-startup-id play-with-mpv
+
 # exec --no-startup-id picom
 # bindcode Mod4+Shift+21 exec --no-startup-id picom-trans -c +20
 # bindcode Mod4+Shift+20 exec --no-startup-id picom-trans -c -20
