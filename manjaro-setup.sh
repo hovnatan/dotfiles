@@ -31,7 +31,7 @@ git clone https://github.com/hovnatan/i3-volume.git
 yay -S --needed freetype2-cleartype
 yay -S --needed skypeforlinux-stable-bin zoom dropbox google-chrome
 yay -S --needed manjaro-firmware i3ipc-python-git libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete python-snakeviz
-yay -S --needed dragon-drag-and-drop-git xkb-switch-git flacon mpv-mpris-git playerctl-git ranger-git autojump python-pynput
+yay -S --needed dragon-drag-and-drop-git xkb-switch-git flacon mpv-mpris-git playerctl-git ranger-git autojump python-pynput play-with-mpv
 # yay -S --needed ptags ripgrep-all
 # sudo grub-mkconfig -o /boot/grub/grub.cfg
 
