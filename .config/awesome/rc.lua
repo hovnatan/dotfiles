@@ -56,8 +56,6 @@ editor_cmd = terminal .. " -e " .. editor
 modkey = "Mod1"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
-awful.spawn.with_shell("~/.dotfiles/bin/setkmap.sh")
-
 awful.layout.layouts = {
     awful.layout.suit.max,
     awful.layout.suit.tile.left,

@@ -278,13 +278,6 @@ bindcode Mod4+Shift+58 exec dex ~/.local/share/applications/chrome-googlemusic.d
 
 bindcode Mod4+39 exec ~/.dotfiles/bin/color_rofi.sh
 
-exec --no-startup-id xss-lock -l -- ~/.dotfiles/lock-xss.sh
-
-exec --no-startup-id setkmap.sh
-exec --no-startup-id unclutter --timeout 3 --jitter 3 -b
-exec --no-startup-id udiskie --no-automount --tray
-exec --no-startup-id dex /usr/share/applications/org.keepassxc.KeePassXC.desktop
-
 set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown (z) zathura_save
 mode "$mode_system" {
     bindsym l exec --no-startup-id ~/.dotfiles/lock-xss.sh lock, mode "default"
