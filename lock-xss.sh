@@ -37,7 +37,6 @@ if [[ "$XSS_SLEEP_LOCK_FD" != "" ]]; then
 else
   ~/.dotfiles/check-i3lock.sh &
 fi
-xkb-switch -s us
 zathura_save.sh last add_hname
 
 if pkill -xu $EUID -0 workrave; then
