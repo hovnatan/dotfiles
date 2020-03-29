@@ -1,5 +1,9 @@
 pcall(require, "luarocks.loader")
 
+awpwkb = require("awpwkb")
+
+kb = awpwkb.init()
+
 -- Standard awesome library
 local gears = require("gears")
 local awful = require("awful")
@@ -53,6 +57,7 @@ modkey = "Mod1"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
 awful.spawn.with_shell("~/.dotfiles/bin/setkmap.sh")
+
 awful.layout.layouts = {
     awful.layout.suit.max,
     awful.layout.suit.tile.left,
@@ -161,7 +166,7 @@ awful.screen.connect_for_each_screen(function(s)
     set_wallpaper(s)
 
     -- Each screen has its own tag table.
-    awful.tag({ "1", "2", "3", "4", "5", "6", "7", "8", "9" }, s, awful.layout.layouts[1])
+    awful.tag({ "1", "2", "3", "4", "5", "6", "7", "8", "9", "0" }, s, awful.layout.layouts[1])
 
     -- Create a promptbox for each screen
     s.mypromptbox = awful.widget.prompt()
@@ -482,7 +487,7 @@ awful.rules.rules = {
 
     -- Add titlebars to normal clients and dialogs
     { rule_any = {type = { "normal", "dialog" }
-      }, properties = { titlebars_enabled = true }
+      }, properties = {  }
     },
 
     -- Set Firefox to always map on the tag named "2" on screen 1.
