@@ -30,5 +30,3 @@ else
 fi
 
 echo "${monitor_mode}" > "$DATA_FILE"
-
-setkmap.sh

@@ -55,7 +55,6 @@ on_exit() {
     if pkill -xu $EUID -0 workrave; then
       dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetUsageMode string:reading
     fi
-    setkmap.sh
     rm "$LOCK_FILE"
 }
 
