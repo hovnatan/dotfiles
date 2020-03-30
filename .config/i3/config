@@ -20,10 +20,10 @@ bindcode Mod1+40 exec rofi -show drun
 bindcode Mod1+Shift+40 exec --no-startup-id dropbox_toggle.py
 
 # change focus, h j k l
-bindcode Mod1+43 focus left
-bindcode Mod1+44 focus down
-bindcode Mod1+45 focus up
-bindcode Mod1+46 focus right
+bindcode Mod4+44 focus down
+bindcode Mod1+44 focus left
+bindcode Mod1+45 focus right
+bindcode Mod4+45 focus up
 
 # move focused window, h j k l
 bindcode Mod1+Shift+43 move left
