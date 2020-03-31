@@ -74,7 +74,7 @@ sudo cp ~/.dotfiles/etc/vconsole.conf /etc/
 sudo systemctl enable tlp.service NetworkManager-dispatcher.service
 sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 
-sudo cp -p ~/.dotfiles/etc/X11/xorg.conf.d/90-touchpad.conf /etc/X11/xorg.conf.d/
+sudo cp -p ~/.dotfiles/etc/X11/xorg.conf.d/90-custom.conf /etc/X11/xorg.conf.d/
 sudo cp -p ~/.dotfiles/etc/modprobe.d/i915.conf /etc/modprobe.d/
 
 exit 0
