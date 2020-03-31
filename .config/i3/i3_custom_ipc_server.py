@@ -6,7 +6,6 @@ import sys
 import queue
 import subprocess
 import threading
-import collections
 import logging
 
 import sh
@@ -14,9 +13,7 @@ import sh
 from systemd.journal import JournalHandler
 
 import i3ipc
-from pynput import keyboard
 
-NUM_WORKSPACES_TO_FOLLOW = 10
 TIME_TO_SYNC = 0.1
 DEFAULT_KEYBOARD_LAYOUT = "us"
 
@@ -34,36 +31,6 @@ logger.addHandler(journald_handler)
 logger.setLevel(logging.INFO)
 
 
-class SizedAndUpdatedOrderedDict(collections.OrderedDict):
-    'Limit size, evicting the least recently looked-up key when full'
-
-    def __init__(self, maxsize=4, *args, **kwds):
-        self.maxsize = maxsize
-        super().__init__(*args, **kwds)
-
-    def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-        self.move_to_end(key)
-        if self.maxsize != 0 and len(self) > self.maxsize:
-            oldest = next(iter(self))
-            del self[oldest]
-
-
-WINDOW_DIRECTIONS = {104: 'left', 108: 'right', 106: 'down', 107: 'up'}
-WORKSPACE_NAMES = {
-    48: '10',
-    49: '1',
-    50: '2',
-    51: '3',
-    52: '4',
-    53: '5',
-    54: '6',
-    55: '7',
-    56: '8',
-    57: '9'
-}
-
-
 class FocusWatcher:
     def __init__(self, debug=False):
         self.debug = debug
@@ -72,36 +39,17 @@ class FocusWatcher:
         # logger.debug("Connection to I3 established.")
         self.i3.on('window::focus', self.on_window_focus)
         self.i3.on("window::close", self.on_window_close)
-        self.i3.on("workspace::focus", self.on_workspace_focus)
         self.i3.on('ipc_shutdown', self.on_shutdown)
 
         self.w_queue = queue.SimpleQueue()
-        self.ws_queue = queue.SimpleQueue()
-        self.window_list = SizedAndUpdatedOrderedDict(maxsize=0)
         self.window_list_lock = threading.RLock()
-        self.alt_on = False
-        self.moving_in_windows = False
-        self.moving_in_workspaces = False
-        self.w_index = 0
+        self.window_list = {}
         self.current_w = -1
-        self.ws_window_list = set()
-        self.ws_w_curr_length = -1
-        self.current_key = "us"
+        self.current_key = DEFAULT_KEYBOARD_LAYOUT
         self.current_key_lock = threading.RLock()
-
-        self.workspace_list_lock = threading.RLock()
-        self.workspace_list = SizedAndUpdatedOrderedDict(
-            maxsize=NUM_WORKSPACES_TO_FOLLOW
-        )
-        self.ws_index = 0
-        self.current_ws = -1
 
     @staticmethod
     def on_shutdown(i3conn):
-        try:
-            sh.pkill("-f", "i3_custom_ipc_client.py")
-        except sh.ErrorReturnCode:
-            pass
         sys.exit(0)
 
     def on_window_close(self, i3conn, event):
@@ -113,87 +61,10 @@ class FocusWatcher:
             if window_id in self.window_list:
                 del self.window_list[window_id]
 
-    def latest_window_on_ws(self):
-        if not self.moving_in_windows:
-            self.ws_window_list = set()
-            for x in self.i3.get_tree().find_focused().workspace().descendants(
-            ):
-                if not x.window:
-                    continue
-                self.ws_window_list.add(x.id)
-            self.ws_w_curr_length = len(self.ws_window_list)
-            # logger.debug(
-            #     "Current ws windows %s %s", self.ws_window_list,
-            #     self.window_list
-            # )
-            if self.ws_w_curr_length < 2:
-                return
-            self.moving_in_windows = True
-            self.w_index = 1
-        with self.window_list_lock:
-            k = self.w_index % self.ws_w_curr_length
-            check_k = 0
-            for window in reversed(self.window_list):
-                if window in self.ws_window_list:
-                    if check_k != k:
-                        check_k += 1
-                        continue
-                    self.i3.command('[con_id="%d"] focus' % window)
-                    break
-            self.w_index += 1
-
-    def workspace_back(self):
-        if not self.moving_in_workspaces:
-            self.moving_in_workspaces = True
-            self.ws_index = 1
-        with self.workspace_list_lock:
-            curr_length = len(self.workspace_list)
-            if curr_length < 2:
-                return
-            k = self.ws_index % curr_length
-            for check_k, ws in enumerate(reversed(self.workspace_list)):
-                if check_k != k:
-                    continue
-                self.i3.command(f"workspace {ws}")
-                break
-            self.ws_index += 1
-
-    def on_workspace_focus(self, i3conn, event):
-        cws = str(event.current.name)
-        # logger.debug("hello ws %s", cws)
-        # # if not cws.isdigit():
-        # #     return
-        self.current_ws = cws
-        if self.moving_in_windows or self.moving_in_workspaces:
-            return
-        self.workspace_setup()
-
-    def workspace_setup(self):
-        if self.current_ws != -1:
-            with self.workspace_list_lock:
-                self.workspace_list[self.current_ws] = True
-
-    def window_setup(self):
-        # logger.debug("Keyboard setup with %s", self.current_w)
-        with self.window_list_lock:
-            if self.current_w in self.window_list:
-                key = self.window_list[self.current_w]
-            else:
-                key = DEFAULT_KEYBOARD_LAYOUT
-                # logger.debug("Setting last %s to us", self.current_w)
-            self.window_list[self.current_w] = key
-        if key != self.current_key:
-            subprocess.run(["xkb-switch", "-s", key])
-
     def on_window_focus(self, i3conn, event):
         window_id = event.container.id
-        # logger.debug(
-        #     "window focus on %s %s", window_id, event.container.floating
-        # )
         self.current_w = window_id
-        if self.moving_in_windows or self.moving_in_workspaces:
-            return
-        self.window_setup()
+        self.w_queue.put((window_id, time.time()))
 
     def launch_i3(self):
         # logger.debug("i3 started.")
@@ -204,46 +75,19 @@ class FocusWatcher:
         if debug:
             logger.setLevel(logging.DEBUG)
 
-    def listen_kb_events(self):
-        with keyboard.Events() as events:
-            for event in events:
-                key = event.key
-                try:
-                    vk = key.vk
-                except AttributeError:
-                    vk = None
-                if isinstance(event, keyboard.Events.Press):
-                    # logger.debug("Pressed %s %s.", key, vk)
-                    if key == keyboard.Key.alt:
-                        self.alt_on = True
-                        continue
-                    if not self.alt_on:
-                        continue
-                    if key == keyboard.Key.tab:
-                        self.workspace_back()
-                        continue
-                    if vk == 96:
-                        self.latest_window_on_ws()
-                    elif vk in WINDOW_DIRECTIONS:
-                        self.moving_in_windows = True
-                        self.i3.command(f'focus {WINDOW_DIRECTIONS[vk]}')
-                    elif vk in WORKSPACE_NAMES:
-                        self.moving_in_workspaces = True
-                        self.i3.command(f'workspace {WORKSPACE_NAMES[vk]}')
-                elif key == keyboard.Key.alt or vk == 65511:  # weird behavior: when Alt+Shift+Enter is released sometimes release of Alt is registered as 65511
-                    # logger.debug("Released %s %s.", key, vk)
-                    self.alt_on = False
-                    if self.moving_in_windows:
-                        self.moving_in_windows = False
-                        time.sleep(TIME_TO_SYNC)
-                        self.window_setup()
-                        continue
-                    if self.moving_in_workspaces:
-                        self.moving_in_workspaces = False
-                        time.sleep(TIME_TO_SYNC)
-                        self.workspace_setup()
-                        self.window_setup()
-                        continue
+    def w_thread(self):
+        while True:
+            w, t = self.w_queue.get()
+            ct = time.time()
+            time.sleep(max(0.0, TIME_TO_SYNC - (ct - t)))
+            if w == self.current_w:
+                with self.window_list_lock:
+                    key = self.window_list.get(
+                        self.current_w, DEFAULT_KEYBOARD_LAYOUT
+                    )
+                with self.current_key_lock:
+                    if key != self.current_key:
+                        subprocess.run(["xkb-switch", "-s", key])
 
     def kb_watch_thread(self):
         result = subprocess.Popen(['xkb-switch', '-W'], stdout=subprocess.PIPE)
@@ -252,11 +96,9 @@ class FocusWatcher:
             # logger.debug("Keyboard switch to %s received.", line)
             with self.current_key_lock:
                 self.current_key = line
-            with self.window_list_lock:
-                for window in reversed(self.window_list):
-                    self.window_list[window] = line
-                    # logger.debug("Keyboard for %s switch to %s.", window, line)
-                    break
+            if self.current_w:
+                with self.window_list_lock:
+                    self.window_list[self.current_w] = line
             subprocess.run(["pkill", "-RTMIN+10", "i3blocks"])
 
     def run(self):
@@ -265,9 +107,7 @@ class FocusWatcher:
         threads.append(
             threading.Thread(target=self.kb_watch_thread, daemon=True)
         )
-        threads.append(
-            threading.Thread(target=self.listen_kb_events, daemon=True)
-        )
+        threads.append(threading.Thread(target=self.w_thread, daemon=True))
         for t in threads:
             t.start()
 
