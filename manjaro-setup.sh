@@ -32,6 +32,7 @@ yay -S --needed freetype2-cleartype
 yay -S --needed skypeforlinux-stable-bin zoom dropbox google-chrome
 yay -S --needed libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete
 yay -S --needed dragon-drag-and-drop-git mpv-mpris-git playerctl-git ranger-git autojump play-with-mpv
+yay -S --needed interception-caps2esc interception-tools
 # yay -S --needed ptags ripgrep-all
 # sudo grub-mkconfig -o /boot/grub/grub.cfg
 
@@ -82,6 +83,9 @@ sudo mkdir -p /opt/bin
 sudo cp -p ~/.dotfiles/opt/bin/disable_wake_on_usb.sh /opt/bin/
 sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
 sudo systemctl enable disable-USB-wakeup.service
+
+sudo cp -p etc/udevmon.yaml /etc/
+sudo systemctl enable udevmon
 
 # pacman best servers for armenia found by rankmirrors. Write in /etc/pacman.d/mirrorlist
 # Server = http://mirror.metalgamer.eu/archlinux/$repo/os/$arch
