@@ -78,6 +78,8 @@ class FocusWatcher:
     def w_thread(self):
         while True:
             w, t = self.w_queue.get()
+            if not self.w_queue.empty():
+                continue
             ct = time.time()
             time.sleep(max(0.0, TIME_TO_SYNC - (ct - t)))
             if w == self.current_w:
