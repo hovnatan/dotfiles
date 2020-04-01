@@ -39,6 +39,6 @@ interval=30
 
 [battery]
 label= 
-command=$SCRIPT_DIR/battery
+command=$SCRIPT_DIR/battery.sh
 #instance=1
 interval=30
