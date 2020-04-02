@@ -5,7 +5,7 @@ import re
 import pathlib
 import sys
 
-DROPBOX_CMDLINE = pathlib.Path.home() / "Dropbox/scripts/dropbox.py"
+DROPBOX_CMDLINE = pathlib.Path.home() / ".dotfiles/bin/dropbox.py"
 
 status = subprocess.check_output([DROPBOX_CMDLINE,
                                   'status']).decode(sys.stdout.encoding)
