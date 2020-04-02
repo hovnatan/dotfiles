@@ -14,7 +14,6 @@ libinput-gestures &
 nm-applet --sm-disable &
 blueman-applet &
 xss-lock -l -- ~/.dotfiles/lock-xss.sh &
-setkmap.sh &
 unclutter --timeout 3 --jitter 3 -b &
 udiskie --no-automount --tray &
 dex /usr/share/applications/org.keepassxc.KeePassXC.desktop &
