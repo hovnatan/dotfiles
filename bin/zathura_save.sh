@@ -69,7 +69,7 @@ while [ ${#SYNCED_FILES[@]} != $COUNT_TO_SYNC ] && [ $i -lt 30 ] ; do
     if [[ " ${SYNCED_FILES[@]} " =~ " ${OUTPUT_FILE_NAMES} " ]]; then
       continue
     fi
-    STATUS=$("$HOME/Dropbox/scripts/dropbox.py" filestatus "$OUTPUT_FILE_NAME" | grep -- "up to date")
+    STATUS=$("dropbox.py" filestatus "$OUTPUT_FILE_NAME" | grep -- "up to date")
     if [ "$STATUS" != "" ]; then
       SYNCED_FILES+=( "$OUTPUT_FILE_NAME" )
     fi

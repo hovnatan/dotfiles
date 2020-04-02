@@ -26,7 +26,7 @@ class GracefulKiller:
         self.kill_now = True
 
 
-DROPBOX_CMDLINE = pathlib.Path.home() / "Dropbox/scripts/dropbox.py"
+DROPBOX_CMDLINE = pathlib.Path.home() / ".dotfiles/bin/dropbox.py"
 CONSEQ_IDLE = 20
 
 killer = GracefulKiller()
