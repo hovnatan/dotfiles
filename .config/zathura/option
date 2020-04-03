@@ -5,6 +5,8 @@ set window-title-basename true
 set guioptions ''
 map d scroll half-down
 map i scroll half-down
+map <C-j> scroll half-down
+map <C-k> scroll half-up
 map u scroll half-up
 map e scroll half-up
 map D navigate next
