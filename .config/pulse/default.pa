@@ -1,4 +1,5 @@
 .include /etc/pulse/default.pa
 unload-module module-switch-on-port-available
+unload-module module-stream-restore
 load-module module-bluetooth-policy
 load-module module-bluetooth-discover
