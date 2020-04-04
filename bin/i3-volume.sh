@@ -12,6 +12,12 @@ get_volume() {
                       /^[ \t]+volume: / && insink {gsub("%", ""); print $5; exit}'
 }
 
+get_description() {
+    pacmd list-sinks |
+        awk -W posix '/^[ \t]+name: /{insink = $2 == "<'$sink'>"}
+                      /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}'
+}
+
 get_if_muted_pulseaudio() {
     pacmd list-sinks $sink | grep muted | grep yes
 }
@@ -28,27 +34,15 @@ lower_volume() {
 }
 
 set_volume() {
-    set_volume_pulseaudio "$sink" "$1"
+    pactl set-sink-volume "$sink" "$1"
 }
 
-set_volume_pulseaudio() {
-    local sink="$1"
-    local vol="$2"
-    pactl set-sink-volume "$sink" "$vol"
-}
-
-# Toggle mute.
 toggle_mute() {
-    toggle_mute_pulseaudio "$sink"
-}
-
-toggle_mute_pulseaudio() {
-    local sink="$1"
     pactl set-sink-mute "$sink" toggle
 }
 
 is_muted() {
-        return $(is_muted_pulseaudio "$sink")
+   return $(is_muted_pulseaudio "$sink")
 }
 
 is_muted_pulseaudio() {
@@ -218,7 +212,7 @@ if ${opt_set_volume}; then
 fi
 
 if ${opt_mute_volume}; then
-    toggle_mute $sink
+    toggle_mute
 fi
 
 # The options below this line must be last
@@ -231,12 +225,13 @@ if ${opt_notification}; then
 fi
 
 if ${opt_get_volume}; then
+  name=$(get_description)
   muted=$(get_if_muted_pulseaudio)
   if [ -z "$muted" ]
   then
-    echo $(get_volume)%
+    echo "$name $(get_volume)%"
   else
-    echo "MUTED"
+    echo "$name MUTED"
   fi
 fi
 
@@ -250,4 +245,3 @@ else
         usage
     fi
 fi
-
