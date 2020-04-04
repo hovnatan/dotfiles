@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# sudo nvim /etc/makepkg.conf change PKGEXT to tar.zst
+# sudo nvim /etc/makepkg.conf change PKGEXT to tar.zst add -march and remove -mtune as in
+#CFLAGS="-march=native -O2 -pipe -fstack-protector-strong -fno-plt"
+#CXXFLAGS="-march=native -O2 -pipe -fstack-protector-strong -fno-plt"
 # Remove keymap hook from /etc/mkinitcpio.conf HOOKS =()
 
 set -e
