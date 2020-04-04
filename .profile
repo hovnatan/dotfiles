@@ -8,7 +8,7 @@ export PKGEXT='.pkg.tar.zst'
 
 export TERMINAL_APP="termite"
 
-export PATH="$HOME/.dotfiles/bin:$HOME/.local/bin:$PATH"
+export PATH="$HOME/.dotfiles/bin:$HOME/.local/bin:$HOME/opt/usr/bin:$PATH"
 
 export MAKEFLAGS="-j7"
 
