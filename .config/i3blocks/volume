@@ -1,12 +1,12 @@
 #!/bin/bash
 
-volumepath="$HOME"/.dotfiles/i3-volume
+volumepath="$HOME"/.dotfiles/bin/i3-volume.sh
 volumestep=5
 
 case $BLOCK_BUTTON in
-  3) $volumepath/volume -m ;;
-  4) $volumepath/volume -i $volumestep ;;
-  5)  $volumepath/volume -d $volumestep ;;
+  3) $volumepath -m ;;
+  4) $volumepath -i $volumestep ;;
+  5)  $volumepath -d $volumestep ;;
 esac
 
-echo $($volumepath/volume -g)
+echo $($volumepath -g)

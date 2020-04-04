@@ -27,9 +27,6 @@ sudo systemctl enable bluetooth
 # sudo systemctl enable docker.service
 systemctl --user enable pulseaudio
 
-cd ~/.dotfiles
-git clone https://github.com/hovnatan/i3-volume.git
-
 yay -S --needed freetype2-cleartype
 yay -S --needed skypeforlinux-stable-bin zoom dropbox google-chrome
 yay -S --needed libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete
