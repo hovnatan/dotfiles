@@ -82,12 +82,13 @@ sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 sudo cp -p ~/.dotfiles/etc/X11/xorg.conf.d/90-custom.conf /etc/X11/xorg.conf.d/
 sudo cp -p ~/.dotfiles/etc/modprobe.d/i915.conf /etc/modprobe.d/
 
-exit 0
-
 sudo mkdir -p /opt/bin
 sudo cp -p ~/.dotfiles/opt/bin/disable_wake_on_usb.sh /opt/bin/
 sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
 sudo systemctl enable disable-USB-wakeup.service
+
+# end default conf
+exit 0
 
 # sudo cp -p etc/udevmon.yaml /etc/
 # sudo systemctl enable udevmon
@@ -110,9 +111,16 @@ sudo localectl --no-convert set-x11-keymap us,am pc105 ,phonetic-alt grp:alt_spa
 # sudo cp ~/.dotfiles/bin/usbmodreset.sh /usr/bin/
 # sudo systemctl enable usb-reset.service
 
-# git clone https://gitlab.manjaro.org/arch-packages/community/mpv.git
-# cd mpv/repos/community-x86_64
-# makepkg -si
-# git clone https://gitlab.manjaro.org/arch-packages/extra/ffmpeg.git
-# cd ffmpeg/repos/extra-x86_64
-# makepkg -si
+cd ~/tmp
+git clone https://gitlab.manjaro.org/arch-packages/extra/ffmpeg.git
+cd ffmpeg/repos/extra-x86_64
+makepkg -si
+cd ~/tmp
+rm -rf ffmpeg
+git clone https://gitlab.manjaro.org/arch-packages/community/mpv.git
+cd mpv/repos/community-x86_64
+makepkg -si
+cd ~/tmp
+rm -rf mpv
+# Add to /etc/pacman.conf
+# IgnorePkg   = mpv ffmpeg
