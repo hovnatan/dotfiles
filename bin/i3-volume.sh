@@ -24,13 +24,13 @@ get_if_muted_pulseaudio() {
 
 raise_volume() {
     local step="${1:-5}"
-    set_volume_pulseaudio "$sink" "+${step}%"
+    set_volume "+${step}%"
 }
 
 
 lower_volume() {
     local step="${1:-5}"
-    set_volume_pulseaudio "$sink" "-${step}%"
+    set_volume "-${step}%"
 }
 
 set_volume() {
