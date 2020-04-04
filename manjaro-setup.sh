@@ -109,3 +109,10 @@ sudo localectl --no-convert set-x11-keymap us,am pc105 ,phonetic-alt grp:alt_spa
 # sudo cp ~/.dotfiles/etc/systemd/system/usb-reset.service /etc/systemd/system/
 # sudo cp ~/.dotfiles/bin/usbmodreset.sh /usr/bin/
 # sudo systemctl enable usb-reset.service
+
+# git clone https://gitlab.manjaro.org/arch-packages/community/mpv.git
+# cd mpv/repos/community-x86_64
+# makepkg -si
+# git clone https://gitlab.manjaro.org/arch-packages/extra/ffmpeg.git
+# cd ffmpeg/repos/extra-x86_64
+# makepkg -si
