@@ -1,22 +1,24 @@
 #!/bin/bash
 
-# modified from ttps://github.com/hastinbe/i3-volume
+# modified from https://github.com/hastinbe/i3-volume
 
 get_default_sink() {
-  default_sink_name=$(pacmd stat | awk -F": " '/^Default sink name: /{print $2}')
-  default_sink_description=$(pacmd list-sinks |
-        awk -W posix '/^[ \t]+name: /{insink = $2 == "<'$default_sink_name'>"}
+  SINKS=$(pacmd list-sinks)
+  DEFAULT_SINK_INDEX=$(echo "$SINKS" | grep "* index:" | awk '{print $3}')
+  DEFAULT_SINK_DESCRIPTION=$(echo "$SINKS" |
+        awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
+          /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}')
+  NON_DEFAULT_SINK_INDEX=$(echo "$SINKS" |
+    awk -W posix '/^[ \t]+index: /{print $2}')
+  NON_DEFAULT_SINK_DESCRIPTION=$(echo "$SINKS" |
+        awk -W posix '/^[ \t]+index: /{insink = $2 == "'$NON_DEFAULT_SINK_INDEX'"}
           /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}')
 }
 
 get_volume() {
     pacmd list-sinks |
-        awk -W posix '/^[ \t]+name: /{insink = $2 == "<'$default_sink_name'>"}
+        awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
                       /^[ \t]+volume: / && insink {gsub("%", ""); print $5; exit}'
-}
-
-get_if_muted_pulseaudio() {
-    pacmd list-sinks $sink | grep muted | grep yes
 }
 
 raise_volume() {
@@ -31,22 +33,16 @@ lower_volume() {
 }
 
 set_volume() {
-    pactl set-sink-volume "$sink" "$1"
+    pactl set-sink-volume "$DEFAULT_SINK_INDEX" "$1"
 }
 
 toggle_mute() {
-    pactl set-sink-mute "$sink" toggle
+    pactl set-sink-mute "$DEFAULT_SINK_INDEX" toggle
 }
 
 is_muted() {
-   return $(is_muted_pulseaudio "$sink")
-}
-
-is_muted_pulseaudio() {
-    local sink="$1"
-
     muted=$(pacmd list-sinks |
-                   awk -W posix '/^[ \t]+name: /{insink = $2 == "<'$sink'>"}
+                   awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
                                  /^[ \t]+muted: / && insink {print $2; exit}')
     [ "$muted" = "yes" ]
 }
@@ -222,10 +218,10 @@ if ${opt_notification}; then
 fi
 
 if ${opt_get_volume}; then
-  muted=$(get_if_muted_pulseaudio)
+  muted=$(is_muted)
   if [ -z "$muted" ]
   then
-    echo "$default_sink_description $(get_volume)%"
+    echo "$DEFAULT_SINK_DESCRIPTION $(get_volume)%"
   else
     echo "$name MUTED"
   fi
