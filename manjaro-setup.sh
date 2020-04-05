@@ -119,5 +119,15 @@ cd mpv/repos/community-x86_64
 makepkg -si
 cd ~/tmp
 rm -rf mpv
+git clone https://gitlab.manjaro.org/arch-packages/extra/pulseaudio.git
+cd pulseaudio/repos/extra-x86_64
+makepkg -si
+cd ~/tmp
+rm -rf pulseaudio
+git clone https://gitlab.manjaro.org/arch-packages/extra/pulseaudio-alsa.git
+cd pulseaudio-alsa/repos/extra-any
+makepkg -si
+cd ~/tmp
+rm -rf pulseaudio-alsa
 # Add to /etc/pacman.conf
-# IgnorePkg   = mpv ffmpeg
+# IgnorePkg   = mpv ffmpeg pulseaudio pulseaudio-alsa
