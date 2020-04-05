@@ -1,5 +1,11 @@
 .include /etc/pulse/default.pa
+
+.nofail
 unload-module module-switch-on-port-available
 unload-module module-stream-restore
+unload-module module-gsettings
+unload-module module-dbus-protocol
+
+.fail
 load-module module-bluetooth-policy
 load-module module-bluetooth-discover

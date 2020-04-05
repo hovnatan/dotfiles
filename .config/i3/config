@@ -279,7 +279,8 @@ bindcode Mod4+29 exec dex ~/.local/share/applications/chrome-youtube.desktop
 bindcode Mod4+42 exec dex ~/.local/share/applications/chrome-gitter.desktop
 bindcode Mod4+Shift+58 exec dex ~/.local/share/applications/chrome-googlemusic.desktop
 
-bindcode Mod4+39 exec ~/.dotfiles/bin/color_rofi.sh
+bindcode Mod4+Shift+39 exec ~/.dotfiles/bin/color_rofi.sh
+bindcode Mod4+39 exec python3 ~/.dotfiles/bin/switch_pulse_card.py
 
 set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown (z) zathura_save
 mode "$mode_system" {
