@@ -2,20 +2,17 @@
 
 # modified from ttps://github.com/hastinbe/i3-volume
 
-get_default_sink_name() {
-  sink=$(pacmd stat | awk -F": " '/^Default sink name: /{print $2}')
+get_default_sink() {
+  default_sink_name=$(pacmd stat | awk -F": " '/^Default sink name: /{print $2}')
+  default_sink_description=$(pacmd list-sinks |
+        awk -W posix '/^[ \t]+name: /{insink = $2 == "<'$default_sink_name'>"}
+          /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}')
 }
 
 get_volume() {
     pacmd list-sinks |
-        awk -W posix '/^[ \t]+name: /{insink = $2 == "<'$sink'>"}
+        awk -W posix '/^[ \t]+name: /{insink = $2 == "<'$default_sink_name'>"}
                       /^[ \t]+volume: / && insink {gsub("%", ""); print $5; exit}'
-}
-
-get_description() {
-    pacmd list-sinks |
-        awk -W posix '/^[ \t]+name: /{insink = $2 == "<'$sink'>"}
-                      /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}'
 }
 
 get_if_muted_pulseaudio() {
@@ -195,7 +192,7 @@ done
 shift $((OPTIND-1)) # Shift off options and optional --
 
 if [[ "$sink" == "" ]]; then
-  get_default_sink_name
+  get_default_sink
 fi
 
 
@@ -225,11 +222,10 @@ if ${opt_notification}; then
 fi
 
 if ${opt_get_volume}; then
-  name=$(get_description)
   muted=$(get_if_muted_pulseaudio)
   if [ -z "$muted" ]
   then
-    echo "$name $(get_volume)%"
+    echo "$default_sink_description $(get_volume)%"
   else
     echo "$name MUTED"
   fi
