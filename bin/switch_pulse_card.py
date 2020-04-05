@@ -1,6 +1,10 @@
 import subprocess
 import json
+import time
 from pathlib import Path
+
+subprocess.run(['playerctl', 'pause'])
+time.sleep(0.5)
 
 config_path = Path.home() / ".config/pulse/my_conf.json"
 
