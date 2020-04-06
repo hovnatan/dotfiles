@@ -1,10 +1,12 @@
-import subprocess
 import json
+import subprocess
 import time
 from pathlib import Path
 
-subprocess.run(['playerctl', 'pause'])
-time.sleep(0.5)
+players_present = subprocess.run(['playerctl', 'status']).returncode
+if players_present == 0:
+    subprocess.run(['playerctl', 'pause'])
+    time.sleep(0.5)
 
 config_path = Path.home() / ".config/pulse/my_conf.json"
 
@@ -14,6 +16,7 @@ if config_path.is_file():
 
 result = subprocess.run(['get_pulse_cards.sh'], capture_output=True)
 
+# TODO: works only for two cards now
 for line in result.stdout.decode().split('\n'):
     if line == "":
         continue
