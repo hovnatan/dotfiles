@@ -131,3 +131,12 @@ cd ~/tmp
 rm -rf pulseaudio-alsa
 # Add to /etc/pacman.conf
 # IgnorePkg   = mpv ffmpeg pulseaudio pulseaudio-alsa
+
+# fwupd
+fwupdmgr refresh
+fwupdmgr get-updates
+fwupdmgr update
+
+# manjaro hardware setup: list devices
+sudo mhwd -l -d
+sudo mhwd -i pci <video-linux>etc
