@@ -8,11 +8,6 @@ get_default_sink() {
   DEFAULT_SINK_DESCRIPTION=$(echo "$SINKS" |
         awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
           /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}')
-  NON_DEFAULT_SINK_INDEX=$(echo "$SINKS" |
-    awk -W posix '/^[ \t]+index: /{print $2}')
-  NON_DEFAULT_SINK_DESCRIPTION=$(echo "$SINKS" |
-        awk -W posix '/^[ \t]+index: /{insink = $2 == "'$NON_DEFAULT_SINK_INDEX'"}
-          /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}')
 }
 
 get_volume() {
@@ -218,12 +213,11 @@ if ${opt_notification}; then
 fi
 
 if ${opt_get_volume}; then
-  muted=$(is_muted)
-  if [ -z "$muted" ]
+  if is_muted
   then
-    echo "$DEFAULT_SINK_DESCRIPTION $(get_volume)%"
+    echo "$DEFAULT_SINK_DESCRIPTION MUTED"
   else
-    echo "$name MUTED"
+    echo "$DEFAULT_SINK_DESCRIPTION $(get_volume)%"
   fi
 fi
 
