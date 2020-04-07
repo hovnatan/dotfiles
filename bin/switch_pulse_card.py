@@ -34,7 +34,7 @@ subprocess.run(
         config.get(card_to_turn_on[1], 'off')
     ]
 )
-subprocess.run(['dunstify', '-t', '2000', f'Switched to {card}.'])
+subprocess.run(['dunstify', '-t', '2000', f'Switched to {card_to_turn_on[1]}.'])
 
 json.dump(config, open(config_path, 'w'), indent=2, sort_keys=True)
 subprocess.run(['pkill', '-RTMIN+10', 'i3blocks'])
