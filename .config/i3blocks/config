@@ -18,7 +18,7 @@ signal=10
 [volume]
 command=$SCRIPT_DIR/volume
 label=♪ 
-interval=once
+interval=60
 signal=10
 
 [load_average]
