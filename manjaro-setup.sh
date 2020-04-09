@@ -84,6 +84,8 @@ sudo cp -p ~/.dotfiles/opt/bin/disable_wake_on_usb.sh /opt/bin/
 sudo cp ~/.dotfiles/etc/systemd/system/disable-USB-wakeup.service /etc/systemd/system/
 sudo systemctl enable disable-USB-wakeup.service
 
+# sudo systemctl enable fstrim.timer
+
 # end default conf
 exit 0
 
