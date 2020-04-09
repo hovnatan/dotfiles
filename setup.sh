@@ -140,7 +140,7 @@ cd ~
 #cp -R gruvmox-colors/gruvmox/ ~/.config/oomox/colors/
 cd ~/.dotfiles
 git update-index --assume-unchanged .workrave/workrave.ini
-#git update-index --no-assume-unchanged workrave.ini
+# git update-index --no-assume-unchanged .workrave/workrave.ini
 ln -s ~/.dotfiles/.xbindkeysrc ~/
 
 rm -rf ~/.config/ranger
