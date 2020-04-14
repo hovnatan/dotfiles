@@ -136,5 +136,7 @@ abbr .... "../../.."
 set -x NVIM_LISTEN_ADDRESS /tmp/nvimsocket
 set -x REVIEW_BASE master
 source /usr/share/autojump/autojump.fish
+set fish_command_timer_export_cmd_duration_str 1
+set fish_command_timer_enabled 0
 
 end
