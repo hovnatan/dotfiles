@@ -615,3 +615,4 @@ nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
 
 " copy relative filepath and the current line number to clipboard
 nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
+nmap ,h /[^\d0-\d127]<CR>
