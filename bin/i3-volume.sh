@@ -46,6 +46,10 @@ toggle_mute() {
     pactl set-sink-mute "$DEFAULT_SINK_INDEX" toggle
 }
 
+toggle_mute_mic() {
+    pactl set-source-mute "$DEFAULT_SOURCE_INDEX" toggle
+}
+
 is_muted() {
     muted=$(pacmd list-sinks |
                    awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
@@ -71,33 +75,6 @@ get_volume_icon() {
     fi
 
     echo "${icon}"
-}
-
-# Display a notification indicating the volume is muted.
-notify_muted() {
-    if $opt_use_dunstify; then
-        dunstify -i audio-volume-muted -t $expires -h int:value:0 -h string:synchronous:volume "Volume muted" -r 1000
-    else
-        notify-send -i audio-volume-muted -t $expires -h int:value:0 -h string:synchronous:volume "Volume muted"
-    fi
-}
-
-# Display a notification indicating the current volume.
-notify_volume() {
-    local vol=$(get_volume)
-    local icon=$(get_volume_icon "$vol")
-    local text="Volume ${vol}%"
-
-    if $opt_show_volume_progress; then
-        local progress=$(get_progress_bar "$vol")
-        text="$text $progress"
-    fi
-
-    if $opt_use_dunstify; then
-        dunstify -i "$icon" -t $expires -h int:value:"$vol" -h string:synchronous:volume "$text" -r 1000
-    else
-        notify-send -i "$icon" -t $expires -h int:value:"$vol" -h string:synchronous:volume "$text"
-    fi
 }
 
 update_statusline() {
@@ -140,6 +117,7 @@ Options:
 opt_decrease_volume=false
 opt_increase_volume=false
 opt_mute_volume=false
+opt_mute_mic_volume=false
 opt_notification=false
 opt_set_volume=false
 opt_show_volume_progress=false
@@ -152,7 +130,7 @@ volume=5
 expires="1500"
 opt_get_volume=false
 
-while getopts ":d:e:hi:mnps:t:u:v:yg" o; do
+while getopts ":d:e:hi:mMnps:t:u:v:yg" o; do
     case "$o" in
         d)
             opt_decrease_volume=true
@@ -167,6 +145,9 @@ while getopts ":d:e:hi:mnps:t:u:v:yg" o; do
             ;;
         m)
             opt_mute_volume=true
+            ;;
+        M)
+            opt_mute_mic_volume=true
             ;;
         n)
             opt_notification=true
@@ -221,13 +202,31 @@ if ${opt_mute_volume}; then
     toggle_mute
 fi
 
-# The options below this line must be last
+if ${opt_mute_mic_volume}; then
+    toggle_mute_mic
+fi
+
 if ${opt_notification}; then
-    if is_muted; then
-        notify_muted
+    if is_muted
+    then
+      vol="MUTED"
     else
-        notify_volume
+      vol="$(get_volume)%"
     fi
+    if is_mic_muted
+    then
+      mic_vol="MUTED"
+    else
+      mic_vol="$(get_mic_volume)%"
+    fi
+    text="OUT:   $vol
+IN:      $mic_vol"
+
+    if $opt_show_volume_progress; then
+        local progress=$(get_progress_bar "$vol")
+        text="$text $progress"
+    fi
+    dunstify -i audio-volume-low -t $expires -h int:value:"$vol" -h string:synchronous:volume "$text" -r 1000
 fi
 
 if ${opt_get_volume}; then
