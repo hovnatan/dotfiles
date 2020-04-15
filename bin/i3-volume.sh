@@ -2,7 +2,7 @@
 
 # modified from https://github.com/hastinbe/i3-volume
 
-get_default_sink() {
+get_default_sink_source() {
   SINKS=$(pacmd list-sinks)
   DEFAULT_SINK_INDEX=$(echo "$SINKS" | grep "* index:" | awk '{print $3}')
   DEFAULT_SINK_DESCRIPTION=$(echo "$SINKS" |
@@ -51,36 +51,17 @@ toggle_mute_mic() {
 }
 
 is_muted() {
-    muted=$(pacmd list-sinks |
+    local muted=$(pacmd list-sinks |
                    awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
                                  /^[ \t]+muted: / && insink {print $2; exit}')
     [ "$muted" = "yes" ]
 }
 
 is_mic_muted() {
-    muted=$(pacmd list-sources |
+    local muted=$(pacmd list-sources |
                    awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SOURCE_INDEX'"}
                                  /^[ \t]+muted: / && insink {print $2; exit}')
     [ "$muted" = "yes" ]
-}
-
-get_volume_icon() {
-    local vol="$1"
-    local icon
-
-    if [ "$vol" -ge 70 ]; then icon="audio-volume-high"
-    elif [ "$vol" -ge 40 ]; then icon="audio-volume-medium"
-    elif [ "$vol" -gt 0 ]; then icon="audio-volume-low"
-    else icon="audio-volume-low"
-    fi
-
-    echo "${icon}"
-}
-
-update_statusline() {
-    local signal="$1"
-    local proc="$2"
-    pkill "-$signal" "$proc"
 }
 
 get_progress_bar() {
@@ -98,15 +79,10 @@ Control volume and related notifications.
 
 Options:
   -d <amount>       decrease volume
-  -e <expires>      expiration time of notifications, in milliseconds
   -i <amount>       increase volume
   -m                toggle mute
   -n                show notifications
   -p                show text volume progress bar
-  -s <sink_name>    symbolic name of sink (pulseaudio only)
-  -t <process_name> name of status line process. must be used with -u
-  -u <signal>       update status line using signal. must be used with -t
-  -v <value>        set volume
   -y                use dunstify instead of notify-send
   -h                display this help and exit
 " 1>&2
@@ -119,25 +95,16 @@ opt_increase_volume=false
 opt_mute_volume=false
 opt_mute_mic_volume=false
 opt_notification=false
-opt_set_volume=false
-opt_show_volume_progress=false
-opt_use_amixer=false
-opt_use_dunstify=false
-signal=""
-sink=""
 statusline=""
 volume=5
-expires="1500"
+expires="2000"
 opt_get_volume=false
 
-while getopts ":d:e:hi:mMnps:t:u:v:yg" o; do
+while getopts ":d:hi:mMnt:g" o; do
     case "$o" in
         d)
             opt_decrease_volume=true
             volume="${OPTARG}"
-            ;;
-        e)
-            expires="${OPTARG}"
             ;;
         i)
             opt_increase_volume=true
@@ -152,24 +119,8 @@ while getopts ":d:e:hi:mMnps:t:u:v:yg" o; do
         n)
             opt_notification=true
             ;;
-        p)
-            opt_show_volume_progress=true
-            ;;
-        s)
-            sink="${OPTARG}"
-            ;;
         t)
             statusline="${OPTARG}"
-            ;;
-        u)
-            signal="${OPTARG}"
-            ;;
-        v)
-            opt_set_volume=true
-            volume="${OPTARG}"
-            ;;
-        y)
-            opt_use_dunstify=true
             ;;
         g)
             opt_get_volume=true
@@ -179,12 +130,9 @@ while getopts ":d:e:hi:mMnps:t:u:v:yg" o; do
             ;;
     esac
 done
-shift $((OPTIND-1)) # Shift off options and optional --
+shift $((OPTIND-1))
 
-if [[ "$sink" == "" ]]; then
-  get_default_sink
-fi
-
+get_default_sink_source
 
 if ${opt_increase_volume}; then
     raise_volume $volume
@@ -192,10 +140,6 @@ fi
 
 if ${opt_decrease_volume}; then
     lower_volume $volume
-fi
-
-if ${opt_set_volume}; then
-    set_volume $volume
 fi
 
 if ${opt_mute_volume}; then
@@ -211,22 +155,21 @@ if ${opt_notification}; then
     then
       vol="MUTED"
     else
-      vol="$(get_volume)%"
+      vol="$(get_volume)"
+      progress=$(get_progress_bar "$vol")
+      vol="$vol% $progress"
     fi
     if is_mic_muted
     then
       mic_vol="MUTED"
     else
-      mic_vol="$(get_mic_volume)%"
+      mic_vol="$(get_mic_volume)"
+      mic_vol="$mic_vol%"
     fi
     text="OUT:   $vol
 IN:      $mic_vol"
 
-    if $opt_show_volume_progress; then
-        local progress=$(get_progress_bar "$vol")
-        text="$text $progress"
-    fi
-    dunstify -i audio-volume-low -t $expires -h int:value:"$vol" -h string:synchronous:volume "$text" -r 1000
+    dunstify -i audio-volume-low -t $expires -r 1000 "Audio: $DEFAULT_SINK_DESCRIPTION" "$text"
 fi
 
 if ${opt_get_volume}; then
@@ -245,13 +188,4 @@ if ${opt_get_volume}; then
   echo "$DEFAULT_SINK_DESCRIPTION $vol $mic_vol"
 fi
 
-if [ -n "${signal}" ]; then
-    if [ -z "${statusline}" ]; then
-        usage
-    fi
-    update_statusline "${signal}" "${statusline}"
-else
-    if [ -n "${statusline}" ]; then
-        usage
-    fi
-fi
+pkill -RTMIN+10 i3blocks
