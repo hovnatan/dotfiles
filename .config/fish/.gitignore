@@ -1,1 +1,3 @@
 fish_variables
+conf.d
+functions/fish_command_timer.fish
