@@ -197,14 +197,14 @@ bindsym XF86MonBrightnessDown exec backlight.sh down
 set $volumepath ~/.dotfiles/bin/i3-volume.sh
 set $volumestep 5
 
-bindsym XF86AudioRaiseVolume exec --no-startup-id $volumepath -y -np -i $volumestep -u "RTMIN+10" -t i3blocks
-bindsym XF86AudioLowerVolume exec --no-startup-id $volumepath -y -np -d $volumestep -u "RTMIN+10" -t i3blocks
-bindsym XF86AudioMute        exec --no-startup-id $volumepath -y -mn -u "RTMIN+10" -t i3blocks
-bindsym XF86AudioMicMute     exec --no-startup-id $volumepath -y -Mn -u "RTMIN+10" -t i3blocks
-bindcode Mod4+19 exec --no-startup-id $volumepath -y -np -i $volumestep -u "RTMIN+10" -t i3blocks
-bindcode Mod4+18 exec --no-startup-id $volumepath -y -np -d $volumestep -u "RTMIN+10" -t i3blocks
-bindcode Mod4+17 exec --no-startup-id $volumepath -y -mn -u "RTMIN+10" -t i3blocks
-bindcode Mod4+Shift+17     exec --no-startup-id $volumepath -y -Mn -u "RTMIN+10" -t i3blocks
+bindsym XF86AudioRaiseVolume exec --no-startup-id $volumepath -n -i $volumestep
+bindsym XF86AudioLowerVolume exec --no-startup-id $volumepath -n -d $volumestep
+bindsym XF86AudioMute        exec --no-startup-id $volumepath -mn
+bindsym XF86AudioMicMute     exec --no-startup-id $volumepath -Mn
+bindcode Mod4+19 exec --no-startup-id $volumepath -n -i $volumestep
+bindcode Mod4+18 exec --no-startup-id $volumepath -n -d $volumestep
+bindcode Mod4+17 exec --no-startup-id $volumepath -mn
+bindcode Mod4+Shift+17     exec --no-startup-id $volumepath -Mn
 bindcode Mod4+16 exec --no-startup-id playerctl play-pause
 bindcode Mod4+Shift+16 exec --no-startup-id ~/.dotfiles/bin/get_playing_info.sh
 bindcode Mod4+Shift+19 exec --no-startup-id playerctl next
