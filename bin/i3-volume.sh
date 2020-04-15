@@ -8,11 +8,22 @@ get_default_sink() {
   DEFAULT_SINK_DESCRIPTION=$(echo "$SINKS" |
         awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
           /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}')
+  SOURCES=$(pacmd list-sources)
+  DEFAULT_SOURCE_INDEX=$(echo "$SOURCES" | grep "* index:" | awk '{print $3}')
+  DEFAULT_SOURCE_DESCRIPTION=$(echo "$SOURCES" |
+        awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SOURCE_INDEX'"}
+          /^[ \t]+device.description / && insink {gsub("\"", ""); print $3; exit}')
 }
 
 get_volume() {
     pacmd list-sinks |
         awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
+                      /^[ \t]+volume: / && insink {gsub("%", ""); print $5; exit}'
+}
+
+get_mic_volume() {
+    pacmd list-sources |
+        awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SOURCE_INDEX'"}
                       /^[ \t]+volume: / && insink {gsub("%", ""); print $5; exit}'
 }
 
@@ -38,6 +49,13 @@ toggle_mute() {
 is_muted() {
     muted=$(pacmd list-sinks |
                    awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SINK_INDEX'"}
+                                 /^[ \t]+muted: / && insink {print $2; exit}')
+    [ "$muted" = "yes" ]
+}
+
+is_mic_muted() {
+    muted=$(pacmd list-sources |
+                   awk -W posix '/^[ \t\*]+index: /{insink = $3 == "'$DEFAULT_SOURCE_INDEX'"}
                                  /^[ \t]+muted: / && insink {print $2; exit}')
     [ "$muted" = "yes" ]
 }
@@ -215,10 +233,17 @@ fi
 if ${opt_get_volume}; then
   if is_muted
   then
-    echo "$DEFAULT_SINK_DESCRIPTION MUTED"
+    vol="MUTED"
   else
-    echo "$DEFAULT_SINK_DESCRIPTION $(get_volume)%"
+    vol="$(get_volume)%"
   fi
+  if is_mic_muted
+  then
+    mic_vol="MUTED"
+  else
+    mic_vol="$(get_mic_volume)%"
+  fi
+  echo "$DEFAULT_SINK_DESCRIPTION $vol $mic_vol"
 fi
 
 if [ -n "${signal}" ]; then
