@@ -175,16 +175,17 @@ fi
 if ${opt_get_volume}; then
   if is_muted
   then
-    vol="MUTED"
+    vol="MUTE"
   else
     vol="$(get_volume)%"
-    # printf -v vol "%-5" "$vol"
+    printf -v vol " %-4s" "$vol"
   fi
   if is_mic_muted
   then
-    mic_vol="MUTED"
+    mic_vol="MUTE"
   else
     mic_vol="$(get_mic_volume)%"
+    printf -v mic_vol " %-4s" "$mic_vol"
   fi
   desc=${DEFAULT_SINK_DESCRIPTION:0:5}
   desc="${desc,,}"
