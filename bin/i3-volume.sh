@@ -178,6 +178,7 @@ if ${opt_get_volume}; then
     vol="MUTED"
   else
     vol="$(get_volume)%"
+    # printf -v vol "%-5" "$vol"
   fi
   if is_mic_muted
   then
@@ -185,7 +186,10 @@ if ${opt_get_volume}; then
   else
     mic_vol="$(get_mic_volume)%"
   fi
-  echo "$DEFAULT_SINK_DESCRIPTION $vol $mic_vol"
+  desc=${DEFAULT_SINK_DESCRIPTION:0:5}
+  desc="${desc,,}"
+  desc="${desc^}"
+  echo "$desc $vol $mic_vol"
 fi
 
 pkill -RTMIN+10 i3blocks
