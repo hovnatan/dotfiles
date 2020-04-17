@@ -3,7 +3,7 @@
 dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.GetOperationMode | grep normal
 if [[ "$?" != 0 ]]; then
   dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:normal
-  dunstify -t 1000 "Turn on Workrave"
+  dunstify -i /usr/share/icons/hicolor/scalable/apps/workrave.svg -t 1000 "Workrave" "Turned on."
   pkill -f -9 "bash.*workrave_toggle.sh"
 else
   INDEX=$(echo "15 minutes|30 minutes|1 hour|2 hours" | rofi -width -75 -sep '|' -dmenu -p "Suspend Workrave for > " -format i)
@@ -26,9 +26,9 @@ else
       exit 1
   esac
   dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:quiet
-  dunstify -t 1000 "Turn off Workrave for $TIME seconds."
+  dunstify -i /usr/share/icons/hicolor/scalable/apps/workrave.svg -t 1000 "Workrave" "Turned off for $TIME seconds."
   sleep $TIME
   dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:normal
-  dunstify -t 1000 "Turn on Workrave"
+  dunstify -i /usr/share/icons/hicolor/scalable/apps/workrave.svg -t 1000 "Workrave" "Turned on."
 fi
 
