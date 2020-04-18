@@ -7,6 +7,7 @@ export QT_AUTO_SCREEN_SCALE_FACTOR=0
 export QT_SCALE_FACTOR=1
 export FREETYPE_PROPERTIES="truetype:interpreter-version=38"
 export PKGEXT='.pkg.tar.zst'
+export SSH_ASKPASS='/usr/lib/ssh/x11-ssh-askpass'
 
 export TERMINAL_APP="termite"
 
