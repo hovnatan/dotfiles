@@ -2,7 +2,7 @@ exec --no-startup-id monitor_setup.sh a
 
 set $mod Mod1
 
-font pango:sans-serif 11
+font pango:sans-serif-ui 11
 workspace_layout tabbed
 
 floating_modifier Mod1
@@ -162,7 +162,7 @@ bar {
     # tray_output none
 
     status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
-    font pango:sans-serif 11
+    font pango:sans-serif-ui 11
 
     colors {
         background $base00
