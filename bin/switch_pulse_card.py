@@ -16,7 +16,7 @@ if config_path.is_file():
 
 result = subprocess.run(['get_pulse_cards.sh'], capture_output=True)
 
-card_to_turn_on = -1
+card_to_turn_on = None
 for i, line in enumerate(result.stdout.decode().split('\n')):
     if line == "":
         continue
@@ -27,14 +27,19 @@ for i, line in enumerate(result.stdout.decode().split('\n')):
     else:
         card_to_turn_on = index, card
 
-subprocess.run(
-    [
-        'pacmd', 'set-card-profile',
-        str(card_to_turn_on[0]),
-        config.get(card_to_turn_on[1], 'off')
-    ]
-)
-subprocess.run(['dunstify', '-t', '2000', f'Switched to {card_to_turn_on[1]}.'])
+if card_to_turn_on is not None:
+    subprocess.run(
+        [
+            'pacmd', 'set-card-profile',
+            str(card_to_turn_on[0]),
+            config.get(card_to_turn_on[1], 'off')
+        ]
+    )
+    subprocess.run(
+        ['dunstify', '-t', '2000', f'Switched to {card_to_turn_on[1]}.']
+    )
+else:
+    subprocess.run(['dunstify', '-t', '2000', f'Switched off all cards.'])
 
 json.dump(config, open(config_path, 'w'), indent=2, sort_keys=True)
 subprocess.run(['pkill', '-RTMIN+10', 'i3blocks'])
