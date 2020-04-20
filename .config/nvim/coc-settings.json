@@ -3,7 +3,7 @@
   "coc.preferences.jumpCommand": "edit",
   "diagnostic.maxWindowHeight": 25,
   "highlight.colors.enable": false,
-  "highlight.document.enable": true,
+  "highlight.document.enable": false,
   "languageserver": {
     "clangd": {
       "command": "clangd",
