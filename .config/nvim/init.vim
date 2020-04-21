@@ -200,7 +200,7 @@ nnoremap <Esc><Esc> :<C-u>let v:hlsearch=!v:hlsearch<CR>
 
 let g:coc_global_extensions = [ 'coc-marketplace', 'coc-python',
       \ 'coc-json', 'coc-word',
-      \ 'coc-vimtex', 'coc-highlight', 'coc-lists',
+      \ 'coc-vimtex', 'coc-lists',
       \ 'coc-git', 'coc-css', 'coc-html', 'coc-tsserver'
       \ ]
 call textobj#user#plugin('line', {
@@ -475,9 +475,6 @@ map <C-h> <C-w>h
 map <C-j> <C-w>j
 map <C-k> <C-w>k
 map <C-l> <C-w>l
-
-set updatetime=300
-autocmd CursorHold * silent call CocActionAsync('highlight')
 
 " # Function to permanently delete views created by 'mkview'
 function! MyDeleteView()
