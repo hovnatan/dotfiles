@@ -9,19 +9,18 @@ sudo apt update; sudo apt -y dist-upgrade
 
 
 sudo apt -y install feh gimp pinta tmux fish neovim git-cola meld fortune-mod fortunes htop uget mpv vlc curl workrave workrave-gnome unzip lm-sensors jq awscli fonts-hack-ttf vainfo ubuntu-restricted-extras net-tools chrome-gnome-shell chromium-browser adobe-flashplugin
-sudo apt -y install evolution gnome-session 
+sudo apt -y install evolution gnome-session
 sudo apt -y install vanilla-gnome-desktop gnome-clocks
 #sudo update-alternatives --config gdm3.css
 
 sudo apt -y install python3-pip python-pip jupyter-notebook jupyter-core python-ipykernel python3-pandas python3-boto cython3 spyder3 python3-numpy python-numpy ipython3
-sudo apt -y install build-essential cppcheck automake clang-tools clang-format valgrind gfortran checkinstall cmake libboost-all-dev ccache pkg-config 
+sudo apt -y install build-essential cppcheck automake clang-tools clang-format valgrind gfortran checkinstall cmake libboost-all-dev ccache pkg-config
 sudo apt -y install libopenblas-dev tk-dev libtbb-dev libeigen3-dev zlib1g-dev libjpeg-dev libpng-dev libtiff5-dev liblapacke-dev libblas-dev libatlas-base-dev libhdf5-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libxvidcore-dev libx264-dev libncurses5-dev
 
 
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 ~/.fzf/install --bin
 sudo cp ~/.fzf/bin/fzf /usr/local/bin/
-cp ~/.fzf/shell/key-bindings.fish ~/.config/fish/functions/fzf_key_bindings.fish
 rm -rf ~/.fzf
 
 sudo -H pip3 install pss
@@ -39,7 +38,7 @@ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub
 # cd ~/.local/share/gnome-shell/extensions/pixel-saver@deadalnix.me/themes
 # mv Ambiance Ambiance.bak
 # ln -s default Ambiance
-# 
+#
 # to increase swap space:
 # sudo swapoff -a
 # sudo fallocate -l 24G /swapfile
@@ -60,10 +59,10 @@ sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub
 #cmake -DWITH_TBB=ON -DWITH_IPP=ON -DWITH_GDAL=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DWITH_CUDA=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/hovnatan/Downloads/opencv_contrib-3.4.1/modules/-DCMAKE_BUILD_TYPE=Release ..
 
 # enable partner repos
-# sudo apt install adobe-flashplugin 
+# sudo apt install adobe-flashplugin
 #cd ~/.local/share/gnome-shell/extensions
 #git clone https://github.com/deadalnix/pixel-saver.git
-#mv pixel-saver/pixel-saver@deadalnix.me/ . 
+#mv pixel-saver/pixel-saver@deadalnix.me/ .
 #rm -rf pixel-saver
 # sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
 # echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main" >> /etc/apt/sources.list

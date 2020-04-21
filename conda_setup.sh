@@ -25,8 +25,6 @@ pip install pypng gitpython tensorboard
 wget https://github.com/sharkdp/fd/releases/download/v7.4.0/fd-musl_7.4.0_amd64.deb
 dpkg -i fd-musl_7.4.0_amd64.deb
 
-cp ~/miniconda3/share/fzf/shell/key-bindings.fish ~/.config/fish/functions/fzf_key_bindings.fish
-
 apt-get install software-properties-common
 sudo add-apt-repository ppa:neovim-ppa/stable
 apt install neovim
