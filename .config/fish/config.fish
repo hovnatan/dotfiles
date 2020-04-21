@@ -8,9 +8,11 @@ end
 
 if status --is-interactive
 
-set -x FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
-set -x FZF_CTRL_T_COMMAND "fd -I -p -H -E .git . \$dir"
-set -x FZF_DEFAULT_COMMAND $FZF_CTRL_T_COMMAND
+set -U FZF_LEGACY_KEYBINDINGS 0
+set -U FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
+set -U FZF_COMPLETE 0
+set -U FZF_FIND_FILE_COMMAND "fd -I -p -H -E .git . \$dir"
+# set -U FZF_DEFAULT_COMMAND $FZF_CTRL_T_COMMAND
 set -x EDITOR nvim
 
 function forward-word-or-exit
@@ -31,7 +33,6 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     bind \cn down-or-search
     bind \cd forward-word-or-exit
     bind -M insert \cd forward-word-or-exit
-    fzf_key_bindings
 #    bind -M insert -m default jk backward-char force-repaint
 #    bind -m insert \e force-repaint
 end
