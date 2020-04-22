@@ -4,15 +4,15 @@ set -e
 
 sudo apt-get update
 
-sudo apt-get install -y software-properties-common jq tmux
+sudo apt-get install -y software-properties-common jq
 
-# wget https://github.com/neovim/neovim/releases/download/v0.4.3/nvim.appimage
-# mv nvim.appimage ~/.dotfiles/bin/nvim
-# chmod +x ~/.dotfiles/bin/nvim
+wget https://github.com/neovim/neovim/releases/download/v0.4.3/nvim.appimage
+mv nvim.appimage ~/.dotfiles/bin/nvim
+chmod +x ~/.dotfiles/bin/nvim
 
-sudo add-apt-repository ppa:neovim-ppa/unstable
-sudo apt-get update
-sudo apt-get install -y neovim
+wget https://github.com/tmux/tmux/releases/download/3.0a/tmux-3.0a-x86_64.AppImage
+mv tmux-3.0a-x86_64.AppImage ~/.dotfiles/bin/tmux
+chmod +x ~/.dotfiles/bin/tmux
 
 wget https://github.com/sharkdp/fd/releases/download/v7.4.0/fd-musl_7.4.0_amd64.deb
 sudo dpkg -i fd-musl_7.4.0_amd64.deb
