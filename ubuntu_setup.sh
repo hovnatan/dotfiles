@@ -4,7 +4,7 @@ set -e
 
 sudo apt-get update
 
-sudo apt-get install -y software-properties-common jq
+sudo apt-get install -y software-properties-common jq feh w3m-img
 
 wget https://github.com/neovim/neovim/releases/download/v0.4.3/nvim.appimage
 mv nvim.appimage ~/.dotfiles/bin/nvim
