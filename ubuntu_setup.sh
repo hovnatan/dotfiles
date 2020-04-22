@@ -1,8 +1,10 @@
 #!/bin/bash
 
+set -e
+
 sudo apt-get update
 
-sudo apt-get install -y software-properties-common jq tmux python3-neovim
+sudo apt-get install -y software-properties-common jq tmux
 
 # wget https://github.com/neovim/neovim/releases/download/v0.4.3/nvim.appimage
 # mv nvim.appimage ~/.dotfiles/bin/nvim
@@ -34,8 +36,9 @@ cd $TMPDIR
 wget -O - ${REPO}${RELEASE} | tar zxf - --strip-component=1
 mv rg ~/.dotfiles/bin
 
-tic -x -o $HOME/.terminfo ~/.dotfiles/.terminfo/tmux.terminfo
 tic -x -o $HOME/.terminfo ~/.dotfiles/.terminfo/termite.terminfo
+mkdir -p ~/.terminfo/t
+cp ~/.dotfiles/.terminfo/tmux-256color ~/.terminfo/t/
 
 curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
 sudo apt-get install -y nodejs
@@ -46,4 +49,8 @@ sudo apt-get update
 sudo apt-get install -y yarn
 
 sudo apt-get install python3-pip
-pip install pylint yapf jedi
+pip3 install --user pylint yapf jedi neovim
+
+git clone git://github.com/wting/autojump.git
+cd autojump
+./install.py
