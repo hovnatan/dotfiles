@@ -30,7 +30,13 @@ echo $$ > "$LOCK_FILE"
 dunstify -t 2000 "Turn off notifications for $TIME seconds."
 sleep 1
 killall -SIGUSR1 dunst
-sleep $TIME
+
+SOON=$(($(date +%s) + $TIME))
+while [[ "$NOW" -le "$SOON" ]]; do
+    sleep 30
+    NOW=$(date +%s)
+done
+
 killall -SIGUSR2 dunst
 dunstify -t 2000 "Turn on notifications"
 rm "$LOCK_FILE"

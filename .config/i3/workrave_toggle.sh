@@ -27,7 +27,11 @@ else
   esac
   dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:quiet
   dunstify -i /usr/share/icons/hicolor/scalable/apps/workrave.svg -t 1000 "Workrave" "Turned off for $TIME seconds."
-  sleep $TIME
+  SOON=$(($(date +%s) + $TIME))
+  while [[ "$NOW" -le "$SOON" ]]; do
+      sleep 30
+      NOW=$(date +%s)
+  done
   dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetOperationMode string:normal
   dunstify -i /usr/share/icons/hicolor/scalable/apps/workrave.svg -t 1000 "Workrave" "Turned on."
 fi
