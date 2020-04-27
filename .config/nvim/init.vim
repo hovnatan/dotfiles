@@ -464,16 +464,11 @@ let g:dispatch_no_maps = 1
 imap ;; <C-o>m.
 
 nnoremap <S-Tab> :bnext<cr>
-nnoremap <space><space> <c-^>
+nnoremap <space><space> <C-^>
 
-" map <C-j> <Plug>RepeatMotionUp
-" map <Down> <Plug>RepeatMotionDown
-" map <Right> <Plug>RepeatMotionRight
-" map <Left> <Plug>RepeatMotionLeft
-
+map <C-j> <C-d>
+map <C-k> <C-u>
 map <C-h> <C-w>h
-map <C-j> <C-w>j
-map <C-k> <C-w>k
 map <C-l> <C-w>l
 
 " # Function to permanently delete views created by 'mkview'
