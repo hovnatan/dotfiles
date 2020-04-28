@@ -16,6 +16,7 @@ blueman-applet &
 xss-lock -l -- ~/.dotfiles/lock-xss.sh &
 unclutter --timeout 3 --jitter 3 -b &
 udiskie --no-automount --tray &
+pulseaudio --start --daemonize=yes
 dex /usr/share/applications/org.keepassxc.KeePassXC.desktop &
 start_workrave.sh &
 
