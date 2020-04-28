@@ -8,6 +8,7 @@ for f in /etc/X11/xinit/xinitrc.d/?*.sh; do
 done
 unset f
 
+# pulseaudio --start --daemonize=yes
 ~/Dropbox/scripts/dropbox.py start &
 redshift-gtk &
 libinput-gestures &
@@ -16,7 +17,6 @@ blueman-applet &
 xss-lock -l -- ~/.dotfiles/lock-xss.sh &
 unclutter --timeout 3 --jitter 3 -b &
 udiskie --no-automount --tray &
-pulseaudio --start --daemonize=yes
 dex /usr/share/applications/org.keepassxc.KeePassXC.desktop &
 start_workrave.sh &
 
