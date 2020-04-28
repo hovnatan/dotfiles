@@ -43,6 +43,13 @@ if pkill -xu $EUID -0 workrave; then
   dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetUsageMode string:normal
 fi
 
+DUNST_LOCK_FILE="$HOME/tmp/$USER-dunst-lock.file"
+if [[ ! -f "$DUNST_LOCK_FILE" ]] ; then
+  dunstify DUNST_COMMAND_PAUSE
+  echo $$ > "$DUNST_LOCK_FILE"
+  DUNST_PAUSED="1"
+fi
+
 kill_i3lock() {
     pkill -xu $EUID "$@" i3lock
 }
@@ -56,6 +63,10 @@ on_exit() {
       dbus-send --print-reply --dest=org.workrave.Workrave /org/workrave/Workrave/Core org.workrave.CoreInterface.SetUsageMode string:reading
     fi
     rm "$LOCK_FILE"
+    if [[ "$DUNST_PAUSED" != "" ]] ; then
+      dunstify DUNST_COMMAND_RESUME
+      rm "$DUNST_LOCK_FILE"
+    fi
 }
 
 trap on_exit TERM INT EXIT
