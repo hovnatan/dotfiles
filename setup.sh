@@ -167,7 +167,7 @@ ln -s ~/.dotfiles/.config/keepassxc ~/.config/keepassxc
 #then visit http://localhost:631 to add printer
 
 mkdir -p ~/.config/pulse
-ln -s ~/.dotfiles/.config/pulse/daemon.conf ~/.config/pulse/
+ln -sf ~/.dotfiles/.config/pulse/daemon-low.conf ~/.config/pulse/daemon.conf
 ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
 ln -s ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
 # less /proc/asound/card0/pcm0p/sub0/hw_params
