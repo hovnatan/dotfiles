@@ -9,7 +9,7 @@ end
 if status --is-interactive
 
 set -U FZF_LEGACY_KEYBINDINGS 0
-set -U FZF_DEFAULT_OPTS "--bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
+set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
 set -U FZF_COMPLETE 0
 set -U FZF_FIND_FILE_COMMAND "fd -I -p -H -E .git . \$dir"
 # set -U FZF_DEFAULT_COMMAND $FZF_CTRL_T_COMMAND
