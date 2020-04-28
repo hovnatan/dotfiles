@@ -29,8 +29,7 @@ pip3 install --user pysnooper neovim-remote arxiv python-opensubtitles
 sudo systemctl enable ntpd.service
 sudo systemctl enable bluetooth
 # sudo systemctl enable docker.service
-# systemctl --user disable pulseaudio
-# systemctl --user disable pulseaudio.socket
+systemctl --user enable pulseaudio
 
 yay -Sy --needed aws-cli google-cloud-sdk
 
