@@ -169,6 +169,7 @@ ln -s ~/.dotfiles/.config/keepassxc ~/.config/keepassxc
 mkdir -p ~/.config/pulse
 ln -s ~/.dotfiles/.config/pulse/daemon.conf ~/.config/pulse/
 ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
+ln -s ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
 # less /proc/asound/card0/pcm0p/sub0/hw_params
 
 rm -rf ~/.config/yay
