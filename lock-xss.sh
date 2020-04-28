@@ -88,8 +88,8 @@ if [[ -e /dev/fd/${XSS_SLEEP_LOCK_FD:--1} ]]; then
         sleep 0.5
     done
 else
-    eval $(xdotool getmouselocation --shell)
-    if [ "$X" -gt 30 ] || [ "$1" != "" ] ; then
+    AUTO_LOCK_FILE="$HOME/tmp/$USER-auto-lock.file"
+    if [[ ! -f "$AUTO_LOCK_FILE" ]] ; then
       eval "i3lock -n $i3lock_options"
     fi
 fi
