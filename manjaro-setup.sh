@@ -9,7 +9,7 @@ set -e
 
 sudo systemctl enable NetworkManager.service
 
-sudo pacman -Sy --needed linux54-acpi_call networkmanager network-manager-applet os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp tlp-rdw htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst i3-wm python-i3ipc i3status perl-anyevent-i3 qt5-styleplugins python-gobject s3fs-fuse unzip imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso hunspell-en_US lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time yarn w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool luarocks tcl tk libimagequant dex fwupd vlc bash-language-server lsof rsync unrar perl-image-exiftool meld libvdpau-va-gl vulkan-intel ntp jre-openjdk unclutter xss-lock pacman-contrib libappindicator-gtk3 blueman udisks2 udiskie tldr rofimoji keepassxc ntfs-3g trayer termite rust fd manjaro-firmware upower ranger playerctl mhwd-tui base-devel
+sudo pacman -Sy --needed linux54-acpi_call networkmanager network-manager-applet os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp tlp-rdw htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod feh mpv xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst i3-wm python-i3ipc i3status perl-anyevent-i3 qt5-styleplugins python-gobject s3fs-fuse unzip imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer pulsemixer fuseiso hunspell-en_US lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time yarn w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool luarocks tcl tk libimagequant dex fwupd vlc bash-language-server lsof rsync unrar perl-image-exiftool meld libvdpau-va-gl vulkan-intel ntp jre-openjdk unclutter xss-lock pacman-contrib libappindicator-gtk3 blueman udisks2 udiskie tldr rofimoji keepassxc ntfs-3g trayer termite rust fd manjaro-firmware upower ranger playerctl mhwd-tui base-devel chromium
 
 sudo pacman -Sy --needed freeoffice texlive-core texlive-langextra pandoc pandoc-citeproc hplip avahi cups inkscape gimp zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift workrave
 
@@ -34,7 +34,7 @@ systemctl --user enable pulseaudio
 yay -Sy --needed aws-cli google-cloud-sdk
 
 yay -S --needed freetype2-cleartype
-yay -S --needed skypeforlinux-stable-bin zoom dropbox google-chrome
+yay -S --needed skypeforlinux-stable-bin zoom dropbox
 yay -S --needed libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete
 yay -S --needed dragon-drag-and-drop-git mpv-mpris-git autojump play-with-mpv
 
