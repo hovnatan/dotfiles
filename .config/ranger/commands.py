@@ -29,12 +29,13 @@ class fzf_select(Command):
 class autojump_select(Command):
     """
     :select a dir from autojump list using fzf
+            "sort -r -t \| -k 3 ~/.local/share/z/data | cut -d\| -f1 |  fzf +m",
     """
     def execute(self):
         import subprocess
         import os.path
         fzf = self.fm.execute_command(
-            "cut -f2- ~/.local/share/autojump/autojump.txt |  fzf +m",
+            "fish -c \"j --list\" | awk -F '  +' '{print $2}' | fzf +m",
             universal_newlines=True,
             stdout=subprocess.PIPE
         )

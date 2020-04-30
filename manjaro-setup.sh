@@ -36,7 +36,7 @@ yay -Sy --needed aws-cli google-cloud-sdk
 yay -S --needed freetype2-cleartype
 yay -S --needed skypeforlinux-stable-bin zoom dropbox
 yay -S --needed libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete
-yay -S --needed dragon-drag-and-drop-git mpv-mpris-git autojump play-with-mpv
+yay -S --needed dragon-drag-and-drop-git mpv-mpris-git play-with-mpv
 
 wget 'https://www.dropbox.com/download?dl=packages/dropbox.py' -O ~/.dotfiles/bin/dropbox.py
 chmod +x ~/.dotfiles/bin/dropbox.py
