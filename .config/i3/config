@@ -26,10 +26,10 @@ bindcode Mod1+45 focus right
 bindcode Mod1+46 focus up
 
 # move focused window, h j k l
-bindcode Mod1+Shift+43 move left
-bindcode Mod1+Shift+44 move down
-bindcode Mod1+Shift+45 move up
-bindcode Mod1+Shift+46 move right
+bindcode Mod1+Shift+43 move down
+bindcode Mod1+Shift+44 move left
+bindcode Mod1+Shift+45 move right
+bindcode Mod1+Shift+46 move up
 
 # alternatively, you can use the cursor keys:
 bindsym Mod1+Shift+Left move left
