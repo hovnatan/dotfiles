@@ -180,6 +180,8 @@ ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
 rm -rf ~/.config/kitty
 ln -s ~/.dotfiles/.config/kitty ~/.config/kitty
 
+ln -sf ~/.dotfiles/.config/alacritty ~/.config/
+
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
