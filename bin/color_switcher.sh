@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# set -o errexit
-set -o pipefail
-set -o nounset
-# set -o xtrace
-
 CONFIG="$1"
 OPTION="$2"
 COLOR_PATH="$3"
-cat "$COLOR_PATH" > "$CONFIG"
-echo >> "$CONFIG"
-cat "$OPTION" >> "$CONFIG"
+if [[ "$4" == "" ]]; then
+  cat "$COLOR_PATH" > "$CONFIG"
+  echo >> "$CONFIG"
+  cat "$OPTION" >> "$CONFIG"
+else
+  cat "$OPTION" > "$CONFIG"
+  echo >> "$CONFIG"
+  cat "$COLOR_PATH" >> "$CONFIG"
+fi
