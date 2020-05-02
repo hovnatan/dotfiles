@@ -19,6 +19,10 @@ unclutter --timeout 3 --jitter 3 -b &
 udiskie --no-automount --tray &
 dex /usr/share/applications/org.keepassxc.KeePassXC.desktop &
 start_workrave.sh &
+clipster -d
+xset s 300
+xset -dpms
+dunst
 
 exec i3
 #exec i3 --shmlog-size=26214400

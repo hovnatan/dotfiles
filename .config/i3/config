@@ -224,7 +224,6 @@ for_window [class="Workrave"] floating enable
 bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh
 bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 
-exec --no-startup-id dunst
 bindcode Mod1+57 exec --no-startup-id ~/.config/i3/dunst_turnoff.sh
 bindcode Mod1+Shift+57 exec --no-startup-id ~/.config/i3/dunst_turnon.sh
 bindcode $mod+Shift+61 exec --no-startup-id ~/.dotfiles/bin/set_w_name.sh
@@ -252,10 +251,8 @@ bindcode $mod+20 scratchpad show, resize set 1280 720, move position center
 
 workspace_auto_back_and_forth yes
 
-exec --no-startup-id clipster -d
 bindcode $mod+54 exec --no-startup-id clipster -s
 bindcode $mod+Shift+54 exec --no-startup-id clipster -p -s
-exec --no-startup-id xset s 300 && xset -dpms
 
 # for_window [title="Messenger" instance="www.messenger.com"] move to workspace $ws10
 
