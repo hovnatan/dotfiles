@@ -1,3 +1,5 @@
+key_bindings:
+  - { key: S, mods: Control|Shift, action: PasteSelection }
 # Colors (Gruvbox dark)
 schemes:
   # Default colors
@@ -58,5 +60,3 @@ schemes:
       magenta: '#8f3f71'
       cyan:    '#427b58'
       white:   '#3c3836'
-
-colors: *light
