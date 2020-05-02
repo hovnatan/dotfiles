@@ -151,9 +151,9 @@ ln -s ~/Dropbox/scripts/ranger/bookmarks ~/.local/share/ranger/
 ln -s ~/.dotfiles/.config/sway ~/.config/sway
 ln -s ~/.dotfiles/.Xdefaults ~/.Xresources
 
-# ln -s /usr/bin/google-chrome-stable ~/.dotfiles/bin/chromium
-# ln -sf ~/.dotfiles/.config/chrome-flags.conf ~/.config/
-ln -sf ~/.dotfiles/.config/chromium-flags.conf ~/.config/
+ln -s /usr/bin/google-chrome-stable ~/.dotfiles/bin/chromium
+ln -sf ~/.dotfiles/.config/chrome-flags.conf ~/.config/
+#ln -sf ~/.dotfiles/.config/chromium-flags.conf ~/.config/
 
 ln -s ~/.dotfiles/.condarc ~/.condarc
 
