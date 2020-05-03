@@ -10,8 +10,8 @@ unload-module module-dbus-protocol
 load-module module-bluetooth-policy
 load-module module-bluetooth-discover
 
-.ifexists module-ladspa-sink.so
-.nofail
-load-module module-ladspa-sink sink_name=compressor plugin=sc1_1425 label=sc1 control=5,100,-25,8,2.5,0
-.fail
-.endif
+# .ifexists module-ladspa-sink.so
+# .nofail
+# load-module module-ladspa-sink sink_name=compressor plugin=sc1_1425 label=sc1 control=5,100,-25,8,2.5,0
+# .fail
+# .endif
