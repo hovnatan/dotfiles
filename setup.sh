@@ -169,6 +169,7 @@ mkdir -p ~/.config/pulse
 ln -sf ~/.dotfiles/.config/pulse/daemon-low.conf ~/.config/pulse/daemon.conf
 ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
 ln -s ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
+ln -sf ~/.dotfiles/.config/pulse/equalizerrc ~/.config/pulse/
 # less /proc/asound/card0/pcm0p/sub0/hw_params
 
 rm -rf ~/.config/yay
