@@ -221,6 +221,8 @@ exec_always --no-startup-id ~/.dotfiles/bin/setkmap.sh
 # bindsym $mod+space exec --no-startup-id xkb-switch -n
 
 for_window [class="Workrave"] floating enable
+for_window [class="Workrave" title="Rest break"] sticky enable
+for_window [class="Workrave" title="Micro-break"] sticky enable
 bindcode $mod+Shift+25 exec --no-startup-id ~/.config/i3/workrave_toggle.sh
 bindcode $mod+Shift+39  exec --no-startup-id ~/.config/i3/workrave_grb.sh
 
@@ -301,6 +303,7 @@ mode "$mode_system" {
 bindsym $mod+Escape mode "$mode_system"
 
 exec --no-startup-id i3-msg workspace 3
+exec --no-startup-id rm ~/tmp/hovnatan-lock.file
 
 # exec --no-startup-id picom
 # bindcode Mod4+Shift+21 exec --no-startup-id picom-trans -c +20
