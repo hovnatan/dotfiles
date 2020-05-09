@@ -88,6 +88,8 @@ nnoremap <S-h> gT
 nnoremap <S-l> gt
 
 call plug#begin('~/.local/share/nvim/site/plugged')
+  Plug 'SirVer/ultisnips'
+  Plug 'honza/vim-snippets'
   Plug 'inkarkat/vim-ingo-library'
   Plug 'inkarkat/vim-EnhancedJumps'
   Plug 'inkarkat/vim-SpellCheck'
@@ -199,7 +201,7 @@ nnoremap <leader>gp :Gpush<CR>
 nnoremap <Esc><Esc> :<C-u>let v:hlsearch=!v:hlsearch<CR>
 
 let g:coc_global_extensions = [ 'coc-marketplace', 'coc-python',
-      \ 'coc-json', 'coc-word',
+      \ 'coc-json', 'coc-word', 'coc-snippets',
       \ 'coc-vimtex', 'coc-lists',
       \ 'coc-git', 'coc-css', 'coc-html', 'coc-tsserver'
       \ ]
