@@ -9,7 +9,7 @@ set -e
 
 sudo systemctl enable NetworkManager.service
 
-sudo pacman -Sy --needed linux54-acpi_call networkmanager network-manager-applet os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp tlp-rdw htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod feh xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst i3-wm python-i3ipc i3status perl-anyevent-i3 qt5-styleplugins python-gobject s3fs-fuse unzip imagemagick scrot pulseaudio-alsa pulseaudio-bluetooth pulsemixer swh-plugins pulseaudio-equalizer-ladspa fuseiso hunspell-en_US lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time yarn w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool luarocks tcl tk libimagequant dex fwupd vlc bash-language-server lsof rsync unrar perl-image-exiftool meld libvdpau-va-gl vulkan-intel ntp jre-openjdk xss-lock pacman-contrib libappindicator-gtk3 blueman udisks2 udiskie tldr rofimoji keepassxc ntfs-3g trayer termite rust fd manjaro-firmware upower ranger playerctl mhwd-tui base-devel downgrade
+sudo pacman -Sy --needed linux54-acpi_call networkmanager network-manager-applet os-prober openssh pepper-flash ethtool lsb-release smartmontools x86_energy_perf_policy powertop tlp tlp-rdw htop intel-gpu-tools libva-intel-driver libva-utils intel-media-driver xorg fortune-mod feh xclip neovim python-neovim fzf tmux youtube-dl fish intel-ucode grub glew vtk xf86-video-intel rofi dunst i3-wm python-i3ipc i3status perl-anyevent-i3 qt5-styleplugins python-gobject s3fs-fuse unzip imagemagick scrot pulseaudio-alsa pulsemixer swh-plugins pulseaudio-equalizer-ladspa fuseiso hunspell-en_US lm_sensors uget transmission-cli transmission-gtk wget ack pavucontrol sshfs bluez bluez-utils acpi alsa-utils sysstat i3blocks xorg-xinit pdfgrep xbindkeys ripgrep aria2 tk libjpeg-turbo ctags time yarn w3m elinks odt2txt mediainfo highlight ffmpegthumbnailer atool luarocks tcl tk libimagequant dex fwupd vlc bash-language-server lsof rsync unrar perl-image-exiftool meld libvdpau-va-gl vulkan-intel ntp jre-openjdk xss-lock pacman-contrib libappindicator-gtk3 blueman udisks2 udiskie tldr rofimoji keepassxc ntfs-3g trayer termite rust fd manjaro-firmware upower ranger playerctl mhwd-tui base-devel downgrade
 
 sudo pacman -Sy --needed freeoffice texlive-core texlive-langextra pandoc pandoc-citeproc hplip avahi cups inkscape gimp zathura zathura-djvu zathura-ps zathura-pdf-mupdf redshift workrave
 
@@ -26,17 +26,12 @@ sudo luarocks install --server=http://luarocks.org/dev digestif
 
 pip3 install --user pysnooper neovim-remote arxiv python-opensubtitles
 
-sudo systemctl enable ntpd.service
-sudo systemctl enable bluetooth
-# sudo systemctl enable docker.service
-systemctl --user enable pulseaudio
-
 yay -Sy --needed aws-cli google-cloud-sdk
 
 yay -S --needed freetype2-cleartype
 yay -S --needed skypeforlinux-stable-bin zoom dropbox google-chrome
 yay -S --needed libinput-gestures clipster i3lock-color gruvbox-icon-theme bear-git nerd-fonts-dejavu-complete
-yay -S --needed dragon-drag-and-drop-git mpv-mpris-git mpv-git
+yay -S --needed dragon-drag-and-drop-git mpv-mpris-git mpv-git ffmpeg-git pulseaudio-git
 
 wget 'https://www.dropbox.com/download?dl=packages/dropbox.py' -O ~/.dotfiles/bin/dropbox.py
 chmod +x ~/.dotfiles/bin/dropbox.py
@@ -63,6 +58,11 @@ chmod +x ~/.dotfiles/bin/dropbox.py
 
 # enabel timesync
 sudo systemctl enable systemd-timesyncd.service
+sudo systemctl enable ntpd.service
+sudo systemctl enable bluetooth
+# sudo systemctl enable docker.service
+systemctl --user enable pulseaudio
+
 # set timezone
 # timedatectl set-timezone (curl https://ipapi.co/timezone)
 
@@ -115,30 +115,6 @@ sudo localectl --no-convert set-x11-keymap us,am pc105 ,phonetic-alt grp:alt_spa
 # sudo cp ~/.dotfiles/etc/systemd/system/usb-reset.service /etc/systemd/system/
 # sudo cp ~/.dotfiles/bin/usbmodreset.sh /usr/bin/
 # sudo systemctl enable usb-reset.service
-
-cd ~/tmp
-git clone https://gitlab.manjaro.org/arch-packages/extra/ffmpeg.git
-cd ffmpeg/repos/extra-x86_64
-makepkg -si
-cd ~/tmp
-rm -rf ffmpeg
-git clone https://gitlab.manjaro.org/arch-packages/community/mpv.git
-cd mpv/repos/community-x86_64
-makepkg -si
-cd ~/tmp
-rm -rf mpv
-git clone https://gitlab.manjaro.org/arch-packages/extra/pulseaudio.git
-cd pulseaudio/repos/extra-x86_64
-makepkg -si
-cd ~/tmp
-rm -rf pulseaudio
-git clone https://gitlab.manjaro.org/arch-packages/extra/pulseaudio-alsa.git
-cd pulseaudio-alsa/repos/extra-any
-makepkg -si
-cd ~/tmp
-rm -rf pulseaudio-alsa
-# Add to /etc/pacman.conf
-# IgnorePkg   = mpv ffmpeg pulseaudio pulseaudio-alsa
 
 # fwupd
 fwupdmgr refresh
