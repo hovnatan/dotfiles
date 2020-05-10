@@ -239,7 +239,7 @@ for_window [instance="scrpad"] move scratchpad
 bindcode Mod1+55 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_pavucontrol.sh
 for_window [class="Pavucontrol"] move scratchpad
 for_window [title="Workrave" class="Workrave"] move scratchpad
-for_window [title="Passwords - KeePassXC" class="KeePassXC"] move scratchpad
+for_window [title="passwords*" class="KeePassXC"] move scratchpad
 
 bindcode Mod4+31 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh ipython ipython-scrpad
 
