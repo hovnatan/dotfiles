@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ~/Downloads
-aria2c -x 8 -s 8 https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash ./Miniconda3-latest-Linux-x86_64.sh
 ln -s ~/.dotfiles/.condarc ~/.condarc
 import_miniconda
@@ -13,7 +13,7 @@ conda install tbb tbb-devel cmake binutils_impl_linux-64 binutils_linux-64 gxx_l
 #also might be install sudo apt-get install -y libgl1-mesa-dev
 # conda env export | cut -f 1 -d '=' > ~/.dotfiles/conda_environment.yml
 # conda env update --file ~/.dotfiles/conda_environment.yml
-ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
+# ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 # run import_miniconda fish shell integration
 # for bash
 # run source /opt/miniconda3/etc/profile.d/conda.sh
@@ -21,10 +21,3 @@ ln -s /usr/local/share/terminfo/x/xterm-termite ~/miniconda3/share/terminfo/x/
 
 # pypng for indexed png, gitpython python wrapper for git
 pip install pypng gitpython tensorboard
-
-wget https://github.com/sharkdp/fd/releases/download/v7.4.0/fd-musl_7.4.0_amd64.deb
-dpkg -i fd-musl_7.4.0_amd64.deb
-
-apt-get install software-properties-common
-sudo add-apt-repository ppa:neovim-ppa/stable
-apt install neovim
