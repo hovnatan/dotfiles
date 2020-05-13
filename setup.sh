@@ -84,6 +84,7 @@ ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
 ln -s ~/.dotfiles/.config/gtk-3.0/gtk.css  ~/.config/gtk-3.0/gtk.css
 ln -s ~/Dropbox/scripts/gtk_bookmarks ~/.config/gtk-3.0/bookmarks
 ln -s ~/.dotfiles/.gtkrc-2.0 ~/.gtkrc-2.0
+ln -sf ~/.dotfiles/.config/gtk-2.0 ~/.config/
 
 rm -rf ~/.config/fontconfig/fonts.conf
 mkdir -p ~/.config/fontconfig
