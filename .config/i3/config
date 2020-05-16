@@ -31,12 +31,6 @@ bindcode Mod1+Shift+44 move left
 bindcode Mod1+Shift+45 move right
 bindcode Mod1+Shift+46 move up
 
-# alternatively, you can use the cursor keys:
-bindsym Mod1+Shift+Left move left
-bindsym Mod1+Shift+Down move down
-bindsym Mod1+Shift+Up move up
-bindsym Mod1+Shift+Right move right
-
 # 55=v, 41=f
 bindcode Mod4+Shift+55 split h
 bindcode Mod4+55 split v
@@ -100,36 +94,25 @@ bindsym Mod4+Left workspace prev
 bindcode Mod4+45 workspace next
 bindcode Mod4+44 workspace prev
 
-bindcode $mod+Shift+27 restart
+bindcode Mod1+Shift+27 restart
 
 mode "resize" {
-        bindsym h resize shrink width 5 px or 5 ppt
-        bindsym j resize grow height 5 px or 5 ppt
-        bindsym k resize shrink height 5 px or 5 ppt
-        bindsym l resize grow width 5 px or 5 ppt
+        bindcode 43 resize shrink width 10 px or 10 ppt
+        bindcode 44 resize grow height 10 px or 10 ppt
+        bindcode 45 resize shrink height 10 px or 10 ppt
+        bindcode 46 resize grow width 10 px or 10 ppt
+
+        bindcode Mod1+43 move left
+        bindcode Mod1+44 move down
+        bindcode Mod1+45 move up
+        bindcode Mod1+46 move right
 
         # back to normal: Enter or Escape or $mod+r
         bindsym Return mode "default"
         bindsym Escape mode "default"
-        bindsym $mod+r mode "default"
+        bindcode Mod1+27 mode "default"
 }
-bindcode $mod+27 mode "resize"
-
-mode "move" {
-        bindsym --release h exec --no-startup-id xdotool key Left
-        bindsym --release j exec --no-startup-id xdotool key Down
-        bindsym --release k exec --no-startup-id xdotool key Up
-        bindsym --release l exec --no-startup-id xdotool key Right
-
-        bindsym --release Shift+h exec --no-startup-id xdotool key Left Left
-        bindsym --release Shift+j exec --no-startup-id xdotool key Down Down
-        bindsym --release Shift+k exec --no-startup-id xdotool key Up Up
-        bindsym --release Shift+l exec --no-startup-id xdotool key Right Right
-
-        bindsym Return mode "default"
-        bindsym Escape mode "default"
-}
-bindsym $mod+Shift+m mode "move"
+bindcode Mod1+27 mode "resize"
 
 set_from_resource $base00 color0
 set_from_resource $base01 color1
