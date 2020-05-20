@@ -31,6 +31,7 @@
   "git.removedSign.hlGroup": "GitGutterDelete",
   "git.topRemovedSign.hlGroup": "GitGutterDelete",
   "git.changeRemovedSign.hlGroup": "GitGutterChangeDelete",
+  "diagnostic.warningSign": ">>",
   "git.enableGutters": true,
   "coc.source.issues.enable": false,
   "suggest.detailMaxLength": 200,
