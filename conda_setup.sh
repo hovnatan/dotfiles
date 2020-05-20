@@ -29,5 +29,3 @@ cp ~/miniconda3/share/fzf/shell/key-bindings.fish ~/.config/fish/functions/fzf_k
 
 # pypng for indexed png, gitpython python wrapper for git
 pip install pypng gitpython tensorboard
-=======
->>>>>>> setup improve

@@ -523,7 +523,7 @@ function! LargeFile()
  " display message
  set noloadplugins
 
- set lazyredraw
+ " set lazyredraw
  set noswapfile
  set eventignore=all
  set nohidden
