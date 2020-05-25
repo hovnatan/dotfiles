@@ -105,7 +105,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-unimpaired'
   Plug 'tpope/vim-git'
   Plug 'tpope/vim-fugitive'
-  Plug 'rbong/vim-flog'
   Plug 'tommcdo/vim-fubitive'
   Plug 'tpope/vim-rhubarb'
   Plug 'tpope/vim-surround'
