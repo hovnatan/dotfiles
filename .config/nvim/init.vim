@@ -134,7 +134,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'majutsushi/tagbar'
   Plug 'tmhedberg/SimpylFold'
   Plug 'kshenoy/vim-signature'
+  Plug 'Yilin-Yang/vim-markbar'
 call plug#end()
+
+nmap <Leader>m <Plug>ToggleMarkbar
 
 let g:SignatureMap = {
   \ 'Leader'             :  "m",
