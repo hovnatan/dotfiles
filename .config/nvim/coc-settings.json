@@ -2,8 +2,6 @@
   "coc.preferences.formatOnSaveFiletypes": ["python", "cpp", "javascript", "xhtml", "html", "css", "Markdown", "lua"],
   "coc.preferences.jumpCommand": "edit",
   "diagnostic.maxWindowHeight": 25,
-  "highlight.colors.enable": false,
-  "highlight.document.enable": false,
   "languageserver": {
     "clangd": {
       "command": "clangd",
@@ -34,6 +32,7 @@
   "diagnostic.warningSign": ">>",
   "git.enableGutters": true,
   "coc.source.issues.enable": false,
+  "coc.source.word.filetypes": ["text", "html", "markdown"],
   "suggest.detailMaxLength": 200,
   "list.insertMappings": {
     "<C-s>": "action:vsplit",
