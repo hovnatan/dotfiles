@@ -12,6 +12,8 @@ end
 
 if status --is-interactive
 
+set -U Z_CMD "j"
+
 set -U FZF_LEGACY_KEYBINDINGS 0
 set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
 # set -U FZF_COMPLETE 0
@@ -145,7 +147,5 @@ set -x NVIM_LISTEN_ADDRESS /tmp/nvimsocket
 set -x REVIEW_BASE master
 set fish_command_timer_export_cmd_duration_str 1
 set fish_command_timer_enabled 0
-
-set -U Z_CMD "j"
 
 end

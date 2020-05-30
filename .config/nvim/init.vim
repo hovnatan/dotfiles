@@ -129,15 +129,15 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'easymotion/vim-easymotion'
   Plug 'machakann/vim-swap'
   Plug 'jpalardy/vim-slime'
-  Plug 'hovnatan/vim-ipython-cell'
+  Plug 'hanschen/vim-ipython-cell'
   Plug 'wsdjeg/vim-fetch'
   Plug 'majutsushi/tagbar'
   Plug 'tmhedberg/SimpylFold'
   Plug 'kshenoy/vim-signature'
-  Plug 'Yilin-Yang/vim-markbar'
+  " Plug 'Yilin-Yang/vim-markbar'
 call plug#end()
 
-nmap <Leader>m <Plug>ToggleMarkbar
+" nmap <Leader>m <Plug>ToggleMarkbar
 
 let g:SignatureMap = {
   \ 'Leader'             :  "m",
