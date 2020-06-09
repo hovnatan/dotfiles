@@ -4,7 +4,7 @@ export LANGUAGE=en_US.UTF-8
 
 # export TERMINAL_APP="termite"
 # export TMUX_ONE_WINDOW=1
-export LIBGL_ALWAYS_INDIRECT=1
+# export LIBGL_ALWAYS_INDIRECT=1
 
 export PATH="$HOME/.dotfiles/bin:$HOME/.local/bin:$HOME/opt/usr/bin:$PATH"
 
