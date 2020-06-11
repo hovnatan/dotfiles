@@ -4,7 +4,7 @@ set -e
 
 sudo apt-get update
 
-sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-finder ripgrep fish ranger zathura clang clangd bear ppa-purge
+sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-finder ripgrep fish ranger zathura clang clangd bear ppa-purge valgrind texlive-latex-extra latexmk
 
 
 sudo apt-get install gawk
