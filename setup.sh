@@ -46,35 +46,7 @@ ln -sf ~/.dotfiles/.profile ~/.profile
 
 # modify ~/.config/mimeapps.list for image/tiff feh.desktop
 
-<<<<<<< HEAD
-ln -s ~/.dotfiles/.ideavimrc ~/.ideavimrc
 
-mkdir -p ~/Documents/MATLAB
-ln -s ~/.dotfiles/Documents/MATLAB/startup.m ~/Documents/MATLAB/startup.m
-
-mkdir -p ~/.config/gtk-3.0
-rm -rf  ~/.config/gtk-3.0/settings.ini
-ln -s ~/.dotfiles/.config/gtk-3.0/settings.ini  ~/.config/gtk-3.0/settings.ini
-ln -s ~/.dotfiles/.config/gtk-3.0/gtk.css  ~/.config/gtk-3.0/gtk.css
-ln -s ~/Dropbox/scripts/gtk_bookmarks ~/.config/gtk-3.0/bookmarks
-ln -s ~/.dotfiles/.gtkrc-2.0 ~/.gtkrc-2.0
-ln -sf ~/.dotfiles/.config/gtk-2.0 ~/.config/
-
-rm -rf ~/.config/fontconfig/fonts.conf
-mkdir -p ~/.config/fontconfig
-ln -s ~/.dotfiles/.config/fontconfig/fonts.conf ~/.config/fontconfig/fonts.conf
-
-rm -rf ~/.config/dunst/dunstrc
-mkdir -p ~/.config/dunst
-ln -s ~/.dotfiles/.config/dunst/dunstrc  ~/.config/dunst/dunstrc
-
-ln -s ~/.dotfiles/.config/libinput-gestures.conf ~/.config
-
-ln -sf ~/.dotfiles/.config/clipster ~/.config/
-ln -sf ~/.dotfiles/.xinitrc  ~/.xinitrc
-
-=======
->>>>>>> cleanup
 cd ~
 ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519
 #echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
@@ -90,46 +62,12 @@ chmod 600 ~/.ssh/authorized_keys
 rm -rf ~/.config/ranger
 ln -s ~/.dotfiles/.config/ranger/ ~/.config/
 
-<<<<<<< HEAD
-ln -s ~/.dotfiles/.config/sway ~/.config/sway
-ln -s ~/.dotfiles/.Xdefaults ~/.Xresources
-
-ln -s /usr/bin/google-chrome-stable ~/.dotfiles/bin/chromium
-ln -sf ~/.dotfiles/.config/chrome-flags.conf ~/.config/
-#ln -sf ~/.dotfiles/.config/chromium-flags.conf ~/.config/
 
 ln -s ~/.dotfiles/.condarc ~/.condarc
 
 ln -s ~/.dotfiles/.config/keepassxc ~/.config/keepassxc
 
-#for printer discovery
-#sudo systemctl start avahi-daemon.service
-#for printing
-#sudo systemctl start org.cups.cupsd.service
-#then visit http://localhost:631 to add printer
 
-mkdir -p ~/.config/pulse
-ln -sf ~/.dotfiles/.config/pulse/daemon-low.conf ~/.config/pulse/daemon.conf
-ln -s ~/.dotfiles/.config/pulse/default.pa ~/.config/pulse/
-ln -s ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
-ln -sf ~/.dotfiles/.config/pulse/equalizerrc ~/.config/pulse/
-# less /proc/asound/card0/pcm0p/sub0/hw_params
-
-rm -rf ~/.config/yay
-ln -s ~/.dotfiles/.config/yay ~/.config/yay
-
-rm -rf ~/.config/zathura
-ln -s ~/.dotfiles/.config/zathura ~/.config/zathura
-
-rm -rf ~/.config/kitty
-ln -s ~/.dotfiles/.config/kitty ~/.config/kitty
-
-ln -sf ~/.dotfiles/.config/alacritty ~/.config/
-
-=======
-ln -s ~/.dotfiles/.condarc ~/.condarc
-
->>>>>>> cleanup
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
@@ -140,6 +78,8 @@ mkdir -p ~/opt
 # for sshfs sshfs -o Compression=no,reconnect home.server.com:/ ~/home_server/ -p 22
 
 sudo gpasswd -a $USER docker
+
+ln -s /usr/bin/fdfind ~/.dotfiles/bin/fd
 
 # useful for docker cmds
 # docker run -it --name=tuft tuft /bin/bash
