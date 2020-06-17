@@ -50,9 +50,9 @@ set wrapscan
 set switchbuf=usetab
 set listchars=tab:▸\ ,eol:¬
 set history=200
-" if !empty($DISPLAY)
-"   set clipboard+=unnamedplus
-" endif
+if !empty($DISPLAY)
+  set clipboard+=unnamedplus
+endif
 set undofile
 set undodir=$HOME/.vimundo
 set undolevels=1000
@@ -428,7 +428,7 @@ au FileType tex,latex
                 \ setlocal textwidth=80
 au FileType json
       \ set conceallevel=0 |
-      \ nn <buffer> <F4> :%!python -m json.tool<CR>
+      \ nn <buffer> <F4> :%!python3 -m json.tool<CR>
 
 au FileType python
                 \ nnoremap <buffer> <F6> :IPythonCellExecuteCell<CR> |
