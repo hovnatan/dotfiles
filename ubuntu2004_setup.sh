@@ -4,7 +4,10 @@ set -e
 
 sudo apt-get update
 
-sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger zathura clang clangd bear ppa-purge valgrind texlive-latex-extra latexmk curl chrome-gnome-shell
+sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger clang clangd bear ppa-purge valgrind curl neovim
+
+# sudo apt-get install -y texlive-latex-extra latexmk chrome-gnome-shell zathura
+
 
 
 sudo apt-get install gawk
