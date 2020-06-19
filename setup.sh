@@ -77,10 +77,11 @@ mkdir -p ~/Downloads
 mkdir -p ~/opt
 # for sshfs sshfs -o Compression=no,reconnect home.server.com:/ ~/home_server/ -p 22
 
-sudo gpasswd -a $USER docker
-
 ln -s /usr/bin/fdfind ~/.dotfiles/bin/fd
 
+cp ~/.dotfiles/.my_colors ~/
+
+# sudo gpasswd -a $USER docker
 # useful for docker cmds
 # docker run -it --name=tuft tuft /bin/bash
 # install sshd on docker, run server with service ssh start
