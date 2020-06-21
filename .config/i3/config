@@ -7,17 +7,16 @@ workspace_layout tabbed
 
 floating_modifier Mod1
 
-bindsym Mod1+Return exec --no-startup-id ~/.dotfiles/.config/i3/terminal.sh
+bindsym Mod1+Return exec --no-startup-id urxvt
 bindcode Mod4+43 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "htop -u $USER" htop-scrpad
 #bindsym Mod1+Shift+Return exec --no-startup-id kitty
-bindsym Mod1+Shift+Return exec --no-startup-id termite
+bindsym Mod1+Shift+Return exec --no-startup-id urxvt
 
 # kill focused window # Alt+q
 bindcode Mod1+24 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh
 
 # start run (a program launcher), 40=d
 bindcode Mod1+40 exec rofi -show drun
-bindcode Mod1+Shift+40 exec --no-startup-id dropbox_toggle.py
 
 # change focus, h j k l
 bindcode Mod1+43 focus down
@@ -133,9 +132,6 @@ set_from_resource $base0F color15
 
 # Basic bar configuration using the Base16 variables.
 bar {
-    mode hide
-    hidden_state hide
-    modifier Mod4
     position top
     # tray_output none
 
@@ -268,9 +264,9 @@ mode "$mode_system" {
     bindsym l exec --no-startup-id ~/.dotfiles/lock-xss.sh lock, mode "default"
     bindsym $mod+Escape exec --no-startup-id ~/.dotfiles/lock-xss.sh lock, mode "default"
 
-    bindsym e exec --no-startup-id zathura_save.sh last add_hname && tmux kill-server && i3-msg exit
-    bindsym r exec --no-startup-id zathura_save.sh last add_hname && systemctl reboot, mode "default"
-    bindsym Shift+s exec --no-startup-id zathura_save.sh last add_hname && systemctl poweroff -i, mode "default"
+    bindsym e exec --no-startup-id tmux kill-server && i3-msg exit
+    bindsym r exec --no-startup-id systemctl reboot, mode "default"
+    bindsym Shift+s exec --no-startup-id systemctl poweroff -i, mode "default"
 
     bindsym s exec --no-startup-id systemctl suspend, mode "default"
     bindsym h exec --no-startup-id systemctl hibernate, mode "default"
