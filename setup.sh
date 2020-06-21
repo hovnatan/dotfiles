@@ -28,7 +28,6 @@ rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
 curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
 fish -c fisher
-sudo chsh -s `which fish` $USER
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
@@ -81,6 +80,8 @@ ln -s /usr/bin/fdfind ~/.dotfiles/bin/fd
 
 cp ~/.dotfiles/.my_colors ~/
 ln -sf ~/.dotfiles/.config/kitty ~/.config/
+ln -sf ~/.dotfiles/.bashrc ~/
+ln -sf ~/.dotfiles/.bash_profile ~/
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/
 # ln -sf ~/.dotfiles/.Xresources ~/

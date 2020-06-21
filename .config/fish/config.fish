@@ -1,15 +1,3 @@
-if status --is-login
-
-umask 0077
-source ~/.profile
-setup_ssh_agent
-set -x XURL (cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
-set -x DISPLAY $XURL:0.0
-
-tmux_attach_deattached.sh
-
-end
-
 if status --is-interactive
 
 set -U Z_CMD "j"
