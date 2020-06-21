@@ -85,6 +85,7 @@ ln -sf ~/.dotfiles/.config/kitty ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/
 # ln -sf ~/.dotfiles/.Xresources ~/
 # ln -sf ~/.dotfiles/.xsession ~/
+# ln -sf ~/.dotfiles/.config/i3 ~/.config/
 
 # sudo gpasswd -a $USER docker
 # useful for docker cmds
