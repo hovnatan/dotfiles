@@ -80,6 +80,10 @@ mkdir -p ~/opt
 ln -s /usr/bin/fdfind ~/.dotfiles/bin/fd
 
 cp ~/.dotfiles/.my_colors ~/
+# ln -s ~/.dotfiles/.config/fontconfig ~/.config/
+# ln -sf ~/.dotfiles/.xinitrc ~/
+# ln -sf ~/.dotfiles/.Xresources ~/
+# ln -sf ~/.dotfiles/.xsession ~/
 
 # sudo gpasswd -a $USER docker
 # useful for docker cmds
