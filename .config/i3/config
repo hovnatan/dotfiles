@@ -7,10 +7,10 @@ workspace_layout tabbed
 
 floating_modifier Mod1
 
-bindsym Mod1+Return exec --no-startup-id urxvt
+bindsym Mod1+Return exec --no-startup-id kitty
 bindcode Mod4+43 exec --no-startup-id ~/.dotfiles/.config/i3/run_show_scratchpad.sh "htop -u $USER" htop-scrpad
 #bindsym Mod1+Shift+Return exec --no-startup-id kitty
-bindsym Mod1+Shift+Return exec --no-startup-id urxvt
+bindsym Mod1+Shift+Return exec --no-startup-id kitty
 
 # kill focused window # Alt+q
 bindcode Mod1+24 kill; exec --no-startup-id ~/.dotfiles/.config/i3/tmux_kill.sh

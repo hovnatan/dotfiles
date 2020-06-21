@@ -6,8 +6,8 @@ sudo apt-get update
 
 sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger clang clangd bear ppa-purge valgrind curl neovim
 
-# sudo apt-get install -y texlive-latex-extra latexmk chrome-gnome-shell zathura xrdp fonts-croscore
-# sudo apt-get install -y urxvt i3 i3blocks
+# sudo apt-get install -y texlive-latex-extra latexmk chrome-gnome-shell zathura xrdp fonts-croscore kitty
+# sudo apt-get install -y i3 i3blocks
 
 
 

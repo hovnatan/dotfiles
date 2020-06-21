@@ -80,6 +80,7 @@ mkdir -p ~/opt
 ln -s /usr/bin/fdfind ~/.dotfiles/bin/fd
 
 cp ~/.dotfiles/.my_colors ~/
+ln -sf ~/.dotfiles/.config/kitty ~/.config/
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/
 # ln -sf ~/.dotfiles/.Xresources ~/
