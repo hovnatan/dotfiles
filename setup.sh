@@ -69,6 +69,10 @@ ln -sf ~/.dotfiles/.config/zathura ~/.config/
 ln -sf ~/.dotfiles/.config/pulse/daemon-high.conf ~/.config/pulse/daemon.conf
 ln -sf ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
 
+ln -s ~/.dotfiles/.config/kitty ~/.config
+# to install kitty terminfo on remote
+# infocmp xterm-kitty | ssh <myserver> tic -x -o \~/.terminfo /dev/stdin
+
 
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
