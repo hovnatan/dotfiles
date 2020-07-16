@@ -38,5 +38,6 @@
     "<C-s>": "action:vsplit",
     "<C-w>": "command:wincmd k",
     "<C-v>": "eval:@@"
-  }
+  },
+  "list.source.grep.args": ["-S"]
 }
