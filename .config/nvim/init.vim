@@ -378,6 +378,7 @@ nnoremap <silent> <space>w  :exe 'CocList -I --normal --input='.expand('<cword>'
 
 vnoremap <leader>rg :<C-u>call <SID>GrepFromSelected(visualmode())<CR>
 nnoremap <leader>rg :<C-u>set operatorfunc=<SID>GrepFromSelected<CR>g@
+nnoremap <silent> <leader>cf :exe 'CocList --input='.expand('<cword>').' grep'<CR>
 
 function! s:GrepFromSelected(type)
   let saved_unnamed_register = @@
