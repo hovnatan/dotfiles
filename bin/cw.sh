@@ -20,4 +20,4 @@ echo -n "$COLOR" > ~/.my_colors
 color_switcher.sh ~/.config/zathura/zathurarc ~/.config/zathura/option ~/.config/zathura/colors/$COLOR
 echo -n "set -U _reload_color_config ""$COLOR" | fish
 
-kitty @ set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
+kitty @ --to $HOME/.tmpkitty set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
