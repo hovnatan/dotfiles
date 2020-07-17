@@ -65,6 +65,7 @@ ln -s ~/.dotfiles/.config/ranger/ ~/.config/
 ln -s ~/.dotfiles/.condarc ~/.condarc
 
 ln -s ~/.dotfiles/.config/keepassxc ~/.config/keepassxc
+ln -sf ~/.dotfiles/.config/zathura ~/.config/
 
 
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
