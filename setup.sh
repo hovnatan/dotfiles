@@ -66,6 +66,8 @@ ln -s ~/.dotfiles/.condarc ~/.condarc
 
 ln -s ~/.dotfiles/.config/keepassxc ~/.config/keepassxc
 ln -sf ~/.dotfiles/.config/zathura ~/.config/
+ln -sf ~/.dotfiles/.config/pulse/daemon-high.conf ~/.config/pulse/daemon.conf
+ln -sf ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
 
 
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
