@@ -2,3 +2,5 @@
 # then
 #     exec tmux_attach_deattached.sh
 # fi
+alias ta="tmux_attach_deattached.sh"
+alias f="fish"
