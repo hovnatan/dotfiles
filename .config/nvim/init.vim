@@ -542,11 +542,6 @@ if exists('$TMUX')
   autocmd BufEnter,BufNewFile,WinEnter * call system("tmux rename-window \"nvim " . expand("%") . "\"")
 endif
 
-nmap g<C-o>      <Plug>EnhancedJumpsOlder
-nmap g<C-i>      <Plug>EnhancedJumpsNewer
-nmap <C-o>       <Plug>EnhancedJumpsLocalOlder
-nmap <C-i>       <Plug>EnhancedJumpsLocalNewer
-
 if !exists('g:lasttab')
   let g:lasttab = 1
 endif
