@@ -2,6 +2,8 @@
 
 set -e
 
+sudo apt-add-repository ppa:fish-shell/release-3
+
 sudo apt-get update
 
 sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger clang clangd bear ppa-purge valgrind curl neovim htop
