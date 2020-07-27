@@ -1,13 +1,6 @@
 #!/bin/bash
 
-CURRENT_WORKSPACE=""
-if [[ "$3" != "" ]]; then
-  CURRENT_WORKSPACE=$(i3-msg -t get_workspaces \
-  | jq '.[] | select(.focused==true).name' \
-  | cut -d"\"" -f2)
-fi
-
-PIDS_WS_NAME=$(python ~/.dotfiles/bin/zathura_get_windows.py "$CURRENT_WORKSPACE")
+PIDS_WS_NAME=$(wmctrl -lp)
 if [ "$PIDS_WS_NAME" == "" ]; then
   exit 0
 fi
