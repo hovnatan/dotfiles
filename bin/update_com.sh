@@ -1,11 +1,12 @@
 #!/bin/bash
 
+fish -c fisher &
+
+"$HOME/.tmux/plugins/tpm/bin/update_plugins" all &
+
 sudo apt update
 sudo apt dist-upgrade
-
-fish -c fisher
-
-"$HOME/.tmux/plugins/tpm/bin/update_plugins" all
+sudo apt autoremove
 
 nvim -c PlugUpdate
 
