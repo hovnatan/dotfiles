@@ -1,8 +1,9 @@
 #!/bin/sh
 
-PDFS=$(cat ~/.local/share/zathura/history | grep -Po '\[\K[^\]]*' | grep -o -P '.{0,115}$')
-echo "$PDFS"
+PDFS=$(cat ~/.local/share/zathura/history | grep -Po '\[\K[^\]]*' | grep "pdf\|djvu")
+N_PDFS=$(echo "$PDFS" | awk '{print NR  "> " $s}')
+echo "$N_PDFS"
+
 read INDEX
-((++INDEX))
 SELECTED=$(echo "$PDFS" | sed -n "$INDEX"p)
 zathura "$SELECTED" &
