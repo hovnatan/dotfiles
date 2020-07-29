@@ -1,8 +1,9 @@
 #!/bin/bash
 
 fish -c fisher &
-
 "$HOME/.tmux/plugins/tpm/bin/update_plugins" all &
+
+wait
 
 sudo apt update
 sudo apt dist-upgrade
