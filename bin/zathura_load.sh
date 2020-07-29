@@ -1,7 +1,6 @@
 #!/bin/bash
 
-INPUT_DIR="$HOME/Dropbox/scripts/zathura/saves"
-INPUT_FILE="$INPUT_DIR/$1"
+INPUT_FILE="$1"
 
 if [ ! -f "$INPUT_FILE" ]; then
   exit 1
