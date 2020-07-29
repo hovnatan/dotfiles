@@ -2,10 +2,7 @@
 
 PIDS=$(wmctrl -lp | awk '{print $3}')
 
-OUTPUT_DIR="$HOME/Dropbox/scripts/zathura/saves"
 OUTPUT_FILE="$1"
-OUTPUT_FILE="${OUTPUT_FILE}_$(hostname)"
-OUTPUT_FILE="$OUTPUT_DIR/$OUTPUT_FILE"
 rm "$OUTPUT_FILE"
 
 while read PID
