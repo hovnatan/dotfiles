@@ -178,11 +178,15 @@ let g:fastfold_savehook = 1
 let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
 let g:fastfold_fold_movement_commands = [']z', '[z', 'zj', 'zk']
 
+let g:slime_no_mappings = 1
+xmap <c-c><c-c> <Plug>SlimeRegionSend
+nmap <c-c>v     <Plug>SlimeConfig
 let g:slime_target = 'tmux'
 " tmux target pane should be the last digit of $TMUX + :, e.g., 8:. Need
 " "default" not "default " as tmux server
 let g:slime_python_ipython = 1
 let g:slime_default_config = {"socket_name": "default", "target_pane": "{last}"}
+let g:slime_dont_ask_default = 1
 
 let g:ipython_cell_delimit_cells_by = 'tags'
 
@@ -436,10 +440,8 @@ au FileType json
       \ nn <buffer> <F4> :%!python3 -m json.tool<CR>
 
 au FileType python
-                \ nnoremap <buffer> <F6> :IPythonCellExecuteCell<CR> |
-                \ inoremap <buffer> <F6> <C-o>:IPythonCellExecuteCell<CR> |
-                \ nnoremap <buffer> <F7> :IPythonCellExecuteCellJump<CR> |
-                \ inoremap <buffer> <F7> <C-o>:IPythonCellExecuteCellJump<CR> |
+                \ nnoremap <buffer> <c-c><c-c> :IPythonCellExecuteCell<CR> |
+                \ nnoremap <buffer> <c-c><c-n> :IPythonCellExecuteCellJump<CR> |
                 \ Abolish -buffer true True |
                 \ Abolish -buffer false False
 
