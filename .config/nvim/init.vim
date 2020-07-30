@@ -182,6 +182,7 @@ let g:slime_target = 'tmux'
 " tmux target pane should be the last digit of $TMUX + :, e.g., 8:. Need
 " "default" not "default " as tmux server
 let g:slime_python_ipython = 1
+let g:slime_default_config = {"socket_name": "default", "target_pane": "{last}"}
 
 let g:ipython_cell_delimit_cells_by = 'tags'
 
