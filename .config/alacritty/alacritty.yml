@@ -78,3 +78,6 @@ mouse:
   triple_click: { threshold: 300 }
 
   hide_when_typing: true
+
+key_bindings:
+  - { key: S,        mods: Control|Shift,       action: PasteSelection }
