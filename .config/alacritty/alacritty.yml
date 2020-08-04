@@ -1,11 +1,8 @@
 scrolling:
     history: 0
-window:
-    decorations: none
-    startup_mode: Fullscreen
 font:
     # The size to use.
-    size: 12
+    size: 14
     normal:
           family: Consolas
     bold:
@@ -41,3 +38,5 @@ colors:
     magenta: '#8f3f71'
     cyan:    '#427b58'
     white:   '#3c3836'
+
+draw_bold_text_with_bright_colors: false
