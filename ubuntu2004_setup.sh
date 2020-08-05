@@ -27,3 +27,6 @@ sudo apt-get install -y yarn
 
 sudo apt-get install python3-pip
 pip3 install --user pylint yapf jedi neovim ueberzug
+
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
