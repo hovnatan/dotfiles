@@ -6,6 +6,8 @@ if [ ! -f "$INPUT_FILE" ]; then
   exit 1
 fi
 
+XID_TABBED=$(tabbed -d)
+
 IFS=:
 cat "$INPUT_FILE" | while read LINE
 do
@@ -15,7 +17,7 @@ do
     pagenumber=0
   fi
   ((++pagenumber))
-  zathura -P "$pagenumber" "$filename" &
+  zathura -e "$XID_TABBED" -P "$pagenumber" "$filename" &
   PID="$!"
   while true; do
     sleep 0.1
