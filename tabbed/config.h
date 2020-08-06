@@ -41,13 +41,12 @@ static Key keys[] = {
     {MODKEY | ShiftMask, XK_Return, focusonce, {0}},
     {MODKEY | ShiftMask, XK_Return, spawn, {0}},
 
-    {MODKEY, XK_j, rotate, {.i = +1}},
-    {MODKEY, XK_k, rotate, {.i = -1}},
+    {MODKEY, XK_j, rotate, {.i = -1}},
+    {MODKEY, XK_k, rotate, {.i = +1}},
+    {MODKEY, XK_grave, rotate, {.i = 0}},
     {MODKEY | ShiftMask, XK_j, movetab, {.i = -1}},
     {MODKEY | ShiftMask, XK_k, movetab, {.i = +1}},
-    {MODKEY, XK_Tab, rotate, {.i = 0}},
 
-    {MODKEY, XK_grave, spawn, SETPROP("_TABBED_SELECT_TAB")},
     {MODKEY, XK_1, move, {.i = 0}},
     {MODKEY, XK_2, move, {.i = 1}},
     {MODKEY, XK_3, move, {.i = 2}},
