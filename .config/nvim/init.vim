@@ -89,9 +89,6 @@ nnoremap <S-l> gt
 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
-  Plug 'junegunn/limelight.vim'
-  Plug 'junegunn/goyo.vim'
-  Plug 'vim-scripts/neat.vim'
   Plug 'lervag/vimtex'
   Plug 'tpope/vim-abolish'
   Plug 'tpope/vim-dispatch'
@@ -118,7 +115,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kana/vim-textobj-user'
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'jeetsukumaran/vim-indentwise'
-  Plug 'zhimsel/vim-stay' " automatically remember states
+  Plug 'zhimsel/vim-stay'
   Plug 'Konfekt/FastFold'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
@@ -131,8 +128,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tmhedberg/SimpylFold'
   Plug 'kshenoy/vim-signature'
 call plug#end()
-
-" nmap <Leader>m <Plug>ToggleMarkbar
 
 let g:SignatureMap = {
   \ 'Leader'             :  "m",
