@@ -88,9 +88,6 @@ nnoremap <S-h> gT
 nnoremap <S-l> gt
 
 call plug#begin('~/.local/share/nvim/site/plugged')
-  Plug 'inkarkat/vim-ingo-library'
-  Plug 'inkarkat/vim-EnhancedJumps'
-  Plug 'inkarkat/vim-SpellCheck'
   Plug 'sheerun/vim-polyglot'
   Plug 'junegunn/limelight.vim'
   Plug 'junegunn/goyo.vim'
@@ -123,7 +120,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'jeetsukumaran/vim-indentwise'
   Plug 'zhimsel/vim-stay' " automatically remember states
   Plug 'Konfekt/FastFold'
-  " Plug 'andymass/vim-matchup'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
   Plug 'easymotion/vim-easymotion'
@@ -134,7 +130,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'majutsushi/tagbar'
   Plug 'tmhedberg/SimpylFold'
   Plug 'kshenoy/vim-signature'
-  " Plug 'Yilin-Yang/vim-markbar'
 call plug#end()
 
 " nmap <Leader>m <Plug>ToggleMarkbar
