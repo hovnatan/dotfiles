@@ -88,6 +88,8 @@ nnoremap <S-h> gT
 nnoremap <S-l> gt
 
 call plug#begin('~/.local/share/nvim/site/plugged')
+  Plug 'inkarkat/vim-EnhancedJumps'
+  Plug 'inkarkat/vim-ingo-library'
   Plug 'sheerun/vim-polyglot'
   Plug 'lervag/vimtex'
   Plug 'tpope/vim-abolish'
