@@ -85,6 +85,9 @@ cp ~/.dotfiles/.my_colors ~/
 ln -sf ~/.dotfiles/.config/kitty ~/.config/
 ln -sf ~/.dotfiles/.bashrc ~/
 ln -sf ~/.dotfiles/.bash_profile ~/
+
+ln -s ~/.dotfiles/.config/alacritty ~/.config/
+
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/
 # ln -sf ~/.dotfiles/.Xresources ~/
