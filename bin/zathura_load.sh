@@ -7,6 +7,7 @@ if [ ! -f "$INPUT_FILE" ]; then
 fi
 
 XID_TABBED=$(tabbed -d)
+echo "Tabbed XID $XID_TABBED"
 
 IFS=:
 cat "$INPUT_FILE" | while read LINE
