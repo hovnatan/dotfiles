@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PIDS=$(ps aux | head -n -2 | grep "zathura -e" | awk '{print $2}')
+PIDS=$(pgrep -f "zathura -e")
 if [[ "$PIDS" == "" ]] ; then
   echo "Nothing to save"
   exit 0
