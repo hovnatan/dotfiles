@@ -1,6 +1,10 @@
 #!/bin/bash
 
-PIDS=$(wmctrl -lp | awk '{print $3}')
+PIDS=$(ps aux | head -n -2 | grep "zathura -e" | awk '{print $2}')
+if [[ "$PIDS" == "" ]] ; then
+  echo "Nothing to save"
+  exit 0
+fi
 
 OUTPUT_FILE="$1"
 rm "$OUTPUT_FILE"
