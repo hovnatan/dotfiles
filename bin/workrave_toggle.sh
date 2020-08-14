@@ -6,7 +6,7 @@ if [[ "$?" != 0 ]]; then
   notify-send -i /usr/share/icons/hicolor/scalable/apps/workrave.svg -t 1000 "Workrave" "Turned on."
   pkill -f -9 "bash.*workrave_toggle.sh"
 else
-  INDEX=$(echo "15 minutes|30 minutes|1 hour|2 hours" | rofi -width -75 -sep '|' -dmenu -p "Suspend Workrave for > " -format i)
+  INDEX=$(echo "15 minutes|30 minutes|1 hour|2 hours" | rofi -font "mono 14" -width -75 -sep '|' -dmenu -p "Suspend Workrave for > " -format i)
   TIME=900
   case $INDEX in
     0)
