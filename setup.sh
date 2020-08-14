@@ -93,6 +93,12 @@ ln -sf ~/.dotfiles/.bashrc ~/
 ln -sf ~/.dotfiles/.bash_profile ~/
 
 ln -s ~/.dotfiles/.config/alacritty ~/.config/
+ln -s ~/.dotfiles/.config/rofi ~/.config/
+ln -s ~/.dotfiles/.config/rofi ~/.config/
+
+rm -rf ~/.workrave
+mkdir -p ~/.workrave/
+ln -s ~/.dotfiles/.workrave/workrave.ini ~/.workrave/workrave.ini
 
 mkdir -p ~/.config/Code/User
 ln -s ~/.dotfiles/.config/Code/User/settings.json ~/.config/Code/User/
