@@ -1,6 +1,8 @@
 #!/bin/bash
 
-fish -c fisher &
+if [[ "$1" != "" ]] ; then
+  fish -c fisher &
+fi
 "$HOME/.tmux/plugins/tpm/bin/update_plugins" all &
 
 wait
