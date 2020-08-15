@@ -8,6 +8,7 @@ fi
 
 XID_TABBED=$(tabbed -d)
 echo "Tabbed XID $XID_TABBED"
+echo "$XID_TABBED" > ~/.tabbed.xid
 
 IFS=:
 cat "$INPUT_FILE" | while read LINE
