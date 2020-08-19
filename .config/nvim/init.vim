@@ -24,7 +24,7 @@ set showcmd
 set mouse=a
 set ttyfast
 set nostartofline
-set autowrite
+set autowriteall
 set autoread
 set shortmess=atIc
 set modeline
@@ -129,6 +129,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'majutsushi/tagbar'
   Plug 'tmhedberg/SimpylFold'
   Plug 'kshenoy/vim-signature'
+  Plug 'tmux-plugins/vim-tmux-focus-events'
 call plug#end()
 
 let g:SignatureMap = {
@@ -275,6 +276,8 @@ augroup mygroup
   " Update signature help on jump placeholder
   autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
 augroup end
+
+au FocusLost * silent! wa
 
 au BufNewFile,BufRead *.cu set filetype=cuda
 au BufNewFile,BufRead *.cuh set filetype=cuda
