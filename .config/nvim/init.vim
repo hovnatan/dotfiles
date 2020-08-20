@@ -29,7 +29,7 @@ set autoread
 set shortmess=atIc
 set modeline
 set modelines=3
-set whichwrap=b,s,<,>,[,]
+set whichwrap=b,s,<,>,[,],h,l
 set nowrap
 set visualbell t_vb=
 set novisualbell
