@@ -7,7 +7,7 @@ filename="${basename%.*}"
 if [ "$extension" = "md" ]; then
   tmp_file="/tmp/output-md.html"
   pandoc -f gfm -t html -c "$HOME/.dotfiles/.config/nvim/pandoc.css" -s -o "$tmp_file"  $1
-  chromium "$tmp_file"
+  google-chrome "$tmp_file"
 else
   texfile="$1"
   pdflatex -output-directory /tmp "$texfile"
