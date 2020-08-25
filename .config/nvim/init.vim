@@ -366,7 +366,7 @@ nnoremap <silent> <space>d  :<C-u>CocList files<cr>
 nnoremap <silent> <space>l  :<C-u>CocList <cr>
 nnoremap <silent> <space>m  :<C-u>CocList marks<cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
-nnoremap <silent> <space>r  :<C-u>CocList grep<cr>
+nnoremap <silent> <space>r  :<C-u>CocList -I grep -w<cr>
 nnoremap <silent> <space>j  :<C-u>CocNext<cr>
 nnoremap <silent> <space>k  :<C-u>CocPrev<cr>
 nnoremap <silent> <space>p  :<C-u>CocListResume<cr>
@@ -376,9 +376,17 @@ nnoremap <expr><C-b> coc#util#has_float() ? coc#util#float_scroll(0) : "\<C-b>"
 
 nnoremap <silent> <space>w  :exe 'CocList -I --normal --input='.expand('<cword>').' words'<CR>
 
+" grep word under cursor
+command! -nargs=+ -complete=custom,s:GrepArgs Rg exe 'CocList grep '.<q-args>
+
+function! s:GrepArgs(...)
+  let list = ['-S', '-smartcase', '-i', '-ignorecase', '-w', '-word',
+        \ '-e', '-regex', '-u', '-skip-vcs-ignores', '-t', '-extension']
+  return join(list, "\n")
+endfunction
+
 vnoremap <leader>rg :<C-u>call <SID>GrepFromSelected(visualmode())<CR>
 nnoremap <leader>rg :<C-u>set operatorfunc=<SID>GrepFromSelected<CR>g@
-nnoremap <silent> <leader>cf :exe 'CocList --input='.expand('<cword>').' grep'<CR>
 
 function! s:GrepFromSelected(type)
   let saved_unnamed_register = @@
@@ -392,7 +400,7 @@ function! s:GrepFromSelected(type)
   let word = substitute(@@, '\n$', '', 'g')
   let word = escape(word, '| ')
   let @@ = saved_unnamed_register
-  execute 'CocList grep '.word
+  execute 'CocList grep -w '.word
 endfunction
 
 filetype plugin indent on
