@@ -130,6 +130,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tmhedberg/SimpylFold'
   Plug 'kshenoy/vim-signature'
   Plug 'tmux-plugins/vim-tmux-focus-events'
+  Plug 'airblade/vim-rooter'
 call plug#end()
 
 let g:SignatureMap = {
