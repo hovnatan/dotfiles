@@ -84,8 +84,8 @@ cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
 syntax on
-nnoremap <S-h> gT
-nnoremap <S-l> gt
+nnoremap <S-h> :bprevious<CR>
+nnoremap <S-l> :bnext<CR>
 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'inkarkat/vim-EnhancedJumps'
