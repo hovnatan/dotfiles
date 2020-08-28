@@ -133,6 +133,8 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'airblade/vim-rooter'
 call plug#end()
 
+let g:rooter_patterns = ['.git', 'CMakeLists.txt']
+
 let g:SignatureMap = {
   \ 'Leader'             :  "m",
   \ 'PlaceNextMark'      :  "m,",
