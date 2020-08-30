@@ -91,7 +91,7 @@ ln -s ~/.dotfiles/.config/alacritty ~/.config/
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/
 # ln -sf ~/.dotfiles/.Xresources ~/
-# ln -sf ~/.dotfiles/.xsession ~/
+ln -sf ~/.dotfiles/.xsessionrc ~/
 # ln -sf ~/.dotfiles/.config/i3 ~/.config/
 
 # sudo gpasswd -a $USER docker
