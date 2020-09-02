@@ -41,5 +41,8 @@ ln -s "$PWD"/tabbed ~/.dotfiles/bin/tabbed
 
 sudo nvim /etc/sysctl.d/10-ptrace.conf
 
+cd ~/.dotfiles/bin
+wget https://raw.githubusercontent.com/mrichar1/clipster/master/clipster
+chmod +x clipster
 # dconf dump / | sed -n '/\[org.gnome.settings-daemon.plugins.media-keys/,/^$/p' > custom-shortcuts.ini
 # dconf load / < custom-shortcuts.ini
