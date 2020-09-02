@@ -369,15 +369,14 @@ nnoremap <silent> <space>d  :<C-u>CocList files<cr>
 nnoremap <silent> <space>l  :<C-u>CocList <cr>
 nnoremap <silent> <space>m  :<C-u>CocList marks<cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
-nnoremap <silent> <space>r  :<C-u>CocList -I grep -w<cr>
+nnoremap <silent> <space>w  :<C-u>CocList -I grep -w<cr>
+nnoremap <silent> <space>r  :<C-u>CocList -I grep<cr>
 nnoremap <silent> <space>j  :<C-u>CocNext<cr>
 nnoremap <silent> <space>k  :<C-u>CocPrev<cr>
 nnoremap <silent> <space>p  :<C-u>CocListResume<cr>
 
 nnoremap <expr><C-f> coc#util#has_float() ? coc#util#float_scroll(1) : "\<C-f>"
 nnoremap <expr><C-b> coc#util#has_float() ? coc#util#float_scroll(0) : "\<C-b>"
-
-nnoremap <silent> <space>w  :exe 'CocList -I --normal --input='.expand('<cword>').' words'<CR>
 
 " grep word under cursor
 command! -nargs=+ -complete=custom,s:GrepArgs Rg exe 'CocList grep '.<q-args>
