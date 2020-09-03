@@ -134,6 +134,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 call plug#end()
 
 let g:rooter_patterns = ['.git', 'CMakeLists.txt']
+let g:rooter_silent_chdir = 1
 
 let g:SignatureMap = {
   \ 'Leader'             :  "m",
