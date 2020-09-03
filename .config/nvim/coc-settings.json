@@ -5,7 +5,25 @@
   "languageserver": {
     "clangd": {
       "command": "clangd",
-      "args": ["--background-index", "--fallback-style=Google"],
+      "args": [
+				"--fallback-style=Google",
+        "--compile-commands-dir=build",
+        "--compile_args_from=filesystem",
+        "--all-scopes-completion",
+        "--background-index",
+        "--clang-tidy",
+        "--completion-parse=always",
+        "--completion-style=detailed",
+        "--cross-file-rename",
+        "--function-arg-placeholders",
+        "--header-insertion-decorators",
+        "--query-driver=/usr/bin/**/clang-*",
+        "--header-insertion=never",
+        "--cross-file-rename",
+        "--limit-results=0",
+        "-j=6",
+        "--pch-storage=memory"
+      ],
       "rootPatterns": ["compile_flags.txt", "compile_commands.json", ".vim/", ".git/", ".hg/"],
       "filetypes": ["c", "cpp", "cc", "objc", "h", "hpp", "objcpp", "cuda"]
     },
