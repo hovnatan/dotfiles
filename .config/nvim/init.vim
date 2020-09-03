@@ -481,10 +481,14 @@ imap ;; <C-o>m.
 nnoremap <S-Tab> :bnext<cr>
 nnoremap <space><space> <C-^>
 
-map <C-j> <C-d>
-map <C-k> <C-u>
-map <C-h> <C-w>h
-map <C-l> <C-w>l
+nnoremap <C-j> <C-d>
+nnoremap <C-k> <C-u>
+nnoremap <C-h> <C-w>h
+nnoremap <C-l> <C-w>l
+nnoremap <silent> <C-w>j :wincmd h<CR>
+nnoremap <silent> <C-w>k :wincmd l<CR>
+nnoremap <silent> <C-w>h :wincmd j<CR>
+nnoremap <silent> <C-w>l :wincmd k<CR>
 
 " # Function to permanently delete views created by 'mkview'
 function! MyDeleteView()
