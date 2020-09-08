@@ -8,6 +8,7 @@ fi
 
 killall -9 tabbed
 XID_TABBED=$(tabbed -d)
+wmctrl -i -r $XID_TABBED -b add,maximized_vert,maximized_horz
 echo "Tabbed XID $XID_TABBED"
 echo "$XID_TABBED" > ~/.tabbed.xid
 
