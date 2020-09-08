@@ -6,6 +6,7 @@ if [ ! -f "$INPUT_FILE" ]; then
   exit 1
 fi
 
+killall -9 tabbed
 XID_TABBED=$(tabbed -d)
 echo "Tabbed XID $XID_TABBED"
 echo "$XID_TABBED" > ~/.tabbed.xid
