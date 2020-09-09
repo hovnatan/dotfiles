@@ -7,6 +7,7 @@ if [ ! -f "$INPUT_FILE" ]; then
 fi
 
 killall -9 tabbed
+killall -9 zathura
 XID_TABBED=$(tabbed -d)
 wmctrl -i -r $XID_TABBED -b add,maximized_vert,maximized_horz
 echo "Tabbed XID $XID_TABBED"
