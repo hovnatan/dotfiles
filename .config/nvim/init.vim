@@ -1,3 +1,5 @@
+let g:polyglot_disabled = ['latex']
+
 set nocompatible
 set hidden
 set backspace=indent,eol,start
@@ -187,7 +189,6 @@ let g:slime_dont_ask_default = 1
 
 let g:ipython_cell_delimit_cells_by = 'tags'
 
-let g:polyglot_disabled = ['latex']
 
 nmap [g <Plug>(coc-git-prevchunk)
 nmap ]g <Plug>(coc-git-nextchunk)
