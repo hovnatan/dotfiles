@@ -39,3 +39,5 @@ cd tabbed
 ln -s ~/.dotfiles/tabbed/config.h .
 make
 ln -s "$PWD"/tabbed ~/.dotfiles/bin/tabbed
+
+sudo nvim /etc/sysctl.d/10-ptrace.conf
