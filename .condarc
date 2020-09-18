@@ -1,5 +1,6 @@
+channel_priority: strict
 channels:
-  - pytorch
   - conda-forge
+  - pytorch
   - fastai
   - defaults
