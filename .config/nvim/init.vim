@@ -137,8 +137,13 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 call plug#end()
 
 let g:vimspector_install_gadgets = ['debugpy', 'vscode-cpptools', 'CodeLLDB']
+sign define vimspectorBP text=o          texthl=WarningMsg
+sign define vimspectorBPCond text=o?     texthl=WarningMsg
+sign define vimspectorBPDisabled text=o! texthl=LineNr
+sign define vimspectorPC text=->        texthl=MatchParen
+sign define vimspectorPCBP text=o>       texthl=MatchParen
 
-let g:rooter_patterns = ['.git', 'CMakeLists.txt']
+let g:rooter_patterns = ['.git']
 let g:rooter_silent_chdir = 1
 
 let g:SignatureMap = {
