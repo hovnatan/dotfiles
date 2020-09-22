@@ -14,7 +14,6 @@
         "--clang-tidy",
         "--completion-parse=always",
         "--completion-style=detailed",
-        "--cross-file-rename",
         "--function-arg-placeholders",
         "--header-insertion-decorators",
         "--query-driver=/usr/bin/**/clang-*",
