@@ -133,7 +133,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kshenoy/vim-signature'
   Plug 'tmux-plugins/vim-tmux-focus-events'
   Plug 'airblade/vim-rooter'
+  Plug 'puremourning/vimspector'
 call plug#end()
+
+let g:vimspector_install_gadgets = ['debugpy', 'vscode-cpptools', 'CodeLLDB']
 
 let g:rooter_patterns = ['.git', 'CMakeLists.txt']
 let g:rooter_silent_chdir = 1
