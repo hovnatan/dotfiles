@@ -90,6 +90,7 @@ ln -s ~/.dotfiles/.config/alacritty ~/.config/
 
 mkdir -p ~/.config/Code/User
 ln -s ~/.dotfiles/.config/Code/User/settings.json ~/.config/Code/User/
+ln -s ~/.dotfiles/.config/Code/User/keybindings.json ~/.config/Code/User/
 
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/
