@@ -19,5 +19,13 @@
         "key": "ctrl+p",
         "command": "-workbench.action.quickOpenNavigateNextInFilePicker",
         "when": "inFilesPicker && inQuickOpen"
+    },
+    {
+        "key": "alt+k",
+        "command": "workbench.action.nextEditor"
+    },
+    {
+        "key": "alt+j",
+        "command": "workbench.action.previousEditor"
     }
 ]
