@@ -1,0 +1,7 @@
+{
+    "files.autoSave": "onFocusChange",
+    "window.zoomLevel": 2,
+    "editor.formatOnSave": true,
+    "workbench.colorTheme": "Gruvbox Light Medium",
+    "terminal.integrated.shell.linux": "/usr/bin/fish"
+}
