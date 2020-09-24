@@ -24,6 +24,59 @@
             "after": [
                 "C-u"
             ]
+        },
+        {
+            "before": [
+                "<space>",
+                "d"
+            ],
+            "commands": [
+                "workbench.action.quickOpen"
+            ]
+        },
+        {
+            "before": [
+                "<space>",
+                "b"
+            ],
+            "commands": [
+                "workbench.action.showAllEditors"
+            ]
+        },
+        {
+            "before": [
+                "<space>",
+                "c"
+            ],
+            "commands": [
+                "workbench.action.showCommands"
+            ]
+        },
+        {
+            "before": [
+                "<space>",
+                "h"
+            ],
+            "commands": [
+                "editor.action.showHover"
+            ]
         }
-    ]
+    ],
+    "vim.insertModeKeyBindings": [
+        {
+            "before": [
+                "j",
+                "k"
+            ],
+            "after": [
+                "<esc>"
+            ]
+        }
+    ],
+    "breadcrumbs.enabled": false,
+    "editor.renderWhitespace": "none",
+    "editor.rulers": [
+        80
+    ],
+    "editor.occurrencesHighlight": false
 }
