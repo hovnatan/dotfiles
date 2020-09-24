@@ -142,7 +142,7 @@ sign define vimspectorBPCond text=o?     texthl=WarningMsg
 sign define vimspectorBPDisabled text=o! texthl=LineNr
 sign define vimspectorPC text=->        texthl=MatchParen
 sign define vimspectorPCBP text=o>       texthl=MatchParen
-let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
+" let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
 
 let g:rooter_patterns = ['.git']
 let g:rooter_silent_chdir = 1
