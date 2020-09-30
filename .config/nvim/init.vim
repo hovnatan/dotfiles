@@ -65,6 +65,7 @@ set nowritebackup
 set cmdheight=1
 set signcolumn=yes
 set conceallevel=1
+set nofixendofline
 
 nn <F9> :silent Dispatch!<CR>
 
