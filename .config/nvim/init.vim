@@ -1,7 +1,7 @@
 let g:polyglot_disabled = ['latex']
 
 set nocompatible
-set nohidden
+set hidden
 set backspace=indent,eol,start
 set t_Co=256
 
@@ -26,7 +26,7 @@ set showcmd
 set mouse=a
 set ttyfast
 set nostartofline
-set autowriteall
+" set autowriteall
 set autoread
 set shortmess=atIc
 set modeline
@@ -296,6 +296,7 @@ au FocusLost * silent! wa
 au BufLeave * silent! wa
 
 au BufNewFile,BufRead *.cu set filetype=cuda
+au BufNewFile,BufRead *.cu_inl set filetype=cuda
 au BufNewFile,BufRead *.cuh set filetype=cuda
 
 xmap <leader>a  <Plug>(coc-codeaction-selected)
