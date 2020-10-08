@@ -1,7 +1,7 @@
 let g:polyglot_disabled = ['latex']
 
 set nocompatible
-set hidden
+set nohidden
 set backspace=indent,eol,start
 set t_Co=256
 
@@ -293,6 +293,7 @@ augroup mygroup
 augroup end
 
 au FocusLost * silent! wa
+au BufLeave * silent! wa
 
 au BufNewFile,BufRead *.cu set filetype=cuda
 au BufNewFile,BufRead *.cuh set filetype=cuda
