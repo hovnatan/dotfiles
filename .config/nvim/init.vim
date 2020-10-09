@@ -21,7 +21,7 @@ set ls=2
 set title
 set ruler
 set number
-set relativenumber
+" set relativenumber
 set showcmd
 set mouse=a
 set ttyfast
