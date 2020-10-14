@@ -139,6 +139,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
 call plug#end()
 
 let g:DirDiffExcludes = "CVS,*.class,*.o,.git,build"
+let g:DirDiffWindowSize = 28
 
 let g:vimspector_install_gadgets = ['debugpy', 'vscode-cpptools', 'CodeLLDB']
 sign define vimspectorBP text=o          texthl=WarningMsg
