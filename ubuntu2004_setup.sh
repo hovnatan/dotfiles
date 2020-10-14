@@ -8,6 +8,8 @@ sudo apt-get update
 
 sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger clang clangd clang-format bear ppa-purge valgrind curl neovim htop octave libfreetype6-dev libfontconfig1-dev libxext-dev libxcb-render-util0-dev libxcb-shape0-dev libxcb-xfixes0-dev build-essential libxft-dev net-tools
 
+sudo apt-get install -y meld
+
 # sudo apt-get install -y texlive-latex-extra latexmk chrome-gnome-shell zathura xrdp fonts-croscore kitty
 # sudo apt-get install -y i3 i3blocks
 # sudo apt-get install -y mesa-utils freeglut3-dev

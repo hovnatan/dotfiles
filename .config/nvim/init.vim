@@ -135,7 +135,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tmux-plugins/vim-tmux-focus-events'
   Plug 'airblade/vim-rooter'
   Plug 'puremourning/vimspector'
+  Plug 'will133/vim-dirdiff'
 call plug#end()
+
+let g:DirDiffExcludes = "CVS,*.class,*.o,.git,build"
 
 let g:vimspector_install_gadgets = ['debugpy', 'vscode-cpptools', 'CodeLLDB']
 sign define vimspectorBP text=o          texthl=WarningMsg
