@@ -138,7 +138,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'will133/vim-dirdiff'
 call plug#end()
 
-let g:DirDiffExcludes = "CVS,*.class,*.o,.git,build"
+let g:DirDiffExcludes = "CVS,*.class,*.o,.git,build,.clangd"
 let g:DirDiffWindowSize = winheight(0)*2/3
 
 let g:vimspector_install_gadgets = ['debugpy', 'vscode-cpptools', 'CodeLLDB']
