@@ -5,7 +5,7 @@ set -U Z_CMD "j"
 set -U FZF_LEGACY_KEYBINDINGS 0
 set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
 # set -U FZF_COMPLETE 0
-set -U FZF_FIND_FILE_COMMAND "fd -I -p -H -E .git . \$dir"
+set -U FZF_FIND_FILE_COMMAND "fd -IHp --ignore-file ~/.config/fd/ignore . \$dir"
 set -U FZF_DEFAULT_COMMAND $FZF_FIND_FILE_COMMAND
 set -x EDITOR nvim
 
@@ -105,8 +105,7 @@ abbr tl  "tmux list-sessions"
 abbr tc "tmux capture-pane -pJ -S - | nvim -R '+set ft=log|set nowrap|set foldlevel=99|DisableWhitespace' '+norm G' --"
 abbr jc "journalctl -b --no-pager | nvim -R '+set ft=log|set nowrap|set foldlevel=99|DisableWhitespace' '+norm G' --"
 abbr prg "pdfgrep --cache -ri --page-range 1"
-abbr rgh "rg --glob='!.git*' --hidden"
-abbr rgah "rga --hidden"
+abbr rgh "rg --hidden --no-ignore-vcs"
 abbr mhq "mpv --profile=hq"
 abbr mhq2 "mpv --profile=hq2"
 abbr mhq3 "mpv --profile=hq3"
