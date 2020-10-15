@@ -138,6 +138,26 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'will133/vim-dirdiff'
 call plug#end()
 
+function! ToggleZoom(zoom, direction)
+  if exists("t:restore_zoom") && (a:zoom == v:true || t:restore_zoom.win != winnr())
+      exec t:restore_zoom.cmd
+      unlet t:restore_zoom
+  elseif a:zoom
+      let t:restore_zoom = { 'win': winnr(), 'cmd': winrestcmd() }
+			if a:direction == "vert"
+				exec "normal \<C-W>_"
+			else
+        exec "normal \<C-W>\|"
+			endif
+  endif
+endfunction
+
+augroup restorezoom
+    au WinEnter * silent! :call ToggleZoom(v:false, "")
+augroup END
+nnoremap <silent> <C-w>z :call ToggleZoom(v:true, 'vert')<CR>
+nnoremap <silent> <C-w>Z :call ToggleZoom(v:true, 'horiz')<CR>
+
 let g:DirDiffExcludes = "CVS,*.class,*.o,.git,build,.clangd"
 let g:DirDiffWindowSize = winheight(0)*2/3
 
