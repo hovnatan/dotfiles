@@ -2,7 +2,7 @@
 
 set -e
 
-sudo apt-add-repository ppa:fish-shell/release-3
+sudo apt-get install -y software-properties-common
 
 sudo apt-get update
 
@@ -14,10 +14,7 @@ sudo apt-get install -y meld
 # sudo apt-get install -y i3 i3blocks
 # sudo apt-get install -y mesa-utils freeglut3-dev
 
-
-
 sudo apt-get install gawk
-
 
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get install -y nodejs
