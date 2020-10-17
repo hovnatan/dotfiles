@@ -14,7 +14,7 @@ sudo apt-get install -y meld
 # sudo apt-get install -y i3 i3blocks
 # sudo apt-get install -y mesa-utils freeglut3-dev
 
-sudo apt-get install gawk
+sudo apt-get install -y gawk
 
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt-get install -y nodejs
