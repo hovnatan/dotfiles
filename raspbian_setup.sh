@@ -2,6 +2,8 @@
 
 set -e
 
+sudo dpkg-reconfigure locales
+# sudo raspi-config
 sudo apt-get install -y software-properties-common snapd
 
 sudo snap install --edge clangd --classic
