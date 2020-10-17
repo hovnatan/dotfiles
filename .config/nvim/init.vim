@@ -235,7 +235,7 @@ nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gm :Gstatus<CR><C-w>T
 nnoremap <leader>gp :Gpush<CR>
 
-nnoremap <Esc><Esc> :<C-u>let v:hlsearch=!v:hlsearch<CR>
+nnoremap <silent> <C-n> :set hlsearch!<CR>
 
 let g:coc_global_extensions = [ 'coc-marketplace', 'coc-python',
       \ 'coc-json', 'coc-word',
