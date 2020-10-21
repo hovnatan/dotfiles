@@ -40,3 +40,8 @@ make
 ln -s "$PWD"/tabbed ~/.dotfiles/bin/tabbed
 
 sudo nvim /etc/sysctl.d/10-ptrace.conf
+
+# sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+# sudo sh -c 'echo "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64 /" > /etc/apt/sources.list.d/cuda.list'
+# sudo apt-get update
+# sudo apt-get install -y cuda-toolkit-11-0
