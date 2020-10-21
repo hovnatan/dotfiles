@@ -7,7 +7,7 @@ export LANGUAGE=en_US.UTF-8
 # export TERMINAL_APP="termite"
 export TMUX_ONE_WINDOW=1
 # export LIBGL_ALWAYS_INDIRECT=1
-export MAKEFLAGS="-j7"
+export MAKEFLAGS="-j11"
 
 export PATH="$HOME/.dotfiles/bin:$HOME/.local/bin:$HOME/opt/usr/bin:$PATH"
 export CUDA_HOME=/usr/local/cuda
