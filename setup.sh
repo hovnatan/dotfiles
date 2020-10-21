@@ -67,8 +67,7 @@ ln -s ~/.dotfiles/.condarc ~/.condarc
 ln -s ~/.dotfiles/.config/keepassxc ~/.config/keepassxc
 ln -sf ~/.dotfiles/.config/zathura ~/.config/
 ln -sf ~/.dotfiles/.config/pulse/daemon-high.conf ~/.config/pulse/daemon.conf
-ln -sf ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
-
+# ln -sf ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
 
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
@@ -85,7 +84,7 @@ ln -s ~/.dotfiles/.config/fd/ignore ~/.ignore
 
 cp ~/.dotfiles/.my_colors ~/
 ln -sf ~/.dotfiles/.config/kitty ~/.config/
-ln -sf ~/.dotfiles/.bashrc ~/
+ln -sf ~/.dotfiles/.bashrc_local ~/
 ln -sf ~/.dotfiles/.bash_profile ~/
 
 ln -s ~/.dotfiles/.config/alacritty ~/.config/
@@ -97,7 +96,7 @@ ln -s ~/.dotfiles/.config/Code/User/keybindings.json ~/.config/Code/User/
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/
 # ln -sf ~/.dotfiles/.Xresources ~/
-ln -sf ~/.dotfiles/.xsessionrc ~/
+# ln -sf ~/.dotfiles/.xsessionrc ~/
 # ln -sf ~/.dotfiles/.config/i3 ~/.config/
 
 # sudo gpasswd -a $USER docker
