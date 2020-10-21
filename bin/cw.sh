@@ -22,5 +22,5 @@ echo -n "set -U _reload_color_config ""$COLOR" | fish
 
 # kitty @ --to $HOME/.tmpkitty set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
 color_switcher.sh ~/.config/alacritty/alacritty.yml ~/.config/alacritty/option ~/.config/alacritty/colors/$COLOR reverse
-cp ~/.config/alacritty/alacritty.yml ~/Windows/AppData/Roaming/alacritty/alacritty.yml
+cp ~/.config/alacritty/alacritty.yml /mnt/c/Users/hovna/AppData/Roaming/alacritty/alacritty.yml
 tmux source ~/.tmux.conf
