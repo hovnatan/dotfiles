@@ -11,8 +11,8 @@ sudo apt update
 sudo apt -y dist-upgrade
 sudo apt -y autoremove
 
-nvim -c PlugUpdate
-
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 conda update -y --all
+
+nvim -c 'PlugUpgrade | PlugUpdate'
