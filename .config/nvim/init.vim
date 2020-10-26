@@ -136,7 +136,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'airblade/vim-rooter'
   Plug 'puremourning/vimspector'
   Plug 'will133/vim-dirdiff'
-  Plug 'roxma/vim-tmux-clipboard'
 call plug#end()
 
 function! ToggleZoom(zoom, direction)
