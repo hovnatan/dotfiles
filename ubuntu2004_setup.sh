@@ -4,9 +4,13 @@ set -e
 
 sudo apt-get install -y software-properties-common
 
+sudo add-apt-repository multiverse
+sudo add-apt-repository universe
+sudo add-apt-repository restricted
+
 sudo apt-get update
 
-sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger clang clangd clang-format bear ppa-purge valgrind curl neovim htop octave libfreetype6-dev libfontconfig1-dev libxext-dev libxcb-render-util0-dev libxcb-shape0-dev libxcb-xfixes0-dev build-essential libxft-dev net-tools sshfs cmake rustc aria2
+sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger clang clangd clang-format bear ppa-purge valgrind curl neovim htop octave libfreetype6-dev libfontconfig1-dev libxext-dev libxcb-render-util0-dev libxcb-shape0-dev libxcb-xfixes0-dev build-essential libxft-dev net-tools sshfs cmake rustc aria2 mediainfo
 
 sudo apt-get install -y meld
 
