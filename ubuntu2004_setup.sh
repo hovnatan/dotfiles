@@ -30,8 +30,9 @@ pip3 install --user pylint yapf jedi neovim ueberzug
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
 
-sudo rm /usr/share/fish/completions/zathura.fish
+sudo rm -f /usr/share/fish/completions/zathura.fish
 
+mkdir -p ~/Downloads
 cd ~/Downloads
 git clone https://git.suckless.org/tabbed
 cd tabbed
