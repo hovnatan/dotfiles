@@ -52,9 +52,9 @@ set wrapscan
 set switchbuf=usetab
 set listchars=tab:▸\ ,eol:¬
 set history=200
-if !empty($DISPLAY)
-  set clipboard+=unnamedplus
-endif
+" if !empty($DISPLAY)
+"   set clipboard+=unnamedplus
+" endif
 set undofile
 set undodir=$HOME/.vimundo
 set undolevels=1000
