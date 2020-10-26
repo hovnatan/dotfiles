@@ -483,8 +483,8 @@ au FileType json
       \ nn <buffer> <F4> :%!python3 -m json.tool<CR>
 
 au FileType python
-                \ nnoremap <buffer> <c-c><c-c> :IPythonCellExecuteCell<CR> |
-                \ nnoremap <buffer> <c-c><c-n> :IPythonCellExecuteCellJump<CR> |
+                \ nnoremap <buffer> <c-c><c-c> :IPythonCellExecuteCellVerbose<CR> |
+                \ nnoremap <buffer> <c-c><c-n> :IPythonCellExecuteCellVerboseJump<CR> |
                 \ Abolish -buffer true True |
                 \ Abolish -buffer false False
 
