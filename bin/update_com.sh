@@ -4,9 +4,7 @@ sudo apt update
 sudo apt -y dist-upgrade
 sudo apt -y autoremove
 
-if [[ "$1" != "" ]] ; then
-  fish -c fisher
-fi
+fish -c "fisher update"
 
 "$HOME/.tmux/plugins/tpm/bin/update_plugins" all
 
