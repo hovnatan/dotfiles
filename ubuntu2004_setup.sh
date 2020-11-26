@@ -50,3 +50,6 @@ sudo nvim /etc/sysctl.d/10-ptrace.conf
 # sudo sh -c 'echo "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64 /" > /etc/apt/sources.list.d/cuda.list'
 # sudo apt-get update
 # sudo apt-get install -y cuda-toolkit-11-0
+
+
+# cargo install --git https://github.com/nbdd0121/x11-over-vsock
