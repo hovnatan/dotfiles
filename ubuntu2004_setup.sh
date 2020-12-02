@@ -28,7 +28,7 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 sudo apt-get update
 sudo apt-get install -y yarn
 
-sudo apt-get install python3-pip
+sudo apt-get install -y python2 python3-pip
 pip3 install --user pylint yapf jedi neovim ueberzug
 
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
