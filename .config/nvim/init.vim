@@ -237,7 +237,7 @@ nnoremap <leader>gp :Gpush<CR>
 
 nnoremap <silent> <C-n> :set hlsearch!<CR>
 
-let g:coc_global_extensions = [ 'coc-marketplace', 'coc-python',
+let g:coc_global_extensions = [ 'coc-marketplace', 'coc-python', 'coc-clangd',
       \ 'coc-json', 'coc-word',
       \ 'coc-vimtex', 'coc-lists',
       \ 'coc-git', 'coc-css', 'coc-html', 'coc-tsserver'
