@@ -27,4 +27,4 @@ conda install -y yapf pylint jedi ipython rope ipdb pudb sortedcontainers matplo
 # conda activate
 
 # pypng for indexed png, gitpython python wrapper for git
-pip install pypng gitpython tensorboard sphinx-rtd-theme pylint-json2html
+# pip install pypng gitpython tensorboard sphinx-rtd-theme pylint-json2html
