@@ -33,5 +33,6 @@
     "<C-w>": "command:wincmd k",
     "<C-v>": "eval:@@"
   },
-  "list.source.grep.args": ["-S"]
+  "list.source.grep.args": ["-S"],
+  "clangd.arguments": [ "-fallback-style=Google" ]
 }
