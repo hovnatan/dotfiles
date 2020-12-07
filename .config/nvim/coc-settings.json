@@ -27,7 +27,10 @@
   "git.enableGutters": true,
   "coc.source.issues.enable": false,
   "coc.source.word.filetypes": ["text", "html", "markdown"],
-  "suggest.detailMaxLength": 200,
+  "suggest.detailMaxLength": 100,
+  "suggest.highPrioritySourceLimit":20,
+  "suggest.lowPrioritySourceLimit":5,
+  "yank.priority":100,
   "list.insertMappings": {
     "<C-s>": "action:vsplit",
     "<C-w>": "command:wincmd k",
