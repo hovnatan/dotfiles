@@ -16,3 +16,32 @@ export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
 
 export QT_SCALE_FACTOR="1.5"
 export PYTHONBREAKPOINT=pudb.remote.set_trace
+
+SSH_ENV="$HOME/.ssh/agent-environment"
+
+function start_agent {
+    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+    chmod 600 "${SSH_ENV}"
+    . "${SSH_ENV}" > /dev/null
+    /usr/bin/ssh-add > /dev/null 2>&1
+
+    ssh_keys=$(find ~/.ssh -type f -name '*.pem' -o -name "*.rsa")
+    ssh_agent_keys=$(ssh-add -l | awk '{key=NF-1; print $key}')
+
+    for k in "${ssh_keys}"; do
+        for l in "${ssh_agent_keys}"; do
+            if [[ ! "${k}" = "${l}" ]]; then
+                ssh-add "${k}" > /dev/null 2>&1
+            fi
+        done
+    done
+}
+
+if [ -f "${SSH_ENV}" ]; then
+    . "${SSH_ENV}" > /dev/null
+    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+        start_agent;
+    }
+else
+    start_agent;
+fi
