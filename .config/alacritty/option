@@ -1,3 +1,8 @@
+shell:
+  program: wsl.exe
+  args:
+    - "~"
+
 scrolling:
     history: 0
 font:
