@@ -240,7 +240,7 @@ nnoremap <leader>z :<C-u>CocCommand clangd.switchSourceHeader<CR>
 nnoremap <silent> <C-n> :set hlsearch!<CR>
 
 let g:coc_global_extensions = [ 'coc-marketplace', 'coc-python', 'coc-clangd',
-      \ 'coc-json', 'coc-word',
+      \ 'coc-json', 'coc-word', 'coc-yank',
       \ 'coc-vimtex', 'coc-lists',
       \ 'coc-git', 'coc-css', 'coc-html', 'coc-tsserver'
       \ ]
@@ -414,6 +414,7 @@ nnoremap <silent> <space>r  :<C-u>CocList -I grep<cr>
 nnoremap <silent> <space>j  :<C-u>CocNext<cr>
 nnoremap <silent> <space>k  :<C-u>CocPrev<cr>
 nnoremap <silent> <space>p  :<C-u>CocListResume<cr>
+nnoremap <silent> <space>y  :<C-u>CocList --normal yank<cr>
 
 nnoremap <expr><C-f> coc#util#has_float() ? coc#util#float_scroll(1) : "\<C-f>"
 nnoremap <expr><C-b> coc#util#has_float() ? coc#util#float_scroll(0) : "\<C-b>"
