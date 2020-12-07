@@ -235,8 +235,6 @@ nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gm :Gstatus<CR><C-w>T
 nnoremap <leader>gp :Gpush<CR>
 
-nnoremap <leader>z :<C-u>CocCommand clangd.switchSourceHeader<CR>
-
 nnoremap <silent> <C-n> :set hlsearch!<CR>
 
 let g:coc_global_extensions = [ 'coc-marketplace', 'coc-python', 'coc-clangd',
@@ -492,7 +490,8 @@ au FileType python
                 \ Abolish -buffer false False
 
 au FileType cpp
-      \ setlocal cindent
+      \ setlocal cindent |
+      \ nnoremap <leader>z :<C-u>CocCommand clangd.switchSourceHeader<CR>
 
 au BufWritePost *.sh silent! !chmod +x %:p
 
