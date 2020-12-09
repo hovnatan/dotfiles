@@ -31,6 +31,7 @@
   "suggest.highPrioritySourceLimit":20,
   "suggest.lowPrioritySourceLimit":5,
   "yank.priority":100,
+  "yank.highlight.enable":false,
   "list.insertMappings": {
     "<C-s>": "action:vsplit",
     "<C-w>": "command:wincmd k",
