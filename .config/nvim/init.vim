@@ -352,7 +352,7 @@ endif
 
 command! -nargs=? Fold :call CocAction('fold', <f-args>)
 
-command! MakeTags !ptags
+command! MakeTags !ctags -R .
 command! Nw noa w
 
 function! GetFilepath_T()
@@ -427,6 +427,7 @@ nnoremap <silent> <space>gb :<C-u>CocList bcommits<cr>
 nnoremap <silent> <space>d  :<C-u>CocList files<cr>
 nnoremap <silent> <space>l  :<C-u>CocList <cr>
 nnoremap <silent> <space>m  :<C-u>CocList marks<cr>
+nnoremap <silent> <space>t  :<C-u>CocList tags<cr>
 nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
 nnoremap <silent> <space>w  :<C-u>CocList -I grep -w<cr>
 nnoremap <silent> <space>r  :<C-u>CocList -I grep<cr>
@@ -615,7 +616,7 @@ endif
 if !exists('g:lasttab')
   let g:lasttab = 1
 endif
-nmap <space>t :exe "tabn ".g:lasttab<CR>
+nmap <space>T :exe "tabn ".g:lasttab<CR>
 au TabLeave * let g:lasttab = tabpagenr()
 
 nnoremap <expr> <space>v '`[' . strpart(getregtype(), 0, 1) . '`]'
