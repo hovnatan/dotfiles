@@ -28,4 +28,5 @@
 --exclude=tests
 --exclude=vendor
 --exclude=docs
---exclude=venv_sa_conv
+--exclude=venv*
+--exclude=htmlcov
