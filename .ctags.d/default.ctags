@@ -30,3 +30,4 @@
 --exclude=docs
 --exclude=venv*
 --exclude=htmlcov
+--exclude=build
