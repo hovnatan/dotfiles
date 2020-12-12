@@ -7,7 +7,7 @@ else
 fi
 
 if [ -z $session ] ; then
-  tmux
+  exec tmux
 else
-  tmux a -t $session
+  exec tmux a -t $session
 fi
