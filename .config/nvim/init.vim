@@ -82,34 +82,7 @@ xnoremap & :&&<CR>
 
 let mapleader=","
 noremap \ ,
-
-inoremap <expr> k EscapeInsertOrNot()
-
-function! EscapeInsertOrNot() abort
-  " If k is preceded by j, then remove j and go to normal mode.
-  let line_text = getline('.')
-  let cur_ch_idx = CursorCharIdx()
-  let pre_char = CharAtIdx(line_text, cur_ch_idx-1)
-  echom 'pre_char is:' pre_char
-  if pre_char ==# 'j'
-    return "\b\e"
-  else
-    return 'k'
-  endif
-endfunction
-
-function! CharAtIdx(str, idx) abort
-  return strcharpart(a:str, a:idx, 1)
-endfunction
-
-function! CursorCharIdx() abort
-  let cursor_byte_idx = col('.')
-  if cursor_byte_idx == 1
-    return 0
-  endif
-  let pre_cursor_text = getline('.')[:col('.')-2]
-  return strchars(pre_cursor_text)
-endfunction
+inoremap jk <ESC>
 
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
@@ -117,10 +90,6 @@ runtime plugins/matchit.vim
 syntax on
 nnoremap <S-h> :bprevious<CR>
 nnoremap <S-l> :bnext<CR>
-
-nnoremap <silent><c-s> :<c-u>update<cr>
-vnoremap <silent><c-s> <c-c>:update<cr>gv
-inoremap <silent><c-s> <c-o>:update<cr>
 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
