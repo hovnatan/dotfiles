@@ -535,7 +535,6 @@ nnoremap <leader>T <C-w>T<CR>
 nnoremap <leader>t :tab split<CR>
 
 let g:dispatch_no_maps = 1
-imap ;; <C-o>m.
 
 nnoremap <S-Tab> :bnext<cr>
 nnoremap <space><space> <C-^>
