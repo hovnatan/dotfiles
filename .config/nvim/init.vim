@@ -118,6 +118,10 @@ syntax on
 nnoremap <S-h> :bprevious<CR>
 nnoremap <S-l> :bnext<CR>
 
+nnoremap <silent><c-s> :<c-u>update<cr>
+vnoremap <silent><c-s> <c-c>:update<cr>gv
+inoremap <silent><c-s> <c-o>:update<cr>
+
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
   Plug 'lervag/vimtex'
