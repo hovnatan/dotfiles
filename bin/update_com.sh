@@ -13,3 +13,5 @@ conda activate
 conda update -y --all
 
 nvim -c 'PlugUpgrade | PlugUpdate'
+
+# wget https://raw.githubusercontent.com/cyrus-and/gdb-dashboard/master/.gdbinit -P $HOME
