@@ -31,3 +31,4 @@
 --exclude=venv*
 --exclude=htmlcov
 --exclude=build
+--exclude=compile_commands.json
