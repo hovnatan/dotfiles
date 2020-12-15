@@ -9,9 +9,6 @@
     }
   },
   "html.filetypes":["html", "handlebars", "xhtml"],
-  "python.linting.pylintUseMinimalCheckers" : true,
-  "python.linting.pylintArgs": ["--generated-members=numpy.* ,torch.* ,cv2.* , cv.*, sh.*",
-    "--disable=C0103,C0111,C0301,C0330,R0902,R0903,R0912,R0913,R0914,R0915,W1510"],
   "python.formatting.provider" : "yapf",
   "python.formatting.yapfArgs" : ["--style=facebook"],
   "python.autoComplete.showAdvancedMembers" : false,
