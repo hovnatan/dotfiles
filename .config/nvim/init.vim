@@ -122,7 +122,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'Konfekt/FastFold'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
-  Plug 'easymotion/vim-easymotion'
   Plug 'machakann/vim-swap'
   Plug 'jpalardy/vim-slime'
   Plug 'hanschen/vim-ipython-cell'
@@ -132,7 +131,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'kshenoy/vim-signature'
   Plug 'tmux-plugins/vim-tmux-focus-events'
   Plug 'airblade/vim-rooter'
-  Plug 'puremourning/vimspector'
   Plug 'will133/vim-dirdiff'
 call plug#end()
 
