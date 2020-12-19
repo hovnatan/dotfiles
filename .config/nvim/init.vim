@@ -157,13 +157,6 @@ nnoremap <silent> <C-w>Z :call ToggleZoom(v:true, 'horiz')<CR>
 let g:DirDiffExcludes = "CVS,*.class,*.o,.git,build,.clangd"
 let g:DirDiffWindowSize = winheight(0)*2/3
 
-let g:vimspector_install_gadgets = ['debugpy', 'vscode-cpptools', 'CodeLLDB']
-sign define vimspectorBP text=o          texthl=WarningMsg
-sign define vimspectorBPCond text=o?     texthl=WarningMsg
-sign define vimspectorBPDisabled text=o! texthl=LineNr
-sign define vimspectorPC text=->        texthl=MatchParen
-sign define vimspectorPCBP text=o>       texthl=MatchParen
-" let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
 
 let g:rooter_patterns = ['.git']
 let g:rooter_silent_chdir = 1
@@ -460,6 +453,24 @@ function! s:GrepFromSelected(type)
   let word = escape(word, '| ')
   let @@ = saved_unnamed_register
   execute 'CocList grep -w '.word
+endfunction
+
+vnoremap <leader>rt :<C-u>call <SID>TagFromSelected(visualmode())<CR>
+nnoremap <leader>rt :<C-u>set operatorfunc=<SID>TagFromSelected<CR>g@
+
+function! s:TagFromSelected(type)
+  let saved_unnamed_register = @@
+  if a:type ==# 'v'
+    normal! `<v`>y
+  elseif a:type ==# 'char'
+    normal! `[v`]y
+  else
+    return
+  endif
+  let word = substitute(@@, '\n$', '', 'g')
+  let word = escape(word, '| ')
+  let @@ = saved_unnamed_register
+  execute 'CocList --input='.word.' tags'
 endfunction
 
 filetype plugin indent on
