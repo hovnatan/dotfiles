@@ -3,11 +3,8 @@
 set -e
 
 cd ~/.dotfiles
-
 git pull
-
 GIT_BRANCH=$(git branch --show-current)
-
 if [[ "$GIT_BRANCH" != master ]]; then
   git rebase origin/master
   git push -f
