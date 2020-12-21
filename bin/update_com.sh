@@ -1,5 +1,17 @@
 #!/bin/bash
 
+set -e
+
+cd ~/.dotfiles
+
+git pull
+
+GIT_BRANCH=$(git branch --show-current)
+
+if [[ "$GIT_BRANCH" != master ]]; then
+  git rebase origin/master
+fi
+
 sudo apt update
 sudo apt -y dist-upgrade
 sudo apt -y autoremove
