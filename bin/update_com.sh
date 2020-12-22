@@ -2,6 +2,8 @@
 
 set -e
 
+sudo echo "Starting upgrade"
+
 cd ~/.dotfiles
 git pull
 GIT_BRANCH=$(git branch --show-current)
