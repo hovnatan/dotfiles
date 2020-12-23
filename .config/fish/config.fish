@@ -82,7 +82,7 @@ function ranger_fm
     exit
   end
 end
-abbr da  docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print $1}') /bin/bash
+abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
 abbr r   ranger_fm
 abbr z   "zathura"
 abbr g   "grep"
