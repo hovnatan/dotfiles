@@ -10,7 +10,7 @@ set shiftwidth=2
 set softtabstop=2
 set expandtab
 
-set scrolloff=5
+set scrolloff=999
 set termguicolors
 set smartindent
 set showmatch
@@ -88,8 +88,6 @@ cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
 syntax on
-nnoremap <S-h> :bprevious<CR>
-nnoremap <S-l> :bnext<CR>
 
 call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'sheerun/vim-polyglot'
