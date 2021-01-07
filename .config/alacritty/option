@@ -14,6 +14,27 @@ font:
           family: Consolas
     italic:
           family: Consolas
+
+#cursor:
+  # Cursor style
+  #style:
+    # Cursor shape
+    #
+    # Values for `shape`:
+    #   - ▇ Block
+    #   - _ Underline
+    #   - | Beam
+
+    shape: Beam
+    # Cursor blinking state
+    #
+    # Values for `blinking`:
+    #   - Never: Prevent the cursor from ever blinking
+    #   - Off: Disable blinking by default
+    #   - On: Enable blinking by default
+    #   - Always: Force the cursor to always blink
+    blinking: Off
+
 schemas:
   gruvbox_light: &light
     primary:
