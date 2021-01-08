@@ -8,14 +8,16 @@ scrolling:
 font:
     # The size to use.
     size: 14
-    normal:
-          family: Consolas
-    bold:
-          family: Consolas
-    italic:
-          family: Consolas
+    family: "Cascadia Code"
 
-#cursor:
+window:
+  padding:
+    x: 1
+    y: 0
+
+window.dynamic_title: true
+
+cursor:
   # Cursor style
   #style:
     # Cursor shape
@@ -25,7 +27,8 @@ font:
     #   - _ Underline
     #   - | Beam
 
-    shape: Beam
+    shape: Block
+    unfocused_hollow: true
     # Cursor blinking state
     #
     # Values for `blinking`:
@@ -33,7 +36,7 @@ font:
     #   - Off: Disable blinking by default
     #   - On: Enable blinking by default
     #   - Always: Force the cursor to always blink
-    blinking: Off
+    # blinking: Off
 
 schemas:
   gruvbox_light: &light
