@@ -110,3 +110,6 @@ key_bindings:
 
 selection:
   save_to_clipboard: true
+
+env:
+  TERM: alacritty
