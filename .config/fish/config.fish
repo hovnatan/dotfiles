@@ -133,9 +133,4 @@ abbr .... "../../.."
 # set -q MANPATH; or set MANPATH ''; set -gx MANPATH "/home/linuxbrew/.linuxbrew/share/man" $MANPATH;
 # set -q INFOPATH; or set INFOPATH ''; set -gx INFOPATH "/home/linuxbrew/.linuxbrew/share/info" $INFOPATH;
 
-set -x NVIM_LISTEN_ADDRESS /tmp/nvimsocket
-set -x REVIEW_BASE master
-set fish_command_timer_export_cmd_duration_str 1
-set fish_command_timer_enabled 0
-
 end
