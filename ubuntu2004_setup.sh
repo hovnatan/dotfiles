@@ -2,6 +2,8 @@
 
 set -e
 
+sudo apt-add-repository ppa:fish-shell/release-3
+
 sudo apt-get install -y software-properties-common
 
 sudo add-apt-repository multiverse
