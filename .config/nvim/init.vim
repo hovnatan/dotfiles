@@ -10,7 +10,7 @@ set shiftwidth=2
 set softtabstop=2
 set expandtab
 
-set scrolloff=999
+set scrolloff=2
 set termguicolors
 set smartindent
 set showmatch
