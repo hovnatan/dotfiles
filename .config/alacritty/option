@@ -19,8 +19,8 @@ window.dynamic_title: true
 
 cursor:
   style:
-    shape: Beam
-    blinking: On
+    shape: Block
+    blinking: Off
 
 schemas:
   gruvbox_light: &light
