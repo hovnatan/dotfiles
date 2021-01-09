@@ -86,10 +86,10 @@ function fish_vi_cursor -d 'Set cursor shape for different vi modes'
 
     set -l tmux_prefix
     set -l tmux_postfix
-    if set -q TMUX
-        set tmux_prefix echo -ne "'\ePtmux;\e'"
-        set tmux_postfix echo -ne "'\e\\\\'"
-    end
+    # if set -q TMUX
+    #     set tmux_prefix echo -ne "'\ePtmux;\e'"
+    #     set tmux_postfix echo -ne "'\e\\\\'"
+    # end
 
     set -q fish_cursor_unknown
     or set -g fish_cursor_unknown block blink
