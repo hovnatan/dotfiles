@@ -18,7 +18,7 @@ function forward-word-or-exit
     end
 end
 
-# set -g fish_vi_force_cursor 1
+set -g fish_vi_force_cursor 1
 
 function hybrid_bindings --description "Vi-style bindings that inherit emacs-style bindings in all modes"
     for mode in default insert visual
@@ -38,7 +38,7 @@ set -u fish_term24bit 1
 set -g fish_key_bindings hybrid_bindings
 
 set -U fish_cursor_default block
-set -U fish_cursor_insert block
+set -U fish_cursor_insert line
 set -U fish_cursor_visual block
 
 set -u fish_color_cwd brcyan
