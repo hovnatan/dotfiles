@@ -19,7 +19,7 @@ window.dynamic_title: true
 
 cursor:
   style:
-    shape: Block
+    shape: Beam
     blinking: Off
 
 schemas:
