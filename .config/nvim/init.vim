@@ -409,9 +409,9 @@ let g:lightline = {
 nnoremap <silent> <space>a  :<C-u>CocList diagnostics<cr>
 nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
 nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
-nnoremap <silent> <space>h  :<C-u>CocList --no-sort -S --ignore-case mru<cr>
-nnoremap <silent> <space>b  :<C-u>CocList -S --ignore-case buffers<cr>
-nnoremap <silent> <space>f  :<C-u>CocList -S --ignore-case gfiles<cr>
+nnoremap <silent> <space>h  :<C-u>CocList --no-sort mru<cr>
+nnoremap <silent> <space>b  :<C-u>CocList buffers<cr>
+nnoremap <silent> <space>f  :<C-u>CocList gfiles<cr>
 nnoremap <silent> <space>gp :<C-u>CocList commits<cr>
 nnoremap <silent> <space>gb :<C-u>CocList bcommits<cr>
 nnoremap <silent> <space>d  :<C-u>CocList files<cr>
