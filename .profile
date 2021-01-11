@@ -4,7 +4,7 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 
-# export TERM="alacritty"
+export TERM="alacritty"
 export TMUX_ONE_WINDOW=1
 # export LIBGL_ALWAYS_INDIRECT=1
 export MAKEFLAGS="-j11"
