@@ -1,7 +1,8 @@
 #!/bin/bash
 
-tic -x -o $HOME/.terminfo tmux.terminfo
-tic -x -o $HOME/.terminfo termite.terminfo
+# tic -x -o $HOME/.terminfo tmux.terminfo
+# tic -x -o $HOME/.terminfo termite.terminfo
+tic -xe alacritty,alacritty-direct alacritty.info
 
 # compile latest ncurses with
 # ./configure --prefix=/home/hovnatan/opt
