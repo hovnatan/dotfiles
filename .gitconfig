@@ -31,3 +31,4 @@
   stat = !git diff --stat $(git merge-base HEAD \"$REVIEW_BASE\")
   review = !nvim -p $(git files) +\"tabdo Gdiff $REVIEW_BASE\"
   reviewone = !nvim -p +\"tabdo Gdiff $REVIEW_BASE\"
+	lg = log --color --graph --date=relative --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset'
