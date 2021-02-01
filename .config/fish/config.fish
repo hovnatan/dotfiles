@@ -103,7 +103,7 @@ abbr gah 'git stash; and git pull --rebase; and git stash pop'
 abbr gm 'nvim (git rev-parse --show-toplevel)/.git/index'
 abbr gnof "git merge --no-commit --no-ff"
 abbr gr "git restore"
-abbr ta  "tmux_attach_deattached.sh"
+abbr ta  "tmux_attach.sh"
 abbr tl  "tmux list-sessions"
 abbr tc "tmux capture-pane -pJ -S - | nvim -R '+set ft=log|set nowrap|set foldlevel=99|DisableWhitespace' '+norm G' --"
 abbr jc "journalctl -b --no-pager | nvim -R '+set ft=log|set nowrap|set foldlevel=99|DisableWhitespace' '+norm G' --"
