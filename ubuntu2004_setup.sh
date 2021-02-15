@@ -59,4 +59,5 @@ sudo nvim /etc/sysctl.d/10-ptrace.conf
 # cargo install --git https://github.com/nbdd0121/x11-over-vsock
 
 
+# ubuntu-drivers devices
 # sudo ubuntu-drivers autoinstall
