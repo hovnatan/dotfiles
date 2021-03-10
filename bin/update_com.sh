@@ -23,6 +23,7 @@ fish -c "fisher update"
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 conda update -y --all
+pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U
 
 nvim -c 'PlugUpgrade | PlugUpdate'
 
