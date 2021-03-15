@@ -23,7 +23,11 @@ fish -c "fisher update"
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 conda update -y --all
-conda list | grep "pypi" | cut -d " " -f 1 | xargs pip install --upgrade --upgrade-strategy only-if-needed | grep -v "Requirement already satisfied: "
+
+TMPFILE=$(mktemp /tmp/hk-update-script.XXXXXX)
+conda list | grep "pypi" | cut -d " " -f 1 > $TMPFILE
+pip install --upgrade --upgrade-strategy only-if-needed -r $TMPFILE | grep -v "Requirement already satisfied: "
+rm $TMPFILE
 
 nvim -c 'PlugUpgrade | PlugUpdate'
 
