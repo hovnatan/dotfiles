@@ -23,7 +23,7 @@ fish -c "fisher update"
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 conda update -y --all
-conda list | grep "pypi" | cut -d " " -f 1 | xargs pip install --upgrade | grep -v "Requirement already satisfied: "
+conda list | grep "pypi" | cut -d " " -f 1 | xargs pip install --upgrade --upgrade-strategy only-if-needed | grep -v "Requirement already satisfied: "
 
 nvim -c 'PlugUpgrade | PlugUpdate'
 
