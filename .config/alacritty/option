@@ -1,25 +1,7 @@
-shell:
-  program: wsl.exe
-  args:
-    - "~"
-
 scrolling:
     history: 0
 font:
-    # The size to use.
-    size: 14
-    normal:
-       style: Regular
-       family: "Cascadia Code PL"
-    bold:
-       style: Bold
-       family: "Cascadia Code PL"
-    italic:
-       style: Italic
-       family: "Cascadia Code PL"
-    bold_italic:
-       style: Bold Italic
-       family: "Cascadia Code PL"
+    size: 16
 
 window:
   padding:
@@ -102,9 +84,10 @@ mouse:
 
 key_bindings:
   - { key: S,        mods: Control|Shift,       action: PasteSelection }
+  - { key: J,        mods: Command,     chars: "\x1bj"                       }
+  - { key: K,        mods: Command,     chars: "\x1bk"                       }
+  - { key: H,        mods: Command,     chars: "\x1bh"                       }
+  - { key: L,        mods: Command,     chars: "\x1bl"                       }
 
 selection:
   save_to_clipboard: true
-
-env:
-  TERM: alacritty

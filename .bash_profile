@@ -1,4 +1,5 @@
 source ~/.profile
+source ~/.zprofile
 
 # x11-over-vsock &
 # export XURL=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}')
