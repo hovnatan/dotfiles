@@ -10,9 +10,8 @@ if [[ "$GIT_BRANCH" != master ]]; then
   git push -f
 fi
 
-sudo apt update
-sudo apt -y dist-upgrade
-sudo apt -y autoremove
+sudo port selfupdate
+sudo port upgrade outdated
 
 fish -c "fisher update"
 

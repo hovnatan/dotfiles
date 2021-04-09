@@ -6,7 +6,7 @@ cd ~/Downloads
 rm -rf ~/miniconda3
 
 VERSION="latest"
-FILENAME="Miniconda3-${VERSION}-Linux-x86_64.sh"
+FILENAME="Miniconda3-${VERSION}-MacOSX-x86_64.sh"
 
 rm -rf "$FILENAME"
 wget https://repo.anaconda.com/miniconda/$FILENAME
