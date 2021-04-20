@@ -88,6 +88,7 @@ key_bindings:
   - { key: K,        mods: Command,     chars: "\x1bk"                       }
   - { key: H,        mods: Command,     chars: "\x1bh"                       }
   - { key: L,        mods: Command,     chars: "\x1bl"                       }
+  - { key: Q,        mods: Command,     chars: "\x1bq"                       }
 
 selection:
   save_to_clipboard: true
