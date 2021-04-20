@@ -24,7 +24,7 @@ sudo apt-get install -y meld xrdp remmina zathura qtcreator
 
 sudo apt-get install -y gawk
 
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
