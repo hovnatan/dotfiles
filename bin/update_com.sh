@@ -10,8 +10,10 @@ if [[ "$GIT_BRANCH" != master ]]; then
   git push -f
 fi
 
-sudo port selfupdate
-sudo port upgrade outdated
+# sudo port selfupdate
+# sudo port upgrade outdated
+brew update
+brew upgrade
 
 fish -c "fisher update"
 
