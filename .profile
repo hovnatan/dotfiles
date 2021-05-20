@@ -17,7 +17,7 @@ export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
 export QT_SCALE_FACTOR="1.5"
 export PYTHONBREAKPOINT=pudb.remote.set_trace
 
-export RIPGREP_CONFIG_PATH "$HOME/.dotfiles/.ripgreprc"
+export RIPGREP_CONFIG_PATH="$HOME/.dotfiles/.ripgreprc"
 
 SSH_ENV="$HOME/.ssh/agent-environment"
 
