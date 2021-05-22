@@ -9,6 +9,8 @@ bash ./Miniconda3-latest-Linux-x86_64.sh -b
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 
+conda install mamba
+
 conda update -y --all
 
 conda install -y pytorch torchvision cpuonly
