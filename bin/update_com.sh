@@ -22,7 +22,7 @@ fish -c "fisher update"
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
-conda update -y --all
+mamba update -y --all
 
 TMPFILE=$(mktemp /tmp/hk-update-script.XXXXXX)
 conda list | grep "pypi" | cut -d " " -f 1 > $TMPFILE
