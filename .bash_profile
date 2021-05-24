@@ -10,6 +10,8 @@ export REVIEW_BASE=master
 
 export PATH="`python3 -m site --user-base`/bin:$PATH"
 
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+
 source ~/.bashrc
 source ~/.bashrc_local
 
