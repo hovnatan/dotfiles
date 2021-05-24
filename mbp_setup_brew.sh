@@ -6,10 +6,10 @@ $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)
 
 brew update
 
-brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish ranger cmake
+brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish ranger cmake wget
 
-/usr/local/opt/ncurses/bin/infocmp tmux-256color > ~/tmux-256color.info
-tic -xe tmux-256color ~/tmux-256color.info
-rm ~/tmux-256color.info
+# /usr/local/opt/ncurses/bin/infocmp tmux-256color > ~/tmux-256color.info
+# tic -xe tmux-256color ~/tmux-256color.info
+# rm ~/tmux-256color.info
 
-pip3 install pynvim
+pip3 install --user pynvim
