@@ -79,7 +79,7 @@ abbr np  "nvim --noplugin"
 
 function ranger_fm
   if not set -q RANGER_LEVEL
-    ranger --choosedir="$HOME/.rangerdir"; cd (cat $HOME/.rangerdir)
+    ~/miniconda3/bin/python3 /usr/local/Cellar/ranger/1.9.3/libexec/ranger.py --choosedir="$HOME/.rangerdir"; cd (cat $HOME/.rangerdir)
   else
     exit
   end
