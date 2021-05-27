@@ -573,6 +573,6 @@ nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
 nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
 nmap ,h /[^\d0-\d127]<CR>
 
-let g:python3_host_prog = expand('/opt/local/bin/python3.9')
+let g:python3_host_prog = expand('/opt/local/bin/python3')
 
 lua require('config')
