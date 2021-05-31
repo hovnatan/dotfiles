@@ -14,6 +14,8 @@ export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 
 export PATH="/usr/local/Cellar/ncurses/6.2/bin:$PATH"
 
+export PATH="`python3 -m site --user-base`/bin:$PATH"
+
 source ~/.bashrc
 source ~/.bashrc_local
 
