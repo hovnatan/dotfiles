@@ -124,6 +124,7 @@ abbr hh "htop -u $USER"
 abbr p "python"
 abbr hm "history merge"
 abbr rfc "source ~/.config/fish/config.fish"
+abbr source_miniconda "source ~/miniconda3/etc/fish/conf.d/conda.fish"
 abbr ... "../.."
 abbr .... "../../.."
 
