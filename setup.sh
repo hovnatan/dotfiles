@@ -26,7 +26,7 @@ ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
 
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
-curl https://git.io/fisher --create-dirs -sLo ~/.config/fish/functions/fisher.fish
+fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
 fish -c fisher
 
 rm -rf ~/.gitconfig
@@ -107,3 +107,8 @@ ln -s ~/.dotfiles/.ctags.d ~/
 # install sshd on docker, run server with service ssh start
 # find out IP sudo docker inspect -f "{{ .NetworkSettings.IPAddress }}" tuft
 # sshfs -o Compression=no -o Ciphers=aes128-ctr root@172.17.0.2:/deploy ~/tmp
+
+# cd ~/.dotfiles
+# python3 -m venv venv_python_neovim
+# source ~/.dotfiles/venv_python_neovim/bin/activate
+pip3 install --user pylint pynvim jedi black
