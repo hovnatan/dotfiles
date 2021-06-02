@@ -4,4 +4,3 @@
 # fi
 alias ta="tmux_attach.sh"
 alias f="fish"
-alias import_miniconda="source ~/miniconda3/bin/activate"

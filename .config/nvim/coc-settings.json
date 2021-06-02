@@ -1,5 +1,4 @@
 {
-  "coc.preferences.formatOnSaveFiletypes": ["python", "c", "cpp", "cuda", "javascript", "xhtml", "html", "css", "Markdown", "lua"],
   "coc.preferences.jumpCommand": "edit",
   "diagnostic.maxWindowHeight": 25,
   "languageserver": {
@@ -9,8 +8,7 @@
     }
   },
   "html.filetypes":["html", "handlebars", "xhtml"],
-  "python.formatting.provider" : "yapf",
-  "python.formatting.yapfArgs" : ["--style=facebook"],
+  "python.formatting.provider" : "black",
   "python.autoComplete.showAdvancedMembers" : false,
   "python.terminal.activateEnvironment" : false,
   "python.jediEnabled": true,

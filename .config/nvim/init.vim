@@ -191,7 +191,7 @@ let g:undotree_WindowLayout = 2
 
 let g:better_whitespace_filetypes_blacklist=['git', 'diff', 'gitcommit', 'unite', 'qf', 'help']
 let g:better_whitespace_enabled=0
-let g:strip_whitespace_on_save=1
+let g:strip_whitespace_on_save=0
 
 nmap zuz <Plug>(FastFoldUpdate)
 let g:fastfold_savehook = 1
@@ -295,6 +295,9 @@ function! s:show_documentation()
     execute '!' . &keywordprg . " " . expand('<cword>')
   endif
 endfunction
+
+command! -nargs=0 Format :call CocAction('format')
+
 
 nmap <leader>rn <Plug>(coc-rename)
 xmap <leader>f  <Plug>(coc-format-selected)
@@ -500,8 +503,7 @@ au FileType markdown,text,rst
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell |
                 \ setlocal textwidth=80 |
-                \ setlocal formatlistpat+=\\\|^\\*\\s* |
-                \ let b:strip_whitespace_on_save=0
+                \ setlocal formatlistpat+=\\\|^\\*\\s*
 au FileType tex,latex
                 \ let b:dispatch = '~/.config/nvim/preview.sh %:p' |
                 \ setlocal spell |
@@ -687,3 +689,5 @@ nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
 " copy relative filepath and the current line number to clipboard
 nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
 nmap ,h /[^\d0-\d127]<CR>
+
+let g:python3_host_prog = expand('/usr/bin/python3')
