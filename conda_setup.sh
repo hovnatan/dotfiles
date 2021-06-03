@@ -23,7 +23,7 @@ conda install -y pytorch torchvision cpuonly
 # conda install tbb tbb-devel cmake binutils_impl_linux-64 binutils_linux-64 gxx_linux-64 gcc_linux-64 nvcc_linux-64 libx11-common-cos6-x86_64 libx11-cos6-x86_64 libxdamage-cos6-x86_64 libxfixes-cos6-x86_64 libxxf86vm-cos6-x86_64 mesa-dri-drivers-cos6-x86_64 mesa-dri1-drivers-cos6-x86_64 mesa-libgl-cos6-x86_64 mesa-libgl-devel-cos6-x86_64 libselinux-cos6-x86_64
 
 # pypng for indexed png, gitpython python wrapper for git
-pip install pypng gitpython tensorboard sphinx-rtd-theme pylint-json2html pylint-pytest pytest-timeout pyenchant pretty_errors scalene opencv-python
+pip install pypng gitpython tensorboard sphinx-rtd-theme pylint-json2html pylint-pytest pytest-timeout pyenchant pretty_errors scalene opencv-contrib-python
 
 
 # also might be install sudo apt-get install -y libgl1-mesa-dev
