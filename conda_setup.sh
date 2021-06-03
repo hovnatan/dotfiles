@@ -13,13 +13,13 @@ bash ./$FILENAME -b
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 
-conda install mamba
+# conda install -y mamba
 
 conda update -y --all
 
 conda install -y pytorch torchvision cpuonly
-conda install -y pillow boost matplotlib scipy conda-build Cython sympy pandas shapely scikit-image pycairo cvxpy cvxopt scikit-learn
-conda install -y ipython rope ipdb pudb pynvim jupyter pylint pytest pytest-xdist pytest-cov coverage twine sphinx boto3 docker-compose
+# conda install -y pillow boost matplotlib scipy conda-build Cython sympy pandas shapely scikit-image pycairo cvxpy cvxopt scikit-learn
+# conda install -y ipython rope ipdb pudb pynvim jupyter pylint pytest pytest-xdist pytest-cov coverage twine sphinx boto3 docker-compose
 # conda install tbb tbb-devel cmake binutils_impl_linux-64 binutils_linux-64 gxx_linux-64 gcc_linux-64 nvcc_linux-64 libx11-common-cos6-x86_64 libx11-cos6-x86_64 libxdamage-cos6-x86_64 libxfixes-cos6-x86_64 libxxf86vm-cos6-x86_64 mesa-dri-drivers-cos6-x86_64 mesa-dri1-drivers-cos6-x86_64 mesa-libgl-cos6-x86_64 mesa-libgl-devel-cos6-x86_64 libselinux-cos6-x86_64
 
 # pypng for indexed png, gitpython python wrapper for git
