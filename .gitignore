@@ -1,2 +1,5 @@
 Cached Theme.pak
 __pycache__
+*.pyo
+*.pyc
+venv_python_neovim

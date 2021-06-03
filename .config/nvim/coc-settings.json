@@ -33,5 +33,7 @@
     "<C-v>": "eval:@@"
   },
   "list.source.grep.args": ["-S"],
-  "clangd.arguments": [ "-fallback-style=Google" ]
+  "clangd.arguments": [
+    "-fallback-style=Google"
+  ]
 }
