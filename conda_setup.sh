@@ -5,8 +5,6 @@ set -e
 cd ~/Downloads
 rm -rf ~/miniconda3
 
-cd ~/Downloads
-
 VERSION="latest"
 FILENAME="Miniconda3-${VERSION}-MacOSX-x86_64.sh"
 
