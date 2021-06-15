@@ -89,6 +89,8 @@ ln -sf ~/.dotfiles/.bash_profile ~/
 
 ln -s ~/.dotfiles/.config/alacritty ~/.config/
 
+ln -s ~/.dotfiles/.config/bat ~/.config/
+
 mkdir -p ~/.config/Code/User
 ln -s ~/.dotfiles/.config/Code/User/settings.json ~/.config/Code/User/
 ln -s ~/.dotfiles/.config/Code/User/keybindings.json ~/.config/Code/User/
