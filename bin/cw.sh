@@ -24,3 +24,5 @@ echo -n "set -U _reload_color_config ""$COLOR" | fish
 color_switcher.sh ~/.config/alacritty/alacritty.yml ~/.config/alacritty/option ~/.config/alacritty/colors/$COLOR reverse
 cp ~/.config/alacritty/alacritty.yml /mnt/c/Users/hovna/AppData/Roaming/alacritty/alacritty.yml
 tmux source ~/.tmux.conf
+
+color_switcher.sh ~/.config/bat/config ~/.config/bat/option ~/.config/bat/config_$COLOR
