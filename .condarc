@@ -1,5 +1,5 @@
 channel_priority: strict
 channels:
-  - pytorch
+  - pytorch-lts
   - defaults
   - conda-forge
