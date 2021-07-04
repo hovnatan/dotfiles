@@ -42,7 +42,6 @@ set lazyredraw
 set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
 set splitbelow
 set splitright
-set foldmethod=syntax
 set foldenable
 set foldlevel=99
 set viewoptions-=options
@@ -66,6 +65,11 @@ set cmdheight=1
 set signcolumn=yes
 set conceallevel=1
 set nofixendofline
+
+set foldmethod=expr
+set foldexpr=nvim_treesitter#foldexpr()
+
+set completeopt=menuone,noselect
 
 nn <F9> :silent Dispatch!<CR>
 
@@ -110,14 +114,14 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
-  Plug 'neoclide/coc.nvim', {'branch': 'release'}
+  Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+  Plug 'nvim-treesitter/playground'
   Plug 'wellle/tmux-complete.vim'
   Plug 'wellle/targets.vim'
   Plug 'kana/vim-textobj-user'
   Plug 'michaeljsmith/vim-indent-object'
   Plug 'jeetsukumaran/vim-indentwise'
   Plug 'zhimsel/vim-stay'
-  Plug 'Konfekt/FastFold'
   Plug 'mbbill/undotree'
   Plug 'ntpeters/vim-better-whitespace'
   Plug 'machakann/vim-swap'
@@ -125,12 +129,54 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'hanschen/vim-ipython-cell'
   Plug 'wsdjeg/vim-fetch'
   Plug 'majutsushi/tagbar'
-  Plug 'tmhedberg/SimpylFold'
   Plug 'kshenoy/vim-signature'
   Plug 'tmux-plugins/vim-tmux-focus-events'
   Plug 'airblade/vim-rooter'
   Plug 'will133/vim-dirdiff'
+  Plug 'nvim-lua/popup.nvim'
+  Plug 'nvim-lua/plenary.nvim'
+  Plug 'nvim-telescope/telescope.nvim'
+  Plug 'hrsh7th/nvim-compe'
 call plug#end()
+
+let g:compe = {}
+let g:compe.enabled = v:true
+let g:compe.autocomplete = v:true
+let g:compe.debug = v:false
+let g:compe.min_length = 1
+let g:compe.preselect = 'enable'
+let g:compe.throttle_time = 80
+let g:compe.source_timeout = 200
+let g:compe.resolve_timeout = 800
+let g:compe.incomplete_delay = 400
+let g:compe.max_abbr_width = 100
+let g:compe.max_kind_width = 100
+let g:compe.max_menu_width = 100
+let g:compe.documentation = v:true
+
+let g:compe.source = {}
+let g:compe.source.path = v:true
+let g:compe.source.buffer = v:true
+let g:compe.source.calc = v:true
+let g:compe.source.nvim_lsp = v:true
+let g:compe.source.nvim_lua = v:true
+let g:compe.source.vsnip = v:true
+let g:compe.source.ultisnips = v:true
+let g:compe.source.luasnip = v:true
+let g:compe.source.emoji = v:true
+
+inoremap <silent><expr> <C-Space> compe#complete()
+inoremap <silent><expr> <CR>      compe#confirm('<CR>')
+inoremap <silent><expr> <C-e>     compe#close('<C-e>')
+inoremap <silent><expr> <C-f>     compe#scroll({ 'delta': +4 })
+inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })
+
+nnoremap <leader>ff <cmd>Telescope find_files<cr>
+nnoremap <leader>fg <cmd>Telescope live_grep<cr>
+nnoremap <leader>fb <cmd>Telescope buffers<cr>
+nnoremap <leader>fh <cmd>Telescope help_tags<cr>
+nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
+nnoremap <leader>fm <cmd>Telescope marks<cr>
 
 function! ToggleZoom(zoom, direction)
   if exists("t:restore_zoom") && (a:zoom == v:true || t:restore_zoom.win != winnr())
@@ -193,11 +239,6 @@ let g:better_whitespace_filetypes_blacklist=['git', 'diff', 'gitcommit', 'unite'
 let g:better_whitespace_enabled=0
 let g:strip_whitespace_on_save=0
 
-nmap zuz <Plug>(FastFoldUpdate)
-let g:fastfold_savehook = 1
-let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
-let g:fastfold_fold_movement_commands = [']z', '[z', 'zj', 'zk']
-
 let g:slime_no_mappings = 1
 xmap <c-c><c-c> <Plug>SlimeRegionSend
 nmap <c-c>v     <Plug>SlimeConfig
@@ -211,24 +252,12 @@ let g:slime_dont_ask_default = 1
 let g:ipython_cell_delimit_cells_by = 'tags'
 
 
-nmap [g <Plug>(coc-git-prevchunk)
-nmap ]g <Plug>(coc-git-nextchunk)
-nmap <leader>gi <Plug>(coc-git-chunkinfo)
-nmap <leader>gc <Plug>(coc-git-commit)
-nnoremap <leader>ga :<C-u>CocCommand git.chunkStage<CR>
-nnoremap <leader>gu :<C-u>CocCommand git.chunkUndo<CR>
-
 nnoremap <leader>gb :Gblame<CR>
 nnoremap <leader>gm :Gstatus<CR><C-w>T
 nnoremap <leader>gp :Gpush<CR>
 
 nnoremap <silent> <C-n> :set hlsearch!<CR>
 
-let g:coc_global_extensions = [ 'coc-marketplace', 'coc-python', 'coc-clangd',
-      \ 'coc-json', 'coc-word', 'coc-yank',
-      \ 'coc-vimtex', 'coc-lists',
-      \ 'coc-git', 'coc-css', 'coc-html', 'coc-tsserver'
-      \ ]
 call textobj#user#plugin('line', {
 \   '-': {
 \     'select-a-function': 'CurrentLineA',
@@ -258,60 +287,6 @@ function! CurrentLineI()
   \ : 0
 endfunction
 
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-
-inoremap <silent><expr> <cr>
-      \ pumvisible() ? coc#_select_confirm()
-      \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
-
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~# '\s'
-endfunction
-
-inoremap <silent><expr> <c-space> coc#refresh()
-
-nmap <silent> [w <Plug>(coc-diagnostic-prev)
-nmap <silent> ]w <Plug>(coc-diagnostic-next)
-
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gy <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
-
-" Use K to show documentation in preview window
-nnoremap <silent> K :call <SID>show_documentation()<CR>
-
-function! s:show_documentation()
-  if (index(['vim','help'], &filetype) >= 0)
-    execute 'h '.expand('<cword>')
-  elseif (coc#rpc#ready())
-    call CocActionAsync('doHover')
-  else
-    execute '!' . &keywordprg . " " . expand('<cword>')
-  endif
-endfunction
-
-command! -nargs=0 Format :call CocAction('format')
-
-
-nmap <leader>rn <Plug>(coc-rename)
-xmap <leader>f  <Plug>(coc-format-selected)
-nmap <leader>f  <Plug>(coc-format-selected)
-nmap <leader>x  <Plug>(coc-cursors-operator)
-
-augroup mygroup
-  autocmd!
-  " Setup formatexpr specified filetype(s).
-  autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
-  " Update signature help on jump placeholder
-  autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
-augroup end
-
 au FocusLost * silent! wa
 au BufLeave * silent! wa
 
@@ -319,31 +294,6 @@ au BufNewFile,BufRead *.cu set filetype=cuda
 au BufNewFile,BufRead *.cu_inl set filetype=cuda
 au BufNewFile,BufRead *.cuh set filetype=cuda
 
-xmap <leader>a  <Plug>(coc-codeaction-selected)
-nmap <leader>a  <Plug>(coc-codeaction-selected)
-nmap <leader>ac  <Plug>(coc-codeaction)
-nmap <leader>qf  <Plug>(coc-fix-current)
-xmap if <Plug>(coc-funcobj-i)
-omap if <Plug>(coc-funcobj-i)
-xmap af <Plug>(coc-funcobj-a)
-omap af <Plug>(coc-funcobj-a)
-xmap ic <Plug>(coc-classobj-i)
-omap ic <Plug>(coc-classobj-i)
-xmap ac <Plug>(coc-classobj-a)
-omap ac <Plug>(coc-classobj-a)
-
-" Remap <C-f> and <C-b> for scroll float windows/popups.
-if has('nvim-0.4.0') || has('patch-8.2.0750')
-  nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-  nnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-  inoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
-  inoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
-  vnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-  vnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-endif
-
-
-command! -nargs=? Fold :call CocAction('fold', <f-args>)
 
 command! MakeTags !ctags -R .
 command! Nw noa w
@@ -368,111 +318,25 @@ function! GetFilepath_T()
 	return ret
 endfunction
 
-function! CocDiagnostic() abort
-  let info = get(b:, 'coc_diagnostic_info', {})
-  if empty(info) | return '' | endif
-  let msgs = []
-  if get(info, 'error', 0)
-    call add(msgs, 'E' . info['error'])
-  endif
-  if get(info, 'warning', 0)
-    call add(msgs, 'W' . info['warning'])
-  endif
-  return join(msgs, ' ')
-endfunction
-
-function! GitMessTruncated() abort
-  return substitute(FugitiveStatusline()[5:-3], "(", ":", "")
-endfunction
-
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
-      \             [ 'tpath', 'readonly', 'modified', 'cocdiag'] ],
+      \             [ 'tpath', 'readonly', 'modified'] ],
       \   'right': [ [ 'lineinfo' ],
       \              [ 'git']
       \            ]
       \ },
       \ 'inactive': {
-      \   'left': [ ['tpath', 'readonly', 'modified', 'cocdiag' ] ],
+      \   'left': [ ['tpath', 'readonly', 'modified' ] ],
       \   'right': [ [ 'lineinfo' ],
       \            ]
       \ },
       \ 'component': {
       \   'lineinfo': '%3l(%L):%-2v'
       \ },
-      \ 'component_function': {
-      \   'cocdiag': 'CocDiagnostic',
-      \   'tpath': 'GetFilepath_T',
-      \   'git': 'GitMessTruncated'
-      \ },
       \ }
 
-nnoremap <silent> <space>a  :<C-u>CocList diagnostics<cr>
-nnoremap <silent> <space>c  :<C-u>CocList commands<cr>
-nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
-nnoremap <silent> <space>h  :<C-u>CocList --no-sort mru<cr>
-nnoremap <silent> <space>b  :<C-u>CocList buffers<cr>
-nnoremap <silent> <space>f  :<C-u>CocList gfiles<cr>
-nnoremap <silent> <space>gp :<C-u>CocList commits<cr>
-nnoremap <silent> <space>gb :<C-u>CocList bcommits<cr>
-nnoremap <silent> <space>d  :<C-u>CocList files<cr>
-nnoremap <silent> <space>l  :<C-u>CocList <cr>
-nnoremap <silent> <space>m  :<C-u>CocList marks<cr>
-nnoremap <silent> <space>t  :<C-u>CocList tags<cr>
-nnoremap <silent> <space>s  :<C-u>CocList -I symbols<cr>
-nnoremap <silent> <space>w  :<C-u>CocList -I grep -w<cr>
-nnoremap <silent> <space>r  :<C-u>CocList -I grep<cr>
-nnoremap <silent> <space>j  :<C-u>CocNext<cr>
-nnoremap <silent> <space>k  :<C-u>CocPrev<cr>
-nnoremap <silent> <space>p  :<C-u>CocListResume<cr>
-nnoremap <silent> <space>y  :<C-u>CocList --normal yank<cr>
-
-" grep word under cursor
-command! -nargs=+ -complete=custom,s:GrepArgs Rg exe 'CocList grep '.<q-args>
-
-function! s:GrepArgs(...)
-  let list = ['-S', '-smartcase', '-i', '-ignorecase', '-w', '-word',
-        \ '-e', '-regex', '-u', '-skip-vcs-ignores', '-t', '-extension']
-  return join(list, "\n")
-endfunction
-
-vnoremap <leader>rg :<C-u>call <SID>GrepFromSelected(visualmode())<CR>
-nnoremap <leader>rg :<C-u>set operatorfunc=<SID>GrepFromSelected<CR>g@
-
-function! s:GrepFromSelected(type)
-  let saved_unnamed_register = @@
-  if a:type ==# 'v'
-    normal! `<v`>y
-  elseif a:type ==# 'char'
-    normal! `[v`]y
-  else
-    return
-  endif
-  let word = substitute(@@, '\n$', '', 'g')
-  let word = escape(word, '| ')
-  let @@ = saved_unnamed_register
-  execute 'CocList grep -w '.word
-endfunction
-
-vnoremap <leader>rt :<C-u>call <SID>TagFromSelected(visualmode())<CR>
-nnoremap <leader>rt :<C-u>set operatorfunc=<SID>TagFromSelected<CR>g@
-
-function! s:TagFromSelected(type)
-  let saved_unnamed_register = @@
-  if a:type ==# 'v'
-    normal! `<v`>y
-  elseif a:type ==# 'char'
-    normal! `[v`]y
-  else
-    return
-  endif
-  let word = substitute(@@, '\n$', '', 'g')
-  let word = escape(word, '| ')
-  let @@ = saved_unnamed_register
-  execute 'CocList --input='.word.' tags'
-endfunction
 
 filetype plugin indent on
 
@@ -519,8 +383,7 @@ au FileType python
                 \ Abolish -buffer false False
 
 au FileType cpp
-      \ setlocal cindent |
-      \ nnoremap <leader>z :<C-u>CocCommand clangd.switchSourceHeader<CR>
+      \ setlocal cindent
 
 au BufWritePost *.sh silent! !chmod +x %:p
 
@@ -617,7 +480,6 @@ function! LargeFile()
  autocmd VimEnter *  echo "The file is larger than " . (g:LargeFile / 1024 / 1024) . " MB, so some options are changed (see .vimrc for details)."
 endfunction
 
-" call CocAction('toggleSource', 'tmuxcomplete')
 if exists('$TMUX')
   autocmd BufEnter,BufNewFile,WinEnter * call system("tmux rename-window \"nvim " . expand("%") . "\"")
 endif
