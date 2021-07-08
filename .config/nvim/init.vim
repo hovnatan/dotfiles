@@ -111,6 +111,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'tpope/vim-projectionist'
   Plug 'tpope/vim-vinegar'
   Plug 'tpope/vim-jdaddy'
+  Plug 'airblade/vim-gitgutter'
   Plug 'morhetz/gruvbox'
   Plug 'shinchu/lightline-gruvbox.vim'
   Plug 'itchyny/lightline.vim'
@@ -136,7 +137,10 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'nvim-lua/popup.nvim'
   Plug 'nvim-lua/plenary.nvim'
   Plug 'nvim-telescope/telescope.nvim'
+  Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
   Plug 'hrsh7th/nvim-compe'
+  Plug 'andersevenrud/compe-tmux'
+  Plug 'neovim/nvim-lspconfig'
 call plug#end()
 
 let g:compe = {}
@@ -164,6 +168,9 @@ let g:compe.source.vsnip = v:true
 let g:compe.source.ultisnips = v:true
 let g:compe.source.luasnip = v:true
 let g:compe.source.emoji = v:true
+let g:compe.source.tmux = {}
+let g:compe.source.tmux.disabled = v:false
+let g:compe.source.tmux.all_panes = v:true
 
 inoremap <silent><expr> <C-Space> compe#complete()
 inoremap <silent><expr> <CR>      compe#confirm('<CR>')
@@ -171,12 +178,12 @@ inoremap <silent><expr> <C-e>     compe#close('<C-e>')
 inoremap <silent><expr> <C-f>     compe#scroll({ 'delta': +4 })
 inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })
 
-nnoremap <leader>ff <cmd>Telescope find_files<cr>
-nnoremap <leader>fg <cmd>Telescope live_grep<cr>
-nnoremap <leader>fb <cmd>Telescope buffers<cr>
-nnoremap <leader>fh <cmd>Telescope help_tags<cr>
-nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
-nnoremap <leader>fm <cmd>Telescope marks<cr>
+nnoremap <space>f <cmd>Telescope find_files<cr>
+nnoremap <space>g <cmd>Telescope live_grep<cr>
+nnoremap <space>b <cmd>Telescope buffers<cr>
+nnoremap <space>h <cmd>Telescope help_tags<cr>
+nnoremap <space>o <cmd>Telescope oldfiles<cr>
+nnoremap <space>m <cmd>Telescope marks<cr>
 
 function! ToggleZoom(zoom, direction)
   if exists("t:restore_zoom") && (a:zoom == v:true || t:restore_zoom.win != winnr())
@@ -318,13 +325,21 @@ function! GetFilepath_T()
 	return ret
 endfunction
 
+function! LightlineGitGutter()
+  if !get(g:, 'gitgutter_enabled', 0) || empty(FugitiveHead())
+    return ''
+  endif
+  let [ l:added, l:modified, l:removed ] = GitGutterGetHunkSummary()
+  return printf('+%d ~%d -%d', l:added, l:modified, l:removed)
+endfunction
+
+
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
-      \             [ 'tpath', 'readonly', 'modified'] ],
+      \             [ 'tpath', 'readonly', 'modified', 'git'] ],
       \   'right': [ [ 'lineinfo' ],
-      \              [ 'git']
       \            ]
       \ },
       \ 'inactive': {
@@ -333,7 +348,11 @@ let g:lightline = {
       \            ]
       \ },
       \ 'component': {
-      \   'lineinfo': '%3l(%L):%-2v'
+      \   'lineinfo': '%3l(%L):%-2v',
+      \ },
+      \ 'component_function': {
+      \   'tpath': 'GetFilepath_T',
+      \   'git': 'LightlineGitGutter'
       \ },
       \ }
 
@@ -553,3 +572,5 @@ nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
 nmap ,h /[^\d0-\d127]<CR>
 
 let g:python3_host_prog = expand('/usr/bin/python3')
+
+lua require('config')
