@@ -160,7 +160,7 @@ lspconfig.clangd.setup {
   flags = {
     debounce_text_changes = 150,
   },
-  cmd = { "/usr/local/Cellar/llvm/12.0.0_1/bin/clangd", 
+  cmd = { "clangd", 
          "--compile-commands-dir=.",
          "--background-index",
          "--clang-tidy",
