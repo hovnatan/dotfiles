@@ -58,7 +58,7 @@ sudo nvim /etc/sysctl.d/10-ptrace.conf
 
 
 # cargo install --git https://github.com/nbdd0121/x11-over-vsock
-cargo install du-dunst
+cargo install du-dust
 
 
 # ubuntu-drivers devices
