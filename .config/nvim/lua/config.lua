@@ -176,7 +176,7 @@ lspconfig.clangd.setup {
   init_options = {
     clangdFileStatus = true
   },
-  cmd = { "clangd", 
+  cmd = { "/usr/local/Cellar/llvm/12.0.0_1/bin/clangd",
          "--compile-commands-dir=.",
          "--background-index",
          "--clang-tidy",
