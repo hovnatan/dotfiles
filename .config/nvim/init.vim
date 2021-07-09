@@ -139,6 +139,7 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'hrsh7th/nvim-compe'
   Plug 'andersevenrud/compe-tmux'
   Plug 'neovim/nvim-lspconfig'
+  Plug 'lakshayg/vim-bazel'
 call plug#end()
 
 let g:compe = {}
@@ -183,6 +184,8 @@ nnoremap <space>b <cmd>Telescope buffers<cr>
 nnoremap <space>h <cmd>Telescope help_tags<cr>
 nnoremap <space>o <cmd>Telescope oldfiles<cr>
 nnoremap <space>m <cmd>Telescope marks<cr>
+nnoremap <space>q <cmd>Telescope quickfix<cr>
+nnoremap <space>k <cmd>Telescope keymaps<cr>
 
 function! ToggleZoom(zoom, direction)
   if exists("t:restore_zoom") && (a:zoom == v:true || t:restore_zoom.win != winnr())
