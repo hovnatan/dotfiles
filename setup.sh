@@ -27,7 +27,7 @@ ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
 fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
-fish -c fisher
+fish -c fisher update
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
