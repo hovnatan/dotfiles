@@ -98,7 +98,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'lervag/vimtex'
   Plug 'tpope/vim-abolish'
   Plug 'tpope/vim-dispatch'
-  Plug 'junegunn/vim-peekaboo'
   Plug 'radenling/vim-dispatch-neovim'
   Plug 'tpope/vim-commentary'
   Plug 'tpope/vim-unimpaired'
@@ -179,6 +178,7 @@ inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })
 
 nnoremap <space>f <cmd>Telescope find_files<cr>
 nnoremap <space>g <cmd>Telescope live_grep<cr>
+nnoremap <space>r <cmd>Telescope grep_string<cr>
 nnoremap <space>b <cmd>Telescope buffers<cr>
 nnoremap <space>h <cmd>Telescope help_tags<cr>
 nnoremap <space>o <cmd>Telescope oldfiles<cr>
