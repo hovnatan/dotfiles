@@ -131,7 +131,6 @@ call plug#begin('~/.local/share/nvim/site/plugged')
   Plug 'wsdjeg/vim-fetch'
   Plug 'majutsushi/tagbar'
   Plug 'kshenoy/vim-signature'
-  Plug 'tmux-plugins/vim-tmux-focus-events'
   Plug 'airblade/vim-rooter'
   Plug 'will133/vim-dirdiff'
   Plug 'nvim-lua/popup.nvim'
