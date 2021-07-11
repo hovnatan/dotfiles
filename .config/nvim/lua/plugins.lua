@@ -25,15 +25,12 @@ return require('packer').startup(function()
   use {'nvim-treesitter/nvim-treesitter',  run = ':TSUpdate'}
   use {'nvim-treesitter/playground'}
   use {'nvim-treesitter/nvim-treesitter-textobjects'}
-  use {'wellle/tmux-complete.vim'}
   use {'wellle/targets.vim'}
-  use {'kana/vim-textobj-user'}
   use {'michaeljsmith/vim-indent-object'}
   use {'jeetsukumaran/vim-indentwise'}
   use {'zhimsel/vim-stay'}
   use {'mbbill/undotree'}
   use {'ntpeters/vim-better-whitespace'}
-  use {'machakann/vim-swap'}
   use {'jpalardy/vim-slime'}
   use {'hanschen/vim-ipython-cell'}
   use {'wsdjeg/vim-fetch'}
