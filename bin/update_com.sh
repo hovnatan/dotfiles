@@ -29,6 +29,6 @@ conda list | grep "pypi" | cut -d " " -f 1 > $TMPFILE
 pip install --upgrade --upgrade-strategy only-if-needed -r $TMPFILE | grep -v "Requirement already satisfied: "
 rm $TMPFILE
 
-nvim -c 'PlugUpgrade | PlugUpdate'
+nvim -c 'PackerSync'
 
 # wget https://raw.githubusercontent.com/cyrus-and/gdb-dashboard/master/.gdbinit -P $HOME
