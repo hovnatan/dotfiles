@@ -282,5 +282,3 @@ require'compe'.setup {
     tmux = {disabled=false; all_panes=true};
   };
 }
-
-

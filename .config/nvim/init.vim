@@ -22,54 +22,7 @@ filetype plugin on
 runtime plugins/matchit.vim
 syntax on
 
-call plug#begin('~/.local/share/nvim/site/plugged')
-  Plug 'sheerun/vim-polyglot'
-  Plug 'lervag/vimtex'
-  Plug 'tpope/vim-abolish'
-  Plug 'tpope/vim-dispatch'
-  Plug 'radenling/vim-dispatch-neovim'
-  Plug 'tpope/vim-commentary'
-  Plug 'tpope/vim-unimpaired'
-  Plug 'tpope/vim-git'
-  Plug 'tpope/vim-fugitive'
-  Plug 'tommcdo/vim-fubitive'
-  Plug 'tpope/vim-rhubarb'
-  Plug 'tpope/vim-surround'
-  Plug 'tpope/vim-repeat'
-  Plug 'tpope/vim-projectionist'
-  Plug 'tpope/vim-vinegar'
-  Plug 'tpope/vim-jdaddy'
-  Plug 'airblade/vim-gitgutter'
-  Plug 'morhetz/gruvbox'
-  Plug 'shinchu/lightline-gruvbox.vim'
-  Plug 'itchyny/lightline.vim'
-  Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-  Plug 'nvim-treesitter/playground'
-  Plug 'wellle/tmux-complete.vim'
-  Plug 'wellle/targets.vim'
-  Plug 'kana/vim-textobj-user'
-  Plug 'michaeljsmith/vim-indent-object'
-  Plug 'jeetsukumaran/vim-indentwise'
-  Plug 'zhimsel/vim-stay'
-  Plug 'mbbill/undotree'
-  Plug 'ntpeters/vim-better-whitespace'
-  Plug 'machakann/vim-swap'
-  Plug 'jpalardy/vim-slime'
-  Plug 'hanschen/vim-ipython-cell'
-  Plug 'wsdjeg/vim-fetch'
-  Plug 'majutsushi/tagbar'
-  Plug 'kshenoy/vim-signature'
-  Plug 'airblade/vim-rooter'
-  Plug 'will133/vim-dirdiff'
-  Plug 'nvim-lua/popup.nvim'
-  Plug 'nvim-lua/plenary.nvim'
-  Plug 'nvim-telescope/telescope.nvim'
-  Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
-  Plug 'hrsh7th/nvim-compe'
-  Plug 'andersevenrud/compe-tmux'
-  Plug 'neovim/nvim-lspconfig'
-  Plug 'lakshayg/vim-bazel'
-call plug#end()
+lua require('plugins')
 
 inoremap <silent><expr> <C-Space> compe#complete()
 inoremap <silent><expr> <CR>      compe#confirm('<CR>')
@@ -235,6 +188,8 @@ function! LightlineGitGutter()
   return printf('+%d ~%d -%d', l:added, l:modified, l:removed)
 endfunction
 
+let &background=readfile(expand("~/.my_colors"))[0]
+colorscheme gruvbox
 
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
@@ -260,13 +215,6 @@ let g:lightline = {
 
 
 filetype plugin indent on
-
-let g:gruvbox_contrast_light = 'medium'
-let g:gruvbox_contrast_dark = 'medium'
-" let g:gruvbox_color_column = 'dark0'
-let g:gruvbox_hls_cursor = 'red'
-colorscheme gruvbox
-let &background=readfile(expand("~/.my_colors"))[0]
 
 let g:tex_flavor='latex'
 let g:vimtex_view_method='zathura'
