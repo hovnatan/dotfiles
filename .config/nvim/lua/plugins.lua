@@ -24,6 +24,7 @@ return require('packer').startup(function()
   use {'shinchu/lightline-gruvbox.vim'}
   use {'nvim-treesitter/nvim-treesitter',  run = ':TSUpdate'}
   use {'nvim-treesitter/playground'}
+  use {'nvim-treesitter/nvim-treesitter-textobjects'}
   use {'wellle/tmux-complete.vim'}
   use {'wellle/targets.vim'}
   use {'kana/vim-textobj-user'}
@@ -49,4 +50,5 @@ return require('packer').startup(function()
   use {'neovim/nvim-lspconfig'}
   use {'lakshayg/vim-bazel'}
   use {"npxbr/gruvbox.nvim", requires = {"rktjmp/lush.nvim"}}
+  -- use {"tversteeg/registers.nvim"}
 end)
