@@ -50,5 +50,5 @@ return require('packer').startup(function()
   use {'neovim/nvim-lspconfig'}
   use {'lakshayg/vim-bazel'}
   use {"npxbr/gruvbox.nvim", requires = {"rktjmp/lush.nvim"}}
-  -- use {"tversteeg/registers.nvim"}
+  -- use {'gennaro-tedesco/nvim-peekup'}
 end)
