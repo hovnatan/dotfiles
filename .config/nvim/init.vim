@@ -157,17 +157,17 @@ function! LightlineGitGutter()
     return ''
   endif
   let [ l:added, l:modified, l:removed ] = GitGutterGetHunkSummary()
-  return printf('+%d ~%d -%d', l:added, l:modified, l:removed)
+  let branch = fugitive#head()
+
+  return printf('%s +%d ~%d -%d', l:branch, l:added, l:modified, l:removed)
 endfunction
 
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
-      \             [ 'tpath', 'readonly', 'modified', 'git'] ],
-      \   'right': [ [ 'lineinfo' ],
-      \            ]
-      \ },
+      \             [ 'tpath', 'readonly', 'modified', 'git', 'linter_errors', 'linter_warnings', 'linter_infos', 'linter_hints', 'linter_ok' ] ],
+      \   'right':  [[ 'lineinfo'] ] },
       \ 'inactive': {
       \   'left': [ ['tpath', 'readonly', 'modified' ] ],
       \   'right': [ [ 'lineinfo' ],
@@ -180,6 +180,14 @@ let g:lightline = {
       \   'tpath': 'GetFilepath_T',
       \   'git': 'LightlineGitGutter'
       \ },
+      \ }
+
+let g:lightline.component_expand = {
+      \  'linter_hints': 'lightline#lsp#hints',
+      \  'linter_infos': 'lightline#lsp#infos',
+      \  'linter_warnings': 'lightline#lsp#warnings',
+      \  'linter_errors': 'lightline#lsp#errors',
+      \  'linter_ok': 'lightline#lsp#ok',
       \ }
 
 

@@ -46,6 +46,8 @@ return require('packer').startup(function()
   use {'andersevenrud/compe-tmux'}
   use {'neovim/nvim-lspconfig'}
   use {'lakshayg/vim-bazel'}
-  use {"npxbr/gruvbox.nvim", requires = {"rktjmp/lush.nvim"}}
+  -- use {"npxbr/gruvbox.nvim", requires = {"rktjmp/lush.nvim"}}
   -- use {'gennaro-tedesco/nvim-peekup'}
+  use {'morhetz/gruvbox'}
+  use {'spywhere/lightline-lsp'}
 end)
