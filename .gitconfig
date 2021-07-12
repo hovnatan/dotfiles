@@ -24,7 +24,7 @@
 [gui]
 	editor = nvim
 [pull]
-	rebase = true
+	rebase = false
 [alias]
   # from https://blog.jez.io/cli-code-review/; usage in fish, e.g., eval REVIEW_BASE=HEAD~2 git review
   files = !git diff --name-only $(git merge-base HEAD \"$REVIEW_BASE\")
