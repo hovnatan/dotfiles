@@ -1,8 +1,6 @@
 lua require('plugins')
 lua require('config')
 
-highlight link TSError Normal
-
 let g:polyglot_disabled = ['latex']
 
 nn <F9> :silent Dispatch!<CR>
@@ -401,3 +399,5 @@ nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
 nmap ,h /[^\d0-\d127]<CR>
 
 let g:python3_host_prog = expand('/usr/bin/python3')
+
+highlight link TSError Normal
