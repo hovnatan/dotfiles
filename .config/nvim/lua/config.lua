@@ -1,3 +1,64 @@
+vim.opt.compatible = false
+vim.opt.hidden = true
+vim.opt.backspace = 'indent,eol,start'
+-- vim.opt.t_Co = 256
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.softtabstop = 2
+vim.opt.expandtab = true
+vim.opt.scrolloff = 2
+vim.opt.termguicolors = true
+vim.opt.smartindent = true
+vim.opt.showmatch = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.wildignorecase = true
+vim.opt.ls = 2
+vim.opt.title = true
+vim.opt.ruler = true
+vim.opt.number = true
+vim.opt.showcmd = true
+vim.opt.mouse = 'a'
+vim.opt.ttyfast = true
+vim.opt.startofline = false
+vim.opt.autoread = true
+vim.opt.shortmess = 'atIc'
+vim.opt.modeline = true
+vim.opt.modelines = 3
+vim.opt.whichwrap = 'b,s,<,>,[,],h,l'
+vim.opt.wrap = false
+vim.opt.visualbell = false
+vim.opt.iskeyword = '@,48-57,_,192-255'
+vim.opt.isfname = vim.opt.isfname - '='
+vim.opt.wildmenu = true
+vim.opt.lazyredraw = true
+vim.opt.diffopt = 'vertical,filler,internal,algorithm:histogram,indent-heuristic'
+vim.opt.splitbelow = true
+vim.opt.splitright = true
+vim.opt.foldenable = true
+vim.opt.foldlevel = 99
+vim.opt.viewoptions = vim.opt.viewoptions - 'options'
+vim.opt.inccommand = 'nosplit'
+vim.opt.cursorline = true
+vim.opt.wrapscan = true
+vim.opt.switchbuf = 'usetab'
+vim.opt.listchars = 'tab:▸\\ ,eol:¬'
+vim.opt.history = 200
+vim.opt.undofile = true
+vim.opt.undodir = vim.fn.expand('~/.vimundo')
+vim.opt.undolevels = 1000
+vim.opt.undoreload = 10000
+vim.opt.colorcolumn = '80'
+vim.opt.backup = false
+vim.opt.writebackup = false
+vim.opt.cmdheight = 1
+vim.opt.signcolumn = 'yes'
+vim.opt.conceallevel = 1
+vim.opt.fixendofline = false
+vim.opt.foldmethod = 'expr'
+vim.opt.foldexpr = [[nvim_treesitter#foldexpr()]]
+vim.opt.completeopt = 'menuone,noselect'
+
 require('telescope').load_extension('fzf')
 require('telescope').setup{
    defaults = {
@@ -190,3 +251,99 @@ require'nvim-treesitter.configs'.setup {
     },
   }
 }
+
+require'compe'.setup {
+  enabled = true;
+  autocomplete = true;
+  debug = false;
+  min_length = 1;
+  preselect = 'enable';
+  throttle_time = 80;
+  source_timeout = 200;
+  resolve_timeout = 800;
+  incomplete_delay = 400;
+  max_abbr_width = 100;
+  max_kind_width = 100;
+  max_menu_width = 100;
+  documentation = {
+    border = { '', '' ,'', ' ', '', '', '', ' ' }, -- the border option is the same as `|help nvim_open_win|`
+    winhighlight = "NormalFloat:CompeDocumentation,FloatBorder:CompeDocumentationBorder",
+    max_width = 120,
+    min_width = 60,
+    max_height = math.floor(vim.o.lines * 0.3),
+    min_height = 1,
+  };
+  source = {
+    path = true;
+    buffer = true;
+    calc = true;
+    nvim_lsp = true;
+    nvim_lua = true;
+    tmux = {disabled=false; all_panes=true};
+  };
+}
+
+require'nvim-treesitter.configs'.setup {
+  textobjects = {
+    select = {
+      enable = true,
+      -- Automatically jump forward to textobj, similar to targets.vim 
+      lookahead = true,
+      keymaps = {
+        -- You can use the capture groups defined in textobjects.scm
+        ["af"] = "@function.outer",
+        ["if"] = "@function.inner",
+        ["ac"] = "@class.outer",
+        ["ic"] = "@class.inner",
+        -- Or you can define your own textobjects like this
+        ["iF"] = {
+          python = "(function_definition) @function",
+          cpp = "(function_definition) @function",
+          c = "(function_definition) @function",
+          java = "(method_declaration) @function",
+        },
+      },
+    },
+ swap = {
+      enable = true,
+      swap_next = {
+        ["<leader>a"] = "@parameter.inner",
+      },
+      swap_previous = {
+        ["<leader>A"] = "@parameter.inner",
+      },
+    },
+	move = {
+      enable = true,
+      set_jumps = true, -- whether to set jumps in the jumplist
+      goto_next_start = {
+        ["]m"] = "@function.outer",
+        ["]]"] = "@class.outer",
+      },
+      goto_next_end = {
+        ["]M"] = "@function.outer",
+        ["]["] = "@class.outer",
+      },
+      goto_previous_start = {
+        ["[m"] = "@function.outer",
+        ["[["] = "@class.outer",
+      },
+      goto_previous_end = {
+        ["[M"] = "@function.outer",
+        ["[]"] = "@class.outer",
+      },
+    },
+ lsp_interop = {
+      enable = true,
+      border = 'none',
+      peek_definition_code = {
+        ["df"] = "@function.outer",
+        ["dF"] = "@class.outer",
+      },
+    },
+	}
+}
+
+local file = io.open(os.getenv("HOME").."/.my_colors", "r");
+vim.o.background = file:read("*a")
+vim.cmd([[colorscheme gruvbox]])

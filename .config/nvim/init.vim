@@ -1,75 +1,7 @@
+lua require('plugins')
+lua require('config')
+
 let g:polyglot_disabled = ['latex']
-
-set nocompatible
-set hidden
-set backspace=indent,eol,start
-set t_Co=256
-
-set tabstop=2
-set shiftwidth=2
-set softtabstop=2
-set expandtab
-
-set scrolloff=2
-set termguicolors
-set smartindent
-set showmatch
-set ignorecase
-set smartcase
-set wildignorecase
-set ls=2
-set title
-set ruler
-set number
-" set relativenumber
-set showcmd
-set mouse=a
-set ttyfast
-set nostartofline
-" set autowriteall
-set autoread
-set shortmess=atIc
-set modeline
-set modelines=3
-set whichwrap=b,s,<,>,[,],h,l
-set nowrap
-set visualbell t_vb=
-set novisualbell
-set iskeyword=@,48-57,_,192-255
-set isfname-==
-set wildmenu
-set lazyredraw
-set diffopt=vertical,filler,internal,algorithm:histogram,indent-heuristic
-set splitbelow
-set splitright
-set foldenable
-set foldlevel=99
-set viewoptions-=options
-set inccommand=nosplit
-set cursorline
-set wrapscan
-set switchbuf=usetab
-set listchars=tab:▸\ ,eol:¬
-set history=200
-" if !empty($DISPLAY)
-"   set clipboard+=unnamedplus
-" endif
-set undofile
-set undodir=$HOME/.vimundo
-set undolevels=1000
-set undoreload=10000
-set colorcolumn=80
-set nobackup
-set nowritebackup
-set cmdheight=1
-set signcolumn=yes
-set conceallevel=1
-set nofixendofline
-
-set foldmethod=expr
-set foldexpr=nvim_treesitter#foldexpr()
-
-set completeopt=menuone,noselect
 
 nn <F9> :silent Dispatch!<CR>
 
@@ -92,84 +24,6 @@ cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
 syntax on
-
-call plug#begin('~/.local/share/nvim/site/plugged')
-  Plug 'sheerun/vim-polyglot'
-  Plug 'lervag/vimtex'
-  Plug 'tpope/vim-abolish'
-  Plug 'tpope/vim-dispatch'
-  Plug 'radenling/vim-dispatch-neovim'
-  Plug 'tpope/vim-commentary'
-  Plug 'tpope/vim-unimpaired'
-  Plug 'tpope/vim-git'
-  Plug 'tpope/vim-fugitive'
-  Plug 'tommcdo/vim-fubitive'
-  Plug 'tpope/vim-rhubarb'
-  Plug 'tpope/vim-surround'
-  Plug 'tpope/vim-repeat'
-  Plug 'tpope/vim-projectionist'
-  Plug 'tpope/vim-vinegar'
-  Plug 'tpope/vim-jdaddy'
-  Plug 'airblade/vim-gitgutter'
-  Plug 'morhetz/gruvbox'
-  Plug 'shinchu/lightline-gruvbox.vim'
-  Plug 'itchyny/lightline.vim'
-  Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-  Plug 'nvim-treesitter/playground'
-  Plug 'wellle/tmux-complete.vim'
-  Plug 'wellle/targets.vim'
-  Plug 'kana/vim-textobj-user'
-  Plug 'michaeljsmith/vim-indent-object'
-  Plug 'jeetsukumaran/vim-indentwise'
-  Plug 'zhimsel/vim-stay'
-  Plug 'mbbill/undotree'
-  Plug 'ntpeters/vim-better-whitespace'
-  Plug 'machakann/vim-swap'
-  Plug 'jpalardy/vim-slime'
-  Plug 'hanschen/vim-ipython-cell'
-  Plug 'wsdjeg/vim-fetch'
-  Plug 'majutsushi/tagbar'
-  Plug 'kshenoy/vim-signature'
-  Plug 'airblade/vim-rooter'
-  Plug 'will133/vim-dirdiff'
-  Plug 'nvim-lua/popup.nvim'
-  Plug 'nvim-lua/plenary.nvim'
-  Plug 'nvim-telescope/telescope.nvim'
-  Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
-  Plug 'hrsh7th/nvim-compe'
-  Plug 'andersevenrud/compe-tmux'
-  Plug 'neovim/nvim-lspconfig'
-  Plug 'lakshayg/vim-bazel'
-call plug#end()
-
-let g:compe = {}
-let g:compe.enabled = v:true
-let g:compe.autocomplete = v:true
-let g:compe.debug = v:false
-let g:compe.min_length = 1
-let g:compe.preselect = 'enable'
-let g:compe.throttle_time = 80
-let g:compe.source_timeout = 200
-let g:compe.resolve_timeout = 800
-let g:compe.incomplete_delay = 400
-let g:compe.max_abbr_width = 100
-let g:compe.max_kind_width = 100
-let g:compe.max_menu_width = 100
-let g:compe.documentation = v:true
-
-let g:compe.source = {}
-let g:compe.source.path = v:true
-let g:compe.source.buffer = v:true
-let g:compe.source.calc = v:true
-let g:compe.source.nvim_lsp = v:true
-let g:compe.source.nvim_lua = v:true
-let g:compe.source.vsnip = v:true
-let g:compe.source.ultisnips = v:true
-let g:compe.source.luasnip = v:true
-let g:compe.source.emoji = v:true
-let g:compe.source.tmux = {}
-let g:compe.source.tmux.disabled = v:false
-let g:compe.source.tmux.all_panes = v:true
 
 inoremap <silent><expr> <C-Space> compe#complete()
 inoremap <silent><expr> <CR>      compe#confirm('<CR>')
@@ -267,35 +121,6 @@ nnoremap <leader>gp :Gpush<CR>
 
 nnoremap <silent> <C-n> :set hlsearch!<CR>
 
-call textobj#user#plugin('line', {
-\   '-': {
-\     'select-a-function': 'CurrentLineA',
-\     'select-a': 'al',
-\     'select-i-function': 'CurrentLineI',
-\     'select-i': 'il',
-\   },
-\ })
-
-function! CurrentLineA()
-  normal! 0
-  let head_pos = getpos('.')
-  normal! $
-  let tail_pos = getpos('.')
-  return ['v', head_pos, tail_pos]
-endfunction
-
-function! CurrentLineI()
-  normal! ^
-  let head_pos = getpos('.')
-  normal! g_
-  let tail_pos = getpos('.')
-  let non_blank_char_exists_p = getline('.')[head_pos[2] - 1] !~# '\s'
-  return
-  \ non_blank_char_exists_p
-  \ ? ['v', head_pos, tail_pos]
-  \ : 0
-endfunction
-
 au FocusLost * silent! wa
 au BufLeave * silent! wa
 
@@ -335,7 +160,6 @@ function! LightlineGitGutter()
   return printf('+%d ~%d -%d', l:added, l:modified, l:removed)
 endfunction
 
-
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
       \ 'active': {
@@ -360,13 +184,6 @@ let g:lightline = {
 
 
 filetype plugin indent on
-
-let g:gruvbox_contrast_light = 'medium'
-let g:gruvbox_contrast_dark = 'medium'
-" let g:gruvbox_color_column = 'dark0'
-let g:gruvbox_hls_cursor = 'red'
-colorscheme gruvbox
-let &background=readfile(expand("~/.my_colors"))[0]
 
 let g:tex_flavor='latex'
 let g:vimtex_view_method='zathura'
@@ -574,5 +391,3 @@ nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
 nmap ,h /[^\d0-\d127]<CR>
 
 let g:python3_host_prog = expand('/usr/local/bin/python3')
-
-lua require('config')
