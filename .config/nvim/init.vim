@@ -1,3 +1,6 @@
+lua require('plugins')
+lua require('config')
+
 let g:polyglot_disabled = ['latex']
 
 nn <F9> :silent Dispatch!<CR>
@@ -21,8 +24,6 @@ cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 filetype plugin on
 runtime plugins/matchit.vim
 syntax on
-
-lua require('plugins')
 
 inoremap <silent><expr> <C-Space> compe#complete()
 inoremap <silent><expr> <CR>      compe#confirm('<CR>')
@@ -158,9 +159,6 @@ function! LightlineGitGutter()
   let [ l:added, l:modified, l:removed ] = GitGutterGetHunkSummary()
   return printf('+%d ~%d -%d', l:added, l:modified, l:removed)
 endfunction
-
-let &background=readfile(expand("~/.my_colors"))[0]
-colorscheme gruvbox
 
 let g:lightline = {
       \ 'colorscheme': 'gruvbox',
@@ -393,5 +391,3 @@ nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
 nmap ,h /[^\d0-\d127]<CR>
 
 let g:python3_host_prog = expand('/usr/bin/python3')
-
-lua require('config')
