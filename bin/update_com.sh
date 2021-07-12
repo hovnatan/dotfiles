@@ -6,8 +6,8 @@ cd ~/.dotfiles
 git pull
 GIT_BRANCH=$(git branch --show-current)
 if [[ "$GIT_BRANCH" != master ]]; then
-  git rebase origin/master
-  git push -f
+  git merge origin/master
+  git push
 fi
 
 # sudo port selfupdate
