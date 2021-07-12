@@ -1,6 +1,8 @@
 lua require('plugins')
 lua require('config')
 
+highlight link TSError Normal
+
 let g:polyglot_disabled = ['latex']
 
 nn <F9> :silent Dispatch!<CR>
