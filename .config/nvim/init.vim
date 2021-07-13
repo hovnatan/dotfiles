@@ -233,11 +233,6 @@ au FileType cpp
 
 au BufWritePost *.sh silent! !chmod +x %:p
 
-aug i3config_ft_detection
-  au!
-  au BufNewFile,BufRead ~/.config/i3/config set filetype=i3config
-aug end
-
 let g:netrw_banner    = 0
 let g:netrw_winsize   = 20
 let g:netrw_altv      = 1
@@ -327,8 +322,14 @@ function! LargeFile()
 endfunction
 
 if exists('$TMUX')
-  autocmd BufEnter,BufNewFile,WinEnter * call system("tmux rename-window \"nvim " . expand("%") . "\"")
+  augroup TMUX
+    autocmd BufEnter,BufNewFile,WinEnter * call system("tmux rename-window \"nvim " . expand("%") . "\"") |
+  augroup END
 endif
+
+augroup Gitsigns
+    autocmd BufEnter,BufNewFile * Gitsigns attach
+augroup END
 
 if !exists('g:lasttab')
   let g:lasttab = 1
