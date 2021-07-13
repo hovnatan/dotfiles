@@ -396,3 +396,5 @@ require('gitsigns').setup {
   use_decoration_api = true,
   use_internal_diff = true,  -- If luajit is present
 }
+
+vim.api.nvim_set_keymap('n', '$', "<cmd>lua require'hop'.hint_words()<cr>", {})
