@@ -51,4 +51,10 @@ return require('packer').startup(function()
   use {'nvim-lua/plenary.nvim'}
   use {'TimUntersberger/neogit'}
   use {'lewis6991/gitsigns.nvim'}
+  use { 'phaazon/hop.nvim', 
+    as = 'hop',
+    config = function()
+       require'hop'.setup { keys = 'etovxqpdygfblzhckisuran' }
+    end
+  }
 end)
