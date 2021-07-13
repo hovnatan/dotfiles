@@ -153,13 +153,13 @@ function! GetFilepath_T()
 endfunction
 
 function! LightlineGitGutter()
-  if !get(g:, 'gitgutter_enabled', 0) || empty(FugitiveHead())
-    return ''
+  let branch = get(b:, 'gitsigns_head', '')
+  let status = get(b:, 'gitsigns_status', '')
+  if !(status == '')
+    return branch . ' ' .  status
+  else
+    return branch
   endif
-  let [ l:added, l:modified, l:removed ] = GitGutterGetHunkSummary()
-  let branch = fugitive#head()
-
-  return printf('%s +%d ~%d -%d', l:branch, l:added, l:modified, l:removed)
 endfunction
 
 let g:lightline = {

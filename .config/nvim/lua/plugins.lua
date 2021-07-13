@@ -11,15 +11,14 @@ return require('packer').startup(function()
   use {'tpope/vim-commentary'}
   use {'tpope/vim-unimpaired'}
   use {'tpope/vim-git'}
-  use {'tpope/vim-fugitive'}
-  use {'tommcdo/vim-fubitive'}
+  -- use {'tpope/vim-fugitive'}
   use {'tpope/vim-rhubarb'}
   use {'tpope/vim-surround'}
   use {'tpope/vim-repeat'}
   use {'tpope/vim-projectionist'}
   use {'tpope/vim-vinegar'}
   use {'tpope/vim-jdaddy'}
-  use {'airblade/vim-gitgutter'}
+  -- use {'airblade/vim-gitgutter'}
   use {'itchyny/lightline.vim'}
   use {'shinchu/lightline-gruvbox.vim'}
   use {'nvim-treesitter/nvim-treesitter',  run = ':TSUpdate'}
@@ -39,7 +38,6 @@ return require('packer').startup(function()
   use {'airblade/vim-rooter'}
   use {'will133/vim-dirdiff'}
   use {'nvim-lua/popup.nvim'}
-  use {'nvim-lua/plenary.nvim'}
   use {'nvim-telescope/telescope.nvim'}
   use {'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
   use {'hrsh7th/nvim-compe'}
@@ -50,4 +48,7 @@ return require('packer').startup(function()
   -- use {'gennaro-tedesco/nvim-peekup'}
   -- use {'morhetz/gruvbox'}
   use {'spywhere/lightline-lsp'}
+  use {'nvim-lua/plenary.nvim'}
+  use {'TimUntersberger/neogit'}
+  use {'lewis6991/gitsigns.nvim'}
 end)
