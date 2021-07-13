@@ -19,3 +19,5 @@ cargo install hunter
 # rm ~/tmux-256color.info
 
 pip3 install --user pynvim
+
+npm install --global pyright
