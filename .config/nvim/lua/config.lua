@@ -235,6 +235,9 @@ lspconfig.clangd.setup {
          "-j=4",
          "--pch-storage=memory" }
 }
+lspconfig.pyright.setup {
+  on_attach = on_attach
+}
 
 require'nvim-treesitter.configs'.setup {
   ensure_installed = "maintained", -- one of "all", "maintained" (parsers with maintainers), or a list of languages
