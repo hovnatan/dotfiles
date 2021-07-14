@@ -196,7 +196,6 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
   buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
   buf_set_keymap('n', '<space>z', "<cmd>ClangdSwitchSourceHeader<CR>", opts)
-  vim.api.nvim_command[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_sync()]]
 
 end
 
@@ -234,6 +233,9 @@ lspconfig.clangd.setup {
          "--limit-results=0",
          "-j=4",
          "--pch-storage=memory" }
+}
+lspconfig.pyright.setup {
+  on_attach = on_attach
 }
 
 require'nvim-treesitter.configs'.setup {
@@ -398,3 +400,55 @@ require('gitsigns').setup {
 }
 
 vim.api.nvim_set_keymap('n', '$', "<cmd>lua require'hop'.hint_words()<cr>", {})
+
+require('formatter').setup({
+   logging = false,
+    filetype = {
+      javascript = {
+          -- prettier
+         function()
+            return {
+              exe = "prettier",
+              args = {"--stdin-filepath", vim.api.nvim_buf_get_name(0), '--single-quote'},
+              stdin = true
+            }
+          end
+      },
+      rust = {
+        -- Rustfmt
+        function()
+          return {
+            exe = "rustfmt",
+            args = {"--emit=stdout"},
+            stdin = true
+          }
+        end
+      },
+      lua = {
+          -- luafmt
+          function()
+            return {
+              exe = "luafmt",
+              args = {"--indent-count", 2, "--stdin"},
+              stdin = true
+            }
+          end
+        },
+      python = {
+          function()
+            return {
+              exe = "black",
+              args = {"-"},
+              stdin = true
+            }
+          end
+        }
+    }
+  }
+)
+
+vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+    vim.lsp.diagnostic.on_publish_diagnostics, {
+        virtual_text = false
+    }
+)
