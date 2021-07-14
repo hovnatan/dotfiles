@@ -58,4 +58,5 @@ return require('packer').startup(function()
     end
   }
   use {'mhartington/formatter.nvim'}
+  use {'fisadev/vim-isort'}
 end)
