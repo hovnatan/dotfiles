@@ -234,9 +234,10 @@ let g:netrw_banner    = 0
 let g:netrw_winsize   = 20
 let g:netrw_altv      = 1
 let g:netrw_cursor    = 1
-let g:netrw_browsex_viewer="xdg-open"
+let g:netrw_browsex_viewer="open"
 let g:netrw_fastbrowse = 0
 let g:netrw_altfile = 1
+let g:netrw_liststyle = 1
 
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
