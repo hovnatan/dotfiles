@@ -6,7 +6,7 @@ vim.opt.tabstop = 2
 vim.opt.shiftwidth = 2
 vim.opt.softtabstop = 2
 vim.opt.expandtab = true
-vim.opt.scrolloff = 2
+vim.opt.scrolloff = 100
 vim.opt.termguicolors = true
 vim.opt.smartindent = true
 vim.opt.showmatch = true
@@ -30,6 +30,7 @@ vim.opt.wrap = false
 vim.opt.visualbell = false
 vim.opt.iskeyword = '@,48-57,_,192-255'
 vim.opt.isfname = vim.opt.isfname - '='
+vim.opt.matchpairs = vim.opt.matchpairs + '<:>'
 vim.opt.wildmenu = true
 vim.opt.lazyredraw = true
 vim.opt.diffopt = 'vertical,filler,internal,algorithm:histogram,indent-heuristic'
