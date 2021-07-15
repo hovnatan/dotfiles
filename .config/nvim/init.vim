@@ -327,10 +327,6 @@ if exists('$TMUX')
   augroup END
 endif
 
-augroup Gitsigns
-    autocmd BufEnter,BufNewFile * Gitsigns attach
-augroup END
-
 if !exists('g:lasttab')
   let g:lasttab = 1
 endif
@@ -402,3 +398,6 @@ nmap ,h /[^\d0-\d127]<CR>
 let g:python3_host_prog = expand('/usr/bin/python3')
 
 highlight link TSError Normal
+
+
+let g:vim_isort_config_overrides = { 'profile': 'black'}
