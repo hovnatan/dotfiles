@@ -30,7 +30,7 @@ fish -c fisher update
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
-git config --global user.email $USER@$HOSTNAME
+nvim ~/.gitconfig
 
 rm -rf ~/.config/htop
 mkdir ~/.config/htop

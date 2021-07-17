@@ -1,5 +1,6 @@
 [user]
   name = Hovnatan Karapetyan
+  email = 
 [diff]
   tool = meld
 [difftool]
