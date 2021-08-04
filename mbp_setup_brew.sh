@@ -2,11 +2,11 @@
 
 set -e
 
-$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)
+# $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)
 
 brew update
 
-brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish ranger wget less coreutils diffutils git bash gawk man-db dust bat graphviz htop conan alt-tab git-lfs bazel rustup-init go
+brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish ranger wget less coreutils diffutils git bash gawk man-db dust bat graphviz htop conan git-lfs bazel rustup-init go
 brew install --cask cmake
 brew install rga pandoc poppler tesseract ffmpeg
 
