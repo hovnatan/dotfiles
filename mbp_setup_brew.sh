@@ -6,7 +6,7 @@ set -e
 
 brew update
 
-brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish ranger wget less coreutils diffutils git bash gawk man-db dust bat graphviz htop conan git-lfs bazel rustup-init go
+brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish ranger wget less coreutils diffutils git bash gawk man-db dust bat graphviz htop conan git-lfs bazel rustup-init go pyright
 brew install --cask cmake
 brew install rga pandoc poppler tesseract ffmpeg
 
@@ -19,5 +19,3 @@ cargo install hunter
 # rm ~/tmux-256color.info
 
 pip3 install --user pynvim
-
-npm install --global pyright
