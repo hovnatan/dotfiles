@@ -15,7 +15,7 @@ bash ./$FILENAME -b
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 
-conda install -y mamba
+conda install -y mamba -n base -c conda-forge
 
 mamba update -y --all
 
