@@ -399,7 +399,7 @@ nmap ,h /[^\d0-\d127]<CR>
 
 let g:python3_host_prog = expand('/usr/bin/python3')
 
-highlight link TSError Normal
+" highlight link TSError Normal
 
 
 let g:vim_isort_config_overrides = { 'profile': 'black'}
