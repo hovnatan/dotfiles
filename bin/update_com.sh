@@ -22,10 +22,10 @@ fish -c "fisher update"
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
-mamba update -y --all
+conda update -y --all
 
 TMPFILE=$(mktemp /tmp/hk-update-script.XXXXXX)
-mamba list | grep "pypi" | cut -d " " -f 1 > $TMPFILE
+conda list | grep "pypi" | cut -d " " -f 1 > $TMPFILE
 pip install --upgrade --upgrade-strategy only-if-needed -r $TMPFILE | grep -v "Requirement already satisfied: "
 rm $TMPFILE
 
