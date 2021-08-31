@@ -9,15 +9,12 @@ return require('packer').startup(function()
   use {'radenling/vim-dispatch-neovim'}
   use {'tpope/vim-commentary'}
   use {'tpope/vim-unimpaired'}
-  use {'tpope/vim-git'}
-  -- use {'tpope/vim-fugitive'}
   use {'tpope/vim-rhubarb'}
   use {'tpope/vim-surround'}
   use {'tpope/vim-repeat'}
   use {'tpope/vim-projectionist'}
   use {'tpope/vim-vinegar'}
   use {'tpope/vim-jdaddy'}
-  -- use {'airblade/vim-gitgutter'}
   use {'itchyny/lightline.vim'}
   use {'shinchu/lightline-gruvbox.vim'}
   use {'nvim-treesitter/nvim-treesitter',  run = ':TSUpdate'}
