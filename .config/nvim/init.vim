@@ -42,6 +42,7 @@ nnoremap <space>q <cmd>Telescope quickfix<cr>
 nnoremap <space>k <cmd>Telescope keymaps<cr>
 nnoremap <space>a <cmd>Telescope lsp_document_diagnostics<cr>
 nnoremap <space>s <cmd>Telescope lsp_document_symbols<cr>
+nnoremap <space>p <cmd>Telescope resume<cr>
 
 function! ToggleZoom(zoom, direction)
   if exists("t:restore_zoom") && (a:zoom == v:true || t:restore_zoom.win != winnr())
