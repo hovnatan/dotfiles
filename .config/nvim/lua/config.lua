@@ -356,7 +356,7 @@ local file = io.open(os.getenv("HOME").."/.my_colors", "r");
 vim.o.background = file:read("*a")
 vim.cmd([[colorscheme gruvbox]])
 
-require('neogit').setup{}
+-- require('neogit').setup{}
 require('gitsigns').setup {
   signs = {
     add          = {hl = 'GitSignsAdd'   , text = '│', numhl='GitSignsAddNr'   , linehl='GitSignsAddLn'},
