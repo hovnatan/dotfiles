@@ -7,15 +7,26 @@ scrolling:
     history: 0
 font:
     # The size to use.
-    size: 13
-    family: "Cascadia Code"
+    size: 14
+    normal:
+       style: Regular
+       family: "Cascadia Code PL"
+    bold:
+       style: Bold
+       family: "Cascadia Code PL"
+    italic:
+       style: Italic
+       family: "Cascadia Code PL"
+    bold_italic:
+       style: Bold Italic
+       family: "Cascadia Code PL"
 
 window:
   padding:
     x: 1
-    y: 0
-
-window.dynamic_title: true
+    y: 1
+  dynamic_title: true
+  dynamic_padding: true
 
 cursor:
   style:
