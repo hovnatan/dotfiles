@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 sudo echo "Starting upgrade"
 
 cd ~/.dotfiles
