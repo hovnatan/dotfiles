@@ -203,18 +203,6 @@ local on_attach = function(client, bufnr)
 end
 
 local lspconfig = require'lspconfig'
--- lspconfig.ccls.setup {
---    on_attach = on_attach,
---   init_options = {
---     compilationDatabaseDirectory = "";
---     index = {
---       threads = 0;
---     };
---     clang = {
---       excludeArgs = { "-frounding-math"} ;
---     };
---   }
--- }
 lspconfig.clangd.setup {
   on_attach = on_attach,
   flags = {
@@ -238,7 +226,10 @@ lspconfig.clangd.setup {
          "--pch-storage=memory" }
 }
 lspconfig.pyright.setup {
-  on_attach = on_attach
+  on_attach = on_attach, 
+  flags = {
+    debounce_text_changes = 150,
+  },
 }
 
 require'nvim-treesitter.configs'.setup {
