@@ -233,9 +233,9 @@ lspconfig.pyright.setup {
 }
 
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = "maintained", -- one of "all", "maintained" (parsers with maintainers), or a list of languages
+  ensure_installed = {"c", "cpp", "python","bash", "json", "cuda", "fish", "lua", "vim"},
   highlight = {
-    enable = true              -- false will disable the whole extensio
+    enable = true
   },
   indent = {
     enable = true
