@@ -404,3 +404,4 @@ let g:python3_host_prog = expand('/usr/bin/python3')
 
 
 let g:vim_isort_config_overrides = { 'profile': 'black'}
+autocmd FileType c,cpp,java setlocal commentstring=//\ %s
