@@ -63,7 +63,7 @@ cargo install du-dust
 
 # ubuntu-drivers devices
 # sudo ubuntu-drivers autoinstall
-wget https://github.com/neovim/neovim/releases/download/v0.5.0/nvim.appimage -O ~/.dotfiles/bin/nvim
+wget https://github.com/neovim/neovim/releases/download/v0.5.1/nvim.appimage -O ~/.dotfiles/bin/nvim
 chmod +x ~/.dotfiles/bin/nvim
 
 sudo npm i -g pyright
