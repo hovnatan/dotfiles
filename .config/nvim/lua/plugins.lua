@@ -9,7 +9,6 @@ return require('packer').startup(function()
   use {'radenling/vim-dispatch-neovim'}
   use {'tpope/vim-commentary'}
   use {'tpope/vim-unimpaired'}
-  use {'tpope/vim-rhubarb'}
   use {'tpope/vim-surround'}
   use {'tpope/vim-repeat'}
   use {'tpope/vim-projectionist'}
