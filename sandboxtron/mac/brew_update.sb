@@ -1,0 +1,4 @@
+(allow file*
+       (home-subpath "/Library/Caches/Homebrew")
+       (home-subpath "/Library/Logs/Homebrew")
+       (subpath "/usr/local/"))

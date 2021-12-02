@@ -1,0 +1,38 @@
+#!/usr/bin/env zsh
+
+DIR="$( cd "$( dirname $0 )" && pwd )"
+SANDBOXTRON="$( cd $DIR/.. && pwd )"
+
+export SANDBOX_MODE_NETWORK="offline"
+
+PROFILES=("base")
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        "--")
+            shift
+            break
+            ;;
+
+        "online")
+            SANDBOX_MODE_NETWORK="online"
+            PROFILES+=($1)
+            ;;
+
+        *)
+            PROFILES+=($1)
+            ;;
+    esac
+    shift
+done
+
+# TODO, make this work w/ symlinks
+exec sandbox-exec -f "$DIR/../mac/main.sb"                    \
+     -D home="$HOME"                                          \
+     -D sandboxtron="$SANDBOXTRON"                            \
+     -D working-directory="$(pwd)"                            \
+     -D profile1="$PROFILES[1]"                               \
+     -D profile2="$PROFILES[2]"                               \
+     -D profile3="$PROFILES[3]"                               \
+     -D profile4="$PROFILES[4]"                               \
+     -D profile5="$PROFILES[5]"                               \
+     "${@:-$SHELL}"
