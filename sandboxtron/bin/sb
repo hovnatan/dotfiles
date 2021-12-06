@@ -29,6 +29,7 @@ pwd_md5=$(echo -n $(pwd) | md5)
 
 export fish_history="${pwd_md5}"
 export TMUX_TMPDIR=$(PWD)
+export TMPDIR="$(PWD)/temp"
 # exec fish
 
 
