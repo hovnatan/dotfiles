@@ -5,6 +5,7 @@
 (import "/System/Library/Sandbox/Profiles/bsd.sb")
 
 (define home-path (param "home"))
+(define pwd_md5 (param "pwd_md5"))
 
 (define (home-subpath home-relative-subpath)
   (subpath (string-append home-path home-relative-subpath)))
@@ -31,21 +32,21 @@
        (regex "^/dev/tty.*")
        (subpath "/private/var/run/utmpx")
        (subpath "/private/etc/ssl/openssl.cnf")
+       (home-subpath (string-append "/.local/share/fish/" pwd_md5 "_history"))
 
        ;;tempfiles
        (subpath "/private/var/folders/")
-       (subpath "/private/tmp")
 
        (subpath "/Applications/Xcode.app/")
        ;;xcodebuild requires this
        (home-subpath "/Library/Developer/Xcode/DerivedData")
 
        ;;everyone has access to the working directory in which its spawned (passed in via param)
-       (subpath (param "working-directory")))
+       (subpath (param "working-directory"))
+)
 
 (allow file-read*
        ;;zsh needs these for autocomplete
-       (home-subpath "/.gitconfig")
        (subpath "/bin")
        (subpath "/sbin")
        (subpath "/usr/bin")
@@ -68,6 +69,8 @@
        (subpath "/Library/Preferences/com.apple.dt.Xcode.plist")
 
        (home-subpath "/.clojure")
+       (home-subpath "/.tmux.conf")
+       (home-subpath "/.tmux/plugins/")
        ;;Cargo
        (subpath "/Library/Developer/CommandLineTools/")
        (literal "/Library/Preferences/com.apple.security.plist")
@@ -85,6 +88,9 @@
        (to ip "localhost:*"))
 (allow network-inbound
        (from ip "localhost:*"))
+(allow network* 
+       (subpath (param "working-directory"))
+       )
 
 
 (allow mach-lookup

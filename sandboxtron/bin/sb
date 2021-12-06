@@ -25,6 +25,13 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+pwd_md5=$(echo -n $(pwd) | md5)
+
+export fish_history="${pwd_md5}"
+export TMUX_TMPDIR=$(PWD)
+# exec fish
+
+
 # TODO, make this work w/ symlinks
 exec sandbox-exec -f "$DIR/../mac/main.sb"                    \
      -D home="$HOME"                                          \
@@ -35,4 +42,5 @@ exec sandbox-exec -f "$DIR/../mac/main.sb"                    \
      -D profile3="$PROFILES[3]"                               \
      -D profile4="$PROFILES[4]"                               \
      -D profile5="$PROFILES[5]"                               \
-     "${@:-$SHELL}"
+     -D pwd_md5="$pwd_md5"                                    \
+     "${@:-fish}"
