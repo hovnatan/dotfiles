@@ -1,6 +1,8 @@
 (version 1)
 
-(deny default)
+(allow default)
+
+(deny file*)
 
 (import "/System/Library/Sandbox/Profiles/bsd.sb")
 
@@ -43,6 +45,7 @@
 
        ;;everyone has access to the working directory in which its spawned (passed in via param)
        (subpath (param "working-directory"))
+       (subpath "/dev")
 )
 
 (allow file-read*
