@@ -238,6 +238,7 @@ let g:netrw_browsex_viewer="open"
 let g:netrw_fastbrowse = 0
 let g:netrw_altfile = 1
 let g:netrw_liststyle = 1
+let g:netrw_maxfilenamelen = 50
 
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
