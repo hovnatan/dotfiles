@@ -7,7 +7,7 @@ set -e
 brew update
 
 brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish ranger wget less coreutils diffutils git bash gawk man-db dust bat graphviz htop conan git-lfs bazel rustup-init go pyright
-brew install --cask cmake
+brew install --cask cmake alacritty
 brew install rga pandoc poppler tesseract ffmpeg
 
 brew install gst-plugins-good gst-plugins-bad
