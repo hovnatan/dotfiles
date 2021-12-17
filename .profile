@@ -11,8 +11,19 @@ export MAKEFLAGS="-j11"
 
 export PATH="/Applications/CMake.app/Contents/bin":"$PATH"
 export PATH="`python3 -m site --user-base`/bin:$PATH"
-export PATH="$HOME/.dotfiles/bin:$HOME/opt/usr/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
+export PATH="$HOME/.dotfiles/bin:$HOME/opt/usr/bin:$HOME/go/bin:$PATH"
 export PATH="$HOME/.dotfiles/sandboxtron/bin":"$PATH"
+
+export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
+export REVIEW_BASE=master
+
+export PATH="/usr/local/bin:$PATH"
+
+export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+
+export PATH="/usr/local/Cellar/ncurses/6.3/bin:$PATH"
+
+export PATH="/usr/local/opt/man-db/libexec/bin:$PATH"
 
 export PYTHONBREAKPOINT=pudb.remote.set_trace
 
