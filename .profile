@@ -9,8 +9,12 @@ export TMUX_ONE_WINDOW=1
 # export LIBGL_ALWAYS_INDIRECT=1
 export MAKEFLAGS="-j11"
 
+export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
+export REVIEW_BASE=master
+
 export CUDA_HOME=/usr/local/cuda
 export PATH="$CUDA_HOME/bin:$PATH"
+export PATH="`python3 -m site --user-base`/bin:$PATH"
 export PATH="$HOME/.dotfiles/bin:$HOME/opt/usr/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
 export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
 
@@ -49,3 +53,20 @@ else
 fi
 
 . "$HOME/.cargo/env"
+
+import_miniconda() {
+  # >>> conda initialize >>>
+  # !! Contents within this block are managed by 'conda init' !!
+  __conda_setup="$("$HOME/miniconda3/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
+  if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+  else
+    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+      . "$HOME/miniconda3/etc/profile.d/conda.sh"  # commented out by conda initialize
+    else
+      export PATH="$HOME/miniconda3/bin:$PATH"  # commented out by conda initialize
+    fi
+  fi
+  unset __conda_setup
+  # <<< conda initialize <<<
+}

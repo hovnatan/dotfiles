@@ -34,7 +34,7 @@ nnoremap <space>o <cmd>Telescope oldfiles cwd_only=true<cr>
 nnoremap <space>m <cmd>Telescope marks<cr>
 nnoremap <space>q <cmd>Telescope quickfix<cr>
 nnoremap <space>k <cmd>Telescope keymaps<cr>
-nnoremap <space>a <cmd>Telescope lsp_document_diagnostics<cr>
+nnoremap <space>a <cmd>Telescope diagnostics bufnr=0<cr>
 nnoremap <space>s <cmd>Telescope lsp_document_symbols<cr>
 nnoremap <space>p <cmd>Telescope resume<cr>
 
@@ -237,6 +237,8 @@ let g:netrw_cursor    = 1
 let g:netrw_browsex_viewer="xdg-open"
 let g:netrw_fastbrowse = 0
 let g:netrw_altfile = 1
+let g:netrw_liststyle = 1
+let g:netrw_maxfilenamelen = 50
 
 tnoremap <Esc> <C-\><C-n>
 tnoremap <C-v><Esc> <Esc>
