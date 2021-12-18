@@ -4,3 +4,4 @@ __pycache__
 *.pyc
 venv_python_neovim
 .DS_Store
+*.bak
