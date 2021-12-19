@@ -15,8 +15,9 @@ export REVIEW_BASE=master
 export CUDA_HOME=/usr/local/cuda
 export PATH="$CUDA_HOME/bin:$PATH"
 export PATH="`python3 -m site --user-base`/bin:$PATH"
-export PATH="$HOME/.dotfiles/bin:$HOME/opt/usr/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
-export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
+export PATH="$HOME/.dotfiles/bin:$HOME/opt/usr/bin:$HOME/.cargo/bin:$HOME/go/bin:$HOME/bin:$PATH"
+
+export LD_LIBRARY_PATH="$CUDA_HOME/extras/CUPTI/lib64:$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
 
 export QT_SCALE_FACTOR="1.5"
 export PYTHONBREAKPOINT=pudb.remote.set_trace
