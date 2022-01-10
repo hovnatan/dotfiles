@@ -245,13 +245,6 @@ cmp.setup({
       { name = 'path' },
     }
   })
-cmp.setup.cmdline(':', {
-  sources = cmp.config.sources({
-    { name = 'path' }
-  }, {
-    { name = 'cmdline' }
-  })
-})
 
 require'nvim-treesitter.configs'.setup {
   textobjects = {
