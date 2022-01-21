@@ -179,7 +179,7 @@ lspconfig.clangd.setup {
   init_options = {
     clangdFileStatus = true
   },
-  cmd = { "/usr/local/opt/llvm/bin/clangd",
+  cmd = { "/opt/homebrew/opt/llvm/bin/clangd",
          "--compile-commands-dir=.",
          "--background-index",
          "--clang-tidy",
@@ -203,7 +203,6 @@ lspconfig.pyright.setup {
 }
 
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = {"c", "cpp", "python","bash", "json", "cuda", "fish", "lua", "vim"},
   highlight = {
     enable = true
   },

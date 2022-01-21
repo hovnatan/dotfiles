@@ -12,10 +12,10 @@ export MAKEFLAGS="-j11"
 export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
 export REVIEW_BASE=master
 
-export PATH="/usr/local/bin:$PATH"
-export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-export PATH="/usr/local/Cellar/ncurses/6.3/bin:$PATH"
-export PATH="/usr/local/opt/man-db/libexec/bin:$PATH"
+export PATH="/opt/homebrew/bin:$PATH"
+export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+export PATH="/opt/homebrew/Cellar/ncurses/6.3/bin:$PATH"
+export PATH="/opt/homebrew/opt/man-db/libexec/bin:$PATH"
 export PATH="`python3 -m site --user-base`/bin:$PATH"
 
 export PATH="$HOME/.dotfiles/bin:$HOME/opt/usr/bin:$HOME/go/bin:$PATH"
