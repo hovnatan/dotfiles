@@ -394,7 +394,7 @@ nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
 nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
 nmap ,h /[^\d0-\d127]<CR>
 
-let g:python3_host_prog = expand('/usr/local/bin/python3')
+let g:python3_host_prog = expand('/opt/homebrew/bin/python3')
 
 " highlight link TSError Normal
 

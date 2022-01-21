@@ -16,7 +16,7 @@ rm -rf ~/.config/nvim
 ln -s ~/.dotfiles/.config/nvim ~/.config/nvim
 mkdir -p ~/.vimundo/
 git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
-"$HOME/.dotfiles/bin/nvim" -c 'PackerSync | qa'
+nvim -c 'PackerSync | qa'
 
 mkdir ~/.config/pudb
 ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
@@ -68,9 +68,7 @@ ln -sf ~/.dotfiles/.config/zathura ~/.config/
 # ln -sf ~/.dotfiles/.config/pulse/daemon-high.conf ~/.config/pulse/daemon.conf
 # ln -sf ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
 
-ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
-
-ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
+ln -sf ~/.dotfiles/.ssh/config ~/.ssh/config
 
 mkdir -p ~/tmp
 mkdir -p ~/Downloads
@@ -82,19 +80,18 @@ ln -s ~/.dotfiles/.config/fd ~/.config/
 ln -s ~/.dotfiles/.config/fd/ignore ~/.ignore
 
 cp ~/.dotfiles/.my_colors ~/
-ln -sf ~/.dotfiles/.config/kitty ~/.config/
 ln -sf ~/.dotfiles/.bashrc_local ~/
 ln -sf ~/.dotfiles/.bash_profile ~/
 
-ln -s ~/.dotfiles/.config/alacritty ~/.config/
+ln -sf ~/.dotfiles/.config/alacritty ~/.config/
 
-ln -s ~/.dotfiles/.config/bat ~/.config/
+ln -sf ~/.dotfiles/.config/bat ~/.config/
 
 mkdir -p ~/.config/Code/User
-ln -s ~/.dotfiles/.config/Code/User/settings.json ~/.config/Code/User/
-ln -s ~/.dotfiles/.config/Code/User/keybindings.json ~/.config/Code/User/
+ln -sf ~/.dotfiles/.config/Code/User/settings.json ~/.config/Code/User/
+ln -sf ~/.dotfiles/.config/Code/User/keybindings.json ~/.config/Code/User/
 
-ln -s ~/.dotfiles/.ctags.d ~/
+ln -sf ~/.dotfiles/.ctags.d ~/
 
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/
