@@ -16,7 +16,7 @@ return require('packer').startup(function()
   use {'tpope/vim-jdaddy'}
   use {'itchyny/lightline.vim'}
   use {'shinchu/lightline-gruvbox.vim'}
-  use {'nvim-treesitter/nvim-treesitter'}
+  use {'nvim-treesitter/nvim-treesitter',  run = ':TSUpdate'}
   use {'nvim-treesitter/playground'}
   use {'nvim-treesitter/nvim-treesitter-textobjects'}
   use {'wellle/targets.vim'}
