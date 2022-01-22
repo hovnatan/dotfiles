@@ -203,7 +203,7 @@ lspconfig.pyright.setup {
 }
 
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = {"c", "cpp", "python","bash", "json", "cuda", "fish", "lua", "vim"},
+  ensure_installed = {"c", "cpp", "python"},
   highlight = {
     enable = true
   },
@@ -258,12 +258,6 @@ require'nvim-treesitter.configs'.setup {
         ["ac"] = "@class.outer",
         ["ic"] = "@class.inner",
         -- Or you can define your own textobjects like this
-        ["iF"] = {
-          python = "(function_definition) @function",
-          cpp = "(function_definition) @function",
-          c = "(function_definition) @function",
-          java = "(method_declaration) @function",
-        },
       },
     },
  swap = {
