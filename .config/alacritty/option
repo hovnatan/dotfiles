@@ -8,18 +8,6 @@ scrolling:
 font:
     # The size to use.
     size: 14
-    normal:
-       style: Regular
-       family: "Cascadia Code PL"
-    bold:
-       style: Bold
-       family: "Cascadia Code PL"
-    italic:
-       style: Italic
-       family: "Cascadia Code PL"
-    bold_italic:
-       style: Bold Italic
-       family: "Cascadia Code PL"
 
 window:
   padding:
