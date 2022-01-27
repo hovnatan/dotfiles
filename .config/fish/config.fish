@@ -51,15 +51,7 @@ abbr n   "nvim"
 abbr nn  "nvim -u NONE"
 abbr np  "nvim --noplugin"
 
-function ranger_fm
-  if not set -q RANGER_LEVEL
-    ~/miniconda3/bin/python3 /usr/local/Cellar/ranger/1.9.3/libexec/ranger.py --choosedir="$HOME/.rangerdir"; cd (cat $HOME/.rangerdir)
-  else
-    exit
-  end
-end
 abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
-abbr r   ranger_fm
 abbr z   "zathura"
 abbr g   "grep"
 abbr gs  "git status"
