@@ -19,3 +19,6 @@ cargo install hunter
 # rm ~/tmux-256color.info
 
 pip3 install --user pynvim
+
+defaults write com.apple.screencapture disable-shadow -bool TRUE
+defaults write -g ApplePressAndHoldEnabled -bool false
