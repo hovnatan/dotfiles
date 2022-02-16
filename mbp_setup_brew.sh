@@ -22,3 +22,6 @@ pip3 install --user pynvim
 
 defaults write com.apple.screencapture disable-shadow -bool TRUE
 defaults write -g ApplePressAndHoldEnabled -bool false
+
+# to remove from quarantine
+# xattr -rd com.apple.quarantine /path/to/MyApp.app
