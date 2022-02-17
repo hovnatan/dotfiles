@@ -47,6 +47,7 @@ end
 
 abbr c   "cd"
 abbr jj  "fzf_recent_dir"
+abbr cdz "fzf_recent_dir"
 abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr nn  "nvim -u NONE"
