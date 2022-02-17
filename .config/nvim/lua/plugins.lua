@@ -3,7 +3,7 @@ vim.cmd [[packadd packer.nvim]]
 
 return require('packer').startup(function()
   use {'wbthomason/packer.nvim'}
-  use {'sheerun/vim-polyglot'}
+  -- use {'sheerun/vim-polyglot'}
   use {'tpope/vim-abolish'}
   use {'tpope/vim-dispatch'}
   use {'radenling/vim-dispatch-neovim'}
