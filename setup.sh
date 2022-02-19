@@ -115,3 +115,6 @@ pip3 install --user pylint pynvim jedi black
 # /usr/bin/tic -x -o $HOME/.local/share/terminfo tmux-256color.info
 # modify https://gpanders.com/blog/the-definitive-guide-to-using-tmux-256color-on-macos/ pairs#0x10000 to pairs#0x1000
 /usr/bin/tic -x -o $HOME/.local/share/terminfo tmux-256color.info
+
+ln -sf ~/.dotfiles/Library/Application\ Support/sioyek/keys_user.config ~/Library/Application\ Support/sioyek/
+ln -sf ~/.dotfiles/Library/Application\ Support/sioyek/prefs_user.config ~/Library/Application\ Support/sioyek/
