@@ -71,6 +71,8 @@ ln -sf ~/.dotfiles/.config/zathura ~/.config/
 
 ln -sf ~/.dotfiles/.ssh/config ~/.ssh/config
 
+ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
+
 mkdir -p ~/tmp
 mkdir -p ~/Downloads
 mkdir -p ~/opt
@@ -111,15 +113,6 @@ ln -sf ~/.dotfiles/.ctags.d ~/
 # python3 -m venv venv_python_neovim
 # source ~/.dotfiles/venv_python_neovim/bin/activate
 pip3 install --user pylint pynvim jedi black
-
-# infocmp tmux-256color > ~/tmux-256color.info
-# /usr/bin/tic -x -o $HOME/.local/share/terminfo tmux-256color.info
-# modify https://gpanders.com/blog/the-definitive-guide-to-using-tmux-256color-on-macos/ pairs#0x10000 to pairs#0x1000
-/usr/bin/tic -x -o $HOME/.local/share/terminfo tmux-256color.info
-
-ln -sf ~/.dotfiles/Library/Application\ Support/sioyek/keys_user.config ~/Library/Application\ Support/sioyek/
-ln -sf ~/.dotfiles/Library/Application\ Support/sioyek/prefs_user.config ~/Library/Application\ Support/sioyek/
-
 mkdir -p ~/.conan
 ln -sf ~/.dotfiles/.conan/profiles ~/.conan/profiles
 # cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCONAN_DISABLE_CHECK_COMPILER=1 ..
