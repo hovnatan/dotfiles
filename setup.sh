@@ -86,15 +86,15 @@ ln -sf ~/.dotfiles/.config/kitty ~/.config/
 ln -sf ~/.dotfiles/.bashrc_local ~/
 ln -sf ~/.dotfiles/.bash_profile ~/
 
-ln -s ~/.dotfiles/.config/alacritty ~/.config/
+ln -sf ~/.dotfiles/.config/alacritty ~/.config/
 
-ln -s ~/.dotfiles/.config/bat ~/.config/
+ln -sf ~/.dotfiles/.config/bat ~/.config/
 
 mkdir -p ~/.config/Code/User
-ln -s ~/.dotfiles/.config/Code/User/settings.json ~/.config/Code/User/
-ln -s ~/.dotfiles/.config/Code/User/keybindings.json ~/.config/Code/User/
+ln -sf ~/.dotfiles/.config/Code/User/settings.json ~/.config/Code/User/
+ln -sf ~/.dotfiles/.config/Code/User/keybindings.json ~/.config/Code/User/
 
-ln -s ~/.dotfiles/.ctags.d ~/
+ln -sf ~/.dotfiles/.ctags.d ~/
 
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
 # ln -sf ~/.dotfiles/.xinitrc ~/

@@ -102,6 +102,7 @@ require('telescope').setup{
 
     -- Developer configurations: Not meant for general override
     buffer_previewer_maker = require'telescope.previewers'.buffer_previewer_maker
+    path_display={"smart"}
   },
     pickers = {
       -- Your special builtin config goes in here
@@ -241,10 +242,19 @@ cmp.setup({
     },
     sources = {
       { name = 'nvim_lsp' },
-      { name = 'buffer' },
+      { name = 'buffer', option = {
+          get_bufnrs = function()
+            return vim.api.nvim_list_bufs()
+          end }
+      },
       { name = 'path' },
+      { name = 'tmux',
+        option = {
+          all_panes = true,
+          label = '[tmux]',
+      }}
     }
-  })
+})
 
 require'nvim-treesitter.configs'.setup {
   textobjects = {
@@ -258,7 +268,6 @@ require'nvim-treesitter.configs'.setup {
         ["if"] = "@function.inner",
         ["ac"] = "@class.outer",
         ["ic"] = "@class.inner",
-        -- Or you can define your own textobjects like this
       },
     },
  swap = {
