@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Starting upgrade"
+sudo echo "Starting upgrade"
 
 #cd ~/.dotfiles
 #git pull
@@ -10,9 +10,9 @@ echo "Starting upgrade"
 #  git push -f
 #fi
 
-brew update
-brew upgrade
-brew upgrade --cask --greedy
+sudo apt update
+sudo apt -y dist-upgrade
+sudo apt -y autoremove
 
 fish -c "fisher update"
 

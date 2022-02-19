@@ -1,7 +1,12 @@
+shell:
+  program: wsl.exe
+  args:
+    - "~"
+
 scrolling:
     history: 0
 font:
-    size: 16
+    size: 14
 
 window:
   padding:
@@ -84,16 +89,6 @@ mouse:
 
 key_bindings:
   - { key: S,        mods: Control|Shift,       action: PasteSelection }
-  - { key: J,        mods: Command|Shift,     chars: "\x1bJ"           }
-  - { key: K,        mods: Command|Shift,     chars: "\x1bK"           }
-  - { key: H,        mods: Command|Shift,     chars: "\x1bH"           }
-  - { key: L,        mods: Command|Shift,     chars: "\x1bL"           }
-  - { key: J,        mods: Command,           chars: "\x1bj"           }
-  - { key: K,        mods: Command,           chars: "\x1bk"           }
-  - { key: H,        mods: Command,           chars: "\x1bh"           }
-  - { key: L,        mods: Command,           chars: "\x1bl"           }
-  - { key: Q,        mods: Command,           chars: "\x1bq"           }
-  - { key: N,        mods: Command,           action:  CreateNewWindow }
 
 selection:
   save_to_clipboard: true
