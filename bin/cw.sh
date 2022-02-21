@@ -25,3 +25,5 @@ color_switcher.sh ~/.config/alacritty/alacritty.yml ~/.config/alacritty/option ~
 tmux source ~/.tmux.conf
 
 color_switcher.sh ~/.config/bat/config ~/.config/bat/option ~/.config/bat/config_$COLOR
+
+color_switcher.sh "$HOME/.dotfiles/Library/Application Support/sioyek/prefs_user.config" "$HOME/.dotfiles/Library/Application Support/sioyek/prefs_user_common" "$HOME/.dotfiles/Library/Application Support/sioyek/$COLOR" reverse
