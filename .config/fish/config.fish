@@ -53,6 +53,14 @@ abbr n   "nvim"
 abbr nn  "nvim -u NONE"
 abbr np  "nvim --noplugin"
 
+function ranger_fm
+  if not set -q RANGER_LEVEL
+    ranger --choosedir="$HOME/.rangerdir"; cd (cat $HOME/.rangerdir)
+  else
+    exit
+  end
+end
+abbr r  ranger_fm
 abbr ll  "ls -asl"
 abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
 abbr z   "zathura"
