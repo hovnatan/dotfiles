@@ -45,7 +45,7 @@ function reload-color-config --on-variable _reload_color_config
   end
 end
 
-abbr c   "cd"
+abbr c   "fzf_recent_dir"
 abbr jj  "fzf_recent_dir"
 abbr cdz "fzf_recent_dir"
 abbr rsync  "rsync -a --info=progress2"
@@ -53,6 +53,7 @@ abbr n   "nvim"
 abbr nn  "nvim -u NONE"
 abbr np  "nvim --noplugin"
 
+abbr ll  "ls -asl"
 abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
 abbr z   "zathura"
 abbr g   "grep"
