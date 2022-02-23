@@ -102,7 +102,7 @@ require('telescope').setup{
 
     -- Developer configurations: Not meant for general override
     buffer_previewer_maker = require'telescope.previewers'.buffer_previewer_maker,
-    path_display={"smart"}
+    path_display={"truncate"},
   },
     pickers = {
       -- Your special builtin config goes in here
