@@ -102,6 +102,7 @@ abbr hm "history merge"
 abbr rfc "source ~/.config/fish/config.fish"
 abbr ... "../.."
 abbr .... "../../.."
+abbr conda mamba
 
 # set -gx HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew";
 # set -gx HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar";
