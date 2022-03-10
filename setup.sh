@@ -118,3 +118,7 @@ pip3 install --user pylint pynvim jedi black
 
 ln -sf ~/.dotfiles/Library/Application\ Support/sioyek/keys_user.config ~/Library/Application\ Support/sioyek/
 ln -sf ~/.dotfiles/Library/Application\ Support/sioyek/prefs_user.config ~/Library/Application\ Support/sioyek/
+
+mkdir -p ~/.conan
+ln -sf ~/.dotfiles/.conan/profiles ~/.conan/profiles
+# cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCONAN_DISABLE_CHECK_COMPILER=1 ..
