@@ -2,22 +2,19 @@
   name = Hovnatan Karapetyan
   email = 
 [diff]
-  tool = meld
+  colorMoved = default
 [difftool]
   prompt = false
-[difftool "meld"]
-  cmd = meld "$LOCAL" "$REMOTE"
 [difftool "fugitive"]
   cmd = nvim -d "$LOCAL" "$MERGED" "$REMOTE"
   trustExitCode = false
   keepBackup = false
 [merge]
-  tool = meld
-[mergetool "meld"]
-  cmd = meld "$LOCAL" "$MERGED" "$REMOTE" --output "$MERGED"
+  conflictstyle = diff3
 [core]
   editor = 'nvim'
 	hooksPath = .githooks
+  pager = delta
 [filter "gitignoredebugsaveimage"]
   #clean = "sed '/DebugSaveImage/{/noignore/!d}'"
 	#smudge = cat
@@ -30,3 +27,8 @@
   review = !nvim -p $(git files) +\"tabdo Gdiff $REVIEW_BASE\"
   reviewone = !nvim -p +\"tabdo Gdiff $REVIEW_BASE\"
 	lg = log --color --graph --date=relative --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset'
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+  navigate = true  # use n and N to move between diff sections
+  syntax-theme = gruvbox-light
