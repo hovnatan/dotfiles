@@ -5,7 +5,7 @@ set -e
 cd ~/Downloads
 rm -rf ~/miniforge3
 
-FILENAME="Miniforge3-MacOSX-arm64.sh"
+FILENAME="Miniforge3-MacOSX-x86_64.sh"
 
 rm -rf "$FILENAME"
 wget "https://github.com/conda-forge/miniforge/releases/latest/download/$FILENAME"
@@ -18,15 +18,15 @@ conda activate
 
 conda update -y --all
 
-conda install -y pytorch torchvision
-conda install -y scikit-image kornia opencv
-conda install -y jupyterlab black pylint jedi
+pip install torch torchvision mediapipe
+# conda install -y scikit-image kornia opencv
+# conda install -y jupyterlab black pylint jedi
 # conda install -y pillow boost matplotlib scipy conda-build Cython sympy pandas shapely scikit-image pycairo cvxpy cvxopt scikit-learn
 # conda install -y ipython rope ipdb pudb pynvim pylint pytest pytest-xdist pytest-cov coverage twine sphinx boto3 docker-compose
 # conda install tbb tbb-devel cmake binutils_impl_linux-64 binutils_linux-64 gxx_linux-64 gcc_linux-64 nvcc_linux-64 libx11-common-cos6-x86_64 libx11-cos6-x86_64 libxdamage-cos6-x86_64 libxfixes-cos6-x86_64 libxxf86vm-cos6-x86_64 mesa-dri-drivers-cos6-x86_64 mesa-dri1-drivers-cos6-x86_64 mesa-libgl-cos6-x86_64 mesa-libgl-devel-cos6-x86_64 libselinux-cos6-x86_64
 
 # pypng for indexed png, gitpython python wrapper for git
-pip install pypng gitpython tensorboard sphinx-rtd-theme pylint-json2html pylint-pytest pytest-timeout pyenchant pretty_errors scalene reedsolo albumentations segmentation-models-pytorch imagecorruptions imgaug imutils
+# pip install pypng gitpython tensorboard sphinx-rtd-theme pylint-json2html pylint-pytest pytest-timeout pyenchant pretty_errors scalene reedsolo albumentations segmentation-models-pytorch imagecorruptions imgaug imutils
 
 
 # also might be install sudo apt-get install -y libgl1-mesa-dev

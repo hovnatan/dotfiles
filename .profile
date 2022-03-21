@@ -17,6 +17,7 @@ export PATH="/opt/homebrew/bin:$PATH"
 export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/Cellar/ncurses/6.3/bin:$PATH"
+# export PATH="/opt/homebrew/Cellar/llvm/13.0.1_1/bin/:$PATH"
 export PATH="/opt/homebrew/opt/man-db/libexec/bin:$PATH"
 export PATH="`python3 -m site --user-base`/bin:$PATH"
 
