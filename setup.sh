@@ -122,3 +122,4 @@ ln -sf ~/.dotfiles/Library/Application\ Support/sioyek/prefs_user.config ~/Libra
 mkdir -p ~/.conan
 ln -sf ~/.dotfiles/.conan/profiles ~/.conan/profiles
 # cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCONAN_DISABLE_CHECK_COMPILER=1 ..
+ln -sf ~/.dotfiles/.config/wezterm ~/.config/
