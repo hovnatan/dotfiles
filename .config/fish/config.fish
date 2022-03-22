@@ -94,7 +94,8 @@ abbr mhqnr "mpv --no-resume-playback --profile=hq"
 abbr ync "yay --noconfirm"
 abbr bc "bc -l"
 abbr rf "rm -rfvI"
-abbr b "batcat"
+abbr b "bat"
+abbr cat "bat"
 abbr h "htop"
 abbr hh "htop -u $USER"
 abbr p "python"
@@ -102,7 +103,6 @@ abbr hm "history merge"
 abbr rfc "source ~/.config/fish/config.fish"
 abbr ... "../.."
 abbr .... "../../.."
-abbr conda mamba
 
 # set -gx HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew";
 # set -gx HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar";
