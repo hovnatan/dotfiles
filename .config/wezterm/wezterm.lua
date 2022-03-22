@@ -6,6 +6,7 @@ return {
   font_size = 16.0,
   hide_tab_bar_if_only_one_tab = true,
   disable_default_key_bindings = true,
+  check_for_updates = false,
   keys = {
     {key="J", mods="CMD", action=wezterm.action{SendString="\x1bj"}},
     {key="K", mods="CMD", action=wezterm.action{SendString="\x1bk"}},
@@ -18,5 +19,9 @@ return {
     {key="L", mods="CMD|SHIFT", action=wezterm.action{SendString="\x1bL"}},
     {key="C", mods="CMD|SHIFT", action=wezterm.action{CopyTo="Clipboard"}},
     {key="V", mods="CMD|SHIFT", action=wezterm.action{PasteFrom="Clipboard"}},
+    {key="T", mods="CMD", action=wezterm.action{SpawnTab="CurrentPaneDomain"}},
+    {key="R", mods="CMD", action="ReloadConfiguration"},
+    {key="[", mods="CMD|SHIFT", action=wezterm.action{ActivateTabRelative=-1}},
+    {key="]", mods="CMD|SHIFT", action=wezterm.action{ActivateTabRelative=1}}
   }
 }
