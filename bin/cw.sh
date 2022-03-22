@@ -27,3 +27,12 @@ tmux source ~/.tmux.conf
 color_switcher.sh ~/.config/bat/config ~/.config/bat/option ~/.config/bat/config_$COLOR
 
 color_switcher.sh "$HOME/.dotfiles/Library/Application Support/sioyek/prefs_user.config" "$HOME/.dotfiles/Library/Application Support/sioyek/prefs_user_common" "$HOME/.dotfiles/Library/Application Support/sioyek/$COLOR" reverse
+
+if [ $COLOR == "dark" ]
+then
+  sed 's/Gruvbox/Gruvbox Dark/g' ~/.config/wezterm/wezterm.lua_option > ~/.config/wezterm/wezterm.lua
+  sed -i '' 's/gruvbox-light/gruvbox-dark/g' ~/.gitconfig
+else
+  sed 's/Gruvbox/Gruvbox Light/g' ~/.config/wezterm/wezterm.lua_option > ~/.config/wezterm/wezterm.lua
+  sed -i '' 's/gruvbox-dark/gruvbox-light/g' ~/.gitconfig
+fi
