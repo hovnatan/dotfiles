@@ -23,5 +23,11 @@ return {
     {key="R", mods="CMD", action="ReloadConfiguration"},
     {key="[", mods="CMD|SHIFT", action=wezterm.action{ActivateTabRelative=-1}},
     {key="]", mods="CMD|SHIFT", action=wezterm.action{ActivateTabRelative=1}}
+  },
+   window_padding = {
+    left = "1cell",
+    right = "1cell",
+    top = "0.5cell",
+    bottom = "0.5cell",
   }
 }
