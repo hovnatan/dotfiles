@@ -29,5 +29,6 @@ return {
     right = "1cell",
     top = "0.5cell",
     bottom = "0.5cell",
-  }
+  },
+  audible_bell = "Disabled",
 }
