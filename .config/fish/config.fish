@@ -61,8 +61,8 @@ function ranger_fm
   end
 end
 abbr r  ranger_fm
-abbr ll  "ls -aslh"
-abbr llb  "ls -asl"
+abbr ll  "exa -alh --git"
+abbr llb  "exa -al --git"
 abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
 abbr z   "zathura"
 abbr g   "grep"
