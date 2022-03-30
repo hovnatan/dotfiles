@@ -17,7 +17,7 @@ cargo install difftastic
 # tic -xe tmux-256color ~/tmux-256color.info
 # rm ~/tmux-256color.info
 
-pip3 install --user pynvim ranger-fm
+pip3 install --user pynvim ranger-fm ipdb
 
 defaults write com.apple.screencapture disable-shadow -bool TRUE
 defaults write -g ApplePressAndHoldEnabled -bool false
