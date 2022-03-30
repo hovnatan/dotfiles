@@ -25,7 +25,8 @@ export PATH="$HOME/.dotfiles/bin:$HOME/opt/usr/bin:$HOME/go/bin:$PATH"
 export PATH="$HOME/.dotfiles/sandboxtron/bin":"$PATH"
 
 
-export PYTHONBREAKPOINT=pudb.remote.set_trace
+# export PYTHONBREAKPOINT=pudb.remote.set_trace
+export PYTHONBREAKPOINT=ipdb.set_trace
 
 export RIPGREP_CONFIG_PATH="$HOME/.dotfiles/.ripgreprc"
 
