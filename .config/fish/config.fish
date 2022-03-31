@@ -104,6 +104,7 @@ abbr hm "history merge"
 abbr rfc "source ~/.config/fish/config.fish"
 abbr ... "../.."
 abbr .... "../../.."
+abbr pd "python3 -m ipdb -c continue"
 
 # set -gx HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew";
 # set -gx HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar";
