@@ -77,3 +77,4 @@ import_miniconda() {
   unset __conda_setup
   # <<< conda initialize <<<
 }
+export PATH="/opt/homebrew/opt/mongodb-community@4.4/bin:$PATH"
