@@ -22,7 +22,5 @@ pip3 install --user pynvim ranger-fm ipdb
 defaults write com.apple.screencapture disable-shadow -bool TRUE
 defaults write -g ApplePressAndHoldEnabled -bool false
 
-npm i -g vscode-langservers-extracted
-
 # to remove from quarantine
 # xattr -rd com.apple.quarantine /path/to/MyApp.app
