@@ -31,6 +31,7 @@ nnoremap <space>r <cmd>Telescope grep_string<cr>
 nnoremap <space>b <cmd>Telescope buffers<cr>
 nnoremap <space>h <cmd>Telescope help_tags<cr>
 nnoremap <space>o <cmd>Telescope oldfiles cwd_only=true<cr>
+nnoremap <space>O <cmd>Telescope oldfiles<cr>
 nnoremap <space>m <cmd>Telescope marks<cr>
 nnoremap <space>q <cmd>Telescope quickfix<cr>
 nnoremap <space>k <cmd>Telescope keymaps<cr>
