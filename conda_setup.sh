@@ -16,8 +16,6 @@ conda activate
 
 # conda install -y mamba -n base -c conda-forge
 
-conda update -y --all
-
 pip install torch torchvision mediapipe
 # conda install -y scikit-image kornia opencv
 # conda install -y jupyterlab black pylint jedi
