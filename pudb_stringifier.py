@@ -33,7 +33,6 @@ try:
 except ImportError:
     HAVE_PYTORCH = 0
 
-from pudb.py3compat import string_types, text_type
 from pathlib import Path
 
 
@@ -60,22 +59,22 @@ STR_SAFE_TYPES = get_str_safe_types()
 
 def pudb_stringifier(value):
     if HAVE_NUMPY and isinstance(value, numpy.ndarray):
-        return text_type("ndarray %s %s") % (value.dtype, value.shape)
+        return ("ndarray %s %s") % (value.dtype, value.shape)
     elif HAVE_NUMPY and numpy.isscalar(value):
-        return text_type("%s") % value
+        return ("%s") % value
     elif HAVE_PYTORCH and isinstance(value, torch.Tensor):
         dtype = str(value.dtype)[6:]
         shape = tuple(value.size())
         if shape:
-            return text_type("tTensor %s %s") % (dtype, shape)
+            return ("tTensor %s %s") % (dtype, shape)
         else:
-            return text_type("tTensor %s %s %s") % (dtype, shape, value.item())
+            return ("tTensor %s %s %s") % (dtype, shape, value.item())
     elif isinstance(value, Path):
-        return text_type("Path %s") % value
+        return ("Path %s") % value
 
     elif isinstance(value, STR_SAFE_TYPES):
         try:
-            return text_type(value)
+            return (value)
         except Exception:
             pass
 
@@ -87,10 +86,9 @@ def pudb_stringifier(value):
         except Exception:
             pass
         else:
-            if isinstance(result, string_types):
-                return text_type(result)
+            return result
 
     elif type(value) in [set, frozenset, list, tuple, dict]:
-        return text_type("%s (%s)") % (type(value).__name__, len(value))
+        return ("%s (%s)") % (type(value).__name__, len(value))
 
-    return text_type(type(value).__name__)
+    return type(value).__name__
