@@ -33,10 +33,14 @@
   navigate = true  # use n and N to move between diff sections
   syntax-theme = gruvbox-light
 [diff]
-    tool = difftastic
+  tool = difftastic
 [difftool "difftastic"]
-    cmd = difft "$LOCAL" "$REMOTE"
+  cmd = difft "$LOCAL" "$REMOTE"
 [pager]
-    difftool = true
+  difftool = true
 [alias]
-    dft = difftool
+  dft = difftool
+[pull]
+  rebase = true
+[fetch]
+  prune = true
