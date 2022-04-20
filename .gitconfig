@@ -13,7 +13,7 @@
   conflictstyle = diff3
 [core]
   editor = 'nvim'
-	hooksPath = .githooks
+  #hooksPath = .githooks
   pager = delta
 [filter "gitignoredebugsaveimage"]
   #clean = "sed '/DebugSaveImage/{/noignore/!d}'"
