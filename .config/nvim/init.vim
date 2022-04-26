@@ -21,18 +21,20 @@ noremap \ ,
 inoremap jk <ESC>
 
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
-filetype plugin on
+let g:do_filetype_lua = 1
+let g:did_load_filetypes = 0
 runtime plugins/matchit.vim
 syntax on
 
 nnoremap <space>f <cmd>Telescope find_files<cr>
-nnoremap <space>g <cmd>Telescope live_grep<cr>
-nnoremap <space>r <cmd>Telescope grep_string<cr>
+nnoremap <space>g <cmd>Telescope grep_string<cr>
+nnoremap <space>G <cmd>Telescope live_grep<cr>
 nnoremap <space>b <cmd>Telescope buffers<cr>
 nnoremap <space>h <cmd>Telescope help_tags<cr>
 nnoremap <space>o <cmd>Telescope oldfiles cwd_only=true<cr>
 nnoremap <space>O <cmd>Telescope oldfiles<cr>
 nnoremap <space>m <cmd>Telescope marks<cr>
+nnoremap <space>r <cmd>Telescope registers<cr>
 nnoremap <space>q <cmd>Telescope quickfix<cr>
 nnoremap <space>k <cmd>Telescope keymaps<cr>
 nnoremap <space>a <cmd>Telescope diagnostics bufnr=0<cr>
