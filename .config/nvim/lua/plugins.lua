@@ -13,7 +13,9 @@ return require('packer').startup(function()
   use {'tpope/vim-repeat'}
   use {'tpope/vim-projectionist'}
   use {'tpope/vim-vinegar'}
-  use {'tpope/vim-jdaddy'}
+  use {'tpope/vim-jdaddy',
+        ft = {'json'}
+      }
   use {'itchyny/lightline.vim'}
   use {'shinchu/lightline-gruvbox.vim'}
   use {'nvim-treesitter/nvim-treesitter',  run = ':TSUpdate'}
@@ -25,8 +27,12 @@ return require('packer').startup(function()
   use {'zhimsel/vim-stay'}
   use {'mbbill/undotree'}
   use {'ntpeters/vim-better-whitespace'}
-  use {'jpalardy/vim-slime'}
-  use {'hanschen/vim-ipython-cell'}
+  use {'jpalardy/vim-slime',
+        ft = {'python'}
+      }
+  use {'hanschen/vim-ipython-cell',
+        ft = {'python'}
+      }
   use {'wsdjeg/vim-fetch'}
   use {'majutsushi/tagbar'}
   use {'kshenoy/vim-signature'}
@@ -43,7 +49,9 @@ return require('packer').startup(function()
   use {'hrsh7th/vim-vsnip'}
   use {'andersevenrud/cmp-tmux'}
   use {'neovim/nvim-lspconfig'}
-  use {'lakshayg/vim-bazel'}
+  use {'lakshayg/vim-bazel',
+        ft = {'bzl'}
+      },
   use {"npxbr/gruvbox.nvim", requires = {"rktjmp/lush.nvim"}}
   -- use {'gennaro-tedesco/nvim-peekup'}
   -- use {'morhetz/gruvbox'}
@@ -58,5 +66,7 @@ return require('packer').startup(function()
     end
   }
   use {'mhartington/formatter.nvim'}
-  use {'fisadev/vim-isort'}
+  use {'fisadev/vim-isort',
+        ft = {'python'}
+      }
 end)
