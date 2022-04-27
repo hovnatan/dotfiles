@@ -17,7 +17,6 @@ fi
 
 echo -n "$COLOR" > ~/.my_colors
 
-color_switcher.sh ~/.config/zathura/zathurarc ~/.config/zathura/option ~/.config/zathura/colors/$COLOR
 echo -n "set -U _reload_color_config ""$COLOR" | fish
 
 # kitty @ --to $HOME/.tmpkitty set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
@@ -30,9 +29,7 @@ color_switcher.sh "$HOME/.dotfiles/Library/Application Support/sioyek/prefs_user
 
 if [ $COLOR == "dark" ]
 then
-  sed 's/Gruvbox/Gruvbox Dark/g' ~/.config/wezterm/wezterm.lua_option > ~/.config/wezterm/wezterm.lua
   sed -i '' 's/gruvbox-light/gruvbox-dark/g' ~/.gitconfig
 else
-  sed 's/Gruvbox/Gruvbox Light/g' ~/.config/wezterm/wezterm.lua_option > ~/.config/wezterm/wezterm.lua
   sed -i '' 's/gruvbox-dark/gruvbox-light/g' ~/.gitconfig
 fi
