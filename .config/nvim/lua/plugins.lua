@@ -51,7 +51,7 @@ return require('packer').startup(function()
   use {'neovim/nvim-lspconfig'}
   use {'lakshayg/vim-bazel',
         ft = {'bzl'}
-      },
+      }
   use {"npxbr/gruvbox.nvim", requires = {"rktjmp/lush.nvim"}}
   -- use {'gennaro-tedesco/nvim-peekup'}
   -- use {'morhetz/gruvbox'}
