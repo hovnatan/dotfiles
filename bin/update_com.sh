@@ -12,6 +12,7 @@ echo "Starting upgrade"
 
 brew update
 brew upgrade
+brew upgrade --cask --greedy
 
 fish -c "fisher update"
 
