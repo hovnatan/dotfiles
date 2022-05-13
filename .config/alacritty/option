@@ -93,6 +93,7 @@ key_bindings:
   - { key: H,        mods: Command,           chars: "\x1bh"           }
   - { key: L,        mods: Command,           chars: "\x1bl"           }
   - { key: Q,        mods: Command,           chars: "\x1bq"           }
+  - { key: N,        mods: Command,           action:  CreateNewWindow }
 
 selection:
   save_to_clipboard: true
