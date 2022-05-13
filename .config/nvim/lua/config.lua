@@ -372,46 +372,6 @@ require('gitsigns').setup {
 
 vim.api.nvim_set_keymap('n', '$', "<cmd>lua require'hop'.hint_words()<cr>", {})
 
-require('formatter').setup({
-    logging = false,
-    filetype = {
-        javascript = {
-            -- prettier
-            function()
-                return {
-                    exe = "prettier",
-                    args = {
-                        "--stdin-filepath", vim.api.nvim_buf_get_name(0),
-                        '--single-quote'
-                    },
-                    stdin = true
-                }
-            end
-        },
-        rust = {
-            -- Rustfmt
-            function()
-                return {exe = "rustfmt", args = {"--emit=stdout"}, stdin = true}
-            end
-        },
-        lua = {
-            -- luafmt
-            function()
-                return {
-                    exe = "luafmt",
-                    args = {"--indent-count", 2, "--stdin"},
-                    stdin = true
-                }
-            end
-        },
-        python = {
-            function()
-                return {exe = "black", args = {"-"}, stdin = true}
-            end
-        }
-    }
-})
-
 vim.lsp.handlers["textDocument/publishDiagnostics"] =
     vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics,
                  {virtual_text = false})

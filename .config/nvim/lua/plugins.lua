@@ -65,5 +65,4 @@ return require('packer').startup(function()
        require'hop'.setup { keys = 'etovxqpdygfblzhckisuran' }
     end
   }
-  use {'mhartington/formatter.nvim'}
 end)
