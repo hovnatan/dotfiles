@@ -117,7 +117,3 @@ mkdir -p ~/.conan
 ln -sf ~/.dotfiles/.conan/profiles ~/.conan/profiles
 # cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCONAN_DISABLE_CHECK_COMPILER=1 ..
 ln -sf ~/.dotfiles/.config/wezterm ~/.config/
-
-ln -sf ~/.dotfiles/.config/karabiner/ ~/.config/
-
-ln -sf ~/.dotfiles/.config/kitty/ ~/.config/
