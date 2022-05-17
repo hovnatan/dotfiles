@@ -47,3 +47,4 @@ chmod +x ~/.dotfiles/bin/nvim
 
 export GO111MODULE=on
 go install github.com/mattn/efm-langserver
+cargo install exa
