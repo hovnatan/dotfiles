@@ -126,4 +126,5 @@ ln -sf ~/.dotfiles/.conan/profiles ~/.conan/profiles
 ln -sf ~/.dotfiles/.config/wezterm ~/.config/
 
 ln -sf ~/.dotfiles/.npmrc ~/.npmrc
-npm i -g vscode-langservers-extracted
+
+ln -sf ~/.dotfiles/.config/karabiner/ ~/.config/
