@@ -19,10 +19,15 @@ export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/Cellar/ncurses/6.3/bin:$PATH"
 # export PATH="/opt/homebrew/Cellar/llvm/13.0.1_1/bin/:$PATH"
 export PATH="/opt/homebrew/opt/man-db/libexec/bin:$PATH"
+export PATH="/opt/homebrew/opt/mongodb-community@4.4/bin:$PATH"
 export PATH="`python3 -m site --user-base`/bin:$PATH"
 
-export PATH="$HOME/.dotfiles/bin:$HOME/opt/usr/bin:$HOME/go/bin:$PATH"
-export PATH="$HOME/.dotfiles/sandboxtron/bin":"$PATH"
+export PATH="$HOME/opt/usr/bin:$PATH"
+. "$HOME/.cargo/env"
+export PATH="$HOME/go/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.dotfiles/bin:$PATH"
+export PATH="$HOME/.dotfiles/sandboxtron/bin:$PATH"
 
 
 # export PYTHONBREAKPOINT=pudb.remote.set_trace
@@ -59,8 +64,6 @@ else
     start_agent;
 fi
 
-. "$HOME/.cargo/env"
-
 import_miniconda() {
   # >>> conda initialize >>>
   # !! Contents within this block are managed by 'conda init' !!
@@ -77,4 +80,3 @@ import_miniconda() {
   unset __conda_setup
   # <<< conda initialize <<<
 }
-export PATH="/opt/homebrew/opt/mongodb-community@4.4/bin:$PATH"
