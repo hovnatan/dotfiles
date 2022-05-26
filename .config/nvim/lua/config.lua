@@ -378,6 +378,7 @@ vim.lsp.handlers["textDocument/publishDiagnostics"] =
 vim.o.clipboard = 'unnamed'
 
 lspconfig.efm.setup {
+    filetypes = {"lua", "javascript", "python"},
     on_attach = on_attach,
     init_options = {documentFormatting = true},
     settings = {
@@ -389,7 +390,8 @@ lspconfig.efm.setup {
                     formatCommand = "isort --stdout --profile black -",
                     formatStdin = true
                 }, {formatCommand = "black --fast -", formatStdin = true}
-            }
+            },
+            javascript = {{formatCommand = "prettier", formatStdin = true}},
         }
     }
 }
