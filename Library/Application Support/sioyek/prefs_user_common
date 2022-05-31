@@ -6,3 +6,5 @@ page_separator_width     2
 page_separator_color	0.0 0.0 0.0
 
 use_heuristic_if_text_summary_not_available 1
+
+show_doc_path 1
