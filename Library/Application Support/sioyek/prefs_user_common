@@ -1,4 +1,4 @@
-startup_commands		toggle_custom_color;toggle_horizontal_scroll_lock;toggle_statusbar
+startup_commands		toggle_custom_color;toggle_horizontal_scroll_lock;toggle_statusbar;toggle_fullscreen
 
 touchpad_sensitivity  1.0
 
