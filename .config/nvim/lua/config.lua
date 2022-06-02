@@ -1,3 +1,5 @@
+require "core.utils"
+require "modules"
 require "core.keymaps"
 require "core.autocmd"
 
@@ -63,69 +65,6 @@ vim.opt.fixendofline = false
 vim.opt.foldmethod = 'expr'
 vim.opt.foldexpr = [[nvim_treesitter#foldexpr()]]
 vim.opt.completeopt = 'menuone,noselect'
-
-require('telescope').load_extension('fzf')
-require('telescope').setup {
-    defaults = {
-        vimgrep_arguments = {
-            'rg', '--color=never', '--no-heading', '--with-filename',
-            '--line-number', '--column', '--smart-case'
-        },
-        prompt_prefix = "> ",
-        selection_caret = "> ",
-        entry_prefix = "  ",
-        initial_mode = "insert",
-        selection_strategy = "reset",
-        sorting_strategy = "descending",
-        layout_strategy = "horizontal",
-        layout_config = {
-            horizontal = {mirror = false},
-            vertical = {mirror = false}
-        },
-        file_sorter = require'telescope.sorters'.get_fuzzy_file,
-        file_ignore_patterns = {},
-        generic_sorter = require'telescope.sorters'.get_generic_fuzzy_sorter,
-        winblend = 0,
-        border = {},
-        borderchars = {'─', '│', '─', '│', '╭', '╮', '╯', '╰'},
-        color_devicons = true,
-        use_less = true,
-        set_env = {['COLORTERM'] = 'truecolor'}, -- default = nil,
-        file_previewer = require'telescope.previewers'.vim_buffer_cat.new,
-        grep_previewer = require'telescope.previewers'.vim_buffer_vimgrep.new,
-        qflist_previewer = require'telescope.previewers'.vim_buffer_qflist.new,
-
-        -- Developer configurations: Not meant for general override
-        buffer_previewer_maker = require'telescope.previewers'.buffer_previewer_maker,
-        path_display = {"truncate"}
-    },
-    pickers = {
-        -- Your special builtin config goes in here
-        buffers = {
-            sort_lastused = true,
-            previewer = false,
-            mappings = {
-                i = {
-                    ["<c-d>"] = require("telescope.actions").delete_buffer,
-                    -- or right hand side can also be a the name of the action as string
-                    ["<c-d>"] = "delete_buffer"
-                },
-                n = {["<c-d>"] = require("telescope.actions").delete_buffer}
-            }
-        },
-        find_files = {previewer = false},
-        oldfiles = {previewer = false}
-    },
-    extensions = {
-        fzf = {
-            fuzzy = true, -- false will only do exact matching
-            override_generic_sorter = false, -- override the generic sorter
-            override_file_sorter = true, -- override the file sorter
-            case_mode = "smart_case" -- or "ignore_case" or "respect_case"
-            -- the default case_mode is "smart_case"
-        }
-    }
-}
 
 local on_attach = function(client, bufnr)
     local function buf_set_keymap(...)
