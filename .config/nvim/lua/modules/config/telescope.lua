@@ -1,5 +1,9 @@
-require('telescope').load_extension('fzf')
-require('telescope').setup {
+local telescope = require('telescope')
+local telescope_previewers = require('telescope.previewers')
+local telescope_actions = require('telescope.actions')
+
+telescope.load_extension('fzf')
+telescope.setup {
     defaults = {
         vimgrep_arguments = {
             'rg', '--color=never', '--no-heading', '--with-filename',
@@ -25,12 +29,12 @@ require('telescope').setup {
         color_devicons = true,
         use_less = true,
         set_env = {['COLORTERM'] = 'truecolor'}, -- default = nil,
-        file_previewer = require'telescope.previewers'.vim_buffer_cat.new,
-        grep_previewer = require'telescope.previewers'.vim_buffer_vimgrep.new,
-        qflist_previewer = require'telescope.previewers'.vim_buffer_qflist.new,
+        file_previewer = telescope_previewers.vim_buffer_cat.new,
+        grep_previewer = telescope_previewers.vim_buffer_vimgrep.new,
+        qflist_previewer = telescope_previewers.vim_buffer_qflist.new,
 
         -- Developer configurations: Not meant for general override
-        buffer_previewer_maker = require'telescope.previewers'.buffer_previewer_maker,
+        buffer_previewer_maker = telescope_previewers.buffer_previewer_maker,
         path_display = {"truncate"}
     },
     pickers = {
@@ -40,11 +44,11 @@ require('telescope').setup {
             previewer = false,
             mappings = {
                 i = {
-                    ["<c-d>"] = require("telescope.actions").delete_buffer,
+                    ["<c-d>"] = telescope_actions.delete_buffer,
                     -- or right hand side can also be a the name of the action as string
                     ["<c-d>"] = "delete_buffer"
                 },
-                n = {["<c-d>"] = require("telescope.actions").delete_buffer}
+                n = {["<c-d>"] = telescope_actions.delete_buffer}
             }
         },
         find_files = {previewer = false},
