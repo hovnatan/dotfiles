@@ -1,24 +1,6 @@
 lua require('plugins')
 lua require('config')
 
-let g:polyglot_disabled = ['latex']
-
-nn <F9> :silent Dispatch!<CR>
-
-nnoremap <expr> j (v:count == 0 ? 'gj' : 'j')
-nnoremap gj j
-nnoremap <expr> k (v:count == 0 ? 'gk' : 'k')
-nnoremap gk k
-nnoremap gV `[v`]
-cnoremap <C-p> <Up>
-cnoremap <C-n> <Down>
-
-nnoremap & :&&<CR>
-xnoremap & :&&<CR>
-
-noremap \ ,
-inoremap jk <ESC>
-
 cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
 let g:do_filetype_lua = 1
 let g:did_load_filetypes = 0
