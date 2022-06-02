@@ -1,4 +1,5 @@
 require "core.keymaps"
+require "core.autocmd"
 
 vim.opt.compatible = false
 vim.opt.hidden = true
