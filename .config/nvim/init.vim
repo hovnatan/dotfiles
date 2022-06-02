@@ -16,7 +16,6 @@ cnoremap <C-n> <Down>
 nnoremap & :&&<CR>
 xnoremap & :&&<CR>
 
-let mapleader=","
 noremap \ ,
 inoremap jk <ESC>
 
