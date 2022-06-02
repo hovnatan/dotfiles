@@ -3,6 +3,8 @@ local map = function(mode, key, cmd, opts)
                             opts or {noremap = true, silent = true})
 end
 
+vim.g.mapleader = ','
+
 map("n", "<space>f", "<cmd>lua require('telescope.builtin').find_files()<cr>")
 map("n", "<space>g", "<cmd>lua require('telescope.builtin').grep_string()<cr>")
 map("n", "<space>G", "<cmd>lua require('telescope.builtin').live_grep()<cr>")
