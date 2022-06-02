@@ -326,7 +326,7 @@ lspconfig.efm.setup {
     settings = {
         rootMarkers = {".git/"},
         languages = {
-            lua = {{formatCommand = "lua-format -i", formatStdin = true}},
+            lua = {{formatCommand = "stylua --search-parent-directories -", formatStdin = true}},
             python = {
                 {
                     formatCommand = "isort --stdout --profile black -",
