@@ -1,3 +1,5 @@
+require "core.keymaps"
+
 vim.opt.compatible = false
 vim.opt.hidden = true
 vim.opt.backspace = 'indent,eol,start'
