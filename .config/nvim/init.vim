@@ -1,9 +1,6 @@
 lua require('plugins')
 lua require('config')
 
-cnoremap <expr> %% getcmdtype() == ':' ? expand('%:h').'/' : '%%'
-let g:do_filetype_lua = 1
-let g:did_load_filetypes = 0
 runtime plugins/matchit.vim
 syntax on
 
