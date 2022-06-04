@@ -1,24 +1,4 @@
 return function() 
-local lspconfig = require("lspconfig")
-lspconfig.efm.setup({
-  filetypes = { "lua", "javascript", "python" },
-  on_attach = on_attach,
-  init_options = { documentFormatting = true },
-  settings = {
-    rootMarkers = { ".git/" },
-    languages = {
-      lua = { { formatCommand = "stylua --search-parent-directories -", formatStdin = true } },
-      python = {
-        {
-          formatCommand = "isort --stdout --profile black -",
-          formatStdin = true,
-        },
-        { formatCommand = "black --fast -", formatStdin = true },
-      },
-      javascript = { { formatCommand = "prettier", formatStdin = true } },
-    },
-  },
-})
 
 local on_attach = function(client, bufnr)
   local function buf_set_keymap(...)
@@ -55,6 +35,26 @@ local on_attach = function(client, bufnr)
   buf_set_keymap("n", "<space>q", "<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>", opts)
   buf_set_keymap("n", "<leader>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
 end
+local lspconfig = require("lspconfig")
+lspconfig.efm.setup({
+  filetypes = { "lua", "javascript", "python" },
+  on_attach = on_attach,
+  init_options = { documentFormatting = true },
+  settings = {
+    rootMarkers = { ".git/" },
+    languages = {
+      lua = { { formatCommand = "stylua --search-parent-directories -", formatStdin = true } },
+      python = {
+        {
+          formatCommand = "isort --stdout --profile black -",
+          formatStdin = true,
+        },
+        { formatCommand = "black --fast -", formatStdin = true },
+      },
+      javascript = { { formatCommand = "prettier", formatStdin = true } },
+    },
+  },
+})
 
 lspconfig.clangd.setup({
   on_attach = on_attach,
