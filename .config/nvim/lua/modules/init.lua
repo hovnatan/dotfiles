@@ -3,7 +3,6 @@ local function conf(name)
 end
 
 local plugins = {
-  { "wbthomason/packer.nvim" },
   { "tpope/vim-abolish" },
   { "tpope/vim-dispatch" },
   { "radenling/vim-dispatch-neovim" },
@@ -56,10 +55,12 @@ local plugins = {
     as = "hop",
     config = function()
       require("hop").setup({ keys = "etovxqpdygfblzhckisuran" })
+      nvim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", { noremap = true, silent = true})
     end,
   },
 }
 
+-- vim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", {})
 local install_path = vim.fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
 if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
   vim.fn.system({ "git", "clone", "--depth", "1", "https://github.com/wbthomason/packer.nvim", install_path })
