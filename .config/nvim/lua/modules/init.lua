@@ -24,7 +24,7 @@ local plugins = {
   { "zhimsel/vim-stay" },
   { "mbbill/undotree" },
   { "ntpeters/vim-better-whitespace" },
-  { "jpalardy/vim-slime", ft = { "python" } },
+  { "jpalardy/vim-slime", ft = { "python" }, config = conf("vim-slime") },
   { "hanschen/vim-ipython-cell", ft = { "python" } },
   { "wsdjeg/vim-fetch" },
   { "majutsushi/tagbar" },
