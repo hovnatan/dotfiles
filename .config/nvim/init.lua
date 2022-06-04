@@ -14,9 +14,10 @@ vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
 )
 vim.o.clipboard = "unnamed"
 
+vim.g.rooter_patterns = { ".git" }
+vim.g.rooter_silent_chdir = 1
+
 vim.cmd([==[
-runtime plugins/matchit.vim
-syntax on
 
 function! ToggleZoom(zoom, direction)
   if exists("t:restore_zoom") && (a:zoom == v:true || t:restore_zoom.win != winnr())
@@ -40,10 +41,6 @@ nnoremap <silent> <C-w>Z :call ToggleZoom(v:true, 'horiz')<CR>
 
 let g:DirDiffExcludes = "CVS,*.class,*.o,.git,build,.clangd"
 let g:DirDiffWindowSize = winheight(0)*2/3
-
-
-let g:rooter_patterns = ['.git']
-let g:rooter_silent_chdir = 1
 
 let g:SignatureMap = {
   \ 'Leader'             :  "m",
@@ -91,20 +88,10 @@ let g:slime_dont_ask_default = 1
 
 let g:ipython_cell_delimit_cells_by = 'tags'
 
-
-nnoremap <leader>gb :Gblame<CR>
-nnoremap <leader>gm :Gstatus<CR><C-w>T
-nnoremap <leader>gp :Gpush<CR>
-
 nnoremap <silent> <C-n> :set hlsearch!<CR>
 
 au FocusLost * silent! wa
 au BufLeave * silent! wa
-
-au BufNewFile,BufRead *.cu set filetype=cuda
-au BufNewFile,BufRead *.cu_inl set filetype=cuda
-au BufNewFile,BufRead *.cuh set filetype=cuda
-
 
 command! MakeTags !ctags -R .
 command! Nw noa w
@@ -375,9 +362,6 @@ nmap ,cl :let @+=join([@%,  line(".")], ':')<CR>
 nmap ,h /[^\d0-\d127]<CR>
 
 let g:python3_host_prog = expand('/opt/homebrew/bin/python3')
-
-" highlight link TSError Normal
-
 
 let g:vim_isort_config_overrides = { 'profile': 'black'}
 autocmd FileType c,cpp,java setlocal commentstring=//\ %s
