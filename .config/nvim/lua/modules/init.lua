@@ -34,6 +34,7 @@ local plugins = {
   { "nvim-lua/popup.nvim" },
   { "nvim-telescope/telescope.nvim", config = conf("telescope") },
   { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
+  { "lewis6991/gitsigns.nvim", config = conf("gitsigns") },
   { "hrsh7th/cmp-nvim-lsp" },
   { "hrsh7th/cmp-buffer" },
   { "hrsh7th/cmp-path" },
@@ -41,7 +42,7 @@ local plugins = {
   { "hrsh7th/cmp-vsnip" },
   { "hrsh7th/vim-vsnip" },
   { "andersevenrud/cmp-tmux" },
-  { "neovim/nvim-lspconfig" },
+  { "neovim/nvim-lspconfig", config=conf("lsp") },
   { "lakshayg/vim-bazel", ft = { "bzl" } },
   { "npxbr/gruvbox.nvim", requires = { "rktjmp/lush.nvim" } },
   -- use {'gennaro-tedesco/nvim-peekup'}
@@ -49,7 +50,6 @@ local plugins = {
   { "spywhere/lightline-lsp" },
   { "nvim-lua/plenary.nvim" },
   { "TimUntersberger/neogit" },
-  { "lewis6991/gitsigns.nvim" },
   {
     "phaazon/hop.nvim",
     as = "hop",
