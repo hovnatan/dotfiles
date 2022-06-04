@@ -6,7 +6,7 @@ require("core.autocmd")
 
 local file = io.open(os.getenv("HOME") .. "/.my_colors", "r")
 vim.o.background = file:read("*a")
-vim.cmd([[colorscheme gruvbox]])
+vim.cmd("colorscheme gruvbox")
 
 vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
   vim.lsp.diagnostic.on_publish_diagnostics,
@@ -279,12 +279,6 @@ if exists('$TMUX')
     autocmd BufEnter,BufNewFile,WinEnter * call system("tmux rename-window \"nvim " . expand("%") . "\"") |
   augroup END
 endif
-
-if !exists('g:lasttab')
-  let g:lasttab = 1
-endif
-nmap <space>T :exe "tabn ".g:lasttab<CR>
-au TabLeave * let g:lasttab = tabpagenr()
 
 nnoremap <expr> <space>v '`[' . strpart(getregtype(), 0, 1) . '`]'
 
