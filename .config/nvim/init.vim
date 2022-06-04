@@ -1,4 +1,3 @@
-lua require('plugins')
 lua require('config')
 
 runtime plugins/matchit.vim
