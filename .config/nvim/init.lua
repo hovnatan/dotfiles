@@ -197,9 +197,6 @@ let g:netrw_altfile = 1
 let g:netrw_liststyle = 1
 let g:netrw_maxfilenamelen = 50
 
-tnoremap <Esc> <C-\><C-n>
-tnoremap <C-v><Esc> <Esc>
-
 nnoremap <leader>T <C-w>T<CR>
 nnoremap <leader>t :tab split<CR>
 
