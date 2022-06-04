@@ -1,3 +1,5 @@
+return function() 
+local lspconfig = require("lspconfig")
 lspconfig.efm.setup({
   filetypes = { "lua", "javascript", "python" },
   on_attach = on_attach,
@@ -17,3 +19,5 @@ lspconfig.efm.setup({
     },
   },
 })
+
+end
