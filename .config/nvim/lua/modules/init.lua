@@ -55,7 +55,7 @@ local plugins = {
     as = "hop",
     config = function()
       require("hop").setup({ keys = "etovxqpdygfblzhckisuran" })
-      nvim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", { noremap = true, silent = true})
+      vim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", { noremap = true, silent = true})
     end,
   },
 }
