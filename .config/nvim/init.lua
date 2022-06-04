@@ -1,5 +1,20 @@
-lua require('config')
+require("core.utils")
+require("modules")
+require("core.options")
+require("core.keymaps")
+require("core.autocmd")
 
+local file = io.open(os.getenv("HOME") .. "/.my_colors", "r")
+vim.o.background = file:read("*a")
+vim.cmd([[colorscheme gruvbox]])
+
+vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+  vim.lsp.diagnostic.on_publish_diagnostics,
+  { virtual_text = false }
+)
+vim.o.clipboard = "unnamed"
+
+vim.cmd([==[
 runtime plugins/matchit.vim
 syntax on
 
@@ -366,3 +381,4 @@ let g:python3_host_prog = expand('/opt/homebrew/bin/python3')
 
 let g:vim_isort_config_overrides = { 'profile': 'black'}
 autocmd FileType c,cpp,java setlocal commentstring=//\ %s
+]==])
