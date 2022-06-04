@@ -76,16 +76,6 @@ let g:better_whitespace_filetypes_blacklist=['git', 'diff', 'gitcommit', 'unite'
 let g:better_whitespace_enabled=0
 let g:strip_whitespace_on_save=0
 
-let g:slime_no_mappings = 1
-xmap <c-c><c-c> <Plug>SlimeRegionSend
-nmap <c-c>v     <Plug>SlimeConfig
-let g:slime_target = 'tmux'
-" tmux target pane should be the last digit of $TMUX + :, e.g., 8:. Need
-" "default" not "default " as tmux server
-let g:slime_python_ipython = 1
-let g:slime_default_config = {"socket_name": "default", "target_pane": "{last}"}
-let g:slime_dont_ask_default = 1
-
 let g:ipython_cell_delimit_cells_by = 'tags'
 
 nnoremap <silent> <C-n> :set hlsearch!<CR>
