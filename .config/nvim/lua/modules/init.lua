@@ -38,11 +38,16 @@ local plugins = {
   { "hrsh7th/cmp-nvim-lsp" },
   { "hrsh7th/cmp-buffer" },
   { "hrsh7th/cmp-path" },
-  { "hrsh7th/nvim-cmp" },
-  { "hrsh7th/cmp-vsnip" },
-  { "hrsh7th/vim-vsnip" },
-  { "andersevenrud/cmp-tmux" },
-  { "neovim/nvim-lspconfig", config=conf("lsp") },
+  {
+    "hrsh7th/nvim-cmp",
+    config = conf("nvim-cmp"),
+    requires = {
+      { "hrsh7th/cmp-vsnip" },
+      { "hrsh7th/vim-vsnip" },
+      { "andersevenrud/cmp-tmux" },
+    },
+  },
+  { "neovim/nvim-lspconfig", config = conf("lsp") },
   { "lakshayg/vim-bazel", ft = { "bzl" } },
   { "npxbr/gruvbox.nvim", requires = { "rktjmp/lush.nvim" } },
   -- use {'gennaro-tedesco/nvim-peekup'}
@@ -55,7 +60,7 @@ local plugins = {
     as = "hop",
     config = function()
       require("hop").setup({ keys = "etovxqpdygfblzhckisuran" })
-      vim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", { noremap = true, silent = true})
+      vim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", { noremap = true, silent = true })
     end,
   },
 }
