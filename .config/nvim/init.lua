@@ -345,5 +345,4 @@ nmap ,h /[^\d0-\d127]<CR>
 let g:python3_host_prog = expand('/opt/homebrew/bin/python3')
 
 let g:vim_isort_config_overrides = { 'profile': 'black'}
-autocmd FileType c,cpp,java setlocal commentstring=//\ %s
 ]==])
