@@ -10,6 +10,13 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "c,cpp,java",
   callback = function()
-    vim.opt_local.commentstring = "// %s"
+    vim.bo.commentstring = "// %s"
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave" }, {
+  pattern = "*",
+  callback = function()
+    vim.cmd("wa")
   end,
 })

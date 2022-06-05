@@ -4,7 +4,12 @@ end
 
 local plugins = {
   { "tpope/vim-abolish" },
-  { "tpope/vim-dispatch" },
+  {
+    "tpope/vim-dispatch",
+    conifg = function()
+      vim.g.dispatch_no_maps = 1
+    end,
+  },
   { "radenling/vim-dispatch-neovim" },
   { "tpope/vim-commentary" },
   { "tpope/vim-unimpaired" },
@@ -13,24 +18,70 @@ local plugins = {
   { "tpope/vim-projectionist" },
   { "tpope/vim-vinegar" },
   { "tpope/vim-jdaddy", ft = { "json" } },
-  { "itchyny/lightline.vim" },
+  { "itchyny/lightline.vim", config = conf("lightline") },
   { "shinchu/lightline-gruvbox.vim" },
   { "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" },
-  { "nvim-treesitter/playground" },
   { "nvim-treesitter/nvim-treesitter-textobjects" },
   { "wellle/targets.vim" },
   { "michaeljsmith/vim-indent-object" },
   { "jeetsukumaran/vim-indentwise" },
   { "zhimsel/vim-stay" },
-  { "mbbill/undotree" },
-  { "ntpeters/vim-better-whitespace" },
+  { "mbbill/undotree", config = conf("undotree") },
   { "jpalardy/vim-slime", ft = { "python" }, config = conf("vim-slime") },
-  { "hanschen/vim-ipython-cell", ft = { "python" } },
+  {
+    "hanschen/vim-ipython-cell",
+    ft = { "python" },
+    config = conf("vim-ipython-cell"),
+  },
+
   { "wsdjeg/vim-fetch" },
-  { "majutsushi/tagbar" },
-  { "kshenoy/vim-signature" },
-  { "airblade/vim-rooter" },
-  { "will133/vim-dirdiff" },
+  {
+    "majutsushi/tagbar",
+    config = function()
+      vim.api.nvim_set_keymap("n", "<F8>", ":TagbarToggle<CR>", { noremap = true, silent = true })
+    end,
+  },
+  {
+    "kshenoy/vim-signature",
+    config = function()
+      vim.g.SignatureMap = {
+        Leader = "m",
+        PlaceNextMark = "m,",
+        ToggleMarkAtLine = "m.",
+        PurgeMarksAtLine = "m-",
+        DeleteMark = "dm",
+        PurgeMarks = "m<Space>",
+        PurgeMarkers = "m<BS>",
+        GotoNextLineAlpha = "",
+        GotoPrevLineAlpha = "",
+        GotoNextSpotAlpha = "",
+        GotoPrevSpotAlpha = "",
+        GotoNextLineByPos = "",
+        GotoPrevLineByPos = "",
+        GotoNextSpotByPos = "",
+        GotoPrevSpotByPos = "",
+        GotoNextMarker = "",
+        GotoPrevMarker = "",
+        GotoNextMarkerAny = "",
+        GotoPrevMarkerAny = "",
+        ListBufferMarks = "m/",
+        ListBufferMarkers = "m?",
+      }
+    end,
+  },
+  {
+    "airblade/vim-rooter",
+    config = function()
+      vim.g.rooter_patterns = { ".git" }
+      vim.g.rooter_silent_chdir = 1
+    end,
+  },
+  {
+    "will133/vim-dirdiff",
+    config = function()
+      vim.g.DirDiffExcludes = "CVS,*.class,*.o,.git,build,.clangd"
+    end,
+  },
   { "nvim-lua/popup.nvim" },
   { "nvim-telescope/telescope.nvim", config = conf("telescope") },
   { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
