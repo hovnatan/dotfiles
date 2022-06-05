@@ -20,3 +20,18 @@ vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave" }, {
     vim.cmd("wa")
   end,
 })
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown,text,rst,tex,latex",
+  callback = function()
+    vim.bo.textwidth = 80
+    vim.bo.spell = true
+  end,
+})
+
+vim.api.nvim_create_autocmd("BufWritePost", {
+  pattern = "*.sh",
+  callback = function()
+    vim.cmd("!chmod +x %:p")
+  end,
+})
