@@ -6,6 +6,7 @@ require("core.autocmd")
 
 local file = io.open(os.getenv("HOME") .. "/.my_colors", "r")
 vim.o.background = file:read("*a")
+file:close()
 vim.cmd("colorscheme gruvbox")
 
 vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
@@ -28,32 +29,3 @@ vim.g.netrw_maxfilenamelen = 50
 
 vim.o.spelllang = en_us
 vim.o.spellfile = "~/Dropbox/scripts/nvim/spell/en.utf-8.add"
-
-vim.cmd([==[
-
-" file is large from 10mb
-let g:LargeFile = 1024 * 1024 * 100
-augroup LargeFile
-  au!
-  autocmd BufReadPre * let f=getfsize(expand("<afile>")) | if f > g:LargeFile || f == -2 | call LargeFile() | endif
-augroup END
-
-function! LargeFile()
- " save memory when other file is viewed
- setlocal bufhidden=unload
- " is read-only (write with :w new_filename)
- setlocal buftype=nowrite
- " no undo possible
- setlocal undolevels=-1
- " display message
- set noloadplugins
-
- set lazyredraw
- set noswapfile
- set eventignore=all
- set nohidden
- set syntax=off
- autocmd VimEnter *  echo "The file is larger than " . (g:LargeFile / 1024 / 1024) . " MB, so some options are changed (see .vimrc for details)."
-endfunction
-
-]==])
