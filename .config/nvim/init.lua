@@ -15,7 +15,7 @@ vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
 )
 vim.o.clipboard = "unnamed"
 
-vim.g.python3_host_prog = "/opt/homebrew/bin/python3"
+vim.g.python3_host_prog = "python3"
 
 vim.g.netrw_banner = 0
 vim.g.netrw_winsize = 20
