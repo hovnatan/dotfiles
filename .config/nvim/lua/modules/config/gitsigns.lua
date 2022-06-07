@@ -1,4 +1,4 @@
-return function() 
+return function()
   local gitsigns = safe_require("gitsigns")
 
   gitsigns.setup({
