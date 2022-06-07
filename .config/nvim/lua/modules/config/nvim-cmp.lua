@@ -29,10 +29,16 @@ return function()
           end,
         },
       },
-      { name = "tmux", option = { all_panes = true, label = "[tmux]" } },
+      { name = "tmux", option = { all_panes = true } },
     },
     view = {
       entries = { name = "custom", selection_order = "near_cursor" },
+    },
+    formatting = {
+      format = function(entry, vim_item)
+        vim_item.menu = entry.source.name
+        return vim_item
+      end,
     },
   })
 end
