@@ -19,6 +19,7 @@ return function()
       ["<Tab>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "s" }),
     },
     sources = {
+      { name = "path" },
       { name = "nvim_lsp" },
       {
         name = "buffer",
@@ -28,8 +29,10 @@ return function()
           end,
         },
       },
-      { name = "path" },
       { name = "tmux", option = { all_panes = true, label = "[tmux]" } },
+    },
+    view = {
+      entries = { name = "custom", selection_order = "near_cursor" },
     },
   })
 end
