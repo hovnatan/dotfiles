@@ -9,4 +9,4 @@ else
   session=$1
 fi
 
-tmux new-session -As ${session}
+tmux new-session -As ${session} -n nvim
