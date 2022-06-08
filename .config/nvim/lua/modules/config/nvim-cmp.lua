@@ -19,17 +19,18 @@ return function()
       ["<Tab>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "s" }),
     },
     sources = {
-      { name = "path" },
-      { name = "nvim_lsp" },
+      { name = "path", max_item_count = 2 },
+      { name = "nvim_lsp", max_item_count = 15 },
       {
         name = "buffer",
+        max_item_count = 2,
         option = {
           get_bufnrs = function()
             return vim.api.nvim_list_bufs()
           end,
         },
       },
-      { name = "tmux", option = { all_panes = true } },
+      { name = "tmux", max_item_count = 2, option = { all_panes = true } },
     },
     view = {
       entries = { name = "custom", selection_order = "near_cursor" },
