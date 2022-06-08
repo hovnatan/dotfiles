@@ -15,7 +15,7 @@ export REVIEW_BASE=master
 export PATH="`python3 -m site --user-base`/bin:$PATH"
 
 export PATH="$HOME/opt/usr/bin:$PATH"
-. "$HOME/.cargo/env"
+export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/go/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.dotfiles/bin:$PATH"
