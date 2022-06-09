@@ -1,12 +1,12 @@
 #!/bin/bash
 
-if [ -z $1 ]; then
-  session=$(tmux list-sessions | head -n 1 | cut -d: -f1)
-  if [ -z $session ]; then
-    session="default"
-  fi
-else
-  session=$1
+if [ -z $1 ]; then 
+  exit 1
 fi
 
-tmux new-session -As ${session} -n nvim
+if ! tmux has-session -t "$1" 2>/dev/null; then
+  tmux new-session -d -s "$1" -n nvim
+  tmux new-window -n cmd1 -t "$1"
+  tmux new-window -n r1 -t "$1"
+fi
+tmux attach-session -t "$1"
