@@ -1,7 +1,8 @@
 #!/bin/bash
 
 if [ -z $1 ]; then 
-  exit 1
+  tmux list-sessions
+  exit 0
 fi
 
 if ! tmux has-session -t "$1" 2>/dev/null; then
