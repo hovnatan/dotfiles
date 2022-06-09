@@ -1,5 +1,5 @@
-function import_miniconda
-  eval $HOME/miniconda3/bin/conda "shell.fish" "hook" | source
+function import_miniforge
+  eval $HOME/miniforge3/bin/conda "shell.fish" "hook" | source
   # eval ~/miniconda3/bin/conda "shell.fish" "hook" | source
   # replay source ~/miniconda3/etc/conda/activate.d/activate-gcc_linux-64.sh
   # replay source ~/miniconda3/etc/conda/activate.d/activate-gxx_linux-64.sh
