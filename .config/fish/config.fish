@@ -105,6 +105,7 @@ abbr rfc "source ~/.config/fish/config.fish"
 abbr ... "../.."
 abbr .... "../../.."
 abbr pd "python3 -m ipdb -c continue"
+abbr pip_update_outdated "pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U"
 
 # set -gx HOMEBREW_PREFIX "/home/linuxbrew/.linuxbrew";
 # set -gx HOMEBREW_CELLAR "/home/linuxbrew/.linuxbrew/Cellar";
