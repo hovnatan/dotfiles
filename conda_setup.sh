@@ -3,15 +3,15 @@
 set -e
 
 cd ~/Downloads
-rm -rf ~/miniforge3
+rm -rf ~/miniconda3
 
 FILENAME="Miniforge3-MacOSX-x86_64.sh"
 
 rm -rf "$FILENAME"
-wget "https://github.com/conda-forge/miniforge/releases/latest/download/$FILENAME"
+wget "https://repo.anaconda.com/miniconda/$FILENAME"
 bash ./$FILENAME -b
 
-source ~/miniforge3/etc/profile.d/conda.sh
+source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 
 # conda install -y mamba -n base -c conda-forge
