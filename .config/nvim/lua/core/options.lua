@@ -56,9 +56,32 @@ vim.opt.colorcolumn = "80"
 vim.opt.backup = false
 vim.opt.writebackup = false
 vim.opt.cmdheight = 1
-vim.opt.signcolumn = "yes"
+vim.opt.signcolumn = "auto:1-3"
 vim.opt.conceallevel = 1
 vim.opt.fixendofline = false
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = [[nvim_treesitter#foldexpr()]]
 vim.opt.completeopt = "menuone,noselect"
+
+local file = io.open(os.getenv("HOME") .. "/.my_colors", "r")
+vim.o.background = file:read("*a")
+file:close()
+vim.cmd("colorscheme gruvbox")
+
+vim.o.clipboard = "unnamed"
+
+vim.g.python3_host_prog = "python3"
+
+vim.g.netrw_banner = 0
+vim.g.netrw_winsize = 20
+vim.g.netrw_altv = 1
+vim.g.netrw_cursor = 1
+vim.g.netrw_browsex_viewer = "open"
+vim.g.netrw_fastbrowse = 0
+vim.g.netrw_altfile = 1
+vim.g.netrw_liststyle = 1
+vim.g.netrw_maxfilenamelen = 50
+
+vim.o.spelllang = en_us
+vim.o.spellfile = "~/Dropbox/scripts/nvim/spell/en.utf-8.add"
+
