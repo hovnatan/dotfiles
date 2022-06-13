@@ -134,9 +134,10 @@ handle_mime() {
             highlight --replace-tabs="${HIGHLIGHT_TABWIDTH}" --out-format="${highlight_format}" \
                 --config-file="${HIGHLIGHT_STYLE}" --force -- "${FILE_PATH}" && exit 5
             exit 2;;
-
-        # Video, audio and image
-        video/* | audio/* | image/*)
+        image/*)
+            timg -g "${PV_WIDTH}"x"${PV_HEIGHT}" --color8 -a "${FILE_PATH}" && exit 5
+            exit 2;;
+        video/* | audio/*)
             mediainfo "${FILE_PATH}" && exit 5
             exit 1;;
     esac
@@ -170,9 +171,6 @@ fi
 
 MIMETYPE="$( file --dereference --brief --mime-type -- "${FILE_PATH}" )"
 
-if [[ "${PV_IMAGE_ENABLED}" == 'True' ]]; then
-    handle_image "${MIMETYPE}"
-fi
 handle_extension
 handle_mime "${MIMETYPE}"
 handle_fallback
