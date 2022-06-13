@@ -40,60 +40,71 @@ return function()
     buf_set_keymap("n", "<leader>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
   end
 
-  local lspconfig = require("lspconfig")
-  lspconfig.efm.setup({
-    filetypes = { "lua", "javascript", "python" },
-    on_attach = on_attach,
-    init_options = { documentFormatting = true },
-    settings = {
-      rootMarkers = { ".git/" },
-      languages = {
-        lua = { { formatCommand = "stylua --search-parent-directories -", formatStdin = true } },
-        python = {
-          {
-            formatCommand = "isort --stdout --profile black -",
-            formatStdin = true,
-          },
-          { formatCommand = "black --fast -", formatStdin = true },
-        },
-        javascript = { { formatCommand = "prettier", formatStdin = true } },
-      },
-    },
-  })
+  local capabilities = vim.lsp.protocol.make_client_capabilities()
+  capabilities.textDocument.completion.completionItem.snippetSupport = true
+  local cmp_nvim_lsp = safe_require("cmp_nvim_lsp")
+  if cmp_nvim_lsp then
+    capabilities = cmp_nvim_lsp.update_capabilities(capabilities)
+  end
 
-  lspconfig.clangd.setup({
-    on_attach = on_attach,
-    flags = { debounce_text_changes = 150 },
-    init_options = { clangdFileStatus = true },
-    cmd = {
-      "/opt/homebrew/opt/llvm/bin/clangd",
-      "--compile-commands-dir=.",
-      "--background-index",
-      "--clang-tidy",
-      "--completion-parse=always",
-      "--completion-style=detailed",
-      "--function-arg-placeholders",
-      "--header-insertion-decorators",
-      "--header-insertion=never",
-      "--cross-file-rename",
-      "--limit-results=0",
-      "-j=4",
-      "--pch-storage=memory",
-    },
-    capabilities = require("cmp_nvim_lsp").update_capabilities(vim.lsp.protocol.make_client_capabilities()),
-  })
-  lspconfig.pyright.setup({
-    on_attach = on_attach,
-    flags = { debounce_text_changes = 150 },
-    capabilities = require("cmp_nvim_lsp").update_capabilities(vim.lsp.protocol.make_client_capabilities()),
-    settings = {
-      python = {
-        analysis = {
-          autoSearchPaths = true,
-          stubPath = os.getenv("HOME") .. "/work/stubs",
+  local servers_config = {
+    efm = {
+      filetypes = { "lua", "javascript", "python" },
+      init_options = { documentFormatting = true },
+      settings = {
+        rootMarkers = { ".git/" },
+        languages = {
+          lua = { { formatCommand = "stylua --search-parent-directories -", formatStdin = true } },
+          python = {
+            {
+              formatCommand = "isort --stdout --profile black -",
+              formatStdin = true,
+            },
+            { formatCommand = "black --fast -", formatStdin = true },
+          },
+          javascript = { { formatCommand = "prettier", formatStdin = true } },
         },
       },
     },
-  })
-  lspconfig.jsonls.setup({ on_attach = on_attach })
+    clangd = {
+      flags = { debounce_text_changes = 150 },
+      init_options = { clangdFileStatus = true },
+      cmd = {
+        "/opt/homebrew/opt/llvm/bin/clangd",
+        "--compile-commands-dir=.",
+        "--background-index",
+        "--clang-tidy",
+        "--completion-parse=always",
+        "--completion-style=detailed",
+        "--function-arg-placeholders",
+        "--header-insertion-decorators",
+        "--header-insertion=never",
+        "--cross-file-rename",
+        "--limit-results=0",
+        "-j=4",
+        "--pch-storage=memory",
+      },
+    },
+    pyright = {
+      flags = { debounce_text_changes = 150 },
+      settings = {
+        python = {
+          analysis = {
+            autoSearchPaths = true,
+            stubPath = os.getenv("HOME") .. "/work/stubs",
+          },
+        },
+      },
+    },
+  }
+
+  local servers = { "clangd", "pyright", "efm", "jsonls" }
+
+  local lspconfig = require("lspconfig")
+  for _, name in pairs(servers) do
+    local config = servers_config[name] or {}
+    config.capabilities = capabilities
+    config.on_attach = on_attach
+    lspconfig[name].setup(config)
+  end
 end
