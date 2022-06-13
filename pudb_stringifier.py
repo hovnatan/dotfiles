@@ -23,12 +23,14 @@ THE SOFTWARE.
 
 try:
     import numpy
+
     HAVE_NUMPY = 1
 except ImportError:
     HAVE_NUMPY = 0
 
 try:
     import torch
+
     HAVE_PYTORCH = 1
 except ImportError:
     HAVE_PYTORCH = 0
@@ -51,7 +53,7 @@ def get_str_safe_types():
         "LambdaType MemberDescriptorType MethodType ModuleType "
         "SliceType TypeType TracebackType UnboundMethodType XRangeType".split()
         if hasattr(types, s)
-    ) + (WatchEvalError, )
+    ) + (WatchEvalError,)
 
 
 STR_SAFE_TYPES = get_str_safe_types()
@@ -74,7 +76,7 @@ def pudb_stringifier(value):
 
     elif isinstance(value, STR_SAFE_TYPES):
         try:
-            return (value)
+            return value
         except Exception:
             pass
 
