@@ -5,7 +5,7 @@ set -e
 cd ~/Downloads
 rm -rf ~/miniconda3
 
-FILENAME="Miniforge3-MacOSX-x86_64.sh"
+FILENAME="Miniconda3-latest-Linux-x86_64.sh"
 
 rm -rf "$FILENAME"
 wget "https://repo.anaconda.com/miniconda/$FILENAME"
@@ -16,7 +16,7 @@ conda activate
 
 # conda install -y mamba -n base -c conda-forge
 
-pip install torch torchvision mediapipe
+# pip install torch torchvision mediapipe
 # conda install -y scikit-image kornia opencv
 # conda install -y jupyterlab black pylint jedi
 # conda install -y pillow boost matplotlib scipy conda-build Cython sympy pandas shapely scikit-image pycairo cvxpy cvxopt scikit-learn
