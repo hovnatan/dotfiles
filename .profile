@@ -80,3 +80,5 @@ import_miniconda() {
   unset __conda_setup
   # <<< conda initialize <<<
 }
+
+export MY_IP=$("$HOME/.dotfiles/bin/get_my_ip.sh")
