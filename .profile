@@ -81,4 +81,8 @@ import_miniconda() {
   # <<< conda initialize <<<
 }
 
-export MY_IP=$("$HOME/.dotfiles/bin/get_my_ip.sh")
+if [ -f "${SSH_CONNECTION}" ]; then
+  export MY_IP=$("$HOME/.dotfiles/bin/get_my_ip.sh")
+else
+  export MY_IP="127.0.0.1"
+fi
