@@ -1,11 +1,6 @@
 function fish_prompt --description 'Write out the prompt'
 	set -l last_status $status
 
-	# Just calculate this once, to save a few cycles when displaying the prompt
-	if not set -q __fish_prompt_hostname
-		set -g __fish_prompt_hostname (hostname|cut -d . -f 1)
-	end
-
 	set -l normal (set_color normal)
 
 	# Hack; fish_config only copies the fish_prompt function (see #736)
@@ -65,36 +60,15 @@ function fish_prompt --description 'Write out the prompt'
 		set prompt_status ' ' (set_color $fish_color_status) "[$last_status]" "$normal"
 	end
 
-	set -l mode_str
-	switch "$fish_key_bindings"
-	case '*_vi_*' '*_vi'
-		# possibly fish_vi_key_bindings, or custom key bindings
-		# that includes the name "vi"
-		set mode_str (
-			echo -n " "
-			switch $fish_bind_mode
-			case default
-				set_color --bold --background red white
-				echo -n "[N]"
-			case insert
-				set_color --bold green
-				echo -n "[I]"
-			case visual
-				set_color --bold magenta
-				echo -n "[V]"
-			end
-			set_color normal
-		)
-	end
-    set -l usr $USER
-    set -l hstnm  $__fish_prompt_hostname
+    # set -l usr $USER
+    # set -l hstnm  $__fish_prompt_hostname
     set -l prpwd (prompt_pwd)
     set -l gitpr (__fish_git_prompt)
-	set -l part1 (echo -e "$usr@$hstnm $prpwd   %")
-	echo -n -s (set_color -b $fish_color_prompt_bg) "$usr" @ "$hstnm" $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
-    set -l lpart1 (string length $part1)
-    if [ (expr $COLUMNS - $lpart1) -lt 50 ]
-        echo 
-    end
+	  # set -l part1 (echo -e "$usr@$hstnm $prpwd   %")
+    echo -n -s (set_color -b $fish_color_prompt_bg) (date +%H:%M) $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
+    # set -l lpart1 (string length $part1)
+    # if [ (expr $COLUMNS - $lpart1) -lt 50 ]
+    #     echo 
+    # end
     echo -n "% "
 end
