@@ -45,6 +45,10 @@ sudo nvim /etc/sysctl.d/10-ptrace.conf
 wget https://github.com/neovim/neovim/releases/download/v0.7.0/nvim.appimage -O ~/.dotfiles/bin/nvim
 chmod +x ~/.dotfiles/bin/nvim
 
+cd ~/Downloads
+wget https://github.com/sharkdp/bat/releases/download/v0.21.0/bat_0.21.0_amd64.deb
+sudo dpkg -i bat_0.21.0_amd64.deb
+
 export GO111MODULE=on
 go install github.com/mattn/efm-langserver
 cargo install exa
