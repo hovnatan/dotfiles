@@ -1,5 +1,6 @@
 return function()
   local cmp = safe_require("cmp")
+  -- vim.g.vsnip_filetypes = { "python" }
   cmp.setup({
     snippet = {
       -- REQUIRED - you must specify a snippet engine
@@ -19,18 +20,19 @@ return function()
       ["<Tab>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "s" }),
     },
     sources = {
-      { name = "path", max_item_count = 2 },
+      { name = "vsnip", max_item_count = 5 },
+      { name = "path", max_item_count = 5 },
       { name = "nvim_lsp", max_item_count = 15 },
       {
         name = "buffer",
-        max_item_count = 2,
+        max_item_count = 5,
         option = {
           get_bufnrs = function()
             return vim.api.nvim_list_bufs()
           end,
         },
       },
-      { name = "tmux", max_item_count = 2, option = { all_panes = true } },
+      { name = "tmux", max_item_count = 5, option = { all_panes = true } },
     },
     view = {
       entries = { name = "custom", selection_order = "near_cursor" },

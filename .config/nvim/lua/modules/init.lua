@@ -95,6 +95,8 @@ local plugins = {
     requires = {
       { "hrsh7th/cmp-vsnip" },
       { "hrsh7th/vim-vsnip" },
+      { "hrsh7th/vim-vsnip-integ" },
+      { "rafamadriz/friendly-snippets" },
       { "andersevenrud/cmp-tmux" },
     },
   },
