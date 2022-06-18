@@ -13,7 +13,7 @@ sudo add-apt-repository restricted
 sudo apt-get update
 sudo apt-get -y dist-upgrade
 
-sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear ppa-purge valgrind curl neovim htop octave libfreetype6-dev libfontconfig1-dev libxext-dev libxcb-render-util0-dev libxcb-shape0-dev libxcb-xfixes0-dev build-essential libxft-dev net-tools sshfs cmake rustc cargo aria2 mediainfo xdg-utils wmctrl awscli docker.io default-jre universal-ctags gcc-10 g++-10 aptitude pandoc poppler-utils ffmpeg git-lfs ripgrep libfuse2 bat ubuntu-drivers-common nodejs npm unzip
+sudo apt-get install -y software-properties-common jq feh w3m-img tmux fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear ppa-purge valgrind curl neovim htop octave libfreetype6-dev libfontconfig1-dev libxext-dev libxcb-render-util0-dev libxcb-shape0-dev libxcb-xfixes0-dev build-essential libxft-dev net-tools sshfs cmake rustc cargo aria2 mediainfo xdg-utils wmctrl awscli docker.io default-jre universal-ctags gcc-10 g++-10 aptitude pandoc poppler-utils ffmpeg git-lfs ripgrep libfuse2 bat ubuntu-drivers-common nodejs npm unzip golang-go
 
 sudo apt-get install -y xrdp remmina 
 cargo install exa
@@ -39,3 +39,5 @@ sudo nvim /etc/sysctl.d/10-ptrace.conf
 # sudo ubuntu-drivers autoinstall
 wget https://github.com/neovim/neovim/releases/download/v0.7.0/nvim.appimage -O ~/.dotfiles/bin/nvim
 chmod +x ~/.dotfiles/bin/nvim
+
+go install github.com/mattn/efm-langserver@latest
