@@ -39,5 +39,3 @@ sudo nvim /etc/sysctl.d/10-ptrace.conf
 # sudo ubuntu-drivers autoinstall
 wget https://github.com/neovim/neovim/releases/download/v0.7.0/nvim.appimage -O ~/.dotfiles/bin/nvim
 chmod +x ~/.dotfiles/bin/nvim
-
-sudo npm i -g pyright
