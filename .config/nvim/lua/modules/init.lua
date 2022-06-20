@@ -87,6 +87,7 @@ local plugins = {
   { "nvim-lua/popup.nvim" },
   { "nvim-telescope/telescope.nvim", config = conf("telescope") },
   { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
+  { "liuchengxu/vista.vim" },
   { "lewis6991/gitsigns.nvim", config = conf("gitsigns") },
   { "hrsh7th/cmp-nvim-lsp" },
   { "hrsh7th/cmp-buffer" },
@@ -126,6 +127,8 @@ if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
   vim.fn.system({ "git", "clone", "--depth", "1", "https://github.com/wbthomason/packer.nvim", install_path })
   vim.cmd("packadd packer.nvim")
 end
+
+vim.g.vista_default_executive = "nvim_lsp"
 
 local packer = safe_require("packer")
 if packer then
