@@ -20,8 +20,16 @@ local plugins = {
   { "tpope/vim-jdaddy", ft = { "json" } },
   { "itchyny/lightline.vim", config = conf("lightline") },
   { "shinchu/lightline-gruvbox.vim" },
-  { "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" },
+  {
+    "nvim-treesitter/nvim-treesitter",
+    run = ":TSUpdate",
+    config = conf("nvim-treesitter"),
+  },
   { "nvim-treesitter/nvim-treesitter-textobjects" },
+  {
+    "nvim-treesitter/nvim-treesitter-context",
+    config = conf("nvim-treesitter-context"),
+  },
   { "wellle/targets.vim" },
   { "michaeljsmith/vim-indent-object" },
   { "jeetsukumaran/vim-indentwise" },
@@ -35,12 +43,6 @@ local plugins = {
   },
 
   { "wsdjeg/vim-fetch" },
-  {
-    "majutsushi/tagbar",
-    config = function()
-      vim.api.nvim_set_keymap("n", "<F8>", ":TagbarToggle<CR>", { noremap = true, silent = true })
-    end,
-  },
   {
     "kshenoy/vim-signature",
     config = function()
