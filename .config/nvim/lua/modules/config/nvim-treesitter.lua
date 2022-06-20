@@ -1,6 +1,6 @@
 return function()
   require("nvim-treesitter.configs").setup({
-    ensure_installed = { "c", "cpp", "python", "lua", "json", "yaml" },
+    ensure_installed = { "c", "cpp", "python", "lua", "json", "yaml", "cmake", "bash", "fish" },
     highlight = { enable = true },
     indent = { enable = true },
     incremental_selection = {
