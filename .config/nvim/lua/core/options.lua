@@ -57,7 +57,7 @@ vim.opt.backup = false
 vim.opt.writebackup = false
 vim.opt.cmdheight = 1
 vim.opt.signcolumn = "yes:1"
-vim.opt.conceallevel = 1
+vim.opt.conceallevel = 0
 vim.opt.fixendofline = false
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = [[nvim_treesitter#foldexpr()]]
@@ -84,4 +84,3 @@ vim.g.netrw_maxfilenamelen = 50
 
 vim.o.spelllang = en_us
 vim.o.spellfile = "~/Dropbox/scripts/nvim/spell/en.utf-8.add"
-
