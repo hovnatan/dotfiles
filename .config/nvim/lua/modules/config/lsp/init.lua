@@ -47,7 +47,7 @@ return function()
         python = {
           analysis = {
             autoSearchPaths = true,
-            stubPath = os.getenv("HOME") .. "/work/stubs",
+            stubPath = os.getenv("HOME") .. "/.dotfiles/python/stubs",
           },
         },
       },
