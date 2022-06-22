@@ -125,6 +125,12 @@ return function()
   )
   vim.api.nvim_set_keymap(
     "n",
+    "<space>j",
+    "<cmd>lua require('telescope.builtin').jumplist()<cr>",
+    { noremap = true, silent = true }
+  )
+  vim.api.nvim_set_keymap(
+    "n",
     "<space>r",
     "<cmd>lua require('telescope.builtin').registers()<cr>",
     { noremap = true, silent = true }
