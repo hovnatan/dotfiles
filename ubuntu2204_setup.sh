@@ -19,7 +19,7 @@ if [[ "$WSL_DISTRO_NAME" ]]; then
 fi
 
 sudo apt-get install -y xrdp remmina 
-cargo install exa
+cargo install exa stylua
 
 # sudo apt-get install -y texlive-latex-recommended texlive-pictures texlive-latex-extra latexmk
 # sudo apt-get install chrome-gnome-shell zathura xrdp fonts-croscore kitty
