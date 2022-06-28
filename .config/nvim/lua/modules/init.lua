@@ -112,7 +112,6 @@ local plugins = {
   { "npxbr/gruvbox.nvim", requires = { "rktjmp/lush.nvim" } },
   -- use {'gennaro-tedesco/nvim-peekup'}
   -- use {'morhetz/gruvbox'}
-  { "spywhere/lightline-lsp" },
   { "nvim-lua/plenary.nvim" },
   { "TimUntersberger/neogit" },
   {
