@@ -5,7 +5,7 @@ set -U Z_CMD "j"
 set -U FZF_LEGACY_KEYBINDINGS 0
 set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
 # set -U FZF_COMPLETE 0
-set -U FZF_FIND_FILE_COMMAND "fd -IHp --ignore-file ~/.config/fd/ignore . \$dir"
+set -U FZF_FIND_FILE_COMMAND "fdfind -IHp --ignore-file ~/.config/fd/ignore . \$dir"
 set -U FZF_DEFAULT_COMMAND $FZF_FIND_FILE_COMMAND
 set -x EDITOR nvim
 
