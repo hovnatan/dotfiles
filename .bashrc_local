@@ -1,2 +1,4 @@
 alias ta="tmux_attach.sh"
 alias f="fish"
+
+fish
