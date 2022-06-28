@@ -89,6 +89,7 @@ mouse:
 
 key_bindings:
   - { key: S,        mods: Control|Shift,       action: PasteSelection }
+  - { key: N,        mods: Control|Shift,       action: CreateNewWindow }
 
 selection:
   save_to_clipboard: true
