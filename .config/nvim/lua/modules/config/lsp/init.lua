@@ -29,7 +29,7 @@ return function()
       flags = { debounce_text_changes = 150 },
       init_options = { clangdFileStatus = true },
       cmd = {
-        "/opt/homebrew/opt/llvm/bin/clangd",
+        "clangd",
         "--compile-commands-dir=.",
         "--background-index",
         "--clang-tidy",
