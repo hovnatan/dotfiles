@@ -18,8 +18,6 @@ local plugins = {
   { "tpope/vim-projectionist" },
   { "tpope/vim-vinegar" },
   { "tpope/vim-jdaddy", ft = { "json" } },
-  { "itchyny/lightline.vim", config = conf("lightline") },
-  { "shinchu/lightline-gruvbox.vim" },
   {
     "nvim-treesitter/nvim-treesitter",
     run = ":TSUpdate",
@@ -124,6 +122,10 @@ local plugins = {
       require("hop").setup({ keys = "etovxqpdygfblzhckisuran" })
       vim.api.nvim_set_keymap("n", "f", "<cmd>lua require'hop'.hint_words()<cr>", { noremap = true, silent = true })
     end,
+  },
+  {
+    "nvim-lualine/lualine.nvim",
+    requires = { "kyazdani42/nvim-web-devicons", opt = true, config = conf("lualine") },
   },
 }
 
