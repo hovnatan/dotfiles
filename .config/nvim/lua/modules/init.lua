@@ -125,7 +125,6 @@ local plugins = {
   {
     "nvim-lualine/lualine.nvim",
     config = conf("lualine"),
-    requires = { "kyazdani42/nvim-web-devicons", opt = true },
   },
 }
 
