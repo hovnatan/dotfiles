@@ -96,19 +96,18 @@ local plugins = {
   {
     "hrsh7th/nvim-cmp",
     config = conf("nvim-cmp"),
-    wants = { "LuaSnip" },
     requires = {
       { "hrsh7th/cmp-nvim-lsp" },
       { "hrsh7th/cmp-buffer" },
       { "hrsh7th/cmp-path" },
       { "andersevenrud/cmp-tmux" },
-      { "saadparwaiz1/cmp_luasnip" },
-      {
-        "L3MON4D3/LuaSnip",
-        wants = "friendly-snippets",
-        config = conf("luasnip"),
-      },
-      "rafamadriz/friendly-snippets",
+      -- { "saadparwaiz1/cmp_luasnip" },
+      -- {
+      --   "L3MON4D3/LuaSnip",
+      --   wants = "friendly-snippets",
+      --   config = conf("luasnip"),
+      -- },
+      -- "rafamadriz/friendly-snippets",
     },
   },
   { "neovim/nvim-lspconfig", config = conf("lsp") },
