@@ -130,3 +130,6 @@ ln -sf ~/.dotfiles/.npmrc ~/.npmrc
 ln -sf ~/.dotfiles/.config/karabiner/ ~/.config/
 
 ln -sf ~/.dotfiles/.config/kitty/ ~/.config/
+
+npm i -g prettier
+
