@@ -1,6 +1,5 @@
 return function()
   local cmp = safe_require("cmp")
-  -- vim.g.vsnip_filetypes = { "python" }
   cmp.setup({
     snippet = {
       -- REQUIRED - you must specify a snippet engine
@@ -51,7 +50,7 @@ return function()
       }),
     },
     sources = {
-      { name = "luasnip", max_item_count = 5 },
+      -- { name = "luasnip", max_item_count = 5 },
       { name = "path", max_item_count = 5 },
       { name = "nvim_lsp", max_item_count = 15 },
       {
