@@ -57,3 +57,9 @@ vim.api.nvim_create_autocmd("BufReadPre", {
     end
   end,
 })
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  pattern = "*.gyp",
+  callback = function()
+    vim.bo.filetype = "json"
+  end,
+})
