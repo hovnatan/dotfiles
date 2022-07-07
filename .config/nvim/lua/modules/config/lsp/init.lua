@@ -1,7 +1,7 @@
 return function()
   local handlers = require("modules.config.lsp.handlers")
   handlers.setup()
-  handlers.enable_format_on_save()
+  -- handlers.enable_format_on_save()
 
   local servers_config = {
     efm = {
