@@ -5,7 +5,7 @@ return function()
 
   local servers_config = {
     efm = {
-      filetypes = { "lua", "python", "javascript", "html", "markdown" },
+      filetypes = { "lua", "python", "javascript", "typescript", "html", "markdown" },
       init_options = { documentFormatting = true },
       settings = {
         rootMarkers = { ".git/" },
@@ -19,6 +19,7 @@ return function()
             { formatCommand = "black --fast -", formatStdin = true },
           },
           javascript = { { formatCommand = "prettier --stdin-filepath .js", formatStdin = true } },
+          typescript = { { formatCommand = "prettier --stdin-filepath .ts", formatStdin = true } },
           html = { { formatCommand = "prettier --stdin-filepath .html", formatStdin = true } },
           markdown = { { formatCommand = "prettier --stdin-filepath .md", formatStdin = true } },
         },
