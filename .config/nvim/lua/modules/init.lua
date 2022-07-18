@@ -129,6 +129,14 @@ local plugins = {
     "nvim-lualine/lualine.nvim",
     config = conf("lualine"),
   },
+  {
+    "AckslD/nvim-neoclip.lua",
+    requires = {
+      { "nvim-telescope/telescope.nvim" },
+      { "kkharji/sqlite.lua", module = "sqlite" },
+    },
+    config = conf("neoclip"),
+  },
 }
 
 -- vim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", {})
