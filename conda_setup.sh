@@ -5,7 +5,15 @@ set -e
 cd ~/Downloads
 rm -rf ~/miniconda3
 
-FILENAME="Miniconda3-latest-Linux-x86_64.sh"
+if [ "$(uname)" == "Darwin" ]; then
+  FILENAME="Miniconda3-latest-MacOSX-x86_64.sh"
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+  FILENAME="Miniconda3-latest-Linux-x86_64.sh"
+elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
+    # Do something under 32 bits Windows NT platform
+elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]; then
+    # Do something under 64 bits Windows NT platform
+fi
 
 rm -rf "$FILENAME"
 wget "https://repo.anaconda.com/miniconda/$FILENAME"
@@ -14,7 +22,7 @@ bash ./$FILENAME -b
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate
 
-# conda install -y mamba -n base -c conda-forge
+conda install conda-libmamba-solver
 
 # pip install torch torchvision mediapipe
 # conda install -y scikit-image kornia opencv
