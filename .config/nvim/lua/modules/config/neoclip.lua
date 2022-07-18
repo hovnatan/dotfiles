@@ -14,7 +14,21 @@ return function()
   require("neoclip").setup({
     enable_persistent_history = true,
     filter = function(data)
-      return not all(data.event.regcontents, is_whitespace)
+      whitespace = not all(data.event.regcontents, is_whitespace)
+      if not whitespace then
+        return false
+      end
+      local count = 0
+      for _, entry in ipairs(data.event.regcontents) do
+        if count > 0 then
+          return true
+        end
+        if string.len(entry) > 1 then
+          return true
+        end
+        count = count + 1
+      end
+      return false
     end,
     on_paste = {
       set_reg = true,
