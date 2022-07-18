@@ -68,8 +68,6 @@ vim.o.background = file:read("*a")
 file:close()
 vim.cmd("colorscheme gruvbox")
 
-vim.o.clipboard = "unnamed"
-
 vim.g.python3_host_prog = "python3"
 
 vim.g.netrw_banner = 0
