@@ -86,3 +86,5 @@ if [ -z "${SSH_CONNECTION}" ]; then
 else
   export MY_IP=$("$HOME/.dotfiles/bin/get_my_ip.sh")
 fi
+
+export CONDA_EXPERIMENTAL_SOLVER=libmamba
