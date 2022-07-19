@@ -13,6 +13,7 @@ return function()
   end
   require("neoclip").setup({
     enable_persistent_history = true,
+    history = 10000,
     filter = function(data)
       whitespace = not all(data.event.regcontents, is_whitespace)
       if not whitespace then
@@ -36,16 +37,7 @@ return function()
     keys = {
       telescope = {
         i = {
-          paste = "<c-h>",
-          paste_behind = "<c-y>",
-        },
-        n = {
-          select = "<cr>",
-          paste = "p",
-          paste_behind = "P",
-          replay = "q",
-          delete = "d",
-          custom = {},
+          paste = "<cr>",
         },
       },
     },
