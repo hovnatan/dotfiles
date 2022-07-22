@@ -155,6 +155,12 @@ return function()
   )
   vim.api.nvim_set_keymap(
     "n",
+    "<space>A",
+    "<cmd>lua require('telescope.builtin').diagnostics()<cr>",
+    { noremap = true, silent = true }
+  )
+  vim.api.nvim_set_keymap(
+    "n",
     "<space>s",
     "<cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>",
     { noremap = true, silent = true }
