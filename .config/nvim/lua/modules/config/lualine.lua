@@ -7,7 +7,7 @@ return function()
       section_separators = { left = "", right = "" },
       disabled_filetypes = {},
       always_divide_middle = true,
-      globalstatus = false,
+      globalstatus = true,
     },
     sections = {
       lualine_a = { "mode" },
