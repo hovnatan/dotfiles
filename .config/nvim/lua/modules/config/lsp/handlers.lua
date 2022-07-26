@@ -74,15 +74,19 @@ function M.enable_format_on_save()
       au BufWritePre * lua vim.lsp.buf.formatting_sync(nil, 2000)
     augroup end
   ]])
+  vim.notify("Enabled format on save")
+end
+
+function M.disable_format_on_save()
+  vim.cmd("au! format_on_save")
+  vim.notify("Disabled format on save")
 end
 
 function M.toggle_format_on_save()
   if vim.fn.exists("#format_on_save#BufWritePre") == 0 then
     M.enable_format_on_save()
-    vim.notify("Enabled format on save")
   else
-    vim.cmd("au! format_on_save")
-    vim.notify("Disabled format on save")
+    M.disable_format_on_save()
   end
 end
 
@@ -98,6 +102,7 @@ function M.toggle_virtual_text()
 end
 
 vim.cmd([[command! LspEnableAutoFormat execute 'lua require("modules.config.lsp.handlers").enable_format_on_save()']])
+vim.cmd([[command! LspDisableAutoFormat execute 'lua require("modules.config.lsp.handlers").disable_format_on_save()']])
 vim.cmd([[command! LspToggleAutoFormat execute 'lua require("modules.config.lsp.handlers").toggle_format_on_save()']])
 vim.cmd([[command! LspToggleVirtualText execute 'lua require("modules.config.lsp.handlers").toggle_virtual_text()']])
 
