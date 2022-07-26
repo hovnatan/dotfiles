@@ -24,10 +24,12 @@ return function()
       initial_mode = "insert",
       selection_strategy = "reset",
       sorting_strategy = "descending",
-      layout_strategy = "horizontal",
+      layout_strategy = "vertical",
       layout_config = {
         horizontal = { mirror = false },
         vertical = { mirror = false },
+        height = 0.95,
+        width = 0.95,
       },
       file_sorter = require("telescope.sorters").get_fuzzy_file,
       file_ignore_patterns = {},

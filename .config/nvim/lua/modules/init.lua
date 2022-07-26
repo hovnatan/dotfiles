@@ -70,10 +70,9 @@ local plugins = {
     end,
   },
   {
-    "airblade/vim-rooter",
+    "notjedi/nvim-rooter.lua",
     config = function()
-      vim.g.rooter_patterns = { ".git" }
-      vim.g.rooter_silent_chdir = 1
+      require("nvim-rooter").setup()
     end,
   },
   {
@@ -151,7 +150,7 @@ local plugins = {
         lookup_parents = true, -- Lookup config files in parent directories
       })
     end,
-  }
+  },
 }
 
 -- vim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", {})
