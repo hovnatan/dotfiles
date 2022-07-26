@@ -64,6 +64,7 @@ return function()
       },
       find_files = { previewer = false },
       oldfiles = { previewer = false },
+      jumplist = { fname_width = 0.7 },
     },
     extensions = {
       fzf = {
