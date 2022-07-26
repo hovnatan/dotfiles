@@ -97,6 +97,7 @@ function M.toggle_virtual_text()
   end
 end
 
+vim.cmd([[command! LspEnableAutoFormat execute 'lua require("modules.config.lsp.handlers").enable_format_on_save()']])
 vim.cmd([[command! LspToggleAutoFormat execute 'lua require("modules.config.lsp.handlers").toggle_format_on_save()']])
 vim.cmd([[command! LspToggleVirtualText execute 'lua require("modules.config.lsp.handlers").toggle_virtual_text()']])
 
