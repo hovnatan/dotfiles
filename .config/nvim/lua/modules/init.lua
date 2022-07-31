@@ -43,6 +43,9 @@ local plugins = {
   { "wsdjeg/vim-fetch" },
   {
     "chentoast/marks.nvim",
+    config = function()
+      require("marks").setup({})
+    end,
   },
   {
     "notjedi/nvim-rooter.lua",
