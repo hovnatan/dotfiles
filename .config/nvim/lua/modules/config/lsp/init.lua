@@ -57,7 +57,7 @@ return function()
     },
   }
 
-  local servers = { "clangd", "pyright", "efm", "jsonls" }
+  local servers = { "clangd", "pyright", "efm", "jsonls", "bashls" }
 
   local lspconfig = require("lspconfig")
   for _, name in pairs(servers) do
