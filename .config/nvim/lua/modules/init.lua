@@ -42,32 +42,7 @@ local plugins = {
 
   { "wsdjeg/vim-fetch" },
   {
-    "kshenoy/vim-signature",
-    config = function()
-      vim.g.SignatureMap = {
-        Leader = "m",
-        PlaceNextMark = "m,",
-        ToggleMarkAtLine = "m.",
-        PurgeMarksAtLine = "m-",
-        DeleteMark = "dm",
-        PurgeMarks = "m<Space>",
-        PurgeMarkers = "m<BS>",
-        GotoNextLineAlpha = "",
-        GotoPrevLineAlpha = "",
-        GotoNextSpotAlpha = "",
-        GotoPrevSpotAlpha = "",
-        GotoNextLineByPos = "",
-        GotoPrevLineByPos = "",
-        GotoNextSpotByPos = "",
-        GotoPrevSpotByPos = "",
-        GotoNextMarker = "",
-        GotoPrevMarker = "",
-        GotoNextMarkerAny = "",
-        GotoPrevMarkerAny = "",
-        ListBufferMarks = "m/",
-        ListBufferMarkers = "m?",
-      }
-    end,
+    "chentoast/marks.nvim",
   },
   {
     "notjedi/nvim-rooter.lua",
