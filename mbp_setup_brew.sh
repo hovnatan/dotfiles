@@ -6,7 +6,7 @@ set -e
 
 brew update
 
-brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish wget less coreutils diffutils git bash gawk man-db dust bat graphviz htop conan git-lfs bazel rustup-init go pyright findutils git-delta diskonaut exa efm-langserver mupdf
+brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish wget less coreutils diffutils git bash gawk man-db dust bat graphviz htop conan git-lfs bazel rustup-init go pyright findutils git-delta diskonaut exa efm-langserver mupdf prettier shellcheck bash-language-server
 brew install --cask cmake alacritty time-out zotero netron
 brew install rga pandoc tesseract ffmpeg
 
@@ -25,3 +25,5 @@ defaults write com.apple.Terminal FocusFollowsMouse -bool true
 
 # to remove from quarantine
 # xattr -rd com.apple.quarantine /path/to/MyApp.app
+
+cp ~/.dotfiles/.npmrc ~/.npmrc
