@@ -19,3 +19,5 @@ fish -c "fisher update"
 "$HOME/.tmux/plugins/tpm/bin/update_plugins" all
 
 nvim -c 'PackerSync'
+
+pipdeptree --warn silence -u | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install -U
