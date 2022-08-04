@@ -47,6 +47,11 @@ return function()
       -- Developer configurations: Not meant for general override
       buffer_previewer_maker = telescope_previewers.buffer_previewer_maker,
       path_display = { "truncate" },
+      mappings = {
+        i = {
+          ["<esc>"] = telescope_actions.close,
+        },
+      },
     },
     pickers = {
       -- Your special builtin config goes in here
@@ -64,7 +69,7 @@ return function()
       },
       find_files = { previewer = false },
       oldfiles = { previewer = false },
-      jumplist = { fname_width = 0.7 },
+      jumplist = { fname_width = 0.7, initial_mode = "insert" },
     },
     extensions = {
       fzf = {
