@@ -1,5 +1,8 @@
 return function()
   local cmp = safe_require("cmp")
+  local t = function(str)
+    return vim.api.nvim_replace_termcodes(str, true, true, true)
+  end
   cmp.setup({
     snippet = {
       -- REQUIRED - you must specify a snippet engine
@@ -19,14 +22,14 @@ return function()
       ["<C-n>"] = cmp.mapping({
         c = function()
           if cmp.visible() then
-            cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
+            cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
           else
             vim.api.nvim_feedkeys(t("<Down>"), "n", true)
           end
         end,
         i = function(fallback)
           if cmp.visible() then
-            cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
+            cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
           else
             fallback()
           end
@@ -35,14 +38,14 @@ return function()
       ["<C-p>"] = cmp.mapping({
         c = function()
           if cmp.visible() then
-            cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })
+            cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert })
           else
             vim.api.nvim_feedkeys(t("<Up>"), "n", true)
           end
         end,
         i = function(fallback)
           if cmp.visible() then
-            cmp.select_prev_item({ behavior = cmp.SelectBehavior.Select })
+            cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert })
           else
             fallback()
           end
