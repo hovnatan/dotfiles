@@ -26,7 +26,7 @@ vim.api.nvim_set_keymap("n", "<C-w>k", ":wincmd l<CR>", { noremap = true, silent
 vim.api.nvim_set_keymap("n", "<C-w>h", ":wincmd j<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<C-w>l", ":wincmd k<CR>", { noremap = true, silent = true })
 
-vim.cmd[[
+vim.cmd([[
 let s:savedCpo = &cpo
 set cpo&vim
 
@@ -74,4 +74,4 @@ noremap <expr> n 'Nn'[v:searchforward]
 noremap <expr> N 'nN'[v:searchforward]
 
 let &cpo = s:savedCpo
-]]
+]])
