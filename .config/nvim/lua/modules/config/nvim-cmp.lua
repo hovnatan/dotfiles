@@ -65,9 +65,9 @@ return function()
       },
       { name = "tmux", max_item_count = 5, option = { all_panes = true } },
     },
-    view = {
-      entries = { name = "custom", selection_order = "near_cursor" },
-    },
+    -- view = {
+    --   entries = { name = "custom", selection_order = "near_cursor" },
+    -- },
     formatting = {
       format = function(entry, vim_item)
         vim_item.menu = entry.source.name
