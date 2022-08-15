@@ -96,7 +96,6 @@ abbr ync "yay --noconfirm"
 abbr bc "bc -l"
 abbr rf "rm -rfvI"
 abbr b "batcat"
-abbr cat "batcat"
 abbr h "htop"
 abbr hh "htop -u $USER"
 abbr p "python"
@@ -105,7 +104,6 @@ abbr rfc "source ~/.config/fish/config.fish"
 abbr ... "../.."
 abbr .... "../../.."
 abbr pd "python3 -m ipdb -c continue"
-abbr pip_update_outdated "pip list --outdated --format=freeze | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip install -U"
 
 set -u VIRTUAL_ENV_DISABLE_PROMPT 1
 
