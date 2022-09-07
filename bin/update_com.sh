@@ -20,9 +20,4 @@ fish -c "fisher update"
 
 nvim -c 'PackerSync'
 
-top_level=( $(pipdeptree --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' ) )
-user_level=( $(pip freeze --user | grep -E '(^\S+)' | awk -F== '{print$1}' ) )
-
-intersect=($(comm -12 <(for X in "${top_level[@]}"; do echo "${X}"; done|sort)  <(for X in "${user_level[@]}"; do echo "${X}"; done|sort)))
-
-pip3 install -U ${intersect[*]// /|}
+pipdeptree --warn silence -u | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install -U
