@@ -30,10 +30,8 @@ tmux source ~/.tmux.conf
 
 color_switcher.sh ~/.config/bat/config ~/.config/bat/option ~/.config/bat/config_$COLOR
 
-SIOYEK="$HOME/.dotfiles/Library/Application Support/sioyek/"
+SIOYEK="$HOME/.dotfiles/.config/sioyek/"
 color_switcher.sh "$SIOYEK/prefs_user.config" "$SIOYEK/prefs_user_common" "$SIOYEK/$COLOR" reverse
-cp "$SIOYEK/prefs_user.config" "$WINDOWS_HOME/sioyek-release-windows/"
-cp "$SIOYEK/keys_user.config" "$WINDOWS_HOME/sioyek-release-windows/"
 
 if [ $COLOR == "dark" ]
 then

@@ -10,6 +10,7 @@ window:
   dynamic_title: true
   dynamic_padding: false
   decorations: none
+  startup_mode: Maximized
 
 cursor:
   style:
