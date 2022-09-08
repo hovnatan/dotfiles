@@ -9,6 +9,7 @@ window:
     y: 0
   dynamic_title: true
   dynamic_padding: false
+  decorations: none
 
 cursor:
   style:
@@ -85,6 +86,8 @@ mouse:
 key_bindings:
   - { key: S,        mods: Control|Shift,       action: PasteSelection }
   - { key: N,        mods: Control|Shift,       action: CreateNewWindow }
+  - { key: F,        mods: Control|Shift,       action: ToggleFullscreen }
+  - { key: Q,        mods: Control|Shift,       action: Quit }
 
 selection:
   save_to_clipboard: true
