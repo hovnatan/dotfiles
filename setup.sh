@@ -6,6 +6,10 @@ cd ~
 
 mkdir -p ~/.config
 
+ln -sf ~/.dotfiles/.profile ~/.profile
+ln -sf ~/.dotfiles/.bashrc_local ~/
+ln -sf ~/.dotfiles/.bash_profile ~/
+
 rm -rf ~/.tmux.conf
 ln -s ~/.dotfiles/.tmux.conf .tmux.conf
 rm -rf ~/.tmux/plugins/tpm
@@ -15,7 +19,7 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 rm -rf ~/.config/nvim
 ln -s ~/.dotfiles/.config/nvim ~/.config/nvim
 mkdir -p ~/.vimundo/
-git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+# git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
 nvim -c 'PackerSync | qa'
 
 mkdir ~/.config/pudb
@@ -39,7 +43,6 @@ ln -s ~/.dotfiles/.config/htoprc ~/.config/htop/htoprc
 rm -rf ~/.config/feh
 ln -s ~/.dotfiles/.config/feh ~/.config/feh
 
-ln -sf ~/.dotfiles/.profile ~/.profile
 #ln -s ~/.dotfiles/wc.profile ~/.local_profile
 
 # modify ~/.config/mimeapps.list for image/tiff feh.desktop
@@ -83,8 +86,6 @@ ln -s ~/.dotfiles/.config/fd ~/.config/
 ln -s ~/.dotfiles/.config/fd/ignore ~/.ignore
 
 cp ~/.dotfiles/.my_colors ~/
-ln -sf ~/.dotfiles/.bashrc_local ~/
-ln -sf ~/.dotfiles/.bash_profile ~/
 
 ln -sf ~/.dotfiles/.config/alacritty ~/.config/
 
@@ -112,7 +113,6 @@ ln -sf ~/.dotfiles/.ctags.d ~/
 # cd ~/.dotfiles
 # python3 -m venv venv_python_neovim
 # source ~/.dotfiles/venv_python_neovim/bin/activate
-pip3 install --user pylint pynvim jedi black
 mkdir -p ~/.conan
 ln -sf ~/.dotfiles/.conan/profiles ~/.conan/profiles
 # cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCONAN_DISABLE_CHECK_COMPILER=1 ..
