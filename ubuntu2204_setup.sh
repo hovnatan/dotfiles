@@ -30,7 +30,7 @@ cargo install exa stylua
 sudo apt-get install -y gawk
 
 sudo apt-get install -y python2 python3-pip
-pip3 install --user pylint neovim black
+pip3 install --user pylint pynvim black pipdeptree
 
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
