@@ -6,10 +6,6 @@ cd ~
 
 mkdir -p ~/.config
 
-ln -sf ~/.dotfiles/.profile ~/.profile
-ln -sf ~/.dotfiles/.bashrc_local ~/
-ln -sf ~/.dotfiles/.bash_profile ~/
-
 rm -rf ~/.tmux.conf
 ln -s ~/.dotfiles/.tmux.conf .tmux.conf
 rm -rf ~/.tmux/plugins/tpm
