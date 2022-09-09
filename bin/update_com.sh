@@ -20,4 +20,4 @@ fish -c "fisher update"
 
 nvim -c 'PackerSync'
 
-pipdeptree --warn silence -u | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install -U
+pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U
