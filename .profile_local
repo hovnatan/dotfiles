@@ -12,12 +12,11 @@ export MAKEFLAGS="-j11"
 export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
 export REVIEW_BASE=master
 
-export PATH="`python3 -m site --user-base`/bin:$PATH"
+# export PATH="`python3 -m site --user-base`/bin:$PATH"
 
 export PATH="$HOME/opt/usr/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/go/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.dotfiles/bin:$PATH"
 
 
@@ -29,34 +28,34 @@ export PYTHONBREAKPOINT=pudb.remote.set_trace
 
 export RIPGREP_CONFIG_PATH="$HOME/.dotfiles/.ripgreprc"
 
-SSH_ENV="$HOME/.ssh/agent-environment"
+# SSH_ENV="$HOME/.ssh/agent-environment"
 
-function start_agent {
-    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
-    chmod 600 "${SSH_ENV}"
-    . "${SSH_ENV}" > /dev/null
-    /usr/bin/ssh-add > /dev/null 2>&1
+# function start_agent {
+#     /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+#     chmod 600 "${SSH_ENV}"
+#     . "${SSH_ENV}" > /dev/null
+#     /usr/bin/ssh-add > /dev/null 2>&1
 
-    ssh_keys=$(find ~/.ssh -type f -name '*.pem' -o -name "*.rsa")
-    ssh_agent_keys=$(ssh-add -l | awk '{key=NF-1; print $key}')
+#     ssh_keys=$(find ~/.ssh -type f -name '*.pem' -o -name "*.rsa")
+#     ssh_agent_keys=$(ssh-add -l | awk '{key=NF-1; print $key}')
 
-    for k in "${ssh_keys}"; do
-        for l in "${ssh_agent_keys}"; do
-            if [[ ! "${k}" = "${l}" ]]; then
-                ssh-add "${k}" > /dev/null 2>&1
-            fi
-        done
-    done
-}
+#     for k in "${ssh_keys}"; do
+#         for l in "${ssh_agent_keys}"; do
+#             if [[ ! "${k}" = "${l}" ]]; then
+#                 ssh-add "${k}" > /dev/null 2>&1
+#             fi
+#         done
+#     done
+# }
 
-if [ -f "${SSH_ENV}" ]; then
-    . "${SSH_ENV}" > /dev/null
-    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-        start_agent;
-    }
-else
-    start_agent;
-fi
+# if [ -f "${SSH_ENV}" ]; then
+#     . "${SSH_ENV}" > /dev/null
+#     ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+#         start_agent;
+#     }
+# else
+#     start_agent;
+# fi
 
 import_miniconda() {
   # >>> conda initialize >>>
