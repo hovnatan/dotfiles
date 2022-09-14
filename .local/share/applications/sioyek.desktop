@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Sioyek
+Exec=bash -c "$HOME/Downloads/Sioyek-x86_64.AppImage %U"
+Icon=/home/hovnatan/.dotfiles/.config/sioyek/icon1.ico
+Type=Application
+Terminal=false
+Categories=Office;Viewer
+MimeType=application/pdf;application/x-bzpdf;application/x-ext-pdf;application/x-gzpdf;application/x-xzpdf
+X-GNOME-SingleWindow=true
