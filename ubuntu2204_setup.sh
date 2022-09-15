@@ -46,4 +46,4 @@ go install github.com/mattn/efm-langserver@latest
 
 cp ~/.dotfiles/.npmrc ~/.npmrc
 
-npm i --location=global bash-language-server prettier pyright vscode-langservers-extracted
+npm i --location=global bash-language-server prettier pyright vscode-langservers-extracted typescript typescript-language-server
