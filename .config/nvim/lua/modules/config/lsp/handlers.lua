@@ -53,9 +53,17 @@ M.on_attach = function(client, bufnr)
   buf_set_keymap("n", "<space>e", '<cmd>lua vim.diagnostic.open_float(0, {scope="line"})<CR>', opts)
   buf_set_keymap("n", "[d", "<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>", opts)
   buf_set_keymap("n", "]d", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
-  buf_set_keymap("n", "<space>z", "<cmd>ClangdSwitchSourceHeader<CR>", opts)
   buf_set_keymap("n", "<space>q", "<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>", opts)
   buf_set_keymap("n", "<leader>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+
+  if client.name == "clangd" then
+    buf_set_keymap("n", "<space>z", "<cmd>ClangdSwitchSourceHeader<CR>", opts)
+  end
+
+  if client.name == "tsserver" then
+    client.resolved_capabilities.document_formatting = false
+    -- client.server_capabilities.documentFormattingProvider = false -- 0.8 and later
+  end
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
