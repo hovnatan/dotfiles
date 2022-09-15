@@ -4,3 +4,5 @@ __pycache__
 CMakeFiles
 build
 venv_*
+.venv*
+node_modules
