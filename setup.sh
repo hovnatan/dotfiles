@@ -16,7 +16,7 @@ rm -rf ~/.config/nvim
 ln -s ~/.dotfiles/.config/nvim ~/.config/nvim
 mkdir -p ~/.vimundo/
 # git clone https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
-nvim -c 'PackerSync | qa'
+# ~/.dotfiles/bin/nvim -c 'PackerSync | qa'
 
 mkdir ~/.config/pudb
 ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
@@ -30,7 +30,7 @@ fish -c fisher update
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
-nvim ~/.gitconfig
+vim ~/.gitconfig
 
 rm -rf ~/.config/htop
 mkdir ~/.config/htop
