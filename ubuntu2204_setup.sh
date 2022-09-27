@@ -14,13 +14,13 @@ sudo add-apt-repository restricted
 sudo apt-get update
 sudo apt-get -y dist-upgrade
 
-sudo apt-get install -y jq feh tmux fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear ppa-purge valgrind curl htop octave net-tools sshfs cmake rustc cargo aria2 mediainfo xdg-utils wmctrl awscli docker.io default-jre universal-ctags aptitude pandoc poppler-utils ffmpeg git-lfs ripgrep libfuse2 bat ubuntu-drivers-common nodejs unzip golang-go timg sqlite3 libsqlite3-dev shellcheck gawk
+sudo apt-get install -y jq feh tmux fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear ppa-purge valgrind curl htop octave net-tools sshfs cmake rustc cargo aria2 mediainfo xdg-utils wmctrl awscli docker.io default-jre universal-ctags aptitude pandoc poppler-utils ffmpeg git-lfs ripgrep libfuse2 bat ubuntu-drivers-common nodejs unzip golang-go timg sqlite3 libsqlite3-dev shellcheck gawk libssl-dev
 if [[ "$WSL_DISTRO_NAME" ]]; then
    sudo apt-get install wslu
 fi
 
 # sudo apt-get install -y xrdp remmina
-cargo install exa stylua
+cargo install exa stylua cargo-update
 
 # sudo apt-get install -y texlive-latex-recommended texlive-pictures texlive-latex-extra latexmk
 # sudo apt-get install chrome-gnome-shell zathura xrdp fonts-croscore kitty
@@ -41,6 +41,7 @@ wget https://github.com/neovim/neovim/releases/download/v0.7.2/nvim.appimage -O 
 chmod +x ~/.dotfiles/bin/nvim
 
 go install github.com/mattn/efm-langserver@latest
+go install github.com/nao1215/gup@latest
 
 cp ~/.dotfiles/.npmrc ~/.npmrc
 

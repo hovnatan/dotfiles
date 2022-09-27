@@ -18,6 +18,13 @@ fish -c "fisher update"
 
 "$HOME/.tmux/plugins/tpm/bin/update_plugins" all
 
+pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U
+
+npm update -g
+
+cargo install-update -a
+
+gup update
+
 nvim -c 'PackerSync'
 
-pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U
