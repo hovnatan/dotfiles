@@ -106,5 +106,7 @@ abbr .... "../../.."
 abbr pd "python3 -m ipdb -c continue"
 
 set -u VIRTUAL_ENV_DISABLE_PROMPT 1
+set -u fish_command_timer_enabled 1
+set -u fish_command_timer_export_only_string 1
 
 end
