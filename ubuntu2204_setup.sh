@@ -28,7 +28,7 @@ cargo install exa stylua cargo-update
 # sudo apt-get install -y mesa-utils freeglut3-dev
 
 sudo apt-get install -y python2 python3-pip
-pip3 install --user pylint pynvim black pipdeptree
+pip3 install --user pylint pynvim black pipdeptree pyls-isort "python-lsp-server[all]" python-lsp-black
 
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
 sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
