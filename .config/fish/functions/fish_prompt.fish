@@ -65,7 +65,7 @@ function fish_prompt --description 'Write out the prompt'
     set -l prpwd (prompt_pwd)
     set -l gitpr (__fish_git_prompt)
 	  # set -l part1 (echo -e "$usr@$hstnm $prpwd   %")
-    echo -n -s $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
+    echo -n -s (set_color -b $fish_color_prompt_bg) "####" $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
     # set -l lpart1 (string length $part1)
     # if [ (expr $COLUMNS - $lpart1) -lt 50 ]
     #     echo 
