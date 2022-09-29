@@ -5,7 +5,7 @@ return function()
 
   local servers_config = {
     efm = {
-      filetypes = { "lua", "python", "javascript", "typescript", "html", "markdown" },
+      filetypes = { "lua", "javascript", "typescript", "html", "markdown" },
       init_options = { documentFormatting = true },
       settings = {
         rootMarkers = { ".git/" },
@@ -62,9 +62,32 @@ return function()
         },
       },
     },
+    pylsp = {
+      settings = {
+        pylsp = {
+          plugins = {
+            pylint = {
+              enabled = true,
+            },
+            pyflakes = {
+              enabled = false,
+            },
+            autopep8 = {
+              enabled = false,
+            },
+            yapf = {
+              enabled = false,
+            },
+            black = {
+              enabled = true,
+            },
+          },
+        },
+      },
+    },
   }
 
-  local servers = { "clangd", "pyright", "efm", "jsonls", "bashls", "tsserver", "eslint" }
+  local servers = { "clangd", "pylsp", "efm", "jsonls", "bashls", "tsserver", "eslint" }
 
   local lspconfig = require("lspconfig")
   for _, name in pairs(servers) do
