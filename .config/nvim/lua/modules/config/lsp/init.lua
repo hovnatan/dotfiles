@@ -81,6 +81,9 @@ return function()
             black = {
               enabled = true,
             },
+            pycodestyle = {
+              enabled = false,
+            },
           },
         },
       },

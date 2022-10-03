@@ -39,7 +39,7 @@ sudo vim /etc/sysctl.d/10-ptrace.conf
 
 # ubuntu-drivers devices
 # sudo ubuntu-drivers autoinstall
-wget https://github.com/neovim/neovim/releases/download/v0.7.2/nvim.appimage -O ~/.dotfiles/bin/nvim
+wget https://github.com/neovim/neovim/releases/download/v0.8.0/nvim.appimage -O ~/.dotfiles/bin/nvim
 chmod +x ~/.dotfiles/bin/nvim
 
 go install github.com/mattn/efm-langserver@latest
