@@ -22,6 +22,7 @@ pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs p
 
 npm update -g
 
+rustup update
 cargo install-update -a
 
 gup update
