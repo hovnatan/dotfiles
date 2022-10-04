@@ -7,10 +7,10 @@ elif [ -n "$BACKGROUND_COLOR" ]
 then
   COLOR=$BACKGROUND_COLOR
 else
-  # currenttime=$(date +%H:%M)
-  # if [[ "$currenttime" > "19:00" ]] || [[ "$currenttime" < "07:30" ]]; then
-  MACOS_MODE=$(osascript -e 'tell app "System Events" to tell appearance preferences to get dark mode')
-  if [ $MACOS_MODE == "true" ]; then
+  currenttime=$(date +%H:%M)
+  if [[ "$currenttime" > "19:00" ]] || [[ "$currenttime" < "07:30" ]]; then
+  # MACOS_MODE=$(osascript -e 'tell app "System Events" to tell appearance preferences to get dark mode')
+  # if [ $MACOS_MODE == "true" ]; then
     COLOR="dark"
   else
     COLOR="light"
