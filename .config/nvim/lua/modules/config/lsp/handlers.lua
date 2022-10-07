@@ -61,7 +61,7 @@ M.on_attach = function(client, bufnr)
   end
 
   if client.name == "tsserver" then
-    client.resolved_capabilities.document_formatting = false
+    client.server_capabilities.document_formatting = false
     -- client.server_capabilities.documentFormattingProvider = false -- 0.8 and later
   end
 end
@@ -79,7 +79,7 @@ function M.enable_format_on_save()
   vim.cmd([[
     augroup format_on_save
       au!
-      au BufWritePre * lua vim.lsp.buf.formatting_sync(nil, 2000)
+      au BufWritePre * lua vim.lsp.buf.format({async=true})
     augroup end
   ]])
   vim.notify("Enabled format on save")
