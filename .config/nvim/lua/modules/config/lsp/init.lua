@@ -5,7 +5,7 @@ return function()
 
   local servers_config = {
     efm = {
-      filetypes = { "lua", "javascript", "python", "typescript", "html", "markdown" },
+      filetypes = { "lua", "javascript", "typescript", "html", "markdown" },
       init_options = { documentFormatting = true },
       settings = {
         rootMarkers = { ".git/" },
