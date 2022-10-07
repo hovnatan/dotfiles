@@ -5,7 +5,7 @@ return function()
 
   local servers_config = {
     efm = {
-      filetypes = { "lua", "javascript", "typescript", "html", "markdown" },
+      filetypes = { "lua", "javascript", "python", "typescript", "html", "markdown" },
       init_options = { documentFormatting = true },
       settings = {
         rootMarkers = { ".git/" },
@@ -17,13 +17,13 @@ return function()
               formatStdin = true,
             },
             { formatCommand = "black --fast -", formatStdin = true },
-            -- {
-            --   lintCommand = "pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}",
-            --   lintStdin = false,
-            --   lintFormats = { "%f:%l:%c:%t:%m" },
-            --   lintOffsetColumns = 1,
-            --   lintCategoryMap = { I = "H", R = "I", C = "I", W = "W", E = "E", F = "E" },
-            -- },
+            {
+              lintCommand = "pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}",
+              lintStdin = false,
+              lintFormats = { "%f:%l:%c:%t:%m" },
+              lintOffsetColumns = 1,
+              lintCategoryMap = { I = "H", R = "I", C = "I", W = "W", E = "E", F = "E" },
+            },
           },
           javascript = { { formatCommand = "prettier --stdin-filepath .js", formatStdin = true } },
           typescript = { { formatCommand = "prettier --stdin-filepath .ts", formatStdin = true } },
@@ -90,7 +90,7 @@ return function()
     },
   }
 
-  local servers = { "clangd", "pylsp", "efm", "jsonls", "bashls", "tsserver", "eslint" }
+  local servers = { "clangd", "pyright", "efm", "jsonls", "bashls", "tsserver", "eslint" }
 
   local lspconfig = require("lspconfig")
   for _, name in pairs(servers) do
