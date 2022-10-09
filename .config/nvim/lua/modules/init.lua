@@ -96,11 +96,9 @@ local plugins = {
   { "nvim-lua/plenary.nvim" },
   { "TimUntersberger/neogit" },
   {
-    "phaazon/hop.nvim",
-    as = "hop",
+    "ggandor/leap.nvim",
     config = function()
-      require("hop").setup({ keys = "etovxqpdygfblzhckisuran" })
-      vim.api.nvim_set_keymap("n", "f", "<cmd>lua require'hop'.hint_words()<cr>", { noremap = true, silent = true })
+      require("leap").set_default_keymaps()
     end,
   },
   {
