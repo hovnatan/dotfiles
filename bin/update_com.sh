@@ -14,6 +14,9 @@ sudo apt update
 sudo apt -y dist-upgrade
 sudo apt -y autoremove
 
+sudo snap refresh
+sudo fwupdmgr update
+
 fish -c "fisher update"
 
 "$HOME/.tmux/plugins/tpm/bin/update_plugins" all
