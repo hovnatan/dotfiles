@@ -69,7 +69,7 @@ end
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 local cmp_nvim_lsp = safe_require("cmp_nvim_lsp")
 if cmp_nvim_lsp then
-  capabilities = cmp_nvim_lsp.update_capabilities(capabilities)
+  capabilities = require("cmp_nvim_lsp").default_capabilities()
 end
 capabilities.textDocument.completion.completionItem.snippetSupport = false
 
