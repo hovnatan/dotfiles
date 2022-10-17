@@ -170,7 +170,7 @@ return function()
   vim.api.nvim_set_keymap(
     "n",
     "<space>s",
-    "<cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>",
+    "<cmd>lua require('telescope.builtin').treesitter()<cr>",
     { noremap = true, silent = true }
   )
   vim.api.nvim_set_keymap(
