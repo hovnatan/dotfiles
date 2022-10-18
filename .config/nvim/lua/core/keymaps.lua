@@ -38,3 +38,4 @@ vim.api.nvim_set_keymap("n", "#", "", {
     vim.fn.execute("set hlsearch")
   end,
 })
+vim.cmd[[nnoremap <expr> <space>v '`[' . strpart(getregtype(), 0, 1) . '`]']]
