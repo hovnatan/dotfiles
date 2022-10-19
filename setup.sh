@@ -6,8 +6,7 @@ cd ~
 
 mkdir -p ~/.config
 
-rm -rf ~/.tmux.conf
-ln -s ~/.dotfiles/.tmux.conf .tmux.conf
+ln -s ~/.dotfiles/.config/tmux ~/.config/
 rm -rf ~/.tmux/plugins/tpm
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 "$HOME/.tmux/plugins/tpm/bin/install_plugins"
