@@ -16,8 +16,8 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     fish_vi_key_bindings --no-erase
     bind \cp up-or-search
     bind \cn down-or-search
-    bind \cd forward-word-or-exit
-    bind -M insert \cd forward-word-or-exit
+    bind \cd forward-word
+    bind -M insert \cd forward-word
 #    bind -M insert -m default jk backward-char force-repaint
 #    bind -m insert \e force-repaint
 end
