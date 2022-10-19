@@ -7,9 +7,8 @@ cd ~
 mkdir -p ~/.config
 
 ln -s ~/.dotfiles/.config/tmux ~/.config/
-rm -rf ~/.tmux/plugins/tpm
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-"$HOME/.tmux/plugins/tpm/bin/install_plugins"
+git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
+"$HOME/.config/tmux/plugins/tpm/bin/install_plugins"
 
 rm -rf ~/.config/nvim
 ln -s ~/.dotfiles/.config/nvim ~/.config/nvim
