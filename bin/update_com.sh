@@ -19,7 +19,7 @@ sudo fwupdmgr update
 
 fish -c "fisher update"
 
-"$HOME/.tmux/plugins/tpm/bin/update_plugins" all
+"$HOME/.config/tmux/plugins/tpm/bin/update_plugins" all
 
 pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U --upgrade-strategy=eager
 
