@@ -32,3 +32,4 @@ gup update
 
 nvim -c 'PackerSync'
 
+cat /var/run/reboot-required
