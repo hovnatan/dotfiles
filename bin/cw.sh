@@ -26,7 +26,7 @@ color_switcher.sh ~/.config/alacritty/alacritty.yml ~/.config/alacritty/option ~
 
 WINDOWS_HOME=$(wslpath "$(wslvar USERPROFILE)")
 cp ~/.config/alacritty/alacritty.yml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.yml"
-tmux source ~/.tmux.conf
+tmux source ~/.config/tmux/tmux.conf
 
 color_switcher.sh ~/.config/bat/config ~/.config/bat/option ~/.config/bat/config_$COLOR
 
