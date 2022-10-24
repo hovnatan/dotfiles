@@ -69,7 +69,8 @@ return function()
       },
       find_files = { previewer = false },
       oldfiles = { previewer = false },
-      jumplist = { fname_width = 0.7, initial_mode = "insert" },
+      jumplist = { default_text = vim.fn.expand("%:t") .. " ", fname_width = 0.7, initial_mode = "insert" },
+      treesitter = { default_text = "function " },
     },
     extensions = {
       fzf = {
