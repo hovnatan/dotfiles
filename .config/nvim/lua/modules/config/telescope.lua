@@ -43,7 +43,9 @@ return function()
       file_previewer = telescope_previewers.vim_buffer_cat.new,
       grep_previewer = telescope_previewers.vim_buffer_vimgrep.new,
       qflist_previewer = telescope_previewers.vim_buffer_qflist.new,
-
+      tiebreak = function(current_entry, existing_entry, prompt)
+        return false
+      end,
       -- Developer configurations: Not meant for general override
       buffer_previewer_maker = telescope_previewers.buffer_previewer_maker,
       path_display = { "truncate" },
@@ -56,7 +58,7 @@ return function()
     pickers = {
       -- Your special builtin config goes in here
       buffers = {
-        sort_lastused = true,
+        sort_mru = true,
         previewer = false,
         mappings = {
           i = {
@@ -69,7 +71,7 @@ return function()
       },
       find_files = { previewer = false },
       oldfiles = { previewer = false },
-      jumplist = { default_text = vim.fn.expand("%:t") .. " ", fname_width = 0.5, initial_mode = "insert" },
+      jumplist = { default_text = vim.fn.expand("%:t") .. " ", fname_width = 0.5, show_line = false },
       treesitter = { default_text = "function " },
     },
     extensions = {
