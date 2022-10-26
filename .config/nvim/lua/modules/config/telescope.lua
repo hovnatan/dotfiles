@@ -26,8 +26,8 @@ return function()
       sorting_strategy = "descending",
       layout_strategy = "vertical",
       layout_config = {
-        horizontal = { mirror = false },
-        vertical = { mirror = false },
+        horizontal = { mirror = false, preview_cutoff = 0 },
+        vertical = { mirror = false, preview_cutoff = 0 },
         height = 0.95,
         width = 0.95,
       },
@@ -69,7 +69,7 @@ return function()
       },
       find_files = { previewer = false },
       oldfiles = { previewer = false },
-      jumplist = { default_text = vim.fn.expand("%:t") .. " ", fname_width = 0.3, initial_mode = "insert" },
+      jumplist = { default_text = vim.fn.expand("%:t") .. " ", fname_width = 0.5, initial_mode = "insert" },
       treesitter = { default_text = "function " },
     },
     extensions = {
