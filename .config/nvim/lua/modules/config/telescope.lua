@@ -24,6 +24,7 @@ return function()
       initial_mode = "insert",
       selection_strategy = "reset",
       sorting_strategy = "descending",
+      scroll_strategy = "limit",
       layout_strategy = "vertical",
       layout_config = {
         horizontal = { mirror = false, preview_cutoff = 0 },
