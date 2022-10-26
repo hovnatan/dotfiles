@@ -14,7 +14,6 @@ sudo apt update
 sudo apt -y dist-upgrade
 sudo apt -y autoremove
 
-sudo snap refresh
 sudo fwupdmgr update
 
 fish -c "fisher update"
@@ -35,3 +34,5 @@ nvim -c 'PackerSync'
 if [ -f /var/run/reboot-required ]; then 
   echo 'System reboot required'
 fi
+
+sudo snap refresh --list
