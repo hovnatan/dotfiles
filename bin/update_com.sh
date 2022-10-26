@@ -32,4 +32,6 @@ gup update
 
 nvim -c 'PackerSync'
 
-cat /var/run/reboot-required
+if [ -f /var/run/reboot-required ]; then 
+  echo 'System reboot required'
+fi
