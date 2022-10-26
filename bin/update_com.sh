@@ -31,8 +31,15 @@ gup update
 
 nvim -c 'PackerSync'
 
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "$RED"
+
 if [ -f /var/run/reboot-required ]; then 
   echo 'System reboot required'
 fi
 
 sudo snap refresh --list
+
+echo -e "$NC"
