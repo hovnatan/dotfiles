@@ -90,7 +90,14 @@ local plugins = {
   },
   { "neovim/nvim-lspconfig", config = conf("lsp") },
   { "lakshayg/vim-bazel", ft = { "bzl" } },
-  { "npxbr/gruvbox.nvim", requires = { "rktjmp/lush.nvim" } },
+  {
+    "npxbr/gruvbox.nvim",
+    requires = { "rktjmp/lush.nvim" },
+    config = function()
+      vim.cmd("hi TreesitterContextBottom gui=underline guisp=Grey")
+      vim.cmd("hi link TreesitterContext Normal")
+    end,
+  },
   -- use {'gennaro-tedesco/nvim-peekup'}
   -- use {'morhetz/gruvbox'}
   { "nvim-lua/plenary.nvim" },
