@@ -88,97 +88,25 @@ return function()
   })
   telescope.load_extension("fzf")
 
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>f",
-    "<cmd>lua require('telescope.builtin').find_files()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>g",
-    "<cmd>lua require('telescope.builtin').grep_string()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>G",
-    "<cmd>lua require('telescope.builtin').live_grep()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>b",
-    "<cmd>lua require('telescope.builtin').buffers()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>h",
-    "<cmd>lua require('telescope.builtin').help_tags()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>o",
-    "<cmd>lua require('telescope.builtin').oldfiles({cwd_only=true})<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>O",
-    "<cmd>lua require('telescope.builtin').oldfiles()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>m",
-    "<cmd>lua require('telescope.builtin').marks()<cr>",
-    { noremap = true, silent = true }
-  )
+  vim.keymap.set("n", "<space>f", telescope_builtin.find_files, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>g", telescope_builtin.grep_string, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>G", telescope_builtin.live_grep, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>b", telescope_builtin.buffers, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>h", telescope_builtin.help_tags, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>o", function()
+    return telescope_builtin.oldfiles({ cwd_only = true })
+  end, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>O", telescope_builtin.oldfiles, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>m", telescope_builtin.marks, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>j", function()
     return telescope_builtin.jumplist({ default_text = vim.fn.expand("%:t") .. " " })
   end, { noremap = true, silent = true })
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>r",
-    "<cmd>lua require('telescope.builtin').registers()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>q",
-    "<cmd>lua require('telescope.builtin').quickfix()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>k",
-    "<cmd>lua require('telescope.builtin').keymaps()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>a",
-    "<cmd>lua require('telescope.builtin').diagnostics({bufnr=0})<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>A",
-    "<cmd>lua require('telescope.builtin').diagnostics()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>s",
-    "<cmd>lua require('telescope.builtin').treesitter()<cr>",
-    { noremap = true, silent = true }
-  )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>p",
-    "<cmd>lua require('telescope.builtin').resume()<cr>",
-    { noremap = true, silent = true }
-  )
+  vim.keymap.set("n", "<space>r", telescope_builtin.registers, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>k", telescope_builtin.keymaps, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>a", function()
+    return telescope_builtin.diagnostics({ bufnr = 0 })
+  end, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>A", telescope_builtin.diagnostics, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>s", telescope_builtin.treesitter, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>p", telescope_builtin.resume, { noremap = true, silent = true })
 end
