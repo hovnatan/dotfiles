@@ -94,8 +94,10 @@ local plugins = {
     "npxbr/gruvbox.nvim",
     requires = { "rktjmp/lush.nvim" },
     config = function()
-      vim.cmd("hi TreesitterContextBottom gui=underline guisp=Grey")
-      vim.cmd("hi link TreesitterContext Normal")
+      require("gruvbox").setup({
+        transparent_mode = true,
+      })
+      vim.cmd("colorscheme gruvbox")
     end,
   },
   -- use {'gennaro-tedesco/nvim-peekup'}

@@ -63,7 +63,6 @@ vim.opt.completeopt = "menuone,noselect"
 local file = io.open(os.getenv("HOME") .. "/.my_colors", "r")
 vim.o.background = file:read("*a")
 file:close()
-vim.cmd("colorscheme gruvbox")
 
 vim.g.python3_host_prog = "python3"
 
