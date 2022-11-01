@@ -6,6 +6,7 @@ return function()
 
   local telescope_previewers = require("telescope.previewers")
   local telescope_actions = require("telescope.actions")
+  local telescope_builtin = require("telescope.builtin")
 
   telescope.setup({
     defaults = {
@@ -72,7 +73,7 @@ return function()
       },
       find_files = { previewer = false },
       oldfiles = { previewer = false },
-      jumplist = { default_text = vim.fn.expand("%:t") .. " ", fname_width = 0.5, show_line = false },
+      jumplist = { fname_width = 0.5, show_line = false },
       treesitter = { default_text = "function " },
     },
     extensions = {
@@ -135,12 +136,9 @@ return function()
     "<cmd>lua require('telescope.builtin').marks()<cr>",
     { noremap = true, silent = true }
   )
-  vim.api.nvim_set_keymap(
-    "n",
-    "<space>j",
-    "<cmd>lua require('telescope.builtin').jumplist()<cr>",
-    { noremap = true, silent = true }
-  )
+  vim.keymap.set("n", "<space>j", function()
+    return telescope_builtin.jumplist({ default_text = vim.fn.expand("%:t") .. " " })
+  end, { noremap = true, silent = true })
   vim.api.nvim_set_keymap(
     "n",
     "<space>r",
