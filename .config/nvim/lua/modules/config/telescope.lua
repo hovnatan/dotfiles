@@ -1,30 +1,12 @@
 return function()
-  local telescope = safe_require("telescope")
-  if not telescope then
-    return
-  end
+  local telescope = require("telescope")
 
-  local telescope_previewers = require("telescope.previewers")
   local telescope_actions = require("telescope.actions")
   local telescope_builtin = require("telescope.builtin")
+  local telescope_sorters = require("telescope.sorters")
 
   telescope.setup({
     defaults = {
-      vimgrep_arguments = {
-        "rg",
-        "--color=never",
-        "--no-heading",
-        "--with-filename",
-        "--line-number",
-        "--column",
-        "--smart-case",
-      },
-      prompt_prefix = "> ",
-      selection_caret = "> ",
-      entry_prefix = "  ",
-      initial_mode = "insert",
-      selection_strategy = "reset",
-      sorting_strategy = "descending",
       scroll_strategy = "limit",
       layout_strategy = "vertical",
       layout_config = {
@@ -33,24 +15,13 @@ return function()
         height = 0.95,
         width = 0.95,
       },
-      file_sorter = require("telescope.sorters").get_fuzzy_file,
-      file_ignore_patterns = {},
-      generic_sorter = require("telescope.sorters").get_generic_fuzzy_sorter,
-      winblend = 0,
-      border = {},
-      borderchars = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
-      color_devicons = true,
-      use_less = true,
+      file_sorter = telescope_sorters.get_fuzzy_file,
+      generic_sorter = telescope_sorters.get_generic_fuzzy_sorter,
       set_env = { ["COLORTERM"] = "truecolor" }, -- default = nil,
-      file_previewer = telescope_previewers.vim_buffer_cat.new,
-      grep_previewer = telescope_previewers.vim_buffer_vimgrep.new,
-      qflist_previewer = telescope_previewers.vim_buffer_qflist.new,
       tiebreak = function(current_entry, existing_entry, prompt)
         return false
       end,
-      -- Developer configurations: Not meant for general override
-      buffer_previewer_maker = telescope_previewers.buffer_previewer_maker,
-      path_display = { "truncate" },
+      path_display = { shorten = 2 },
       mappings = {
         i = {
           ["<esc>"] = telescope_actions.close,
@@ -58,18 +29,9 @@ return function()
       },
     },
     pickers = {
-      -- Your special builtin config goes in here
       buffers = {
         sort_mru = true,
         previewer = false,
-        mappings = {
-          i = {
-            ["<c-d>"] = telescope_actions.delete_buffer,
-            -- or right hand side can also be a the name of the action as string
-            ["<c-d>"] = "delete_buffer",
-          },
-          n = { ["<c-d>"] = telescope_actions.delete_buffer },
-        },
       },
       find_files = { previewer = false },
       oldfiles = { previewer = false },
