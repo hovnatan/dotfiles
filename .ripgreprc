@@ -18,3 +18,6 @@ web:*.{html,css,js}*
 
 # Because who cares about case!?
 --smart-case
+
+--hidden
+--no-ignore-vcs
