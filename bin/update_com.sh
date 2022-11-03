@@ -41,5 +41,6 @@ if [ -f /var/run/reboot-required ]; then
 fi
 
 sudo snap refresh --list
+sudo snap refresh
 
 echo -e "$NC"
