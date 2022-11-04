@@ -52,6 +52,14 @@ return function()
         end,
       }),
     },
+    sorting = {
+      priority_weight = 2,
+      comparators = {
+        cmp.config.compare.locality,
+        cmp.config.compare.recently_used,
+        cmp.config.compare.score,
+      },
+    },
     sources = {
       -- { name = "luasnip", max_item_count = 5 },
       { name = "path", max_item_count = 5 },
