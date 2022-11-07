@@ -10,7 +10,10 @@ env:
 scrolling:
     history: 0
 font:
-    size: 14
+  normal:
+    family: Consolas
+    style: Regular
+  size: 14
 
 window:
   padding:
