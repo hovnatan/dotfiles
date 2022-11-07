@@ -8,7 +8,7 @@ return function()
   telescope.setup({
     defaults = {
       scroll_strategy = "limit",
-      layout_strategy = "vertical",
+      layout_strategy = "horizontal",
       layout_config = {
         horizontal = { mirror = false, preview_cutoff = 0 },
         vertical = { mirror = false, preview_cutoff = 0 },
