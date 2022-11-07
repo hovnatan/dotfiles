@@ -10,9 +10,10 @@ env:
 scrolling:
     history: 0
 font:
-  normal:
-    family: Consolas
-    style: Regular
+  # normal:
+    # family: Consolas
+    # family: Hack Nerd Font Mono
+    # style: Regular
   size: 14
 
 window:
