@@ -2,13 +2,12 @@
 
 sudo echo "Starting upgrade"
 
-#cd ~/.dotfiles
-#git pull
-#GIT_BRANCH=$(git branch --show-current)
-#if [[ "$GIT_BRANCH" != master ]]; then
-#  git rebase origin/master
-#  git push -f
-#fi
+sudo snap refresh
+SNAPS_NOT_UPDATED=$(sudo snap refresh --list 2>&1)
+if [ "$SNAPS_NOT_UPDATED" != "All snaps up to date." ]; then
+  echo "$SNAPS_NOT_UPDATED"
+  exit 1;
+fi
 
 sudo apt update
 sudo apt -y dist-upgrade
@@ -34,13 +33,8 @@ nvim -c 'PackerSync'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo -e "$RED"
-
 if [ -f /var/run/reboot-required ]; then 
+  echo -e "$RED"
   echo 'System reboot required'
+  echo -e "$NC"
 fi
-
-sudo snap refresh --list
-sudo snap refresh
-
-echo -e "$NC"
