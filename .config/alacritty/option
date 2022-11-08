@@ -9,12 +9,17 @@ env:
 
 scrolling:
     history: 0
+
 font:
-  # normal:
-    # family: Consolas
-    # family: Hack Nerd Font Mono
+  normal:
+    # family: monospace
+    family: Hack Nerd Font Mono
+    # family: FiraCode Nerd Font
     # style: Regular
   size: 14
+  offset:
+    x: 0
+    y: 2
 
 window:
   padding:
