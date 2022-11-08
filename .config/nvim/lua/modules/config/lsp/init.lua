@@ -52,7 +52,7 @@ return function()
       },
     },
     pyright = {
-      flags = { debounce_text_changes = 150 },
+      flags = { debounce_text_changes = 1000 },
       settings = {
         python = {
           analysis = {
