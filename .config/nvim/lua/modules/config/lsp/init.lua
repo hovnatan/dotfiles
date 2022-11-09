@@ -33,7 +33,7 @@ return function()
       },
     },
     clangd = {
-      flags = { debounce_text_changes = 150 },
+      flags = { debounce_text_changes = 1500 },
       init_options = { clangdFileStatus = true },
       cmd = {
         "clangd",
@@ -52,7 +52,7 @@ return function()
       },
     },
     pyright = {
-      flags = { debounce_text_changes = 150 },
+      flags = { debounce_text_changes = 1500 },
       settings = {
         python = {
           analysis = {
