@@ -3,6 +3,7 @@ return function()
     patterns = {
       python = {
         "with",
+        "try",
       },
     },
   })
