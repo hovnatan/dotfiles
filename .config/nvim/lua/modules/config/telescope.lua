@@ -21,11 +21,16 @@ return function()
       tiebreak = function(current_entry, existing_entry, prompt)
         return false
       end,
-      path_display = { shorten = 2 },
+      path_display = { truncate },
       mappings = {
         i = {
           ["<esc>"] = telescope_actions.close,
+          ["<C-j>"] = telescope_actions.cycle_history_next,
+          ["<C-k>"] = telescope_actions.cycle_history_prev,
         },
+      },
+      cache_picker = {
+        num_pickers = 10,
       },
     },
     pickers = {
@@ -70,5 +75,6 @@ return function()
   end, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>A", telescope_builtin.diagnostics, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>s", telescope_builtin.treesitter, { noremap = true, silent = true })
-  vim.keymap.set("n", "<space>p", telescope_builtin.resume, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>p", telescope_builtin.pickers, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space><space>", telescope_builtin.resume, { noremap = true, silent = true })
 end
