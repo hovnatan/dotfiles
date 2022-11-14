@@ -76,5 +76,5 @@ return function()
   vim.keymap.set("n", "<space>A", telescope_builtin.diagnostics, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>s", telescope_builtin.treesitter, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>p", telescope_builtin.pickers, { noremap = true, silent = true })
-  vim.keymap.set("n", "<space><space>", telescope_builtin.resume, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>[", telescope_builtin.resume, { noremap = true, silent = true })
 end
