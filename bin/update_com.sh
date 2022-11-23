@@ -21,8 +21,10 @@ fish -c "fisher update"
 
 pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U --upgrade-strategy=eager
 
-npm update -g yarn
-yarn global upgrade
+npm install -g yarn@latest
+rm ~/.config/yarn/global/yarn.lock
+yarn global add
+yarn global upgrade --latest
 
 rustup update
 cargo install-update -a
