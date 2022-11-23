@@ -47,7 +47,8 @@ go install github.com/nao1215/gup@latest
 
 cp ~/.dotfiles/.npmrc ~/.npmrc
 
-npm i --location=global bash-language-server prettier pyright vscode-langservers-extracted typescript typescript-language-server
+npm i --location=global yarn
+yarn global add bash-language-server prettier pyright vscode-langservers-extracted typescript typescript-language-server
 
 wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
 mkdir -p ~/.local/share/fonts
