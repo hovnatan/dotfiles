@@ -19,6 +19,9 @@ if [[ "$WSL_DISTRO_NAME" ]]; then
    sudo apt-get install wslu
 fi
 
+wget https://github.com/dandavison/delta/releases/download/0.14.0/git-delta_0.14.0_amd64.deb -P ~/Downloads/
+sudo dpkg -i ~/Downloads/git-delta_0.14.0_amd64.deb
+
 # sudo apt-get install -y xrdp remmina
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 . "$HOME/.cargo/env"
