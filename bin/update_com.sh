@@ -10,7 +10,7 @@ if [ "$SNAPS_NOT_UPDATED" != "All snaps up to date." ]; then
 fi
 
 sudo apt update
-sudo apt -y dist-upgrade
+sudo NEEDRESTART_MODE=a apt -y dist-upgrade
 sudo apt -y autoremove
 
 sudo fwupdmgr update
