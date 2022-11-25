@@ -81,3 +81,4 @@ else
 fi
 
 export CONDA_EXPERIMENTAL_SOLVER=libmamba
+export DOCKER_BUILDKIT=1
