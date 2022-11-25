@@ -19,11 +19,11 @@ fish -c "fisher update"
 
 "$HOME/.config/tmux/plugins/tpm/bin/update_plugins" all
 
-pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U --upgrade-strategy=eager
+pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U # --upgrade-strategy=eager
 
 npm install -g yarn@latest
-rm ~/.config/yarn/global/yarn.lock
-yarn global add
+# rm ~/.config/yarn/global/yarn.lock
+# yarn global add
 yarn global upgrade --latest
 
 rustup update
