@@ -14,7 +14,7 @@ return function()
   require("neoclip").setup({
     enable_persistent_history = true,
     content_spec_column = true,
-    default_register = '+',
+    default_register = "+",
     history = 10000,
     filter = function(data)
       whitespace = not all(data.event.regcontents, is_whitespace)
@@ -47,4 +47,5 @@ return function()
   })
   require("telescope").load_extension("neoclip")
   vim.api.nvim_set_keymap("n", "<space>y", "<cmd>Telescope neoclip<cr>", { noremap = true, silent = true })
+  vim.api.nvim_set_keymap("v", "<space>y", "<cmd>Telescope neoclip<cr>", { noremap = true, silent = true })
 end
