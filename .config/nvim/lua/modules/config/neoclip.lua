@@ -47,5 +47,4 @@ return function()
   })
   require("telescope").load_extension("neoclip")
   vim.api.nvim_set_keymap("n", "<space>y", "<cmd>Telescope neoclip<cr>", { noremap = true, silent = true })
-  vim.api.nvim_set_keymap("v", "<space>y", "<cmd>Telescope neoclip<cr>", { noremap = true, silent = true })
 end
