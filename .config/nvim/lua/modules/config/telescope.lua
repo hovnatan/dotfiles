@@ -51,13 +51,17 @@ return function()
         case_mode = "smart_case", -- or "ignore_case" or "respect_case"
         -- the default case_mode is "smart_case"
       },
+      live_grep_args = {
+        auto_quoting = false,
+      },
     },
   })
   telescope.load_extension("fzf")
+  telescope.load_extension("live_grep_args")
 
   vim.keymap.set("n", "<space>f", telescope_builtin.find_files, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>g", telescope_builtin.grep_string, { noremap = true, silent = true })
-  vim.keymap.set("n", "<space>G", telescope_builtin.live_grep, { noremap = true, silent = true })
+  vim.keymap.set("n", "<space>G", telescope.extensions.live_grep_args.live_grep_args, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>b", telescope_builtin.buffers, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>h", telescope_builtin.help_tags, { noremap = true, silent = true })
   vim.keymap.set("n", "<space>o", function()
