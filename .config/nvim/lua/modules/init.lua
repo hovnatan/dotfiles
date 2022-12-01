@@ -60,8 +60,14 @@ local plugins = {
     end,
   },
   { "nvim-lua/popup.nvim" },
-  { "nvim-telescope/telescope.nvim", config = conf("telescope") },
-  { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
+  {
+    "nvim-telescope/telescope.nvim",
+    requires = {
+      { "nvim-telescope/telescope-live-grep-args.nvim" },
+      { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
+    },
+    config = conf("telescope"),
+  },
   {
     "liuchengxu/vista.vim",
     config = function()
