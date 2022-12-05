@@ -6,3 +6,4 @@ build
 venv_*
 .venv*
 node_modules
+.eggs
