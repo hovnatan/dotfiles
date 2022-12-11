@@ -14,7 +14,7 @@ sudo add-apt-repository restricted
 sudo apt-get update
 sudo apt-get -y dist-upgrade
 
-sudo apt-get install -y jq feh tmux fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear ppa-purge valgrind curl htop octave net-tools sshfs cmake aria2 mediainfo xdg-utils wmctrl awscli docker.io default-jre universal-ctags aptitude pandoc poppler-utils ffmpeg git-lfs ripgrep libfuse2 bat ubuntu-drivers-common nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk libssl-dev python3-venv
+sudo apt-get install -y jq feh fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear ppa-purge valgrind curl htop octave net-tools sshfs cmake aria2 mediainfo xdg-utils wmctrl awscli docker.io default-jre universal-ctags aptitude pandoc poppler-utils ffmpeg git-lfs ripgrep libfuse2 bat ubuntu-drivers-common nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk libssl-dev python3-venv libtool-bin
 if [[ "$WSL_DISTRO_NAME" ]]; then
    sudo apt-get install wslu
 fi
@@ -42,8 +42,8 @@ sudo vim /etc/sysctl.d/10-ptrace.conf
 
 # ubuntu-drivers devices
 # sudo ubuntu-drivers autoinstall
-wget https://github.com/neovim/neovim/releases/download/v0.8.0/nvim.appimage -O ~/.dotfiles/bin/nvim
-chmod +x ~/.dotfiles/bin/nvim
+# wget https://github.com/neovim/neovim/releases/download/v0.8.0/nvim.appimage -O ~/.dotfiles/bin/nvim
+# chmod +x ~/.dotfiles/bin/nvim
 
 go install github.com/mattn/efm-langserver@latest
 go install github.com/nao1215/gup@latest
@@ -64,3 +64,22 @@ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo 
   && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
   && sudo apt update \
   && sudo apt install gh -y
+
+export MAKEFLAGS="-j11"
+export CFLAGS="-march=native"
+export CXXFLAGS="-march=native"
+
+cd ~/Downloads
+git clone https://github.com/neovim/neovim.git
+cd neovim
+git checkout v0.8.1
+make CMAKE_BUILD_TYPE=Release
+sudo make install
+cd ..
+
+git clone https://github.com/tmux/tmux.git
+cd tmux
+git checkout 3.3a
+sh autogen.sh
+./configure && make
+sudo make install
