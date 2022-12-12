@@ -64,14 +64,6 @@ return function()
           ["[]"] = "@class.outer",
         },
       },
-      lsp_interop = {
-        enable = true,
-        border = "none",
-        peek_definition_code = {
-          ["df"] = "@function.outer",
-          ["dF"] = "@class.outer",
-        },
-      },
     },
   })
 end
