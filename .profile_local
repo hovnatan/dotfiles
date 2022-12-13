@@ -8,8 +8,8 @@ export LANGUAGE=en_US.UTF-8
 export TMUX_ONE_WINDOW=1
 # export LIBGL_ALWAYS_INDIRECT=1
 export MAKEFLAGS="-j11"
-export CFLAGS="-march=native"
-export CXXFLAGS="-march=native"
+export CFLAGS="-march=native -O3"
+export CXXFLAGS="-march=native -O3"
 
 export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
 export REVIEW_BASE=master

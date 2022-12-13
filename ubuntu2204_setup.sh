@@ -66,8 +66,8 @@ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo 
   && sudo apt install gh -y
 
 # export MAKEFLAGS="-j11"
-# export CFLAGS="-march=native"
-# export CXXFLAGS="-march=native"
+# export CFLAGS="-march=native -O3"
+# export CXXFLAGS="-march=native -O3"
 
 # cd ~/Downloads
 # git clone https://github.com/neovim/neovim.git
