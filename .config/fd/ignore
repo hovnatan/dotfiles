@@ -7,4 +7,6 @@ venv_*
 .venv*
 node_modules
 .eggs
+*.egg-info
 yarn.lock
+package-lock.json
