@@ -7,3 +7,4 @@ venv_*
 .venv*
 node_modules
 .eggs
+yarn.lock
