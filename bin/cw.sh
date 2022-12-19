@@ -43,7 +43,6 @@ echo -n "set -U _reload_color_config ""$COLOR" | fish
 "$script_full_path/color_switcher.sh" ~/.config/alacritty/alacritty.toml ~/.config/alacritty/option ~/.config/alacritty/colors/$COLOR
 
 if [[ "$WSL_DISTRO_NAME" ]]; then
-  WINDOWS_HOME=$(wslpath "$(wslvar USERPROFILE)")
   cp ~/.config/alacritty/alacritty.yml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.yml"
 fi
 
