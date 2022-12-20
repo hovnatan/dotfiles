@@ -8,3 +8,5 @@ page_separator_color	0.0 0.0 0.0
 show_doc_path 1
 
 super_fast_search 0
+
+shared_database_path /home/hovnatan/Dropbox/scripts/shared.db
