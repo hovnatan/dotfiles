@@ -1,4 +1,5 @@
 return function()
+  local lspconfig = require("lspconfig")
   local handlers = require("modules.config.lsp.handlers")
   handlers.setup()
   -- handlers.enable_format_on_save()
@@ -56,7 +57,6 @@ return function()
       settings = {
         python = {
           analysis = {
-            autoSearchPaths = true,
             stubPath = os.getenv("HOME") .. "/.dotfiles/python/stubs",
           },
         },
@@ -92,7 +92,6 @@ return function()
 
   local servers = { "clangd", "pyright", "efm", "jsonls", "bashls", "tsserver", "eslint" }
 
-  local lspconfig = require("lspconfig")
   for _, name in pairs(servers) do
     local config = servers_config[name] or {}
     config.capabilities = handlers.capabilities
