@@ -10,3 +10,5 @@ node_modules
 *.egg-info
 yarn.lock
 package-lock.json
+htmlcov
+.pytest_cache
