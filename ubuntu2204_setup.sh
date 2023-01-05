@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
+
+sudo apt-get install -y software-properties-common curl
 
 sudo apt-add-repository ppa:fish-shell/release-3
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -53,10 +55,10 @@ cp ~/.dotfiles/.npmrc ~/.npmrc
 npm i --location=global yarn
 yarn global add bash-language-server prettier pyright vscode-langservers-extracted typescript typescript-language-server
 
-wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
-mkdir -p ~/.local/share/fonts
-unzip ~/Downloads/Hack.zip -d ~/.local/share/fonts
-fc-cache -fv
+# wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
+# mkdir -p ~/.local/share/fonts
+# unzip ~/Downloads/Hack.zip -d ~/.local/share/fonts
+# fc-cache -fv
 
 type -p curl >/dev/null || sudo apt install curl -y
 curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \

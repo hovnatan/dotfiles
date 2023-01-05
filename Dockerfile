@@ -1,11 +1,18 @@
-FROM ubuntu:18.04
-SHELL ["/bin/bash", "-c"]
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && apt-get install -y \
-	sudo git ca-certificates && \
-  rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y sudo
 
-COPY ./setup_on_docker.sh /root/
-RUN /root/setup_on_docker.sh
+ARG USER=hovnatan
+
+RUN adduser --disabled-password --gecos '' $USER
+RUN adduser $USER sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+
+USER $USER
+WORKDIR /home/$USER
+
+COPY --chown=$USER . .dotfiles/
+RUN .dotfiles/ubuntu2204_setup.sh
