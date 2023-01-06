@@ -29,12 +29,10 @@ ln -s ~/.dotfiles/.config/pudb/pudb.cfg ~/.config/pudb/pudb.cfg
 
 rm -rf ~/.config/fish
 ln -s ~/.dotfiles/.config/fish ~/.config/fish
-fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
-fish -c fisher update
+fish -c 'curl -sL https://git.io/fisher | source && fisher update'
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
-vim ~/.gitconfig
 
 rm -rf ~/.config/htop
 mkdir ~/.config/htop
@@ -48,13 +46,13 @@ ln -s ~/.dotfiles/.config/feh ~/.config/feh
 # modify ~/.config/mimeapps.list for image/tiff feh.desktop
 
 
-cd ~
-ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519
-ssh-keygen -t rsa -b 4096
+# cd ~
+# ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519 -N '' 
+# ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ''
 #echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
 #chmod 644 ~/.ssh/config
-touch ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys
+# touch ~/.ssh/authorized_keys
+# chmod 600 ~/.ssh/authorized_keys
 
 # To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_ed25519.pub into the field labeled 'Key'. with xclip -i -selection clipboard ~/.ssh/id_ed25519.pub
 
@@ -71,8 +69,6 @@ ln -s ~/.dotfiles/.config/keepassxc ~/.config/keepassxc
 ln -sf ~/.dotfiles/.config/zathura ~/.config/
 # ln -sf ~/.dotfiles/.config/pulse/daemon-high.conf ~/.config/pulse/daemon.conf
 # ln -sf ~/.dotfiles/.config/pulse/client.conf ~/.config/pulse/
-
-ln -sf ~/.dotfiles/.ssh/config ~/.ssh/config
 
 ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
 
@@ -120,6 +116,6 @@ ln -sf ~/.dotfiles/.config/wezterm ~/.config/
 
 ln -sf ~/.dotfiles/.config/sioyek ~/.config/
 
-ln -sf ~/.dotfiles/.local/share/applications/zotero.desktop ~/.local/share/applications/
-ln -sf ~/.dotfiles/.local/share/applications/sioyek.desktop ~/.local/share/applications/
+# ln -sf ~/.dotfiles/.local/share/applications/zotero.desktop ~/.local/share/applications/
+# ln -sf ~/.dotfiles/.local/share/applications/sioyek.desktop ~/.local/share/applications/
 # update-desktop-database ~/.local/share/applications/
