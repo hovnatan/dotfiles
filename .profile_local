@@ -14,7 +14,18 @@ export CXXFLAGS="-march=native -O3"
 export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
 export REVIEW_BASE=master
 
-# export PATH="`python3 -m site --user-base`/bin:$PATH"
+PYPATH="`python3 -m site --user-base`/bin"
+pathprepend() {
+  for ((i=$#; i>0; i--));
+  do
+    ARG=${!i}
+
+    if [ -d "$ARG" ] && [[ ":$PATH:" != *":$ARG:"* ]]; then
+        PATH="$ARG${PATH:+":$PATH"}"
+    fi
+  done
+}
+pathprepend $PYPATH
 
 export PATH="$HOME/opt/usr/bin:$PATH"
 . "$HOME/.cargo/env"
