@@ -1,8 +1,9 @@
 FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND noninteractive
-
-RUN apt-get update && apt-get install -y sudo
+RUN echo "deb mirror://mirrors.ubuntu.com/mirrors.txt jammy main restricted universe multiverse" > /etc/apt/sources.list && \
+    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list && \
+    echo "deb mirror://mirrors.ubuntu.com/mirrors.txt jammy-security main restricted universe multiverse" >> /etc/apt/sources.list && \
+    DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y sudo
 
 ARG USER=hovnatan
 
@@ -15,4 +16,4 @@ USER $USER
 WORKDIR /home/$USER
 
 COPY --chown=$USER . .dotfiles/
-RUN .dotfiles/ubuntu2204_setup.sh
+RUN DEBIAN_FRONTEND=noninteractive .dotfiles/ubuntu2204_setup.sh
