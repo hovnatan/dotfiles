@@ -30,3 +30,5 @@ RUN --mount=type=cache,target=/var/cache/apt \
 
 COPY --chown=$USER . .dotfiles/
 RUN .dotfiles/setup.sh
+
+ENV TERM=alacritty
