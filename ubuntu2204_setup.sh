@@ -17,9 +17,9 @@ sudo add-apt-repository universe
 sudo add-apt-repository restricted
 
 
-sudo apt-get install -y jq feh fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear valgrind curl htop cmake aria2 mediainfo pandoc git-lfs bat nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk python3-venv yacc tmux pkg-config libssl-dev build-essential openssh-client libtool-bin gettext
+sudo apt-get install -y jq feh fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear valgrind curl htop cmake aria2 mediainfo pandoc git-lfs bat nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk python3-venv yacc tmux pkg-config libssl-dev build-essential openssh-client libtool-bin gettext automake libevent-dev libncurses-dev
 
-# sudo apt-get install -y wmctrl awscli docker.io default-jre xdg-utils universal-ctags poppler-utils ffmpeg libfuse2 ubuntu-drivers-common  libevent-dev octave ppa-purge net-tools sshfs 
+# sudo apt-get install -y wmctrl awscli docker.io default-jre xdg-utils universal-ctags poppler-utils ffmpeg libfuse2 ubuntu-drivers-common octave ppa-purge net-tools sshfs 
 # if [[ "$WSL_DISTRO_NAME" ]]; then
 #    sudo apt-get install wslu
 # fi
@@ -78,22 +78,22 @@ make CMAKE_BUILD_TYPE=Release
 sudo make install
 cd ..
 
-# git clone https://github.com/tmux/tmux.git
-# cd tmux
-# git checkout 3.3a
-# sh autogen.sh
-# ./configure && make
-# sudo make install
-# cd ..
+git clone https://github.com/tmux/tmux.git
+cd tmux
+git checkout 3.3a
+sh autogen.sh
+./configure && make
+sudo make install
+cd ..
 
-# git clone https://github.com/fish-shell/fish-shell.git
-# cd fish-shell
-# git checkout 3.5.1
-# mkdir build
-# cmake ..
-# make
-# sudo make install
-# cd ../..
+git clone https://github.com/fish-shell/fish-shell.git
+cd fish-shell
+git checkout 3.5.1
+mkdir build
+cmake ..
+make
+sudo make install
+cd ../..
 
 git clone https://github.com/alacritty/alacritty.git
 cd alacritty
