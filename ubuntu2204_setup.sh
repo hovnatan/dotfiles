@@ -94,3 +94,9 @@ cd ..
 # make
 # sudo make install
 # cd ../..
+
+git clone https://github.com/alacritty/alacritty.git
+cd alacritty
+sudo tic -xe alacritty,alacritty-direct extra/alacritty.info
+cd ..
+rm -rf alacritty
