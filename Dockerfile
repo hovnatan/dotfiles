@@ -5,8 +5,7 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean
 RUN --mount=type=cache,target=/var/cache/apt \
     DEBIAN_FRONTEND=noninteractive \
     apt-get update \
-    && apt-get install -y sudo \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y sudo
 
 ARG USER=hovnatan
 
@@ -24,7 +23,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/home/$USER/.cache \
     DEBIAN_FRONTEND=noninteractive \
     ./ubuntu2204_setup.sh \
-    && sudo rm -rf /var/lib/apt/lists/*
+    && rm ubuntu2204_setup.sh
 
 COPY --chown=$USER . .dotfiles/
 RUN .dotfiles/setup.sh

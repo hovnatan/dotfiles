@@ -5,7 +5,9 @@ set -e
 apt-config dump | grep -we Recommends -e Suggests | sed s/1/0/ | sudo tee /etc/apt/apt.conf.d/99norecommend
 sudo apt-get update
 sudo apt-get -y dist-upgrade
-sudo apt-get install -y software-properties-common curl gnupg wget
+sudo apt-get install -y software-properties-common curl gnupg wget locales
+
+sudo locale-gen --no-purge en_US.UTF-8
 
 sudo apt-add-repository ppa:fish-shell/release-3
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
