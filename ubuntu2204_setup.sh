@@ -45,15 +45,11 @@ sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
 
 # ubuntu-drivers devices
 # sudo ubuntu-drivers autoinstall
-wget https://github.com/neovim/neovim/releases/download/v0.8.2/nvim.appimage -O ~/.dotfiles/bin/nvim
-chmod +x ~/.dotfiles/bin/nvim
 
 go install github.com/mattn/efm-langserver@latest
 go install github.com/nao1215/gup@latest
 
-cp ~/.dotfiles/.npmrc ~/.npmrc
-
-npm i --location=global yarn
+npm i --prefix=~/.local --location=global yarn
 ~/.local/bin/yarn global add bash-language-server prettier pyright vscode-langservers-extracted typescript typescript-language-server
 
 # wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
