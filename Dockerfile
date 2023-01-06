@@ -32,3 +32,5 @@ COPY --chown=$USER . .dotfiles/
 RUN .dotfiles/setup.sh
 
 ENV TERM=alacritty
+
+ENTRYPOINT ["/bin/bash", "-l"]
