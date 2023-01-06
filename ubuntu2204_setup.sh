@@ -17,7 +17,7 @@ sudo add-apt-repository universe
 sudo add-apt-repository restricted
 
 
-sudo apt-get install -y jq feh fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear valgrind curl htop cmake aria2 mediainfo pandoc git-lfs bat nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk python3-venv yacc tmux pkg-config libssl-dev
+sudo apt-get install -y jq feh fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear valgrind curl htop cmake aria2 mediainfo pandoc git-lfs bat nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk python3-venv yacc tmux pkg-config libssl-dev build-essential openssh-client
 
 # sudo apt-get install -y wmctrl awscli docker.io default-jre xdg-utils universal-ctags poppler-utils ffmpeg libfuse2 ubuntu-drivers-common libtool-bin gettext libevent-dev octave ppa-purge net-tools sshfs 
 # if [[ "$WSL_DISTRO_NAME" ]]; then
@@ -66,17 +66,17 @@ npm i --prefix=~/.local --location=global yarn
 #   && sudo apt update \
 #   && sudo apt install gh -y
 
-# export MAKEFLAGS="-j11"
-# export CFLAGS="-march=native -O3"
-# export CXXFLAGS="-march=native -O3"
+export MAKEFLAGS="-j11"
+export CFLAGS="-march=native -O3"
+export CXXFLAGS="-march=native -O3"
 
-# cd ~/Downloads
-# git clone https://github.com/neovim/neovim.git
-# cd neovim
-# git checkout stable
-# make CMAKE_BUILD_TYPE=Release
-# sudo make install
-# cd ..
+cd ~/Downloads
+git clone https://github.com/neovim/neovim.git
+cd neovim
+git checkout stable
+make CMAKE_BUILD_TYPE=Release
+sudo make install
+cd ..
 
 # git clone https://github.com/tmux/tmux.git
 # cd tmux
