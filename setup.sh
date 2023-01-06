@@ -4,9 +4,6 @@ set -e
 
 cd ~
 
-wget https://github.com/neovim/neovim/releases/download/v0.8.2/nvim.appimage -O ~/.dotfiles/bin/nvim
-chmod +x ~/.dotfiles/bin/nvim
-
 cp ~/.dotfiles/.npmrc ~/.npmrc
 
 mkdir -p ~/.config
