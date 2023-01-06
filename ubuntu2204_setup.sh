@@ -28,7 +28,7 @@ wget https://github.com/dandavison/delta/releases/download/0.14.0/git-delta_0.14
 sudo dpkg -i ~/Downloads/git-delta_0.14.0_amd64.deb
 
 # sudo apt-get install -y xrdp remmina
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 . "$HOME/.cargo/env"
 cargo install exa stylua cargo-update
 
