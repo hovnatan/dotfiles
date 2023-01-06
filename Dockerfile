@@ -2,8 +2,12 @@ FROM ubuntu:22.04
 
 RUN apt-config dump | grep -we Recommends -e Suggests | sed s/1/0/ | tee /etc/apt/apt.conf.d/99norecommend
 RUN rm -f /etc/apt/apt.conf.d/docker-clean
+
+RUN sed -i -e 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//mirror:\/\/mirrors\.ubuntu\.com\/mirrors\.txt/' /etc/apt/sources.list
+
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
 RUN --mount=type=cache,target=/var/cache/apt \
-    DEBIAN_FRONTEND=noninteractive \
     apt-get update \
     && apt-get install -y sudo
 
@@ -21,7 +25,6 @@ COPY --chown=$USER ubuntu2204_setup.sh ./
 RUN --mount=type=cache,target=/var/cache/apt \
     --mount=type=cache,target=/home/$USER/.cargo/registry \
     --mount=type=cache,target=/home/$USER/.cache \
-    DEBIAN_FRONTEND=noninteractive \
     ./ubuntu2204_setup.sh \
     && rm ubuntu2204_setup.sh
 
