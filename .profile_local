@@ -16,7 +16,7 @@ export REVIEW_BASE=master
 
 PYPATH="`python3 -m site --user-base`/bin"
 pathprepend() {
-  for ((i=$#; i>0; i--));
+  for ((i=$#; i>0; i--)); 
   do
     ARG=${!i}
 
