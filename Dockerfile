@@ -33,4 +33,6 @@ RUN .dotfiles/setup.sh
 
 ENV TERM=alacritty
 
+RUN echo 'debconf debconf/frontend select readline' | debconf-set-selections
+
 ENTRYPOINT ["/bin/bash", "-l"]
