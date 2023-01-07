@@ -1,19 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -e
 
 sudo echo "Starting upgrade"
 
-sudo snap refresh
-SNAPS_NOT_UPDATED=$(sudo snap refresh --list 2>&1)
-if [ "$SNAPS_NOT_UPDATED" != "All snaps up to date." ]; then
-  echo "$SNAPS_NOT_UPDATED"
-  exit 1;
+if type snap > /dev/null; then
+  sudo snap refresh
+  SNAPS_NOT_UPDATED=$(sudo snap refresh --list 2>&1)
+  if [ "$SNAPS_NOT_UPDATED" != "All snaps up to date." ]; then
+    echo "$SNAPS_NOT_UPDATED"
+    exit 1;
+  fi
 fi
 
 sudo apt update
 sudo NEEDRESTART_MODE=a apt -y dist-upgrade
 sudo apt -y autoremove
 
-sudo fwupdmgr update
+if type fwupdmgr > /dev/null; then
+  sudo fwupdmgr update
+fi
 
 fish -c "fisher update"
 
