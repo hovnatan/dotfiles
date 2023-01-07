@@ -118,3 +118,4 @@ ln -sf ~/.dotfiles/.config/sioyek ~/.config/
 # update-desktop-database ~/.local/share/applications/
 
 # sudo dpkg-reconfigure tzdata
+# ps uxa | grep .vscode-server | awk '{print $2}' | xargs kill
