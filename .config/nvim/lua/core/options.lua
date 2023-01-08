@@ -59,7 +59,6 @@ vim.opt.fixendofline = false
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = [[nvim_treesitter#foldexpr()]]
 vim.opt.completeopt = "menuone,noselect"
-vim.opt.clipboard = "unnamedplus"
 
 local file = io.open(os.getenv("HOME") .. "/.my_colors", "r")
 vim.o.background = file:read("*a")

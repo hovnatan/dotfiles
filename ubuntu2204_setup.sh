@@ -88,8 +88,9 @@ cd ..
 
 git clone https://github.com/fish-shell/fish-shell.git
 cd fish-shell
-git checkout 3.5.1
+git checkout 3.6.0
 mkdir build
+cd build
 cmake ..
 make
 sudo make install
