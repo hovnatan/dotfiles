@@ -21,23 +21,25 @@ if type fwupdmgr > /dev/null; then
   sudo fwupdmgr update
 fi
 
-fish -c "fisher update"
+if [[ -v HK_DEV_ENV ]]; then
+  fish -c "fisher update"
 
-"$HOME/.config/tmux/plugins/tpm/bin/update_plugins" all
+  "$HOME/.config/tmux/plugins/tpm/bin/update_plugins" all
 
-pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U # --upgrade-strategy=eager
+  pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U # --upgrade-strategy=eager
 
-npm install -g yarn@latest
-# rm ~/.config/yarn/global/yarn.lock
-# yarn global add
-yarn global upgrade --latest
+  npm install -g yarn@latest
+  # rm ~/.config/yarn/global/yarn.lock
+  # yarn global add
+  yarn global upgrade --latest
 
-rustup update
-cargo install-update -a
+  rustup update
+  cargo install-update -a
 
-gup update
+  gup update
 
-nvim -c 'PackerSync'
+  nvim -c 'PackerSync'
+fi
 
 RED='\033[0;31m'
 NC='\033[0m' # No Color
