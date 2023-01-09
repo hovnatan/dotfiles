@@ -1,5 +1,7 @@
 #!/bin/bash
 
+script_full_path=$(dirname "$0")
+
 unameOut="$(uname -s)"
 case "${unameOut}" in
     Linux*)     machine=Linux;;
@@ -38,7 +40,7 @@ echo -n "$COLOR" > ~/.my_colors
 echo -n "set -U _reload_color_config ""$COLOR" | fish
 
 # kitty @ --to $HOME/.tmpkitty set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
-color_switcher.sh ~/.config/alacritty/alacritty.yml ~/.config/alacritty/option ~/.config/alacritty/colors/$COLOR reverse
+$script_full_path/color_switcher.sh ~/.config/alacritty/alacritty.yml ~/.config/alacritty/option ~/.config/alacritty/colors/$COLOR reverse
 
 if [[ "$WSL_DISTRO_NAME" ]]; then
   WINDOWS_HOME=$(wslpath "$(wslvar USERPROFILE)")
@@ -47,10 +49,10 @@ fi
 
 tmux source ~/.config/tmux/tmux.conf
 
-color_switcher.sh ~/.config/bat/config ~/.config/bat/option ~/.config/bat/config_$COLOR
+$script_full_path/color_switcher.sh ~/.config/bat/config ~/.config/bat/option ~/.config/bat/config_$COLOR
 
-SIOYEK="$HOME/.dotfiles/.config/sioyek/"
-color_switcher.sh "$SIOYEK/prefs_user.config" "$SIOYEK/prefs_user_common" "$SIOYEK/$COLOR" reverse
+SIOYEK="$HOME/.config/sioyek/"
+$script_full_path/color_switcher.sh "$SIOYEK/prefs_user.config" "$SIOYEK/prefs_user_common" "$SIOYEK/$COLOR" reverse
 
 if [ $COLOR == "dark" ]; then
   if [ "$machine" == "Linux" ]; then
