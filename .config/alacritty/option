@@ -1,9 +1,3 @@
-shell:
-  program: /bin/bash
-  args:
-    - --rcfile 
-    - ~/.dotfiles/.bash_profile_local
-
 env:
   TERM: alacritty
 
