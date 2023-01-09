@@ -71,24 +71,21 @@ export CFLAGS="-march=native -O3"
 export CXXFLAGS="-march=native -O3"
 
 cd ~/Downloads
-git clone https://github.com/neovim/neovim.git
+git clone --depth 1 --branch stable https://github.com/neovim/neovim.git 
 cd neovim
-git checkout stable
 make CMAKE_BUILD_TYPE=Release
 sudo make install
 cd ..
 
-git clone https://github.com/tmux/tmux.git
+git clone --depth 1 --branch 3.3a https://github.com/tmux/tmux.git
 cd tmux
-git checkout 3.3a
 sh autogen.sh
 ./configure && make
 sudo make install
 cd ..
 
-git clone https://github.com/fish-shell/fish-shell.git
+git clone --depth 1 --branch 3.6.0 https://github.com/fish-shell/fish-shell.git
 cd fish-shell
-git checkout 3.6.0
 mkdir build
 cd build
 cmake ..
@@ -96,7 +93,7 @@ make
 sudo make install
 cd ../..
 
-git clone https://github.com/alacritty/alacritty.git
+git clone --depth 1 https://github.com/alacritty/alacritty.git
 cd alacritty
 sudo tic -xe alacritty,alacritty-direct extra/alacritty.info
 cd ..
