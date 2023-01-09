@@ -1,5 +1,7 @@
 FROM ubuntu:22.04
 
+RUN yes | unminimize
+
 RUN apt-config dump | grep -we Recommends -e Suggests | sed s/1/0/ | tee /etc/apt/apt.conf.d/99norecommend
 RUN rm -f /etc/apt/apt.conf.d/docker-clean
 
