@@ -48,12 +48,6 @@ local plugins = {
     end,
   },
   {
-    "notjedi/nvim-rooter.lua",
-    config = function()
-      require("nvim-rooter").setup()
-    end,
-  },
-  {
     "will133/vim-dirdiff",
     config = function()
       vim.g.DirDiffExcludes = "CVS,*.class,*.o,.git,build,.clangd"
