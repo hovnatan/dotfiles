@@ -43,6 +43,7 @@ echo -n "set -U _reload_color_config ""$COLOR" | fish
 $script_full_path/color_switcher.sh ~/.config/alacritty/alacritty.yml ~/.config/alacritty/option ~/.config/alacritty/colors/$COLOR reverse
 
 if [[ "$WSL_DISTRO_NAME" ]]; then
+<<<<<<< Updated upstream
   WINDOWS_HOME=$(wslpath "$(wslvar USERPROFILE)")
   cp ~/.config/alacritty/alacritty.yml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.yml"
 fi
@@ -53,6 +54,10 @@ $script_full_path/color_switcher.sh ~/.config/bat/config ~/.config/bat/option ~/
 
 SIOYEK="$HOME/.config/sioyek/"
 $script_full_path/color_switcher.sh "$SIOYEK/prefs_user.config" "$SIOYEK/prefs_user_common" "$SIOYEK/$COLOR" reverse
+if [[ "$WSL_DISTRO_NAME" ]]; then
+  cp ~/.config/sioyek/prefs_user.config "$WINDOWS_HOME/Downloads/sioyek-release-windows-portable/sioyek-release-windows/"
+  cp ~/.config/sioyek/keys_user.config "$WINDOWS_HOME/Downloads/sioyek-release-windows-portable/sioyek-release-windows/"
+fi
 
 if [ $COLOR == "dark" ]; then
   if [ "$machine" == "Linux" ]; then
