@@ -10,6 +10,10 @@ go install github.com/nao1215/gup@latest
 npm i --prefix=~/.local --location=global yarn
 ~/.local/bin/yarn global add bash-language-server prettier pyright vscode-langservers-extracted typescript typescript-language-server
 
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+. "$HOME/.cargo/env"
+cargo install exa stylua cargo-update
+
 # wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
 # mkdir -p ~/.local/share/fonts
 # unzip ~/Downloads/Hack.zip -d ~/.local/share/fonts
