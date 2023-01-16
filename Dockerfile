@@ -1,6 +1,9 @@
 FROM ubuntu:22.04
 
+RUN apt-get update && apt-get install -y apt-utils
+
 RUN yes | unminimize
+
 
 RUN apt-config dump | grep -we Recommends -e Suggests | sed s/1/0/ | tee /etc/apt/apt.conf.d/99norecommend
 RUN rm -f /etc/apt/apt.conf.d/docker-clean
