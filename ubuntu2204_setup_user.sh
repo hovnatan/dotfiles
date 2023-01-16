@@ -2,6 +2,11 @@
 
 set -e
 
+git clone -b delll https://github.com/hovnatan/dotfiles.git
+mv dotfiles .dotfiles
+cd .dotfiles
+cp .npmrc ..
+
 pip3 install --user pylint pynvim black pipdeptree pyls-isort python-lsp-server python-lsp-black
 
 go install github.com/mattn/efm-langserver@latest
@@ -23,6 +28,7 @@ export MAKEFLAGS="-j11"
 export CFLAGS="-march=native -O3"
 export CXXFLAGS="-march=native -O3"
 
+mkdir ~/Downloads
 cd ~/Downloads
 git clone --depth 1 --branch stable https://github.com/neovim/neovim.git 
 cd neovim

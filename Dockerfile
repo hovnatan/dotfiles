@@ -17,25 +17,17 @@ RUN --mount=type=cache,target=/var/cache/apt \
     ./ubuntu2204_setup.sh \
     && rm ubuntu2204_setup.sh
 
-# RUN --mount=type=cache,target=/var/cache/apt \
-#     apt-get update \
-#     && apt-get install -y sudo
+RUN echo 'debconf debconf/frontend select readline' | debconf-set-selections
 
-# ARG USER=hovnatan
+ARG USER=hovnatan
 
-# RUN adduser --disabled-password --gecos '' $USER
-# RUN adduser $USER sudo
-# RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN adduser --disabled-password --gecos '' $USER
+RUN adduser $USER sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-# USER $USER
-# WORKDIR /home/$USER
+USER $USER
+WORKDIR /home/$USER
 
-# COPY --chown=$USER .npmrc ./
-# COPY --chown=$USER . .dotfiles/
-# RUN .dotfiles/setup.sh
-
-# ENV TERM=alacritty
-
-RUN echo 'debconf debconf/frontend select readline' | sudo debconf-set-selections
+ENV TERM=alacritty
 
 ENTRYPOINT ["/bin/bash", "-l"]

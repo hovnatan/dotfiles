@@ -5,7 +5,7 @@ set -e
 apt-config dump | grep -we Recommends -e Suggests | sed s/1/0/ | tee /etc/apt/apt.conf.d/99norecommend
 apt-get update
 apt-get -y dist-upgrade
-apt-get install -y software-properties-common curl gnupg wget locales
+apt-get install -y software-properties-common curl gnupg wget locales sudo
 
 locale-gen --no-purge en_US.UTF-8
 
