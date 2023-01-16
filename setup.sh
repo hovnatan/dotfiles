@@ -119,3 +119,6 @@ ln -sf ~/.dotfiles/.config/sioyek ~/.config/
 
 # sudo dpkg-reconfigure tzdata
 # ps uxa | grep .vscode-server | awk '{print $2}' | xargs kill
+
+# set the colors
+cw.sh
