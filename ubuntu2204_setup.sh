@@ -34,11 +34,6 @@ update-alternatives --install /usr/bin/python python /usr/bin/python3 2
 #   && sudo apt update \
 #   && sudo apt install gh -y
 # sudo apt-get install -y xrdp remmina
-
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-. "$HOME/.cargo/env"
-cargo install exa stylua cargo-update
-
 # sudo apt-get install -y texlive-latex-recommended texlive-pictures texlive-latex-extra latexmk
 # sudo apt-get install chrome-gnome-shell zathura xrdp fonts-croscore kitty
 # sudo apt-get install -y i3 i3blocks
