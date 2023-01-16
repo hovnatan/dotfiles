@@ -117,7 +117,7 @@ ln -sf ~/.dotfiles/.config/sioyek ~/.config/
 # ln -sf ~/.dotfiles/.local/share/applications/sioyek.desktop ~/.local/share/applications/
 # update-desktop-database ~/.local/share/applications/
 
-# sudo dpkg-reconfigure tzdata
+sudo dpkg-reconfigure tzdata
 # ps uxa | grep .vscode-server | awk '{print $2}' | xargs kill
 
 # set the colors
