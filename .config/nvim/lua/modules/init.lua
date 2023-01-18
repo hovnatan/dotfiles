@@ -89,7 +89,6 @@ local plugins = {
     },
   },
   { "neovim/nvim-lspconfig", config = conf("lsp") },
-  { "lakshayg/vim-bazel", ft = { "bzl" } },
   {
     "npxbr/gruvbox.nvim",
     requires = { "rktjmp/lush.nvim" },
