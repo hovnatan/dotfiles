@@ -30,7 +30,7 @@ fish -c 'curl -sL https://git.io/fisher | source && fisher update'
 
 rm -rf ~/.gitconfig
 cp ~/.dotfiles/.gitconfig ~/
-vim ~/.gitconfig
+nano ~/.gitconfig
 
 rm -rf ~/.config/htop
 mkdir ~/.config/htop

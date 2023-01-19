@@ -17,7 +17,7 @@ add-apt-repository universe
 add-apt-repository restricted
 
 
-apt-get install -y jq feh fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear valgrind curl htop cmake aria2 mediainfo pandoc git-lfs bat nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk python3-venv yacc tmux pkg-config libssl-dev build-essential openssh-client libtool-bin gettext automake libevent-dev libncurses-dev tzdata psmisc
+apt-get install -y jq feh fzf fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear valgrind curl htop cmake aria2 mediainfo pandoc git-lfs bat nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk python3-venv yacc tmux pkg-config libssl-dev build-essential openssh-client libtool-bin gettext automake libevent-dev libncurses-dev tzdata psmisc nano
 
 apt-get install -y python2 python3-pip
 
