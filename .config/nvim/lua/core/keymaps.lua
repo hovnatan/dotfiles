@@ -39,3 +39,15 @@ vim.api.nvim_set_keymap("n", "#", "", {
   end,
 })
 vim.cmd([[nnoremap <expr> <space>v '`[' . strpart(getregtype(), 0, 1) . '`]']])
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>tc",
+  ':call system("tmux load-buffer -", @0)<cr>',
+  { noremap = true, silent = true }
+)
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>tp",
+  ':let @0 = system("tmux save-buffer -")<cr>"0p<cr>g;',
+  { noremap = true, silent = true }
+)
