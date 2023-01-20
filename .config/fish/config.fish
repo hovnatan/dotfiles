@@ -7,6 +7,8 @@ set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:
 # set -U FZF_COMPLETE 0
 set -U FZF_FIND_FILE_COMMAND "fdfind -IHp --ignore-file ~/.config/fd/ignore . \$dir"
 set -U FZF_DEFAULT_COMMAND $FZF_FIND_FILE_COMMAND
+set -U FZF_TMUX 1
+set -U FZF_ENABLE_OPEN_PREVIEW 1
 set -x EDITOR nvim
 
 set -u fish_term24bit 1
