@@ -4,6 +4,9 @@ return function()
       python = {
         "with",
         "try",
+        "except",
+        "elif",
+        "else",
       },
     },
   })
