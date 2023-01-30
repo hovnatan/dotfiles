@@ -4,12 +4,6 @@ end
 
 local plugins = {
   { "tpope/vim-abolish" },
-  {
-    "tpope/vim-dispatch",
-    conifg = function()
-      vim.g.dispatch_no_maps = 1
-    end,
-  },
   { "radenling/vim-dispatch-neovim" },
   { "tpope/vim-commentary" },
   { "tpope/vim-unimpaired" },
@@ -28,10 +22,6 @@ local plugins = {
     "nvim-treesitter/nvim-treesitter-context",
     config = conf("nvim-treesitter-context"),
   },
-  { "wellle/targets.vim" },
-  { "michaeljsmith/vim-indent-object" },
-  { "jeetsukumaran/vim-indentwise" },
-  { "zhimsel/vim-stay" },
   { "mbbill/undotree", config = conf("undotree") },
   { "jpalardy/vim-slime", ft = { "python" }, config = conf("vim-slime") },
   {
@@ -39,8 +29,6 @@ local plugins = {
     ft = { "python" },
     config = conf("vim-ipython-cell"),
   },
-
-  { "wsdjeg/vim-fetch" },
   {
     "chentoast/marks.nvim",
     config = function()
@@ -53,7 +41,6 @@ local plugins = {
       vim.g.DirDiffExcludes = "CVS,*.class,*.o,.git,build,.clangd"
     end,
   },
-  { "nvim-lua/popup.nvim" },
   {
     "nvim-telescope/telescope.nvim",
     requires = {
@@ -61,13 +48,6 @@ local plugins = {
       { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
     },
     config = conf("telescope"),
-  },
-  {
-    "liuchengxu/vista.vim",
-    config = function()
-      vim.g.vista_default_executive = "nvim_lsp"
-      vim.g.vista_echo_cursor = 0
-    end,
   },
   { "lewis6991/gitsigns.nvim", config = conf("gitsigns") },
   {
@@ -132,6 +112,25 @@ local plugins = {
         commands_create = true, -- Create commands (ConfigSource, ConfigEdit, ConfigTrust, ConfigIgnore)
         silent = true, -- Disable plugin messages (Config loaded/ignored)
         lookup_parents = true, -- Lookup config files in parent directories
+      })
+    end,
+  },
+  {
+    "kevinhwang91/nvim-ufo",
+    requires = "kevinhwang91/promise-async",
+    config = function()
+      require("ufo").setup({
+        provider_selector = function(bufnr, filetype, buftype)
+          return { "treesitter", "indent" }
+        end,
+      })
+    end,
+  },
+  {
+    "kylechui/nvim-surround",
+    config = function()
+      require("nvim-surround").setup({
+        -- Configuration here, or leave empty to use defaults
       })
     end,
   },
