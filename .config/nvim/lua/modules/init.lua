@@ -79,8 +79,6 @@ local plugins = {
       vim.cmd("colorscheme gruvbox")
     end,
   },
-  -- use {'gennaro-tedesco/nvim-peekup'}
-  -- use {'morhetz/gruvbox'}
   { "nvim-lua/plenary.nvim" },
   { "TimUntersberger/neogit" },
   {
