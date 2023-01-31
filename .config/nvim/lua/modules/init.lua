@@ -82,6 +82,13 @@ local plugins = {
   { "nvim-lua/plenary.nvim" },
   { "TimUntersberger/neogit" },
   {
+    "sindrets/diffview.nvim",
+    config = function()
+      require("diffview").setup()
+    end,
+    requires = "nvim-lua/plenary.nvim",
+  },
+  {
     "ggandor/leap.nvim",
     config = function()
       require("leap").set_default_keymaps()
