@@ -13,6 +13,9 @@ local plugins = {
   { "tpope/vim-vinegar" },
   { "tpope/vim-jdaddy", ft = { "json" } },
   {
+    "nvim-pack/nvim-spectre",
+  },
+  {
     "lukas-reineke/indent-blankline.nvim",
     config = function()
       require("indent_blankline").setup({
