@@ -13,6 +13,40 @@ local plugins = {
   { "tpope/vim-vinegar" },
   { "tpope/vim-jdaddy", ft = { "json" } },
   {
+    "andymass/vim-matchup",
+  },
+  {
+    "lukas-reineke/indent-blankline.nvim",
+    config = function()
+      require("indent_blankline").setup({
+        filetype = {
+          "javascript",
+          "javascriptreact",
+          "typescript",
+          "typescriptreact",
+          "html",
+          "css",
+          "scss",
+          "sass",
+          "lua",
+          "go",
+          "ruby",
+          "erb",
+          "rust",
+          "json",
+          "yaml",
+          "toml",
+          "scheme",
+          "python",
+        },
+        buftype_exclude = { "terminal", "telescope", "prompt", "nofile" },
+        show_current_context = false,
+        show_current_context_start = false,
+        show_trailing_blankline_indent = false,
+      })
+    end,
+  },
+  {
     "nvim-treesitter/nvim-treesitter",
     run = ":TSUpdate",
     config = conf("nvim-treesitter"),
