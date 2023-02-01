@@ -173,6 +173,12 @@ local plugins = {
       })
     end,
   },
+  {
+    "andymass/vim-matchup",
+    config = function()
+      vim.g.matchup_matchparen_offscreen = { method = "popup" }
+    end,
+  },
 }
 
 -- vim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", {})

@@ -65,5 +65,8 @@ return function()
         },
       },
     },
+    matchup = {
+      enable = true,
+    },
   })
 end
