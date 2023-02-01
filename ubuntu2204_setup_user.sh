@@ -18,11 +18,15 @@ npm i --prefix=~/.local --location=global yarn
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 . "$HOME/.cargo/env"
 cargo install exa stylua cargo-update
+cargo install zoxide --locked
 
 # wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
 # mkdir -p ~/.local/share/fonts
 # unzip ~/Downloads/Hack.zip -d ~/.local/share/fonts
 # fc-cache -fv
+
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+~/.fzf/install
 
 export MAKEFLAGS="-j11"
 export CFLAGS="-march=native -O3"
