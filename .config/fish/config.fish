@@ -1,6 +1,6 @@
 if status --is-interactive
 
-set -U Z_CMD "j"
+zoxide init fish | source
 
 set -U FZF_LEGACY_KEYBINDINGS 0
 set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
@@ -66,7 +66,6 @@ abbr r  ranger_fm
 abbr ll  "exa -alh --git"
 abbr llb  "exa -al --git"
 abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
-abbr z   "zathura"
 abbr g   "grep"
 abbr ta  "tmux_attach.sh"
 abbr tl  "tmux list-sessions"
