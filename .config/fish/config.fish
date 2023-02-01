@@ -85,11 +85,12 @@ abbr b "batcat"
 abbr h "htop"
 abbr hh "htop -u $USER"
 abbr p "python"
+abbr pd "python3 -m ipdb -c continue"
+abbr pu "pipdeptree -u --warn silence | grep -E '(^\S+)' | awk -F== '{print$1}' | xargs pip3 install --user -U"
 abbr hm "history merge"
 abbr rfc "source ~/.config/fish/config.fish"
 abbr ... "../.."
 abbr .... "../../.."
-abbr pd "python3 -m ipdb -c continue"
 abbr sv "source .venv/bin/activate.fish"
 
 set -u VIRTUAL_ENV_DISABLE_PROMPT 1
