@@ -47,9 +47,6 @@ function reload-color-config --on-variable _reload_color_config
   end
 end
 
-abbr c   "fzf_recent_dir"
-abbr jj  "fzf_recent_dir"
-abbr cdz "fzf_recent_dir"
 abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr nn  "nvim -u NONE"
@@ -63,10 +60,9 @@ function ranger_fm
   end
 end
 abbr r  ranger_fm
-abbr ll  "exa -alh --git"
-abbr llb  "exa -al --git"
+abbr ll  "exa -alh --git -F"
+abbr llb  "exa -al --git -F"
 abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
-abbr g   "grep"
 abbr ta  "tmux_attach.sh"
 abbr tl  "tmux list-sessions"
 abbr tc "tmux capture-pane -pJ -S - | nvim -R '+set ft=log|set nowrap|set foldlevel=99|DisableWhitespace' '+norm G' --"
