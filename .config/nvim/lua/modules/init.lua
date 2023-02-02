@@ -23,6 +23,7 @@ require("lazy").setup({
   { "tpope/vim-jdaddy", ft = { "json" } },
   {
     "nvim-pack/nvim-spectre",
+    cmd = "Spectre",
   },
   {
     "lukas-reineke/indent-blankline.nvim",
@@ -76,6 +77,7 @@ require("lazy").setup({
     config = function()
       require("modules/config/undotree")
     end,
+    cmd = "UndotreeShow",
   },
   {
     "jpalardy/vim-slime",
@@ -102,6 +104,7 @@ require("lazy").setup({
     config = function()
       vim.g.DirDiffExcludes = "CVS,*.class,*.o,.git,build,.clangd"
     end,
+    cmd = "DirDiff",
   },
   {
     "nvim-telescope/telescope.nvim",
@@ -156,19 +159,21 @@ require("lazy").setup({
       vim.cmd("colorscheme gruvbox")
     end,
   },
-  { "TimUntersberger/neogit" },
+  { "TimUntersberger/neogit", cmd = "Neogit" },
   {
     "sindrets/diffview.nvim",
     config = function()
       require("diffview").setup()
     end,
     dependencies = "nvim-lua/plenary.nvim",
+    cmd = { "DiffviewOpen", "DiffviewFileHistory" },
   },
   {
     "ggandor/leap.nvim",
     config = function()
       require("leap").set_default_keymaps()
     end,
+    event = "BufRead",
   },
   {
     "nvim-lualine/lualine.nvim",
@@ -224,5 +229,6 @@ require("lazy").setup({
     config = function()
       vim.g.matchup_matchparen_offscreen = { method = "popup" }
     end,
+    event = "BufRead",
   },
 })
