@@ -1,8 +1,17 @@
-local function conf(name)
-  return require(string.format("modules.config.%s", name))
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "--single-branch",
+    "https://github.com/folke/lazy.nvim.git",
+    lazypath,
+  })
 end
+vim.opt.runtimepath:prepend(lazypath)
 
-local plugins = {
+require("lazy").setup({
   { "tpope/vim-abolish" },
   { "radenling/vim-dispatch-neovim" },
   { "tpope/vim-commentary" },
@@ -48,20 +57,39 @@ local plugins = {
   },
   {
     "nvim-treesitter/nvim-treesitter",
-    run = ":TSUpdate",
-    config = conf("nvim-treesitter"),
+    build = ":TSUpdate",
+    config = function()
+      require("modules/config/nvim-treesitter")
+    end,
+    dependencies = {
+      { "nvim-treesitter/nvim-treesitter-textobjects" },
+    },
   },
-  { "nvim-treesitter/nvim-treesitter-textobjects" },
   {
     "nvim-treesitter/nvim-treesitter-context",
-    config = conf("nvim-treesitter-context"),
+    config = function()
+      require("modules/config/nvim-treesitter-context")
+    end,
   },
-  { "mbbill/undotree", config = conf("undotree") },
-  { "jpalardy/vim-slime", ft = { "python" }, config = conf("vim-slime") },
+  {
+    "mbbill/undotree",
+    config = function()
+      require("modules/config/undotree")
+    end,
+  },
+  {
+    "jpalardy/vim-slime",
+    ft = { "python" },
+    config = function()
+      require("modules/config/vim-slime")
+    end,
+  },
   {
     "hanschen/vim-ipython-cell",
     ft = { "python" },
-    config = conf("vim-ipython-cell"),
+    config = function()
+      require("modules/config/vim-ipython-cell")
+    end,
   },
   {
     "chentoast/marks.nvim",
@@ -77,17 +105,27 @@ local plugins = {
   },
   {
     "nvim-telescope/telescope.nvim",
-    requires = {
+    dependencies = {
       { "nvim-telescope/telescope-live-grep-args.nvim" },
-      { "nvim-telescope/telescope-fzf-native.nvim", run = "make" },
+      { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+      { "nvim-lua/plenary.nvim" },
     },
-    config = conf("telescope"),
+    config = function()
+      require("modules/config/telescope")
+    end,
   },
-  { "lewis6991/gitsigns.nvim", config = conf("gitsigns") },
+  {
+    "lewis6991/gitsigns.nvim",
+    config = function()
+      require("modules/config/gitsigns")
+    end,
+  },
   {
     "hrsh7th/nvim-cmp",
-    config = conf("nvim-cmp"),
-    requires = {
+    config = function()
+      require("modules/config/nvim-cmp")
+    end,
+    dependencies = {
       { "hrsh7th/cmp-nvim-lsp" },
       { "hrsh7th/cmp-buffer" },
       { "hrsh7th/cmp-path" },
@@ -102,10 +140,15 @@ local plugins = {
       -- "rafamadriz/friendly-snippets",
     },
   },
-  { "neovim/nvim-lspconfig", config = conf("lsp") },
+  {
+    "neovim/nvim-lspconfig",
+    config = function()
+      require("modules/config/lsp")
+    end,
+  },
   {
     "npxbr/gruvbox.nvim",
-    requires = { "rktjmp/lush.nvim" },
+    dependencies = { "rktjmp/lush.nvim" },
     config = function()
       require("gruvbox").setup({
         transparent_mode = true,
@@ -113,14 +156,13 @@ local plugins = {
       vim.cmd("colorscheme gruvbox")
     end,
   },
-  { "nvim-lua/plenary.nvim" },
   { "TimUntersberger/neogit" },
   {
     "sindrets/diffview.nvim",
     config = function()
       require("diffview").setup()
     end,
-    requires = "nvim-lua/plenary.nvim",
+    dependencies = "nvim-lua/plenary.nvim",
   },
   {
     "ggandor/leap.nvim",
@@ -130,15 +172,19 @@ local plugins = {
   },
   {
     "nvim-lualine/lualine.nvim",
-    config = conf("lualine"),
+    config = function()
+      require("modules/config/lualine")
+    end,
   },
   {
     "AckslD/nvim-neoclip.lua",
-    requires = {
+    dependencies = {
       { "nvim-telescope/telescope.nvim" },
       { "kkharji/sqlite.lua", module = "sqlite" },
     },
-    config = conf("neoclip"),
+    config = function()
+      require("modules/config/neoclip")
+    end,
   },
   {
     "klen/nvim-config-local",
@@ -156,7 +202,7 @@ local plugins = {
   },
   {
     "kevinhwang91/nvim-ufo",
-    requires = "kevinhwang91/promise-async",
+    dependencies = "kevinhwang91/promise-async",
     config = function()
       require("ufo").setup({
         provider_selector = function(bufnr, filetype, buftype)
@@ -179,31 +225,4 @@ local plugins = {
       vim.g.matchup_matchparen_offscreen = { method = "popup" }
     end,
   },
-}
-
--- vim.api.nvim_set_keymap("n", "$", "<cmd>lua require'hop'.hint_words()<cr>", {})
-local install_path = vim.fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
-if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
-  vim.fn.system({ "git", "clone", "--depth", "1", "https://github.com/wbthomason/packer.nvim", install_path })
-  vim.cmd("packadd packer.nvim")
-end
-
-local packer = safe_require("packer")
-if packer then
-  packer.init({
-    compile_path = vim.fn.stdpath("data") .. "/site/plugin/packer_compiled.lua",
-    package_root = vim.fn.stdpath("data") .. "/site/pack",
-    display = {
-      open_fn = function()
-        return require("packer.util").float({ border = "rounded" })
-      end,
-    },
-  })
-
-  return packer.startup(function(use)
-    use("wbthomason/packer.nvim")
-    for _, plugin in ipairs(plugins) do
-      use(plugin)
-    end
-  end)
-end
+})
