@@ -14,7 +14,7 @@ require("neoclip").setup({
   enable_persistent_history = true,
   content_spec_column = true,
   default_register = '"',
-  history = 10000,
+  history = 100,
   filter = function(data)
     whitespace = not all(data.event.regcontents, is_whitespace)
     if not whitespace then
