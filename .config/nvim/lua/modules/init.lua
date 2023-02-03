@@ -163,7 +163,7 @@ require("lazy").setup({
   {
     "sindrets/diffview.nvim",
     config = function()
-      require("diffview").setup()
+      require("diffview").setup({ use_icons = false })
     end,
     dependencies = "nvim-lua/plenary.nvim",
     cmd = { "DiffviewOpen", "DiffviewFileHistory" },
@@ -230,5 +230,22 @@ require("lazy").setup({
       vim.g.matchup_matchparen_offscreen = { method = "popup" }
     end,
     event = "BufRead",
+  },
+}, {
+  ui = {
+    icons = {
+      cmd = "⌘",
+      config = "🛠",
+      event = "📅",
+      ft = "📂",
+      init = "⚙",
+      keys = "🗝",
+      plugin = "🔌",
+      runtime = "💻",
+      source = "📄",
+      start = "🚀",
+      task = "📌",
+      lazy = "💤 ",
+    },
   },
 })
