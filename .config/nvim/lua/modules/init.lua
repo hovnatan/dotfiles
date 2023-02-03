@@ -163,9 +163,9 @@ require("lazy").setup({
   {
     "sindrets/diffview.nvim",
     config = function()
-      require("diffview").setup({ use_icons = false })
+      require("diffview").setup({ use_icons = true })
     end,
-    dependencies = "nvim-lua/plenary.nvim",
+    dependencies = { "nvim-lua/plenary.nvim", "nvim-tree/nvim-web-devicons" },
     cmd = { "DiffviewOpen", "DiffviewFileHistory" },
   },
   {
