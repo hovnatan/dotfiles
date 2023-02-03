@@ -13,7 +13,7 @@ end
 require("neoclip").setup({
   enable_persistent_history = true,
   content_spec_column = true,
-  default_register = "+",
+  default_register = '"',
   history = 10000,
   filter = function(data)
     whitespace = not all(data.event.regcontents, is_whitespace)
