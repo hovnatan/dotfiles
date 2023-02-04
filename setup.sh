@@ -121,3 +121,9 @@ sudo dpkg-reconfigure tzdata
 
 # set the colors
 ~/.dotfiles/bin/cw.sh
+
+# cd ~/tmp
+# wget https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info
+# grep -vwE "Smulx" alacritty.info > alacritty_woundercurl.info
+# tic -xe alacritty,alacritty-direct alacritty_woundercurl.info
+# cd ~
