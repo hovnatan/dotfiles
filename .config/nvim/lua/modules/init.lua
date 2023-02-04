@@ -156,6 +156,8 @@ require("lazy").setup({
     config = function()
       require("gruvbox").setup({
         transparent_mode = true,
+        undercurl = true,
+        underline = true,
       })
       vim.cmd("colorscheme gruvbox")
     end,
