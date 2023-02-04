@@ -80,18 +80,19 @@ require("lazy").setup({
     cmd = "UndotreeShow",
   },
   {
-    "jpalardy/vim-slime",
-    ft = { "python" },
-    config = function()
-      require("modules/config/vim-slime")
-    end,
-  },
-  {
     "hanschen/vim-ipython-cell",
-    ft = { "python" },
     config = function()
       require("modules/config/vim-ipython-cell")
     end,
+    dependencies = {
+      {
+        "jpalardy/vim-slime",
+        config = function()
+          require("modules/config/vim-slime")
+        end,
+      },
+    },
+    cmd = "IPythonCellExecuteCellVerbose",
   },
   {
     "chentoast/marks.nvim",
