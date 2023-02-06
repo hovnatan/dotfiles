@@ -199,7 +199,7 @@ require("lazy").setup({
     config = function()
       require("config-local").setup({
         -- Default configuration (optional)
-        config_files = { ".vimrc.lua", ".vimrc" }, -- Config file patterns to load (lua supported)
+        config_files = { ".vim/.vimrc.lua", ".vim/.vimrc" }, -- Config file patterns to load (lua supported)
         hashfile = vim.fn.stdpath("data") .. "/config-local", -- Where the plugin keeps files data
         autocommands_create = true, -- Create autocommands (VimEnter, DirectoryChanged)
         commands_create = true, -- Create commands (ConfigSource, ConfigEdit, ConfigTrust, ConfigIgnore)
