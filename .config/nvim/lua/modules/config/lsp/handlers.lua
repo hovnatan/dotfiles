@@ -76,17 +76,18 @@ capabilities.textDocument.completion.completionItem.snippetSupport = false
 M.capabilities = capabilities
 
 function M.enable_format_on_save()
-  vim.cmd([[
-    augroup format_on_save
-      au!
-      au BufWritePre * lua vim.lsp.buf.format({async=false})
-    augroup end
-  ]])
+  vim.api.nvim_create_augroup("format_on_save", { clear = true })
+  vim.api.nvim_create_autocmd("BufWritePre", {
+    group = "format_on_save",
+    callback = function()
+      vim.lsp.buf.format({ async = false })
+    end,
+  })
   -- vim.notify("Enabled format on save")
 end
 
 function M.disable_format_on_save()
-  vim.cmd("au! format_on_save")
+  vim.api.nvim_del_augroup_by_name("format_on_save")
   vim.notify("Disabled format on save")
 end
 
@@ -109,9 +110,9 @@ function M.toggle_virtual_text()
   end
 end
 
-vim.cmd([[command! LspEnableAutoFormat execute 'lua require("modules.config.lsp.handlers").enable_format_on_save()']])
-vim.cmd([[command! LspDisableAutoFormat execute 'lua require("modules.config.lsp.handlers").disable_format_on_save()']])
-vim.cmd([[command! LspToggleAutoFormat execute 'lua require("modules.config.lsp.handlers").toggle_format_on_save()']])
-vim.cmd([[command! LspToggleVirtualText execute 'lua require("modules.config.lsp.handlers").toggle_virtual_text()']])
+vim.api.nvim_create_user_command("LspEnableAutoFormat", M.enable_format_on_save, {})
+vim.api.nvim_create_user_command("LspDisableAutoFormat", M.disable_format_on_save, {})
+vim.api.nvim_create_user_command("LspToggleAutoFormat", M.toggle_format_on_save, {})
+vim.api.nvim_create_user_command("LspToggleVirtualText", M.toggle_virtual_text, {})
 
 return M
