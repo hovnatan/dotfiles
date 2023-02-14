@@ -57,6 +57,7 @@ local servers_config = {
       python = {
         analysis = {
           stubPath = os.getenv("HOME") .. "/.dotfiles/python/stubs",
+          autoImportCompletions = false,
         },
       },
     },
