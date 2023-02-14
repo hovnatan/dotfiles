@@ -51,18 +51,18 @@ cmp.setup({
       end,
     }),
   },
-  sorting = {
-    priority_weight = 2,
-    comparators = {
-      cmp.config.compare.locality,
-      cmp.config.compare.recently_used,
-      cmp.config.compare.score,
-    },
-  },
+  -- sorting = {
+  --   priority_weight = 2,
+  --   comparators = {
+  --     cmp.config.compare.locality,
+  --     cmp.config.compare.recently_used,
+  --     cmp.config.compare.score,
+  --   },
+  -- },
   sources = {
     -- { name = "luasnip", max_item_count = 5 },
     { name = "path", keyword_length = 2, max_item_count = 5 },
-    { name = "treesitter", keyword_length = 2, max_item_count = 15 },
+    -- { name = "treesitter", keyword_length = 2, max_item_count = 15 },
     { name = "nvim_lsp", keyword_length = 2, max_item_count = 15 },
     {
       name = "buffer",
