@@ -13,8 +13,8 @@ cmp.setup({
     end,
   },
   mapping = {
-    ["<C-d>"] = cmp.mapping.scroll_docs(-4),
-    ["<C-f>"] = cmp.mapping.scroll_docs(4),
+    ["<C-d>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), { "i", "c" }),
+    ["<C-f>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
     ["<C-e>"] = cmp.mapping.close(),
     ["<CR>"] = cmp.mapping.confirm(),
     ["<Tab>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "s" }),
@@ -61,11 +61,12 @@ cmp.setup({
   },
   sources = {
     -- { name = "luasnip", max_item_count = 5 },
-    { name = "path", max_item_count = 5 },
-    { name = "treesitter", max_item_count = 15 },
-    { name = "nvim_lsp", max_item_count = 15 },
+    { name = "path", keyword_length = 2, max_item_count = 5 },
+    { name = "treesitter", keyword_length = 2, max_item_count = 15 },
+    { name = "nvim_lsp", keyword_length = 2, max_item_count = 15 },
     {
       name = "buffer",
+      keyword_length = 2,
       max_item_count = 5,
       option = {
         get_bufnrs = function()
@@ -73,14 +74,21 @@ cmp.setup({
         end,
       },
     },
-    { name = "tmux", max_item_count = 5, option = { all_panes = true } },
+    { name = "tmux", keyword_length = 2, max_item_count = 5, option = { all_panes = true } },
   },
   view = {
     entries = { name = "custom", selection_order = "near_cursor" },
   },
   formatting = {
     format = function(entry, vim_item)
-      vim_item.menu = entry.source.name
+      vim_item.kind = vim_item.kind
+      vim_item.menu = ({
+        nvim_lsp = "[LSP]",
+        buffer = "[BUF]",
+        tmux = "[TMUX]",
+        treesitter = "[TS]",
+        path = "[PATH]",
+      })[entry.source.name]
       return vim_item
     end,
   },
