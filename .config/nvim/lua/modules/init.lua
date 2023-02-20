@@ -149,6 +149,33 @@ require("lazy").setup({
     config = function()
       require("modules/config/lsp")
     end,
+    dependencies = {
+      {
+        "williamboman/mason.nvim",
+        config = function()
+          require("mason").setup()
+        end,
+      },
+      {
+        "williamboman/mason-lspconfig.nvim",
+        config = function()
+          require("mason-lspconfig").setup({
+            ensure_installed = {
+              "pyright",
+            },
+          })
+        end,
+      },
+      {
+        "j-hui/fidget.nvim",
+        config = function()
+          require("fidget").setup({})
+        end,
+      },
+      "jose-elias-alvarez/typescript.nvim",
+      "folke/neodev.nvim",
+      "jose-elias-alvarez/null-ls.nvim",
+    },
   },
   {
     "npxbr/gruvbox.nvim",
