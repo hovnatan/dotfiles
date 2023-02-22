@@ -17,12 +17,9 @@ add-apt-repository universe
 add-apt-repository restricted
 
 
-apt-get install -y jq feh fd-find ripgrep fish ranger clang clangd clang-format clang-tidy bear valgrind curl htop cmake aria2 mediainfo pandoc git-lfs bat nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk python3-venv yacc tmux pkg-config libssl-dev build-essential openssh-client libtool-bin gettext automake libevent-dev libncurses-dev tzdata psmisc nano less
+apt-get install -y jq feh fd-find ripgrep fish ranger bear valgrind curl htop cmake aria2 mediainfo pandoc git-lfs bat nodejs unzip golang-go sqlite3 libsqlite3-dev shellcheck gawk python3-venv python3-pip yacc tmux pkg-config libssl-dev build-essential openssh-client libtool-bin gettext automake libevent-dev libncurses-dev tzdata psmisc nano less
 
-apt-get install -y python2 python3-pip
-
-update-alternatives --install /usr/bin/python python /usr/bin/python2 1
-update-alternatives --install /usr/bin/python python /usr/bin/python3 2
+update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 # sudo apt-get install -y wmctrl awscli docker.io default-jre xdg-utils universal-ctags poppler-utils ffmpeg libfuse2 ubuntu-drivers-common octave ppa-purge net-tools sshfs 
 # if [[ "$WSL_DISTRO_NAME" ]]; then
 #    sudo apt-get install wslu
