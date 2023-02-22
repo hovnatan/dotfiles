@@ -7,17 +7,15 @@ mv dotfiles .dotfiles
 cd .dotfiles
 cp .npmrc ..
 
-pip3 install --user pylint pynvim black pipdeptree pyls-isort python-lsp-server python-lsp-black
+pip3 install --user pynvim pipdeptree
 
-go install github.com/mattn/efm-langserver@latest
 go install github.com/nao1215/gup@latest
 
 npm i --prefix=~/.local --location=global yarn
-~/.local/bin/yarn global add bash-language-server prettier pyright vscode-langservers-extracted typescript typescript-language-server
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 . "$HOME/.cargo/env"
-cargo install exa stylua cargo-update
+cargo install exa cargo-update
 cargo install zoxide --locked
 
 # wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
