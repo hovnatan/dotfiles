@@ -2,21 +2,11 @@ local M = {}
 
 M.setup = function()
   vim.diagnostic.config({
-    virtual_text = false,
-    signs = {
-      active = signs,
-    },
+    virtual_text = true,
+    float = { severity_sort = true },
     update_in_insert = true,
     underline = true,
     severity_sort = true,
-    float = {
-      focusable = true,
-      style = "minimal",
-      border = "rounded",
-      source = "always",
-      header = "",
-      prefix = "",
-    },
   })
 
   vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
