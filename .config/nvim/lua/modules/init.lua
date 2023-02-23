@@ -184,6 +184,7 @@ require("lazy").setup({
               "stylua",
               "black",
               "isort",
+              "json-lsp",
             },
           })
         end,
