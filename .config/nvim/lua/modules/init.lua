@@ -12,15 +12,11 @@ end
 vim.opt.runtimepath:prepend(lazypath)
 
 require("lazy").setup({
-  { "tpope/vim-abolish" },
-  { "radenling/vim-dispatch-neovim" },
   { "tpope/vim-commentary" },
   { "tpope/vim-unimpaired" },
   { "tpope/vim-surround" },
   { "tpope/vim-repeat" },
-  { "tpope/vim-projectionist" },
   { "tpope/vim-vinegar" },
-  { "tpope/vim-jdaddy", ft = { "json" } },
   {
     "nvim-pack/nvim-spectre",
     cmd = "Spectre",
