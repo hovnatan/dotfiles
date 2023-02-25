@@ -159,6 +159,7 @@ require("lazy").setup({
             ensure_installed = {
               "pyright",
               "bashls",
+              "tsserver",
             },
           })
         end,
