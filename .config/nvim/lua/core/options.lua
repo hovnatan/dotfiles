@@ -76,5 +76,5 @@ vim.g.netrw_altfile = 1
 vim.g.netrw_liststyle = 1
 vim.g.netrw_maxfilenamelen = 50
 
-vim.o.spelllang = en_us
-vim.o.spellfile = "~/Dropbox/scripts/nvim/spell/en.utf-8.add"
+vim.o.spelllang = "en_us"
+vim.o.spellfile = "~/.vim_spell_en.utf-8.add"
