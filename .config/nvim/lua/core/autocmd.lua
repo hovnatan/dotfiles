@@ -22,10 +22,10 @@ vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave" }, {
 })
 
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = "markdown,text,rst,tex,latex",
+  pattern = "NeogitCommitMessage,gitcommit,markdown,text,rst,tex,latex",
   callback = function()
     vim.bo.textwidth = 80
-    vim.wo.spell = true
+    vim.opt_local.spell = true
   end,
 })
 
