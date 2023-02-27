@@ -1,3 +1,13 @@
+vim.g.loaded_2html_plugin = 1
+vim.g.loaded_getscriptPlugin = 1
+vim.g.loaded_gzip = 1
+vim.g.loaded_matchparen = 1
+vim.g.loaded_netrwPlugin = 1
+vim.g.loaded_spellfile_plugin = 1
+vim.g.loaded_tarPlugin = 1
+vim.g.loaded_vimballPlugin = 1
+vim.g.loaded_zipPlugin = 1
+
 vim.opt.compatible = false
 vim.opt.hidden = true
 vim.opt.backspace = "indent,eol,start"
@@ -13,6 +23,7 @@ vim.opt.showmatch = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.wildignorecase = true
+vim.opt.showbreak = "↪ "
 vim.opt.ls = 2
 vim.opt.title = true
 vim.opt.ruler = true
@@ -78,3 +89,4 @@ vim.g.netrw_maxfilenamelen = 50
 
 vim.o.spelllang = "en_us"
 vim.o.spellfile = "~/.vim_spell_en.utf-8.add"
+vim.opt.spelloptions = "camel"
