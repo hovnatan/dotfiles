@@ -28,13 +28,22 @@ vim.keymap.set("n", "<C-w>k", ":wincmd l<CR>", opts)
 vim.keymap.set("n", "<C-w>h", ":wincmd j<CR>", opts)
 vim.keymap.set("n", "<C-w>l", ":wincmd k<CR>", opts)
 
+-- vim.keymap.set("n", "*", function()
+--   vim.fn.execute("normal! *N")
+--   vim.fn.execute("set hlsearch")
+-- end, {})
+-- vim.keymap.set("n", "#", function()
+--   vim.fn.execute("normal! #N")
+--   vim.fn.execute("set hlsearch")
+-- end, {})
+
 vim.cmd([[nnoremap <expr> <space>v '`[' . strpart(getregtype(), 0, 1) . '`]']])
 vim.keymap.set("n", "<leader>tc", ':call system("tmux load-buffer -", @0)<cr>', opts)
 vim.keymap.set("n", "<leader>tp", ':let @0 = system("tmux save-buffer -")<cr>"0p<cr>g;', opts)
 
 vim.keymap.set({ "n", "v", "o" }, "H", "^")
 vim.keymap.set({ "n", "v", "o" }, "L", "g_")
-vim.keymap.set({ "n", "v", "o" }, "M", "%")
+vim.keymap.set({ "n", "v", "o" }, "M", "%", { remap = true })
 vim.keymap.set({ "n", "v", "o" }, "]w", "g*")
 vim.keymap.set({ "n", "v", "o" }, "[w", "g#")
 
