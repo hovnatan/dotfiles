@@ -244,9 +244,6 @@ require("lazy").setup({
     "andymass/vim-matchup",
     config = function()
       vim.g.matchup_matchparen_offscreen = { method = "popup" }
-      vim.keymap.set("n", "]M", "<Plug>(matchup-]%)")
-      vim.keymap.set("n", "[M", "<Plug>(matchup-[%)")
-      vim.keymap.set("n", "zM", "<Plug>(matchup-z%)")
     end,
     event = "BufRead",
   },

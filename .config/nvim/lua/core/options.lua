@@ -71,6 +71,9 @@ vim.opt.conceallevel = 0
 vim.opt.fixendofline = false
 vim.opt.completeopt = "menuone,noselect"
 
+vim.g.do_filetype_lua = 1
+vim.g.did_load_filetypes = 0
+
 local file = io.open(os.getenv("HOME") .. "/.my_colors", "r")
 vim.o.background = file:read("*a")
 file:close()
