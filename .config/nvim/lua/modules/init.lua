@@ -247,4 +247,4 @@ require("lazy").setup({
     end,
     event = "BufRead",
   },
-}, {})
+}, { lockfile = vim.fn.stdpath("data") .. "/lazy-lock.json" })
