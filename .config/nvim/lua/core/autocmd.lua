@@ -35,6 +35,13 @@ vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave" }, {
   end,
 })
 
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
+  pattern = "*",
+  callback = function()
+    vim.cmd("checktime")
+  end,
+})
+
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "NeogitCommitMessage,gitcommit,markdown,text,rst,tex,latex",
   callback = function()
