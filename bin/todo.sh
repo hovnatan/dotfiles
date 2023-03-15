@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ $# -eq 0 ]; then
-  nvim "$HOME/Dropbox/container_in_out/todo/todo_list.txt"
+  nvim "$HOME/Dropbox/container_in_out/todo/todo.md"
 else
-  nvim "$HOME/Dropbox/container_in_out/todo/todo_list_$1.txt"
+  nvim "$HOME/Dropbox/container_in_out/todo/todo_$1.md"
 fi
