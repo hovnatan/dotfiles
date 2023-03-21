@@ -6,8 +6,6 @@ local telescope_sorters = require("telescope.sorters")
 
 telescope.setup({
   defaults = {
-    prompt_prefix = " ",
-    selection_caret = "➜ ",
     scroll_strategy = "limit",
     layout_strategy = "horizontal",
     layout_config = {
