@@ -247,4 +247,22 @@ require("lazy").setup({
     end,
     event = "BufRead",
   },
-}, { lockfile = vim.fn.stdpath("data") .. "/lazy-lock.json" })
+}, {
+  lockfile = vim.fn.stdpath("data") .. "/lazy-lock.json",
+  ui = {
+    icons = {
+      cmd = "⌘",
+      config = "🛠",
+      event = "📅",
+      ft = "📂",
+      init = "⚙",
+      keys = "🗝",
+      plugin = "🔌",
+      runtime = "💻",
+      source = "📄",
+      start = "🚀",
+      task = "📌",
+      lazy = "💤 ",
+    },
+  },
+})
