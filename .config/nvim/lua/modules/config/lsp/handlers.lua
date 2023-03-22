@@ -44,7 +44,7 @@ M.on_attach = function(client, bufnr)
   vim.keymap.set("n", "<space>ca", vim.lsp.buf.code_action, bufopts)
   vim.keymap.set("n", "gr", vim.lsp.buf.references, bufopts)
   vim.keymap.set("n", "<leader>f", function()
-    vim.lsp.buf.format({ async = false })
+    vim.lsp.buf.format({ async = false, timeout_ms = 5000 })
   end, bufopts)
 
   if client.name == "clangd" then
@@ -70,7 +70,7 @@ function M.enable_format_on_save()
   vim.api.nvim_create_autocmd("BufWritePre", {
     group = "format_on_save",
     callback = function()
-      vim.lsp.buf.format({ async = false })
+      vim.lsp.buf.format({ async = false, timeout_ms = 5000 })
     end,
   })
   -- vim.notify("Enabled format on save")
