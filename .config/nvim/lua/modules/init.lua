@@ -140,6 +140,7 @@ require("lazy").setup({
               "pyright",
               "bashls",
               "tsserver",
+              "eslint",
             },
           })
         end,
