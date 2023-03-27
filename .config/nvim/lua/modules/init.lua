@@ -170,12 +170,6 @@ require("lazy").setup({
     },
   },
   {
-    "asiryk/auto-hlsearch.nvim",
-    config = function()
-      require("auto-hlsearch").setup()
-    end,
-  },
-  {
     "npxbr/gruvbox.nvim",
     dependencies = { "rktjmp/lush.nvim" },
     config = function()
