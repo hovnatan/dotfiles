@@ -246,6 +246,12 @@ require("lazy").setup({
     end,
     event = "BufRead",
   },
+  {
+    "folke/which-key.nvim",
+    config = function()
+      require("which-key").setup()
+    end,
+  },
 }, {
   lockfile = vim.fn.stdpath("data") .. "/lazy-lock.json",
   ui = {
