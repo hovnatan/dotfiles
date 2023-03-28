@@ -14,6 +14,16 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "python",
+  callback = function()
+    vim.api.nvim_buf_del_keymap(0, "n", "]M")
+    vim.api.nvim_buf_del_keymap(0, "x", "]M")
+    vim.api.nvim_buf_del_keymap(0, "n", "[M")
+    vim.api.nvim_buf_del_keymap(0, "x", "[M")
+  end,
+})
+
 vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave" }, {
   pattern = "*",
   callback = function()
