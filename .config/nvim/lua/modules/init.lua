@@ -170,11 +170,15 @@ require("lazy").setup({
     },
   },
   {
-    "sainnhe/gruvbox-material",
+    "ellisonleao/gruvbox.nvim",
+    dependencies = { "rktjmp/lush.nvim" },
     config = function()
-      vim.g.gruvbox_material_foreground = "original"
-      vim.g.gruvbox_material_ui_contrast = "high"
-      vim.cmd("colorscheme gruvbox-material")
+      require("gruvbox").setup({
+        transparent_mode = true,
+        undercurl = true,
+        underline = true,
+      })
+      vim.cmd("colorscheme gruvbox")
     end,
   },
   { "TimUntersberger/neogit", cmd = "Neogit" },
