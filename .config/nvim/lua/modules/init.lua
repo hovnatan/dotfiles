@@ -33,6 +33,14 @@ require("lazy").setup({
     end,
   },
   {
+    "echasnovski/mini.nvim",
+    version = false,
+    config = function()
+      require("mini.indentscope").setup({ draw = nil })
+      require("mini.indentscope").gen_animation.none()
+    end,
+  },
+  {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     config = function()
