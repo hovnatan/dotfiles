@@ -174,7 +174,7 @@ require("lazy").setup({
     dependencies = { "rktjmp/lush.nvim" },
     config = function()
       require("gruvbox").setup({
-        transparent_mode = true,
+        transparent_mode = false,
         undercurl = true,
         underline = true,
       })
