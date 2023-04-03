@@ -212,6 +212,13 @@ require("lazy").setup({
     end,
   },
   {
+    "simrat39/symbols-outline.nvim",
+    config = function()
+      require("symbols-outline").setup({})
+    end,
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+  },
+  {
     "AckslD/nvim-neoclip.lua",
     dependencies = {
       { "nvim-telescope/telescope.nvim" },
