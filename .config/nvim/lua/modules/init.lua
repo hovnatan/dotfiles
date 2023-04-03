@@ -215,6 +215,7 @@ require("lazy").setup({
     "simrat39/symbols-outline.nvim",
     config = function()
       require("symbols-outline").setup({})
+      vim.keymap.set("n", "<space>o", ":SymbolsOutline<cr>")
     end,
     dependencies = { "nvim-tree/nvim-web-devicons" },
   },
@@ -269,20 +270,4 @@ require("lazy").setup({
   },
 }, {
   lockfile = vim.fn.stdpath("data") .. "/lazy-lock.json",
-  ui = {
-    icons = {
-      cmd = "⌘",
-      config = "🛠",
-      event = "📅",
-      ft = "📂",
-      init = "⚙",
-      keys = "🗝",
-      plugin = "🔌",
-      runtime = "💻",
-      source = "📄",
-      start = "🚀",
-      task = "📌",
-      lazy = "💤 ",
-    },
-  },
 })
