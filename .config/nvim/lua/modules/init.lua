@@ -214,7 +214,7 @@ require("lazy").setup({
   {
     "simrat39/symbols-outline.nvim",
     config = function()
-      require("symbols-outline").setup({})
+      require("symbols-outline").setup({ autofold_depth = 1 })
       vim.keymap.set("n", "<space>o", ":SymbolsOutline<cr>")
     end,
     dependencies = { "nvim-tree/nvim-web-devicons" },
