@@ -38,8 +38,6 @@ vim.keymap.set("n", "#", function()
 end, {})
 
 vim.cmd([[nnoremap <expr> <space>v '`[' . strpart(getregtype(), 0, 1) . '`]']])
-vim.keymap.set("n", "<leader>tc", ':call system("tmux load-buffer -", @0)<cr>', opts)
-vim.keymap.set("n", "<leader>tp", ':let @0 = system("tmux save-buffer -")<cr>"0p<cr>g;', opts)
 
 vim.keymap.set({ "n", "v", "o" }, "H", "^")
 vim.keymap.set({ "n", "v", "o" }, "L", "g_")

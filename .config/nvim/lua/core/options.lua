@@ -94,3 +94,5 @@ vim.g.netrw_maxfilenamelen = 50
 vim.o.spelllang = "en_us"
 vim.o.spellfile = vim.fn.expand("~/Dropbox/container_in_out/vim-spell-en.utf-8.add")
 vim.opt.spelloptions = "camel"
+
+vim.o.clipboard = "unnamedplus"
