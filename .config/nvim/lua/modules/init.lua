@@ -87,7 +87,7 @@ require("lazy").setup({
     "chentoast/marks.nvim",
     config = function()
       require("marks").setup({
-        builtin_marks = { ".", "<", ">", "'", "^" },
+        builtin_marks = { ".", "'" },
         sign_priority = { lower = 16, upper = 20, builtin = 15, bookmark = 25 },
       })
     end,
