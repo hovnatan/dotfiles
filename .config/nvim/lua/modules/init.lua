@@ -12,7 +12,12 @@ end
 vim.opt.runtimepath:prepend(lazypath)
 
 require("lazy").setup({
-  { "tpope/vim-commentary" },
+  {
+    "numToStr/Comment.nvim",
+    config = function()
+      require("Comment").setup()
+    end,
+  },
   { "tpope/vim-unimpaired" },
   { "tpope/vim-surround" },
   { "tpope/vim-repeat" },
@@ -227,20 +232,6 @@ require("lazy").setup({
     },
     config = function()
       require("modules/config/neoclip")
-    end,
-  },
-  {
-    "klen/nvim-config-local",
-    config = function()
-      require("config-local").setup({
-        -- Default configuration (optional)
-        config_files = { ".vim/.vimrc.lua", ".vim/.vimrc" }, -- Config file patterns to load (lua supported)
-        hashfile = vim.fn.stdpath("data") .. "/config-local", -- Where the plugin keeps files data
-        autocommands_create = true, -- Create autocommands (VimEnter, DirectoryChanged)
-        commands_create = true, -- Create commands (ConfigSource, ConfigEdit, ConfigTrust, ConfigIgnore)
-        silent = true, -- Disable plugin messages (Config loaded/ignored)
-        lookup_parents = true, -- Lookup config files in parent directories
-      })
     end,
   },
   {

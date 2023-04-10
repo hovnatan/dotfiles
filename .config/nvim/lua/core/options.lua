@@ -96,3 +96,5 @@ vim.o.spellfile = vim.fn.expand("~/Dropbox/container_in_out/vim-spell-en.utf-8.a
 vim.opt.spelloptions = "camel"
 
 vim.o.clipboard = "unnamedplus"
+
+vim.opt.exrc = true
