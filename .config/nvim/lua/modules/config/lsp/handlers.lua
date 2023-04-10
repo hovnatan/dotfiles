@@ -52,9 +52,9 @@ M.on_attach = function(client, bufnr)
   end
 
   if client.name == "tsserver" then
-    client.server_capabilities.documentFormattingProvider = false -- 0.8 and later
+    client.server_capabilities.documentFormattingProvider = false
   end
-  client.server_capabilities.semanticTokensProvider = false
+  client.server_capabilities.semanticTokensProvider = true
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
