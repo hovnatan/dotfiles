@@ -70,7 +70,7 @@ vim.opt.signcolumn = "yes:1"
 vim.opt.conceallevel = 0
 vim.opt.fixendofline = false
 vim.opt.completeopt = "menuone,noselect"
-vim.opt.timeoutlen = 500
+vim.opt.timeoutlen = 1000
 
 vim.g.do_filetype_lua = 1
 vim.g.did_load_filetypes = 0
