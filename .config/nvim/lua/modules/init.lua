@@ -259,7 +259,14 @@ require("lazy").setup({
   {
     "folke/which-key.nvim",
     config = function()
-      require("which-key").setup()
+      require("which-key").setup({
+        triggers_nowait = {
+          '"',
+          "<c-r>",
+          -- spelling
+          "z=",
+        },
+      })
     end,
   },
 }, {
