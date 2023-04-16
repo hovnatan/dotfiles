@@ -40,6 +40,7 @@ echo -n "$COLOR" > ~/.my_colors
 echo -n "set -U _reload_color_config ""$COLOR" | fish
 
 # kitty @ --to $HOME/.tmpkitty set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
+mkdir -p "$WINDOWS_HOME/AppData/Roaming/alacritty"
 $script_full_path/color_switcher.sh ~/dotfiles/.config/alacritty/alacritty.yml ~/dotfiles/.config/alacritty/option ~/dotfiles/.config/alacritty/colors/$COLOR reverse
 
 if [[ "$WSL_DISTRO_NAME" ]]; then
@@ -54,8 +55,8 @@ tmux source ~/.config/tmux/tmux.conf
 SIOYEK="$HOME/dotfiles/.config/sioyek/"
 $script_full_path/color_switcher.sh "$SIOYEK/prefs_user.config" "$SIOYEK/prefs_user_common" "$SIOYEK/$COLOR" reverse
 if [[ "$WSL_DISTRO_NAME" ]]; then
-  cp ~/dotfiles/.config/sioyek/prefs_user.config "$WINDOWS_HOME/Downloads/sioyek-release-windows-portable/sioyek-release-windows/"
-  cp ~/dotfiles/.config/sioyek/keys_user.config "$WINDOWS_HOME/Downloads/sioyek-release-windows-portable/sioyek-release-windows/"
+  cp ~/dotfiles/.config/sioyek/prefs_user.config "$WINDOWS_HOME/sioyek-release-windows/"
+  cp ~/dotfiles/.config/sioyek/keys_user.config "$WINDOWS_HOME/sioyek-release-windows/"
 fi
 
 if [ $COLOR == "dark" ]; then
