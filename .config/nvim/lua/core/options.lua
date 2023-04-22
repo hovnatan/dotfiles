@@ -75,7 +75,7 @@ vim.opt.timeoutlen = 1000
 vim.g.do_filetype_lua = 1
 vim.g.did_load_filetypes = 0
 
-local file = io.open(os.getenv("HOME") .. "/.my_colors", "r")
+local file = io.open(vim.fn.expand("~/.my_colors"), "r")
 vim.o.background = file:read("*a")
 file:close()
 
