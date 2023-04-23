@@ -47,6 +47,9 @@ function reload-color-config --on-variable _reload_color_config
   end
 end
 
+
+bind -M insert \cg forget
+
 abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr nn  "nvim -u NONE"

@@ -253,6 +253,9 @@ require("lazy").setup({
       vim.keymap.set("n", "[M", "<Plug>(matchup-[%)")
       vim.keymap.set("n", "zM", "<Plug>(matchup-z%)")
       vim.keymap.set("n", "gM", "<Plug>(matchup-g%)")
+      vim.keymap.set("x", "aM", "<Plug>(matchup-a%)")
+      vim.keymap.set("x", "iM", "<Plug>(matchup-i%)")
+      vim.keymap.set("i", "<C-G>M", "<Plug>(matchup-c_g%)")
     end,
     event = "BufRead",
   },
