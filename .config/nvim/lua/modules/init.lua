@@ -41,7 +41,12 @@ require("lazy").setup({
     "echasnovski/mini.nvim",
     version = false,
     config = function()
-      require("mini.indentscope").setup()
+      require("mini.indentscope").setup({
+        options = {
+          indent_at_cursor = false,
+          border = "both",
+        },
+      })
       require("mini.indentscope").gen_animation.none()
     end,
   },
