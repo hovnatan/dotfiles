@@ -44,7 +44,7 @@ require("lazy").setup({
       require("mini.indentscope").setup({
         options = {
           indent_at_cursor = false,
-          border = "both",
+          border = "top",
         },
       })
       require("mini.indentscope").gen_animation.none()
