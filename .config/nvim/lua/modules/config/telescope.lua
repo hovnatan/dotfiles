@@ -7,7 +7,7 @@ local telescope_sorters = require("telescope.sorters")
 telescope.setup({
   defaults = {
     scroll_strategy = "limit",
-    layout_strategy = "horizontal",
+    layout_strategy = "vertical",
     layout_config = {
       horizontal = { mirror = false, preview_cutoff = 0 },
       vertical = { mirror = false, preview_cutoff = 0 },
