@@ -38,7 +38,7 @@ if [[ -v HK_DEV_ENV ]]; then
 
   gup update
 
-  nvim +"lua require('lazy').sync()"
+  nvim -c "MasonUpdate" -c "lua require('lazy').sync()"
 fi
 
 RED='\033[0;31m'
