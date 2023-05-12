@@ -50,6 +50,13 @@ end
 
 bind -M insert \cg forget
 
+function __zoxide_zi_c
+    set -l result (command zoxide query --interactive -- $argv)
+    and __zoxide_cd $result
+    commandline -f repaint
+end
+bind -M insert \ec  __zoxide_zi_c
+
 abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr nn  "nvim -u NONE"
@@ -70,9 +77,7 @@ function ranger_fm
     exit
   end
 end
-abbr r  ranger_fm
-abbr ll  "exa -alh --git -F"
-abbr llb  "exa -al --git -F"
+
 abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
 abbr ta  "tmux_attach.sh"
 abbr tl  "tmux list-sessions"
