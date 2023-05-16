@@ -57,18 +57,12 @@ function __zoxide_zi_c
 end
 bind -M insert \ec  __zoxide_zi_c
 
+abbr ll  "ls -aslh"
 abbr rsync  "rsync -a --info=progress2"
 abbr n   "nvim"
 abbr nn  "nvim -u NONE"
 abbr np  "nvim --noplugin"
 abbr g   "grep"
-abbr gd   "git diff"
-abbr gs  "git status"
-abbr gp  "git push"
-abbr gpp "git pull"
-abbr ga  "git add -u"
-abbr gc  "git commit -m"
-abbr gca "git commit --amend --no-edit"
 
 function ranger_fm
   if not set -q RANGER_LEVEL
