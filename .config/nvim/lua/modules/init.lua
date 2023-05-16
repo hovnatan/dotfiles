@@ -251,6 +251,19 @@ require("lazy").setup({
     end,
   },
   {
+    "axkirillov/hbac.nvim",
+    config = function()
+      require("hbac").setup({
+        autoclose = true,
+        threshold = 4,
+        close_command = function(bufnr)
+          vim.api.nvim_buf_delete(bufnr, {})
+        end,
+        close_buffers_with_windows = false,
+      })
+    end,
+  },
+  {
     "andymass/vim-matchup",
     config = function()
       vim.g.matchup_matchparen_offscreen = { method = "popup" }
