@@ -1,10 +1,9 @@
 set shellopts '-eu'
 set ifs "\n"
 
-set number true
+set number false
 set mouse true
-set relativenumber true
-set icons true
+set icons false
 set drawbox true
 set scrolloff 5
 set tabstop 4
@@ -15,7 +14,6 @@ set hiddenfiles '.git'
 # set cleaner ~/.config/lf/lf_kitty_clean.sh
 
 cmd open ${{
-
     test -L $f && f=$(readlink -f $f)
 
     case $(file --mime-type $f -b) in
@@ -25,12 +23,12 @@ cmd open ${{
 }}
 
 cmd copy_filename %{{
-  $(basename $f | pbcopy)
+  tmux set-buffer $(basename $f)
   echo "Copied: $(basename $f)"
 }}
 
 cmd copy_filepath %{{
-  $(realpath $f | pbcopy)
+  tmux set-buffer $(realpath $f)
   echo "Copied: $(realpath $f)"
 }}
 
