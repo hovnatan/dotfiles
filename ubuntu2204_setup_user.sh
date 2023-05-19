@@ -10,6 +10,7 @@ cp .npmrc ..
 pip3 install --user pynvim pipdeptree
 
 go install github.com/nao1215/gup@latest
+env CGO_ENABLED=0 go install -ldflags="-s -w" github.com/gokcehan/lf@latest
 
 npm i --prefix=~/.local --location=global yarn
 
