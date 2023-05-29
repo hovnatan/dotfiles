@@ -112,7 +112,7 @@ ln -sf ~/.dotfiles/.config/wezterm ~/.config/
 
 ln -sf ~/.dotfiles/.config/sioyek ~/.config/
 
-ln -sf ~/.dotfiles/.config/lf ~/.config/
+ln -sf ~/.dotfiles/.config/joshuto ~/.config/
 
 # ln -sf ~/.dotfiles/.local/share/applications/zotero.desktop ~/.local/share/applications/
 # ln -sf ~/.dotfiles/.local/share/applications/sioyek.desktop ~/.local/share/applications/
