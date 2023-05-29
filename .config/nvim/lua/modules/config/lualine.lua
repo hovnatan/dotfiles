@@ -22,7 +22,7 @@ require("lualine").setup({
         filetype_names = {
           TelescopePrompt = "Telescope",
         },
-        use_mode_colors = false,
+        use_mode_colors = true,
         symbols = {
           modified = "+",
           alternate_file = "#",
