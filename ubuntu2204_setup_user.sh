@@ -10,7 +10,6 @@ cp .npmrc ..
 pip3 install --user pynvim pipdeptree
 
 go install github.com/nao1215/gup@latest
-env CGO_ENABLED=0 go install -ldflags="-s -w" github.com/gokcehan/lf@latest
 
 npm i --prefix=~/.local --location=global yarn
 
@@ -18,6 +17,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-mod
 . "$HOME/.cargo/env"
 cargo install cargo-update
 cargo install zoxide --locked
+cargo install --git https://github.com/kamiyaa/joshuto.git --force
 
 # wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
 # mkdir -p ~/.local/share/fonts
