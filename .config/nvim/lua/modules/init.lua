@@ -202,7 +202,13 @@ require("lazy").setup({
       vim.cmd("colorscheme gruvbox")
     end,
   },
-  { "TimUntersberger/neogit", cmd = "Neogit" },
+  {
+    "TimUntersberger/neogit",
+    cmd = "Neogit",
+    config = function()
+      neogit = require("neogit").setup({})
+    end,
+  },
   {
     "sindrets/diffview.nvim",
     config = function()
