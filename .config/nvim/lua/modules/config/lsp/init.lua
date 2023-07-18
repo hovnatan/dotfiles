@@ -44,7 +44,16 @@ local servers_config = {
   },
   pyright = {
     flags = { debounce_text_changes = 1000 },
-    cmd = { "pyright-langserver", "--stdio", "-p", "~/.dotfiles/pyproject.toml" },
+    -- cmd = { "pyright-langserver", "--stdio", "--project", os.getenv("HOME") .. "/.dotfiles/pyproject.toml" },
+    settings = {
+      python = {
+        analysis = {
+          stubPath = os.getenv("HOME") .. "/.dotfiles/python/stubs",
+          autoImportCompletions = false,
+          typeCheckingMode = "off",
+        },
+      },
+    },
   },
   pylsp = {
     settings = {
