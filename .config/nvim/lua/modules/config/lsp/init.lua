@@ -44,14 +44,7 @@ local servers_config = {
   },
   pyright = {
     flags = { debounce_text_changes = 1000 },
-    settings = {
-      python = {
-        analysis = {
-          stubPath = os.getenv("HOME") .. "/.dotfiles/python/stubs",
-          autoImportCompletions = false,
-        },
-      },
-    },
+    cmd = { "pyright-langserver", "--stdio", "-p", "~/.dotfiles/pyproject.toml" },
   },
   pylsp = {
     settings = {
@@ -86,7 +79,7 @@ local servers_config = {
   },
 }
 
-local servers = { "clangd", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
+local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
 
 for _, name in pairs(servers) do
   local config = servers_config[name] or {}
