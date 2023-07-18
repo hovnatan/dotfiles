@@ -1,0 +1,41 @@
+[tool.black]
+preview = true
+
+[tool.isort]
+profile = "black"
+
+[tool.codespell]
+skip="./.git,./.gitignore,node_modules,yarn.lock,./.venv,*.c"
+check-filenames = true
+
+[tool.ruff]
+# See https://github.com/charliermarsh/ruff#rules for error code definitions.
+src = ["deqart_internal", "src/common", "src/backend", "src/task_runner"]
+select = [
+    "C4", # comprehensions
+    "DTZ", # naive datetime
+    "F", # flakes
+    "E", # style errors
+    "W", # style warnings
+    "I", # isort
+    "ISC", # string concatenation
+    "N", # naming
+    "PIE", # miscellaneous
+    "PLC", # pylint convention
+    "PLE", # pylint error
+    "PLR", # pylint refactor
+    "PLW", # pylint warning
+    "Q", # quotes
+    "RUF", # Ruff
+    "S", # security
+    "SIM", # simplify
+    "UP", # pyupgrade
+    "W", # style warnings
+    "YTT", # sys.version
+    "B", # bugbear
+    "PTH", # use Path
+    "PL",
+    "RSE",
+    "TRY"
+]
+respect-gitignore = true

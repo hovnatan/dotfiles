@@ -79,9 +79,14 @@ local servers_config = {
       },
     },
   },
+  ruff_lsp = {
+    init_options = {
+      settings = { args = { "--config=~/.dotfiles/pyproject.toml" } },
+    },
+  },
 }
 
-local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint" }
+local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
 
 for _, name in pairs(servers) do
   local config = servers_config[name] or {}
