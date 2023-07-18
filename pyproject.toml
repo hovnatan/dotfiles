@@ -1,3 +1,23 @@
+[tool.pyright]
+typeCheckingMode = "off"
+reportImportCycles = true
+reportConstantRedefinition = true
+reportMissingImport = true
+reportUnusedClass = true
+reportUnusedFunction = true
+reportUnusedVariable = true
+reportDuplicateImport = true
+reportWildcardImportFromLibrary = true
+reportPrivateUsage = true
+reportDeprecated = true
+reportIncompatibleMethodOverride = true
+reportIncompatibleVariableOverride = true
+reportInconsistentConstructor = true
+reportOverlappingOverload = true
+reportMissingSuperCall = true
+reportUninitializedInstanceVariable = true
+reportInvalidStringEscapeSequence = true
+
 [tool.black]
 preview = true
 
