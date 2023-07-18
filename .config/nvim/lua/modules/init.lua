@@ -162,6 +162,7 @@ require("lazy").setup({
               "bashls",
               "tsserver",
               "eslint",
+              "ruff_lsp",
             },
           })
         end,
