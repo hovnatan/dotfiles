@@ -86,7 +86,7 @@ local servers_config = {
   },
 }
 
-local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
+local servers = { "clangd", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
 
 for _, name in pairs(servers) do
   local config = servers_config[name] or {}
