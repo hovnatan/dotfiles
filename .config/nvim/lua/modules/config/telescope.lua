@@ -68,6 +68,7 @@ vim.keymap.set("n", "<space>b", telescope_builtin.buffers, { noremap = true, sil
 vim.keymap.set("n", "<space>h", telescope_builtin.help_tags, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>m", telescope_builtin.marks, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>r", telescope_builtin.registers, { noremap = true, silent = true })
+vim.keymap.set("n", "<space>k", telescope_builtin.keymaps, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>a", function()
   return telescope_builtin.diagnostics({ bufnr = 0 })
 end, { noremap = true, silent = true })
