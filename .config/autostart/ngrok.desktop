@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=NGrok
+GenericName=Ngrok TCP 22
+Comment=Ngrok
+Exec=/bin/sh -c "exec $HOME/ngrok/ngrok tcp 22"
+Terminal=false
+Type=Application
+X-GNOME-Autostart-enabled=true
