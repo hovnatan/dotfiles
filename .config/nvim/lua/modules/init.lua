@@ -298,6 +298,34 @@ require("lazy").setup({
       })
     end,
   },
+  {
+    "andrewferrier/debugprint.nvim",
+    event = "VeryLazy",
+    version = "*",
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+    },
+    config = function()
+      require("debugprint").setup({
+        create_keymaps = false,
+        create_commands = false,
+      })
+      vim.keymap.set("n", "g?p", function()
+        return require("debugprint").debugprint({ variable = true })
+      end, {
+        expr = true,
+      })
+      vim.keymap.set("x", "g?p", function()
+        return require("debugprint").debugprint({ variable = true })
+      end, {
+        expr = true,
+      })
+
+      vim.keymap.set("n", "g?d", function()
+        require("debugprint").deleteprints()
+      end)
+    end,
+  },
 }, {
   lockfile = vim.fn.stdpath("data") .. "/lazy-lock.json",
 })
