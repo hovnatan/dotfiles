@@ -13,9 +13,10 @@ pip3 install --user pynvim pipdeptree
 
 # npm i --prefix=~/.local --location=global yarn
 
-# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-# . "$HOME/.cargo/env"
-# cargo install cargo-update
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+. "$HOME/.cargo/env"
+cargo install cargo-update
+cargo install atuin
 
 # wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
 # mkdir -p ~/.local/share/fonts
