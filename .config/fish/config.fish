@@ -1,7 +1,5 @@
 if status --is-interactive
 
-zoxide init fish | source
-
 set -U FZF_LEGACY_KEYBINDINGS 0
 set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
 # set -U FZF_COMPLETE 0
@@ -49,13 +47,6 @@ end
 
 
 bind -M insert \cg forget
-
-function __zoxide_zi_c
-    set -l result (command zoxide query --interactive -- $argv)
-    and __zoxide_cd $result
-    commandline -f repaint
-end
-bind -M insert \ec  __zoxide_zi_c
 
 abbr rsync  "rsync -a --info=progress2"
 abbr ll  "ls -aslh"

@@ -9,15 +9,13 @@ cp .npmrc ..
 
 pip3 install --user pynvim pipdeptree
 
-go install github.com/nao1215/gup@latest
+# go install github.com/nao1215/gup@latest
 
-npm i --prefix=~/.local --location=global yarn
+# npm i --prefix=~/.local --location=global yarn
 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-. "$HOME/.cargo/env"
-cargo install cargo-update
-cargo install zoxide --locked
-cargo install --git https://github.com/kamiyaa/joshuto.git --force
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+# . "$HOME/.cargo/env"
+# cargo install cargo-update
 
 # wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
 # mkdir -p ~/.local/share/fonts

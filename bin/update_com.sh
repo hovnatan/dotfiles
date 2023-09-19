@@ -28,15 +28,15 @@ if [[ -v HK_DEV_ENV ]]; then
 
   pipdeptree -u --warn silence | grep -E '^[a-zA-Z]+' | awk -F== '{print$1}' | xargs pip3 install --user -U # --upgrade-strategy=eager
 
-  npm install -g yarn@latest
+  # npm install -g yarn@latest
   # rm ~/.config/yarn/global/yarn.lock
   # yarn global add
-  yarn global upgrade --latest
+  # yarn global upgrade --latest
 
-  rustup update
-  cargo install-update -a
+  # rustup update
+  # cargo install-update -a
 
-  gup update
+  # gup update
 
   nvim -c "MasonUpdate" -c "lua require('lazy').sync()"
 fi
