@@ -114,6 +114,8 @@ ln -sf ~/.dotfiles/.config/sioyek ~/.config/
 
 ln -sf ~/.dotfiles/.config/joshuto ~/.config/
 
+ln -sf ~/.dotfiles/.config/atuin ~/.config/
+
 # ln -sf ~/.dotfiles/.config/autostart ~/.config/
 
 # ln -sf ~/.dotfiles/.local/share/applications/zotero.desktop ~/.local/share/applications/
