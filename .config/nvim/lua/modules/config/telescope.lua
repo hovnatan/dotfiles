@@ -39,7 +39,7 @@ telescope.setup({
     },
     find_files = { previewer = false },
     oldfiles = { previewer = false },
-    jumplist = { fname_width = 0.5, show_line = false },
+    jumplist = { fname_width = 0.5, show_line = true },
     treesitter = { default_text = "function " },
   },
   extensions = {
@@ -67,6 +67,7 @@ vim.keymap.set("n", "<space>g", telescope.extensions.live_grep_args.live_grep_ar
 vim.keymap.set("n", "<space>G", telescope_builtin.grep_string, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>b", telescope_builtin.buffers, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>h", telescope_builtin.help_tags, { noremap = true, silent = true })
+vim.keymap.set("n", "<space>j", telescope_builtin.jumplist, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>m", telescope_builtin.marks, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>r", telescope_builtin.registers, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>k", telescope_builtin.keymaps, { noremap = true, silent = true })
