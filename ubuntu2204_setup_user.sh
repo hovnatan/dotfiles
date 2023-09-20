@@ -9,7 +9,7 @@ cp .npmrc ..
 
 pip3 install --user pynvim pipdeptree
 
-# go install github.com/nao1215/gup@latest
+go install github.com/nao1215/gup@latest
 
 # npm i --prefix=~/.local --location=global yarn
 
