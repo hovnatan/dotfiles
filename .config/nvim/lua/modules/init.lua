@@ -176,20 +176,6 @@ require("lazy").setup({
       },
       "jose-elias-alvarez/typescript.nvim",
       "folke/neodev.nvim",
-      "jose-elias-alvarez/null-ls.nvim",
-      {
-        "jay-babu/mason-null-ls.nvim",
-        config = function()
-          require("mason-null-ls").setup({
-            ensure_installed = {
-              "stylua",
-              "black",
-              "isort",
-              "json-lsp",
-            },
-          })
-        end,
-      },
     },
   },
   {
@@ -200,18 +186,6 @@ require("lazy").setup({
       vim.cmd("colorscheme gruvbox-material")
     end,
   },
-  -- {
-  --   "ellisonleao/gruvbox.nvim",
-  --   dependencies = { "rktjmp/lush.nvim" },
-  --   config = function()
-  --     require("gruvbox").setup({
-  --       transparent_mode = true,
-  --       undercurl = true,
-  --       underline = true,
-  --     })
-  --     vim.cmd("colorscheme gruvbox")
-  --   end,
-  -- },
   {
     "TimUntersberger/neogit",
     cmd = "Neogit",
