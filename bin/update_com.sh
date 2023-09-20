@@ -36,7 +36,7 @@ if [[ -v HK_DEV_ENV ]]; then
   rustup update
   cargo install-update -a
 
-  # gup update
+  gup update
 
   nvim -c "MasonUpdate" -c "lua require('lazy').sync()"
 fi
