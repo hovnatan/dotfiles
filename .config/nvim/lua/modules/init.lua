@@ -202,11 +202,49 @@ require("lazy").setup({
     cmd = { "DiffviewOpen", "DiffviewFileHistory" },
   },
   {
-    "ggandor/leap.nvim",
-    config = function()
-      require("leap").set_default_keymaps()
-    end,
-    event = "BufRead",
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    opts = {
+      modes = {
+        search = {
+          enabled = false,
+        },
+      },
+    },
+    keys = {
+      {
+        "s",
+        mode = { "n", "x", "o" },
+        function()
+          require("flash").jump()
+        end,
+        desc = "Flash",
+      },
+      {
+        "S",
+        mode = { "n", "o", "x" },
+        function()
+          require("flash").treesitter()
+        end,
+        desc = "Flash Treesitter",
+      },
+      {
+        "r",
+        mode = "o",
+        function()
+          require("flash").remote()
+        end,
+        desc = "Remote Flash",
+      },
+      {
+        "R",
+        mode = { "o", "x" },
+        function()
+          require("flash").treesitter_search()
+        end,
+        desc = "Flash Treesitter Search",
+      },
+    },
   },
   {
     "nvim-lualine/lualine.nvim",
@@ -266,19 +304,6 @@ require("lazy").setup({
       vim.keymap.set("i", "<C-G>M", "<Plug>(matchup-c_g%)")
     end,
     event = "BufRead",
-  },
-  {
-    "folke/which-key.nvim",
-    config = function()
-      require("which-key").setup({
-        triggers_nowait = {
-          '"',
-          "<c-r>",
-          -- spelling
-          "z=",
-        },
-      })
-    end,
   },
   {
     "andrewferrier/debugprint.nvim",
