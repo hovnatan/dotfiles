@@ -29,25 +29,10 @@ require("lazy").setup({
   {
     "lukas-reineke/indent-blankline.nvim",
     config = function()
-      require("indent_blankline").setup({
-        buftype_exclude = { "terminal", "telescope", "prompt", "nofile" },
-        show_current_context = false,
-        show_current_context_start = false,
-        show_trailing_blankline_indent = false,
+      require("ibl").setup({
+        exclude = { filetypes = { "terminal", "telescope", "prompt", "nofile" } },
+        indent = { char = "▏" },
       })
-    end,
-  },
-  {
-    "echasnovski/mini.nvim",
-    version = false,
-    config = function()
-      require("mini.indentscope").setup({
-        options = {
-          indent_at_cursor = false,
-          border = "top",
-        },
-      })
-      require("mini.indentscope").gen_animation.none()
     end,
   },
   {
