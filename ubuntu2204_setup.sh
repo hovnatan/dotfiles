@@ -41,3 +41,4 @@ update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 # ubuntu-drivers devices
 # sudo ubuntu-drivers autoinstall
 
+curl -fsSL https://crystal-lang.org/install.sh | sudo bash
