@@ -43,7 +43,7 @@ vim.opt.iskeyword = "@,48-57,_,192-255"
 vim.opt.isfname = vim.opt.isfname - "="
 vim.opt.matchpairs = vim.opt.matchpairs + "<:>"
 vim.opt.wildmenu = true
-vim.opt.lazyredraw = true
+vim.opt.lazyredraw = false
 vim.opt.diffopt = "vertical,filler,internal,algorithm:histogram,indent-heuristic"
 vim.opt.splitbelow = true
 vim.opt.splitright = true
