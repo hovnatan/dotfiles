@@ -65,6 +65,7 @@ require("lazy").setup({
       require("ibl").setup({
         exclude = { filetypes = { "terminal", "telescope", "prompt", "nofile" } },
         indent = { char = "▏" },
+        scope = { enabled = false },
       })
     end,
   },
