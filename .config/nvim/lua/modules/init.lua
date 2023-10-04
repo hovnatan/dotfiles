@@ -61,13 +61,12 @@ require("lazy").setup({
   },
   {
     "lukas-reineke/indent-blankline.nvim",
-    config = function()
-      require("ibl").setup({
-        exclude = { filetypes = { "terminal", "telescope", "prompt", "nofile" } },
-        indent = { char = "▏" },
-        scope = { enabled = false },
-      })
-    end,
+    main = "ibl",
+    opts = {
+      exclude = { filetypes = { "terminal", "telescope", "prompt", "nofile" } },
+      indent = { char = "▏" },
+      scope = { enabled = false },
+    },
   },
   {
     "nvim-treesitter/nvim-treesitter",
