@@ -40,7 +40,6 @@ telescope.setup({
     find_files = { previewer = false },
     oldfiles = { previewer = false },
     jumplist = { fname_width = 0.5, show_line = true },
-    treesitter = { default_text = "function " },
   },
   extensions = {
     fzf = {
