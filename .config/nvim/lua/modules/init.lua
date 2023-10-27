@@ -25,10 +25,17 @@ require("lazy").setup({
       --   `nvim-notify` is only needed, if you want to use the notification view.
       --   If not available, we use `mini` as the fallback
       "rcarriga/nvim-notify",
+      "nvim-telescope/telescope.nvim",
     },
     config = function()
       require("noice").setup({
         lsp = {
+          signature = {
+            enabled = true,
+            auto_open = {
+              enabled = false,
+            },
+          },
           -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
           override = {
             ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
@@ -43,6 +50,9 @@ require("lazy").setup({
           lsp_doc_border = false, -- add a border to hover docs and signature help
         },
       })
+      local telescope = require("telescope")
+      telescope.load_extension("noice")
+      vim.keymap.set("n", "<space>n", telescope.extensions.noice.noice, { noremap = true, silent = true })
     end,
   },
   {
