@@ -13,7 +13,6 @@ vim.keymap.set("c", "<C-p>", "<Up>", opts)
 vim.keymap.set("c", "<C-n>", "<Down>", opts)
 
 vim.keymap.set("i", "jk", "<Esc>", opts)
-vim.keymap.set("n", "<C-n>", "<cmd> :set hlsearch! <CR>", opts)
 vim.keymap.set("n", ",cl", "<cmd> :let @+=join([@%,  line('.')], ':')<CR>", opts)
 vim.keymap.set("n", ",h", "/[^\\d0-\\d127]<CR>", opts)
 vim.keymap.set("i", "<C-l>", [[(&spell == 0 ? '' : '<c-g>u<Esc>[s1z=`]a<c-g>u')]], { expr = true })
@@ -30,14 +29,17 @@ vim.keymap.set("n", "<C-w>l", ":wincmd k<CR>", opts)
 
 vim.keymap.set("n", "*", function()
   vim.fn.execute("normal! *N")
-  vim.fn.execute("set hlsearch")
+  vim.opt.hlsearch = true
 end, {})
 vim.keymap.set("n", "#", function()
   vim.fn.execute("normal! #N")
-  vim.fn.execute("set hlsearch")
+  vim.opt.hlsearch = true
 end, {})
+vim.keymap.set("n", "<C-n>", function()
+  vim.opt.hlsearch = not(vim.opt.hlsearch:get())
+end, opts)
 
-vim.cmd([[nnoremap <expr> <space>v '`[' . strpart(getregtype(), 0, 1) . '`]']])
+vim.cmd([[nnoremap <expr> <space>v '`[' . getregtype()[0] . '`]']])
 
 vim.keymap.set({ "n", "v", "o" }, "H", "^")
 vim.keymap.set({ "n", "v", "o" }, "L", "g_")
