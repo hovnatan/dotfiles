@@ -36,16 +36,16 @@ vim.keymap.set("n", "#", function()
   vim.opt.hlsearch = true
 end, {})
 vim.keymap.set("n", "<C-n>", function()
-  vim.opt.hlsearch = not(vim.opt.hlsearch:get())
+  vim.opt.hlsearch = not (vim.opt.hlsearch:get())
 end, opts)
 
 vim.cmd([[nnoremap <expr> <space>v '`[' . getregtype()[0] . '`]']])
 
-vim.keymap.set({ "n", "v", "o" }, "H", "^")
-vim.keymap.set({ "n", "v", "o" }, "L", "g_")
-vim.keymap.set({ "n", "v", "o" }, "M", "%", { remap = true })
-vim.keymap.set({ "n", "v", "o" }, "]w", "g*")
-vim.keymap.set({ "n", "v", "o" }, "[w", "g#")
+vim.keymap.set({ "n", "v", "o" }, "H", "^", opts)
+vim.keymap.set({ "n", "v", "o" }, "L", "g_", opts)
+vim.keymap.set({ "n", "v", "o" }, "M", "%", { remap = true, silent = true })
+vim.keymap.set({ "n", "v", "o" }, "]w", "g*", opts)
+vim.keymap.set({ "n", "v", "o" }, "[w", "g#", opts)
 
 vim.keymap.set("n", "q", "<Nop>")
 vim.keymap.set("n", "gq", "q")
