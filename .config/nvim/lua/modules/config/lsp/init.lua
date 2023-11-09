@@ -35,7 +35,7 @@ local servers_config = {
             formatCommand = "isort --stdout --profile black -",
             formatStdin = true,
           },
-          { formatCommand = "black --fast --preview -", formatStdin = true },
+          { formatCommand = "black --fast -", formatStdin = true },
           -- {
           --   lintCommand = "pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}",
           --   lintStdin = false,
