@@ -65,8 +65,7 @@ require("lazy").setup({
             opts = { skip = true },
           },
         },
-        views = {
-        },
+        views = {},
       })
       local telescope = require("telescope")
       telescope.load_extension("noice")
