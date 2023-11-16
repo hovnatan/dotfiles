@@ -1,5 +1,5 @@
 require("treesitter-context").setup({
-  mode = "cursor",
+  mode = "topbar",
   max_lines = 5,
   multiline_threshold = 1,
   patterns = {
