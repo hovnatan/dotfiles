@@ -23,34 +23,6 @@ vim.api.nvim_create_user_command("LspLog", function()
 end, { force = true, nargs = 0 })
 
 local servers_config = {
-  efm = {
-    filetypes = { "lua", "javascript", "python", "typescript", "html", "markdown" },
-    init_options = { documentFormatting = true },
-    settings = {
-      rootMarkers = { ".git/" },
-      languages = {
-        lua = { { formatCommand = "stylua --search-parent-directories -", formatStdin = true } },
-        python = {
-          {
-            formatCommand = "isort --stdout --profile black -",
-            formatStdin = true,
-          },
-          { formatCommand = "black --fast -", formatStdin = true },
-          -- {
-          --   lintCommand = "pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}",
-          --   lintStdin = false,
-          --   lintFormats = { "%f:%l:%c:%t:%m" },
-          --   lintOffsetColumns = 1,
-          --   lintCategoryMap = { I = "H", R = "I", C = "I", W = "W", E = "E", F = "E" },
-          -- },
-        },
-        javascript = { { formatCommand = "prettier --stdin-filepath .js", formatStdin = true } },
-        typescript = { { formatCommand = "prettier --stdin-filepath .ts", formatStdin = true } },
-        html = { { formatCommand = "prettier --stdin-filepath .html", formatStdin = true } },
-        markdown = { { formatCommand = "prettier --stdin-filepath .md", formatStdin = true } },
-      },
-    },
-  },
   clangd = {
     flags = { debounce_text_changes = 1000 },
     init_options = { clangdFileStatus = true },
@@ -116,7 +88,7 @@ local servers_config = {
   },
 }
 
-local servers = { "efm", "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
+local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
 
 for _, name in pairs(servers) do
   local config = servers_config[name] or {}
