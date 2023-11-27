@@ -247,6 +247,22 @@ require("lazy").setup({
     cmd = { "DiffviewOpen", "DiffviewFileHistory" },
   },
   {
+    "stevearc/conform.nvim",
+    config = function()
+      conform = require("conform")
+      conform.setup({
+        formatters_by_ft = {
+          lua = { "stylua" },
+          python = { "isort", "black" },
+          javascript = { { "prettierd", "prettier" } },
+        },
+      })
+      vim.keymap.set("n", ",f", function()
+        conform.format({ async = false, lsp_fallback = true, timeout_ms = 5000 })
+      end)
+    end,
+  },
+  {
     "folke/flash.nvim",
     event = "VeryLazy",
     keys = {

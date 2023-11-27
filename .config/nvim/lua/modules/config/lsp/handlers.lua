@@ -43,9 +43,6 @@ M.on_attach = function(client, bufnr)
   vim.keymap.set("n", "<space>rn", vim.lsp.buf.rename, bufopts)
   vim.keymap.set("n", "<space>ca", vim.lsp.buf.code_action, bufopts)
   vim.keymap.set("n", "gr", vim.lsp.buf.references, bufopts)
-  vim.keymap.set("n", "<leader>f", function()
-    vim.lsp.buf.format({ async = false, timeout_ms = 5000 })
-  end, bufopts)
 
   if client.name == "clangd" then
     vim.keymap.set("n", "<space>z", "<cmd>ClangdSwitchSourceHeader<CR>", opts)
