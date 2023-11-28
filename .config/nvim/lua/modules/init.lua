@@ -257,8 +257,11 @@ require("lazy").setup({
           javascript = { { "prettierd", "prettier" } },
         },
         format_on_save = function(bufnr)
+          if vim.b[bufnr].enable_autoformat == false then
+            return
+          end
           if vim.g.enable_autoformat or vim.b[bufnr].enable_autoformat then
-            return { timeout_ms = 500, lsp_fallback = true }
+            return { timeout_ms = 5000, lsp_fallback = true }
           end
           return
         end,
@@ -266,9 +269,9 @@ require("lazy").setup({
 
       vim.api.nvim_create_user_command("FormatOnSaveDisable", function(args)
         if args.bang then
-          vim.g.enable_autoformat = false
-        else
           vim.b.enable_autoformat = false
+        else
+          vim.g.enable_autoformat = false
         end
       end, {
         desc = "Disable autoformat-on-save",
@@ -276,12 +279,13 @@ require("lazy").setup({
       })
       vim.api.nvim_create_user_command("FormatOnSaveEnable", function(args)
         if args.bang then
-          vim.g.enable_autoformat = true
-        else
           vim.b.enable_autoformat = true
+        else
+          vim.g.enable_autoformat = true
         end
       end, {
         desc = "Re-enable autoformat-on-save",
+        bang = true,
       })
       vim.api.nvim_create_user_command("Format", function(args)
         local range = nil
