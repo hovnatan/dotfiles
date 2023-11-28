@@ -264,7 +264,7 @@ require("lazy").setup({
         end,
       })
 
-      vim.api.nvim_create_user_command("FormatDisable", function(args)
+      vim.api.nvim_create_user_command("FormatOnSaveDisable", function(args)
         if args.bang then
           vim.g.enable_autoformat = false
         else
@@ -274,7 +274,7 @@ require("lazy").setup({
         desc = "Disable autoformat-on-save",
         bang = true,
       })
-      vim.api.nvim_create_user_command("FormatEnable", function(args)
+      vim.api.nvim_create_user_command("FormatOnSaveEnable", function(args)
         if args.bang then
           vim.g.enable_autoformat = true
         else
