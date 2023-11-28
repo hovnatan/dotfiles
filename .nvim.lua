@@ -1,1 +1,1 @@
-vim.cmd("FormatEnable")
+vim.cmd("FormatOnSaveEnable")
