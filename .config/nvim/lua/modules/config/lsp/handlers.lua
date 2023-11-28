@@ -63,29 +63,6 @@ capabilities.textDocument.completion.completionItem.snippetSupport = false
 
 M.capabilities = capabilities
 
-function M.enable_format_on_save()
-  vim.api.nvim_create_augroup("format_on_save", { clear = true })
-  vim.api.nvim_create_autocmd("BufWritePre", {
-    group = "format_on_save",
-    callback = function()
-      vim.lsp.buf.format({ async = false, timeout_ms = 5000 })
-    end,
-  })
-  -- vim.notify("Enabled format on save")
-end
-
-function M.disable_format_on_save()
-  vim.api.nvim_del_augroup_by_name("format_on_save")
-  vim.notify("Disabled format on save")
-end
-
-function M.toggle_format_on_save()
-  if vim.fn.exists("#format_on_save#BufWritePre") == 0 then
-    M.enable_format_on_save()
-  else
-    M.disable_format_on_save()
-  end
-end
 
 local diagnostic_show = true
 function M.toggle_virtual_text()
@@ -98,9 +75,6 @@ function M.toggle_virtual_text()
   end
 end
 
-vim.api.nvim_create_user_command("LspEnableAutoFormat", M.enable_format_on_save, {})
-vim.api.nvim_create_user_command("LspDisableAutoFormat", M.disable_format_on_save, {})
-vim.api.nvim_create_user_command("LspToggleAutoFormat", M.toggle_format_on_save, {})
 vim.api.nvim_create_user_command("LspToggleVirtualText", M.toggle_virtual_text, {})
 
 return M
