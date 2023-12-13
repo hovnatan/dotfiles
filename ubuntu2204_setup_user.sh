@@ -46,7 +46,7 @@ sh autogen.sh
 sudo make install
 cd ..
 
-git clone --depth 1 --branch 3.6.1 https://github.com/fish-shell/fish-shell.git
+git clone --depth 1 --branch 3.6.4 https://github.com/fish-shell/fish-shell.git
 cd fish-shell
 mkdir build
 cd build
