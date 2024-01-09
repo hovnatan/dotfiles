@@ -4,16 +4,17 @@ shape = "Beam"
 
 [env]
 TERM = "alacritty"
+WSLENV = "TERM"
 
 [font]
-size = 13
+size = 11.5
 
 [font.normal]
 family = "Hack Nerd Font Mono"
 
 [font.offset]
 x = 0
-y = 2
+y = 0
 
 [[keyboard.bindings]]
 action = "PasteSelection"
@@ -45,11 +46,15 @@ history = 0
 save_to_clipboard = true
 
 [window]
-decorations = "none"
+decorations = "Full"
 dynamic_padding = false
 dynamic_title = true
-startup_mode = "Maximized"
+startup_mode = "Windowed"
 
 [window.padding]
 x = 0
 y = 0
+
+[shell]
+program = "wsl.exe"
+args = ["-e", "bash", "-l"]

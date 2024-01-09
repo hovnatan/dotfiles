@@ -41,11 +41,11 @@ echo -n "set -U _reload_color_config ""$COLOR" | fish
 
 # kitty @ --to $HOME/.tmpkitty set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
 mkdir -p "$WINDOWS_HOME/AppData/Roaming/alacritty"
-$script_full_path/color_switcher.sh ~/dotfiles/.config/alacritty/alacritty.yml ~/dotfiles/.config/alacritty/option ~/dotfiles/.config/alacritty/colors/$COLOR reverse
+$script_full_path/color_switcher.sh ~/dotfiles/.config/alacritty/alacritty.toml ~/dotfiles/.config/alacritty/option ~/dotfiles/.config/alacritty/colors/$COLOR reverse
 
 if [[ "$WSL_DISTRO_NAME" ]]; then
   WINDOWS_HOME=$(wslpath "$(wslvar USERPROFILE)")
-  cp ~/dotfiles/.config/alacritty/alacritty.yml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.yml"
+  cp ~/dotfiles/.config/alacritty/alacritty.toml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.toml"
 fi
 
 tmux source ~/.config/tmux/tmux.conf
