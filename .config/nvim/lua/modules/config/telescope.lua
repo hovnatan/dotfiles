@@ -56,10 +56,9 @@ telescope.setup({
 })
 telescope.load_extension("fzf")
 telescope.load_extension("live_grep_args")
-telescope.load_extension("enhanced_find_files")
 
 vim.keymap.set("n", "<space>f", function()
-  return telescope.extensions.enhanced_find_files.enhanced_find_files({ cwd_only = true })
+  require("telescope").extensions.smart_open.smart_open()
 end, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>F", telescope_builtin.oldfiles, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>g", telescope.extensions.live_grep_args.live_grep_args, { noremap = true, silent = true })
