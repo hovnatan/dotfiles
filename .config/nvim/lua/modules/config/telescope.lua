@@ -4,10 +4,6 @@ local telescope_actions = require("telescope.actions")
 local telescope_builtin = require("telescope.builtin")
 local telescope_sorters = require("telescope.sorters")
 
-telescope.load_extension("fzf")
-telescope.load_extension("live_grep_args")
-telescope.load_extension("smart_open")
-
 telescope.setup({
   defaults = {
     scroll_strategy = "limit",
@@ -59,12 +55,16 @@ telescope.setup({
     smart_open = {
       show_scores = true,
       ignore_patterns = { "*.git/*", "*/tmp/*" },
-      match_algorithm = "fzy",
+      match_algorithm = "fzf",
       disable_devicons = true,
       open_buffer_indicators = { previous = "•", others = "∘" },
     },
   },
 })
+
+telescope.load_extension("fzf")
+telescope.load_extension("live_grep_args")
+telescope.load_extension("smart_open")
 
 vim.keymap.set("n", "<space>f", function()
   require("telescope").extensions.smart_open.smart_open({
