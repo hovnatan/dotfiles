@@ -89,6 +89,9 @@ import_miniconda() {
   # <<< conda initialize <<<
 }
 
+shopt -s histappend
+PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
+
 if [ -z "${SSH_CONNECTION}" ]; then
   export MY_IP="127.0.0.1"
 else
