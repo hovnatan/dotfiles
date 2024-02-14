@@ -91,6 +91,7 @@ import_miniconda() {
 
 shopt -s histappend
 PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
+PROMPT_DIRTRIM=1
 
 if [ -z "${SSH_CONNECTION}" ]; then
   export MY_IP="127.0.0.1"
