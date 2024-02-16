@@ -27,8 +27,8 @@ ln -s ~/.dotfiles/.config/fish ~/.config/fish
 fish -c 'curl -sL https://git.io/fisher | source && fisher update'
 
 rm -rf ~/.gitconfig
-cp ~/.dotfiles/.gitconfig ~/
-nano ~/.gitconfig
+ln -s ~/.dotfiles/.gitconfig ~/
+nano ~/.gitconfig_local
 
 rm -rf ~/.config/htop
 mkdir ~/.config/htop

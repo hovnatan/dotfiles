@@ -1,8 +1,10 @@
+[include]
+    path = .gitconfig_local
 [user]
   name = Hovnatan Karapetyan
-  email = 
 [diff]
   colorMoved = default
+  algorithm = histogram
 [difftool]
   prompt = false
 [difftool "fugitive"]
@@ -10,7 +12,7 @@
   trustExitCode = false
   keepBackup = false
 [merge]
-  conflictstyle = diff3
+  conflictstyle = zdiff3
 [core]
   editor = 'nvim'
   #hooksPath = .githooks
@@ -30,6 +32,8 @@
   difftool = true
 [pull]
   rebase = true
+[push]
+  autoSetupRemote = true
 [fetch]
   prune = true
 [submodule]
