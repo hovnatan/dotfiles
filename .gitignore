@@ -5,3 +5,4 @@ __pycache__
 venv_python_neovim
 .DS_Store
 *.bak
+.gitconfig_local
