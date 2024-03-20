@@ -50,7 +50,7 @@ sudo make install
 cd ..
 
 rm -rf fish-shell
-git clone --depth 1 --branch 3.7.0 https://github.com/fish-shell/fish-shell.git
+git clone --depth 1 --branch 3.7.1 https://github.com/fish-shell/fish-shell.git
 cd fish-shell
 mkdir build
 cd build
