@@ -83,12 +83,22 @@ local servers_config = {
   },
   ruff_lsp = {
     init_options = {
-      settings = { args = { "--config=~/.dotfiles/pyproject.toml" } },
+      settings = { args = {} },
     },
   },
 }
 
 local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
+
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = "*.py",
+  callback = function()
+    vim.lsp.buf.code_action({
+      context = { only = { "source.fixAll.ruff" } },
+      apply = true,
+    })
+  end,
+})
 
 for _, name in pairs(servers) do
   local config = servers_config[name] or {}

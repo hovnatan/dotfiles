@@ -260,7 +260,7 @@ require("lazy").setup({
       conform.setup({
         formatters_by_ft = {
           lua = { "stylua" },
-          python = { "isort", "black" },
+          python = { "ruff-lsp" },
           javascript = { { "prettierd", "prettier" } },
         },
         format_on_save = function(bufnr)
