@@ -38,7 +38,7 @@ except ImportError:
 from pathlib import Path
 
 
-class WatchEvalError(object):
+class WatchEvalError:
     def __str__(self):
         return "<error>"
 
