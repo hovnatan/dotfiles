@@ -63,7 +63,6 @@ capabilities.textDocument.completion.completionItem.snippetSupport = false
 
 M.capabilities = capabilities
 
-
 local diagnostic_show = true
 function M.toggle_virtual_text()
   if diagnostic_show then
