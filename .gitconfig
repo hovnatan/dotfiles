@@ -1,5 +1,5 @@
 [include]
-    path = .gitconfig_local
+  path = .gitconfig_local
 [user]
   name = Hovnatan Karapetyan
 [diff]
