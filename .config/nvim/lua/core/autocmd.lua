@@ -40,7 +40,10 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "NeogitCommitMessage,gitcommit,markdown,text,rst,tex,latex",
-  callback = function()
+  callback = function(input)
+    if string.match(input.file, 'requirements.*txt') ~= null then
+      return
+    end
     vim.bo.textwidth = 80
     vim.opt_local.spell = true
   end,
