@@ -68,7 +68,7 @@ telescope.load_extension("smart_open")
 
 vim.keymap.set("n", "<space>f", function()
   require("telescope").extensions.smart_open.smart_open({
-    cwd_only = false,
+    cwd_only = true,
     filename_first = false,
   })
 end, { noremap = true, silent = true })
