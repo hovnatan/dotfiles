@@ -231,6 +231,25 @@ require("lazy").setup({
     },
   },
   {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    config = function()
+      require("mason-tool-installer").setup({
+        ensure_installed = {
+          "bash-language-server",
+          "black",
+          "eslint-lsp",
+          "isort",
+          "json-lsp",
+          "pyright",
+          "ruff",
+          "ruff-lsp",
+          "stylua",
+          "typescript-language-server",
+        },
+      })
+    end,
+  },
+  {
     "sainnhe/gruvbox-material",
     config = function()
       vim.g.gruvbox_material_foreground = "original"
