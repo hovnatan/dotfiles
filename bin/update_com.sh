@@ -26,7 +26,7 @@ if [[ -v HK_DEV_ENV ]]; then
 
   "$HOME/.config/tmux/plugins/tpm/bin/update_plugins" all
 
-  pipdeptree -u --warn silence | grep -E '^[a-zA-Z]+' | awk -F== '{print$1}' | xargs pip3 install --user -U # --upgrade-strategy=eager
+  # pipdeptree -u --warn silence | grep -E '^[a-zA-Z]+' | awk -F== '{print$1}' | xargs pip3 install --user -U # --upgrade-strategy=eager
 
   # npm install -g yarn@latest
   # rm ~/.config/yarn/global/yarn.lock
@@ -38,7 +38,9 @@ if [[ -v HK_DEV_ENV ]]; then
 
   gup update
 
-  nvim -c "MasonUpdate" -c "lua require('lazy').sync()"
+  cd ~/.fzf && git pull && ./install --bin
+
+  nvim -c "MasonUpdate" -c "MasonToolsUpdateSync" -c "lua require('lazy').sync()"
 fi
 
 RED='\033[0;31m'
