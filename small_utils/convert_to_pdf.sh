@@ -20,7 +20,7 @@ for f in "$input_folder"/*.tif; do
   extension="${filename##*.}"
   filename="${filename%.*}"
   echo "$filename"
-  convert "$f" "$out_folder/${filename}.pdf"
+  convert "$f" "$out_folder/${filename}.pdf" &
 done
 )
 
