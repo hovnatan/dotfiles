@@ -23,6 +23,7 @@ for f in "$input_folder"/*.tif; do
   filename="${filename%.*}"
   echo "$filename"
   convert "$f" "$out_folder/${filename}.pdf" &
+#  convert -quality 1 -compress JPEG "$f" "$out_folder/${filename}.pdf" &
 done
 )
 
