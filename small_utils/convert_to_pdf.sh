@@ -8,6 +8,8 @@ input_folder="."
 
 out_folder="out_pdf"
 
+rm -rf "$out_folder"
+
 mkdir -p "$out_folder"
 
 N=8 # num parallel tasks
