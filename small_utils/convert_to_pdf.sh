@@ -31,6 +31,7 @@ for f in "$input_folder"/*.tif; do
   fi
 done
 )
+wait
 
 pdfunite "$out_folder/"*.pdf ./out.pdf
 ocrmypdf ./out.pdf ./out_ocr.pdf
