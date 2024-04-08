@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# sudo apt install imagemagick poppler-utils ocrmypdf
+# sudo apt install imagemagick poppler-utils ocrmypdf mediainfo
 
 # sudo vim /etc/ImageMagick-6/policy.xml # remove lines disabling PDF  also maybe increase memory and disk resources size
 
@@ -22,12 +22,12 @@ for f in "$input_folder"/*.tif; do
   extension="${filename##*.}"
   filename="${filename%.*}"
   size=$(stat -c%s "$f")
-  if [ $size -ge 300000 ]; then
-    convert -quality 5 -compress JPEG "$f" "$out_folder/$filename.pdf" &
-    echo "$filename" $size large_file
+  if [ $size -ge 300000 ] && mediainfo "$f" | grep RGB > /dev/null; then
+    convert -quality 20 -compress JPEG "$f" "$out_folder/$filename.pdf" &
+    echo "$filename" $size yes_convert_JPEG
   else
     convert "$f" "$out_folder/$filename.pdf" &
-    echo "$filename" $size small_file
+    echo "$filename" $size no_convert_JPEG
   fi
 done
 )
