@@ -103,3 +103,4 @@ export CONDA_EXPERIMENTAL_SOLVER=libmamba
 export DOCKER_BUILDKIT=1
 
 alias runlike="docker run --volume=/etc/localtime:/etc/localtime:ro --volume=/home/$USER/work/container_in_out:/home/$USER --volume=/home/$USER/Dropbox/container_in_out:/home/$USER/Dropbox/container_in_out -p 8888:8888 -ti --name=<container_name> <image_name>"
+alias export_from_env="export \$(grep -v '^#' .env | xargs -d '\n')"
