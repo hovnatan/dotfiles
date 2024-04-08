@@ -22,7 +22,7 @@ for f in "$input_folder"/*.tif; do
   extension="${filename##*.}"
   filename="${filename%.*}"
   size=$(stat -c%s "$f")
-  if [ $size -ge 200000 ]; then
+  if [ $size -ge 300000 ]; then
     convert -quality 5 -compress JPEG "$f" "$out_folder/$filename.pdf" &
     echo "$filename" $size large_file
   else
