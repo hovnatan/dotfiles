@@ -1,5 +1,0 @@
-[user]
-  email =
-[include]
-  path = ~/.gitconfig
-
