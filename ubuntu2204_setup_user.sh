@@ -60,7 +60,7 @@ sudo make install
 cd ../..
 
 rm -rf alacritty
-git clone --depth 1 --branch v0.13.1 https://github.com/alacritty/alacritty.git
+git clone --depth 1 --branch v0.13.2 https://github.com/alacritty/alacritty.git
 cd alacritty
 sudo tic -xe alacritty,alacritty-direct extra/alacritty.info
 # cargo build --release --no-default-features --features=wayland
