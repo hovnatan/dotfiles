@@ -3,6 +3,7 @@
 # sudo apt install imagemagick poppler-utils ocrmypdf mediainfo
 
 # sudo vim /etc/ImageMagick-6/policy.xml # remove lines disabling PDF  also maybe increase memory and disk resources size
+# pip install -U --user pdf.tocgen
 
 input_folder="."
 
@@ -35,3 +36,4 @@ wait
 
 pdfunite "$out_folder/"*.pdf ./out.pdf
 ocrmypdf ./out.pdf ./out_ocr.pdf
+pdftocio out_ocr.pdf < toc.txt
