@@ -68,7 +68,7 @@ vim.opt.writebackup = false
 vim.opt.cmdheight = 1
 vim.opt.signcolumn = "yes:1"
 vim.opt.conceallevel = 0
-vim.opt.fixendofline = false
+vim.opt.fixendofline = true
 vim.opt.completeopt = "menuone,noselect"
 vim.opt.timeoutlen = 1000
 
