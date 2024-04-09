@@ -12,9 +12,9 @@ rm -rf "$out_folder"
 
 mkdir -p "$out_folder"
 
+(
 N=8 # num parallel tasks
 
-(
 for f in "$input_folder"/*.tif; do 
   ((i=i%N)); ((i++==0)) && wait
 
@@ -30,8 +30,8 @@ for f in "$input_folder"/*.tif; do
     echo "$filename" $size no_convert_JPEG
   fi
 done
-)
 wait
+)
 
 pdfunite "$out_folder/"*.pdf ./out.pdf
 ocrmypdf ./out.pdf ./out_ocr.pdf
