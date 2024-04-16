@@ -40,7 +40,9 @@ if [[ -v HK_DEV_ENV ]]; then
 
   cd ~/.fzf && git pull && ./install --bin
 
-  nvim -c "MasonUpdate" -c "MasonToolsUpdateSync" -c "lua require('lazy').sync()"
+  nvim --headless -c "MasonUpdate" -c "qall"
+  nvim --headless -c "MasonToolsUpdateSync" -c "qall"
+  nvim -c "lua require('lazy').sync()"
 fi
 
 RED='\033[0;31m'
