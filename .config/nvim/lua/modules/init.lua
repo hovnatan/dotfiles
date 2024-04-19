@@ -214,7 +214,7 @@ require("lazy").setup({
               "bashls",
               "tsserver",
               "eslint",
-              "ruff_lsp",
+              "ruff",
             },
           })
         end,
@@ -242,7 +242,6 @@ require("lazy").setup({
           "json-lsp",
           "pyright",
           "ruff",
-          "ruff-lsp",
           "stylua",
           "typescript-language-server",
         },

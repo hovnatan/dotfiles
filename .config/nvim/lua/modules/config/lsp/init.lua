@@ -81,14 +81,9 @@ local servers_config = {
       },
     },
   },
-  ruff_lsp = {
-    init_options = {
-      settings = { args = {} },
-    },
-  },
 }
 
-local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff_lsp" }
+local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff" }
 
 vim.api.nvim_create_autocmd("BufWritePre", {
   pattern = "*.py",
