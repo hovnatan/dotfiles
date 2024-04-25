@@ -4,15 +4,15 @@ set -e
 
 cd ~
 
-cp /etc/skel/.* ./
-cp /etc/skel/* ./
+cp /etc/skel/.* ./ || true
+cp /etc/skel/* ./ || true
 
 git clone -b delll https://github.com/hovnatan/dotfiles.git
 mv dotfiles .dotfiles
 cd .dotfiles
 cp .npmrc ..
 
-pip3 install --user pynvim pipdeptree
+sudo apt install python3-pynvim
 
 go install github.com/nao1215/gup@latest
 go install github.com/mattn/efm-langserver@latest
