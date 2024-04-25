@@ -2,6 +2,11 @@
 
 set -e
 
+cd ~
+
+cp /etc/skel/.* ./
+cp /etc/skel/* ./
+
 git clone -b delll https://github.com/hovnatan/dotfiles.git
 mv dotfiles .dotfiles
 cd .dotfiles
