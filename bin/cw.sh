@@ -44,7 +44,7 @@ echo -n "set -U _reload_color_config ""$COLOR" | fish
 
 if [[ "$WSL_DISTRO_NAME" ]]; then
   WINDOWS_HOME=$(wslpath "$(wslvar USERPROFILE)")
-  cp ~/.dotfiles/.config/alacritty/alacritty.yml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.yml"
+  cp ~/.dotfiles/.config/alacritty/alacritty.toml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.toml"
 fi
 
 tmux source ~/.config/tmux/tmux.conf
