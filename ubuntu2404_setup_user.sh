@@ -30,7 +30,7 @@ cargo install atuin
 # fc-cache -fv
 
 git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-~/.fzf/install
+~/.fzf/install --bin
 
 export MAKEFLAGS="-j11"
 export CFLAGS="-march=native -O3"
