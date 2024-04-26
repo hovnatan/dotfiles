@@ -1,0 +1,63 @@
+[colors]
+draw_bold_text_with_bright_colors = false
+
+[cursor.style]
+blinking = "Off"
+shape = "Beam"
+
+[env]
+TERM = "alacritty"
+WSLENV = "TERM"
+
+[font]
+size = 11.5
+
+[font.normal]
+family = "Hack Nerd Font Mono"
+
+[font.offset]
+x = 0
+y = 1
+
+[[keyboard.bindings]]
+action = "PasteSelection"
+key = "S"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "CreateNewWindow"
+key = "N"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "ToggleFullscreen"
+key = "F"
+mods = "Control|Shift"
+
+[[keyboard.bindings]]
+action = "Quit"
+key = "Q"
+mods = "Control|Shift"
+
+[mouse]
+hide_when_typing = false
+
+[scrolling]
+history = 0
+
+[selection]
+save_to_clipboard = true
+
+[window]
+decorations = "Full"
+dynamic_padding = false
+dynamic_title = true
+startup_mode = "Windowed"
+
+[window.padding]
+x = 0
+y = 0
+
+[shell]
+program = "wsl.exe"
+args = ["-e", "bash", "-l"]
