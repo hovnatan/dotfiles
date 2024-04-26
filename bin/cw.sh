@@ -39,8 +39,14 @@ echo -n "$COLOR" > ~/.my_colors
 
 echo -n "set -U _reload_color_config ""$COLOR" | fish
 
+if [[ "$WSL_DISTRO_NAME" ]]; then
+  SUFFIX="_wsl"
+else
+  SUFFIX=""
+fi
+
 # kitty @ --to $HOME/.tmpkitty set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
-"$script_full_path/color_switcher.sh" ~/.dotfiles/.config/alacritty/alacritty.toml ~/.dotfiles/.config/alacritty/option ~/.dotfiles/.config/alacritty/colors/$COLOR
+"$script_full_path/color_switcher.sh" ~/.dotfiles/.config/alacritty/alacritty.toml ~/.dotfiles/.config/alacritty/option$SUFFIX ~/.dotfiles/.config/alacritty/colors/$COLOR
 
 if [[ "$WSL_DISTRO_NAME" ]]; then
   WINDOWS_HOME=$(wslpath "$(wslvar USERPROFILE)")
