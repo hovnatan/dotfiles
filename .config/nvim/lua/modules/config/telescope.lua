@@ -36,10 +36,11 @@ telescope.setup({
     buffers = {
       sort_mru = true,
       previewer = false,
+      disable_devicons = true,
     },
-    find_files = { previewer = false },
-    oldfiles = { previewer = false },
-    jumplist = { fname_width = 0.5, show_line = true },
+    find_files = { previewer = false, disable_devicons = true },
+    oldfiles = { previewer = false, disable_devicons = true },
+    jumplist = { fname_width = 0.5, show_line = true, disable_devicons = true },
   },
   extensions = {
     fzf = {
@@ -53,11 +54,8 @@ telescope.setup({
       auto_quoting = false,
     },
     smart_open = {
-      show_scores = true,
       ignore_patterns = { "*.git/*", "*/tmp/*" },
       match_algorithm = "fzf",
-      disable_devicons = true,
-      open_buffer_indicators = { previous = "•", others = "∘" },
     },
   },
 })
@@ -70,6 +68,7 @@ vim.keymap.set("n", "<space>f", function()
   require("telescope").extensions.smart_open.smart_open({
     cwd_only = true,
     filename_first = false,
+    disable_devicons = true,
   })
 end, { noremap = true, silent = true })
 vim.keymap.set("n", "<space>F", telescope_builtin.oldfiles, { noremap = true, silent = true })
