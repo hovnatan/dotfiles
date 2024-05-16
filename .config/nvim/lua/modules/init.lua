@@ -381,12 +381,21 @@ require("lazy").setup({
     end,
   },
   {
-    "simrat39/symbols-outline.nvim",
+    "Bekaboo/dropbar.nvim",
+    -- optional, but required for fuzzy finder support
+    dependencies = {
+      "nvim-telescope/telescope-fzf-native.nvim",
+    },
     config = function()
-      require("symbols-outline").setup({ autofold_depth = 1 })
-      vim.keymap.set("n", "<space>o", ":SymbolsOutline<cr>")
+      require("dropbar").setup({
+        icons = {
+          enable = false,
+          kinds = {
+            use_devicons = false,
+          },
+        },
+      })
     end,
-    dependencies = { "nvim-tree/nvim-web-devicons" },
   },
   {
     "AckslD/nvim-neoclip.lua",
