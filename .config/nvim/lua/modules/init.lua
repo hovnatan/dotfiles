@@ -380,23 +380,27 @@ require("lazy").setup({
       require("modules/config/lualine")
     end,
   },
-  {
-    "Bekaboo/dropbar.nvim",
-    -- optional, but required for fuzzy finder support
-    dependencies = {
-      "nvim-telescope/telescope-fzf-native.nvim",
-    },
-    config = function()
-      require("dropbar").setup({
-        icons = {
-          enable = false,
-          kinds = {
-            use_devicons = false,
-          },
-        },
-      })
-    end,
-  },
+  -- {
+  --   "Bekaboo/dropbar.nvim",
+  --   -- optional, but required for fuzzy finder support
+  --   dependencies = {
+  --     "nvim-telescope/telescope-fzf-native.nvim",
+  --   },
+  --   config = function()
+  --     require("dropbar").setup({
+  --       icons = {
+  --         enable = false,
+  --         ui = {
+  --           bar = {
+  --             separator = ">",
+  --             extends = "...",
+  --           },
+  --         },
+  --       },
+  --     })
+  --     vim.keymap.set("n", "<space>o", require("dropbar.api").pick, { noremap = true, silent = true })
+  --   end,
+  -- },
   {
     "AckslD/nvim-neoclip.lua",
     dependencies = {
