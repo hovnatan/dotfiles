@@ -2,4 +2,4 @@
 
 gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'cycle-windows'
 
-sudo apt install -y default-jre libreoffice-java-common
+sudo apt install -y default-jre libreoffice-java-common firejail
