@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Sioyek
-Exec=bash -c "$HOME/.dotfiles/sioyek.sh %U"
+Exec=bash -c "$HOME/.dotfiles/bin/sioyek.sh %U"
 Icon=/home/hovnatan/.dotfiles/.config/sioyek/icon1.ico
 Type=Application
 Terminal=false
