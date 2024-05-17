@@ -7,9 +7,9 @@ cd ~
 cp /etc/skel/.* ./ || true
 cp /etc/skel/* ./ || true
 
-git clone -b delll https://github.com/hovnatan/dotfiles.git
-mv dotfiles .dotfiles
-cd .dotfiles
+# git clone -b delll https://github.com/hovnatan/dotfiles.git
+# mv dotfiles .dotfiles
+# cd .dotfiles
 cp .npmrc ..
 
 sudo apt install python3-pynvim
