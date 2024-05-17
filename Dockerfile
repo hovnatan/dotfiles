@@ -17,6 +17,8 @@ RUN --mount=type=cache,target=/var/cache/apt ./ubuntu2404_setup.sh && rm ubuntu2
 
 RUN echo 'debconf debconf/frontend select readline' | debconf-set-selections
 
+RUN deluser --remove-home ubuntu
+
 ARG UNAME
 ARG UID
 ARG GID
