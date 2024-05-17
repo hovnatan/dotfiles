@@ -72,12 +72,6 @@ require("lazy").setup({
       vim.keymap.set("n", "<space>n", telescope.extensions.noice.noice, { noremap = true, silent = true })
     end,
   },
-  {
-    "numToStr/Comment.nvim",
-    config = function()
-      require("Comment").setup()
-    end,
-  },
   { "tpope/vim-unimpaired" },
   { "tpope/vim-surround" },
   { "tpope/vim-repeat" },
