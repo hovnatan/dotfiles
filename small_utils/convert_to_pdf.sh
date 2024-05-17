@@ -3,7 +3,7 @@
 # sudo apt install imagemagick poppler-utils ocrmypdf mediainfo
 
 # sudo vim /etc/ImageMagick-6/policy.xml # remove lines disabling PDF  also maybe increase memory and disk resources size
-# pip install -U --user pdf.tocgen
+# pip install -U --user pdf.tocgen pymupdf==1.24.2
 
 input_folder="."
 
