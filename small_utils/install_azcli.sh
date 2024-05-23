@@ -3,7 +3,7 @@
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 sudo apt-get update
-sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
 
 sudo mkdir -p /etc/apt/keyrings
 curl -sLS https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /etc/apt/keyrings/microsoft.gpg
@@ -18,4 +18,4 @@ Architectures: $(dpkg --print-architecture)
 Signed-by: /etc/apt/keyrings/microsoft.gpg" | sudo tee /etc/apt/sources.list.d/azure-cli.sources
 
 sudo apt-get update
-sudo apt-get install azure-cli
+sudo apt-get -y install azure-cli
