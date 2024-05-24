@@ -43,8 +43,8 @@ ln -s ~/.dotfiles/.config/feh ~/.config/feh
 
 
 # cd ~
-# ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519 -N '' 
-# ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ''
+# ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519
+# ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
 #echo -e 'Host *\nServerAliveInterval 120' >> ~/.ssh/config
 #chmod 644 ~/.ssh/config
 # touch ~/.ssh/authorized_keys
