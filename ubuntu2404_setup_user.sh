@@ -22,7 +22,7 @@ go install github.com/mattn/efm-langserver@latest
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
 . "$HOME/.cargo/env"
 cargo install cargo-update
-cargo install atuin
+# cargo install atuin
 
 # wget https://github.com/ryanoasis/nerd-fonts/releases/download/v2.2.2/Hack.zip -O ~/Downloads/Hack.zip
 # mkdir -p ~/.local/share/fonts
