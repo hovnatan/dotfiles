@@ -1,6 +1,6 @@
 if status --is-interactive
 
-atuin init fish --disable-up-arrow | source
+# atuin init fish --disable-up-arrow | source
 
 set -U FZF_LEGACY_KEYBINDINGS 0
 set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"
