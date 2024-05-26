@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# This script uses output of ScanTailor Advanced to create one pdf
+
 # sudo apt install imagemagick poppler-utils ocrmypdf mediainfo
 
 # pip install -U --user pdf.tocgen pymupdf==1.24.2
