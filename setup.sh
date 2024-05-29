@@ -37,6 +37,8 @@ ln -s ~/.dotfiles/.config/htoprc ~/.config/htop/htoprc
 rm -rf ~/.config/feh
 ln -s ~/.dotfiles/.config/feh ~/.config/feh
 
+ln -s ~/.dotfiles/.config/ruff ~/.config/
+
 #ln -s ~/.dotfiles/wc.profile ~/.local_profile
 
 # modify ~/.config/mimeapps.list for image/tiff feh.desktop
