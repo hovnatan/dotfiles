@@ -1,7 +1,5 @@
 [tool.ruff]
-# See https://github.com/charliermarsh/ruff#rules for error code definitions.
-lint.select = [ "ALL"
-]
+lint.select = [ "ALL" ]
 respect-gitignore = true
 lint.extend-ignore = [
     "S101", # use of assert
@@ -18,3 +16,4 @@ lint.extend-ignore = [
     "COM812", # Trailing comma missing
     "TD", # TODO stuff
 ]
+target-version = "py310"
