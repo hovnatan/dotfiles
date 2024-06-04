@@ -51,6 +51,8 @@ ln -s ~/.dotfiles/.config/ruff ~/.config/
 #chmod 644 ~/.ssh/config
 # touch ~/.ssh/authorized_keys
 # chmod 600 ~/.ssh/authorized_keys
+mkdir -p ~/.ssh
+ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 # To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_ed25519.pub into the field labeled 'Key'. with xclip -i -selection clipboard ~/.ssh/id_ed25519.pub
 
