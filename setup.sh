@@ -75,7 +75,6 @@ ln -s ~/.dotfiles/.config/mimeapps.list ~/.config/
 mkdir -p ~/tmp
 mkdir -p ~/Downloads
 mkdir -p ~/opt
-# for sshfs sshfs -o Compression=no,reconnect home.server.com:/ ~/home_server/ -p 22
 
 ln -s /usr/bin/fdfind ~/.dotfiles/bin/fd
 ln -s ~/.dotfiles/.config/fd ~/.config/
