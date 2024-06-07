@@ -99,9 +99,6 @@ ln -sf ~/.dotfiles/.ctags.d ~/
 # find out IP sudo docker inspect -f "{{ .NetworkSettings.IPAddress }}" tuft
 # sshfs -o Compression=no -o Ciphers=aes128-ctr root@172.17.0.2:/deploy ~/tmp
 
-# cd ~/.dotfiles
-# python3 -m venv venv_python_neovim
-# source ~/.dotfiles/venv_python_neovim/bin/activate
 mkdir -p ~/.conan
 ln -sf ~/.dotfiles/.conan/profiles ~/.conan/profiles
 # cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCONAN_DISABLE_CHECK_COMPILER=1 ..
