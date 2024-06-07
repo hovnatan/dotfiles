@@ -12,8 +12,6 @@ cp /etc/skel/* ./ || true
 # cd .dotfiles
 cp .npmrc ..
 
-sudo apt install -y python3-pynvim
-
 go install github.com/nao1215/gup@latest
 go install github.com/mattn/efm-langserver@latest
 
@@ -61,7 +59,7 @@ mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
 make
-sudo make install
+make install
 cd ../..
 
 rm -rf alacritty
