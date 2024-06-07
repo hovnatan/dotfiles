@@ -33,8 +33,8 @@ if [[ -v HK_DEV_ENV ]]; then
   # yarn global add
   # yarn global upgrade --latest
 
-  rustup update
-  cargo install-update -a
+  # rustup update
+  # cargo install-update -a
 
   # gup update
 
