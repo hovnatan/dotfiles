@@ -15,5 +15,16 @@ lint.extend-ignore = [
     "INP001", # is part of an implicit namespace package.
     "COM812", # Trailing comma missing
     "TD", # TODO stuff
+    "FIX002", # todo fix warning
+    "TRY003", # Avoid specifying long messages outside the exception class
+    "TRY002", # Create your own exception
+    "EM101", # exception must not use string literal
+    "EM102", # Exception must not use an f-string literal, assign to variable first
+    "C901", # function is too complex
+    "FBT001", # Boolean-typed positional argument in function definition
+    "FBT003", # Boolean positional value in function call
+    "FBT002", # Boolean default positional value in function call
+    "G004", # Logging statement uses f-string
+    "RET504", # Unnecessary assignment to `` before `return` statement
 ]
-target-version = "py310"
+target-version = "py312"
