@@ -12,8 +12,8 @@ cp /etc/skel/* ./ || true
 # cd .dotfiles
 cp .npmrc ..
 
-go install github.com/nao1215/gup@latest
-go install github.com/mattn/efm-langserver@latest
+# go install github.com/nao1215/gup@latest
+# go install github.com/mattn/efm-langserver@latest
 
 # npm i --prefix=~/.local --location=global yarn
 
