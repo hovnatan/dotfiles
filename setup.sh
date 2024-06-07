@@ -84,12 +84,6 @@ cp ~/.dotfiles/.my_colors ~/
 
 ln -sf ~/.dotfiles/.config/alacritty ~/.config/
 
-ln -sf ~/.dotfiles/.config/bat ~/.config/
-
-mkdir -p ~/.config/Code/User
-ln -sf ~/.dotfiles/.config/Code/User/settings.json ~/.config/Code/User/
-ln -sf ~/.dotfiles/.config/Code/User/keybindings.json ~/.config/Code/User/
-
 ln -sf ~/.dotfiles/.ctags.d ~/
 
 # ln -s ~/.dotfiles/.config/fontconfig ~/.config/
