@@ -48,7 +48,8 @@ rm -rf tmux
 git clone --depth 1 --branch 3.4 https://github.com/tmux/tmux.git
 cd tmux
 sh autogen.sh
-./configure --prefix=$HOME/.local && make
+./configure --prefix=$HOME/.local
+make
 make install
 cd ..
 
