@@ -4,8 +4,9 @@ set -e
 
 cd ~
 
-cp /etc/skel/.* ./ || true
+shopt -s dotglob
 cp /etc/skel/* ./ || true
+shopt -u dotglob
 
 # git clone -b delll https://github.com/hovnatan/dotfiles.git
 # mv dotfiles .dotfiles
