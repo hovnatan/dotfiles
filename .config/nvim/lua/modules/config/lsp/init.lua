@@ -55,32 +55,6 @@ local servers_config = {
       },
     },
   },
-  pylsp = {
-    settings = {
-      pylsp = {
-        plugins = {
-          pylint = {
-            enabled = true,
-          },
-          pyflakes = {
-            enabled = false,
-          },
-          autopep8 = {
-            enabled = false,
-          },
-          yapf = {
-            enabled = false,
-          },
-          black = {
-            enabled = true,
-          },
-          pycodestyle = {
-            enabled = false,
-          },
-        },
-      },
-    },
-  },
 }
 
 local servers = { "clangd", "pyright", "jsonls", "bashls", "tsserver", "eslint", "ruff" }
