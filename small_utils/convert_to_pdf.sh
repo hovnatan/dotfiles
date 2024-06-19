@@ -24,7 +24,7 @@ for f in "$input_folder"/*.tif; do
   extension="${filename##*.}"
   filename="${filename%.*}"
   size=$(stat -c%s "$f")
-  if [ $size -ge 300000 ] && mediainfo "$f" | grep RGB > /dev/null; then
+  if [ $size -ge 200000 ] && mediainfo "$f" | grep RGB > /dev/null; then
     convert -quality 20 -compress JPEG "$f" "$out_folder/$filename.pdf" &
     echo "$filename" $size yes_convert_JPEG
   else
@@ -36,5 +36,5 @@ wait
 )
 
 pdfunite "$out_folder/"*.pdf "$out_folder/out.pdf"
-# ocrmypdf "$out_folder/out.pdf" "$out_folder/out_ocr.pdf"
+ocrmypdf "$out_folder/out.pdf" "$out_folder/out_ocr.pdf"
 # pdftocio "$out_folder/out_ocr.pdf" < toc.txt
