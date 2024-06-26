@@ -42,6 +42,7 @@ zmodload zsh/complist
 
 bindkey -M menuselect '^M' accept-line
 bindkey -M menuselect '^O' history-incremental-search-forward
+bindkey -M menuselect '^P' vi-insert
 bindkey -M menuselect '^H' vi-backward-char
 bindkey -M menuselect '^K' vi-up-line-or-history
 bindkey -M menuselect '^J' vi-down-line-or-history
