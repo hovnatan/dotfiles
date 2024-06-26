@@ -6,7 +6,6 @@ prompt adam1
 
 setopt histignorealldups sharehistory
 
-# Use emacs keybindings even if our EDITOR is set to vi
 bindkey -v
 
 bindkey "^P" up-line-or-search
@@ -41,9 +40,13 @@ cursor_mode
 
 zmodload zsh/complist
 
-bindkey -M menuselect '^xi' vi-insert
 bindkey -M menuselect '^M' accept-line
-bindkey -M menuselect '^xr' history-incremental-search-forward
+bindkey -M menuselect '^O' history-incremental-search-forward
+bindkey -M menuselect '^H' vi-backward-char
+bindkey -M menuselect '^K' vi-up-line-or-history
+bindkey -M menuselect '^J' vi-down-line-or-history
+bindkey -M menuselect '^L' vi-forward-char
+bindkey -M menuselect '^?' backward-delete-char
 
 # Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
 HISTSIZE=1000
