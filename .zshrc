@@ -12,6 +12,8 @@ bindkey -v
 bindkey "^P" up-line-or-search
 bindkey "^N" down-line-or-search
 bindkey "^R" history-incremental-search-backward
+bindkey "^A" vi-beginning-of-line
+bindkey "^E" vi-end-of-line
 
 export KEYTIMEOUT=1
 cursor_mode() {
@@ -38,11 +40,10 @@ cursor_mode() {
 cursor_mode
 
 zmodload zsh/complist
-bindkey -M menuselect 'h' vi-backward-char
-bindkey -M menuselect 'k' vi-up-line-or-history
-bindkey -M menuselect 'l' vi-forward-char
-bindkey -M menuselect 'j' vi-down-line-or-history
+
 bindkey -M menuselect '^xi' vi-insert
+bindkey -M menuselect '^M' accept-line
+bindkey -M menuselect '^xr' history-incremental-search-forward
 
 # Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
 HISTSIZE=1000
@@ -54,8 +55,7 @@ setopt HIST_SAVE_NO_DUPS
 alias ll='ls -lG'
 
 # Use modern completion system
-autoload -Uz compinit
-compinit
+autoload -Uz compinit; compinit
 
 _comp_options+=(globdots)
 
