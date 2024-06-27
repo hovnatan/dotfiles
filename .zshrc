@@ -62,8 +62,8 @@ alias gl='git pull'
 alias gau='git add -u'
 alias gcm='git commit -m'
 
-# Use modern completion system
-autoload -Uz compinit; compinit
+autoload -Uz compinit && compinit
+autoload -Uz bashcompinit && bashcompinit
 
 _comp_options+=(globdots)
 
