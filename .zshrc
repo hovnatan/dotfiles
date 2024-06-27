@@ -59,6 +59,7 @@ setopt HIST_SAVE_NO_DUPS
 setopt NO_CASE_GLOB
 
 alias ll='ls -lG'
+alias ta='tmux a -t'
 
 # Use modern completion system
 autoload -Uz compinit; compinit
