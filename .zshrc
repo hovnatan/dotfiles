@@ -1,8 +1,4 @@
-# Set up the prompt
-
-autoload -Uz promptinit
-promptinit
-prompt adam1
+autoload -Uz promptinit; promptinit; prompt adam1 default
 
 setopt histignorealldups sharehistory
 
@@ -60,6 +56,11 @@ setopt NO_CASE_GLOB
 
 alias ll='ls -lG'
 alias ta='tmux a -t'
+alias gd='git diff'
+alias gst='git status'
+alias gl='git pull'
+alias gau='git add -u'
+alias gcm='git commit -m'
 
 # Use modern completion system
 autoload -Uz compinit; compinit
@@ -70,7 +71,7 @@ zstyle ':completion:*:*:*:*:descriptions' format '%F{green}-- %d --%f'
 zstyle ':completion:*:*:*:*:corrections' format '%F{yellow}!- %d (errors: %e) -!%f'
 zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
 zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
-zstyle ':completion:*' completer _expand _complete _correct _approximate
+zstyle ':completion:*' completer _expand_alias _expand _complete _correct _approximate
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select
 eval "$(dircolors -b)"
