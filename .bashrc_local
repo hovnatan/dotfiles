@@ -3,6 +3,9 @@ alias f="fish"
 
 fish
 
+alias ta="tmux a -t"
+alias tl="tmux ls"
+
 if [ -f /usr/bin/zsh ]; then
   SHELL=zsh exec zsh
 fi
