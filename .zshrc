@@ -1,4 +1,4 @@
-autoload -Uz promptinit; promptinit; prompt adam1 default
+autoload -Uz promptinit; promptinit; prompt adam1
 
 setopt histignorealldups sharehistory
 
