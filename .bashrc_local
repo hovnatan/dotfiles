@@ -2,3 +2,7 @@ alias ta="tmux_attach.sh"
 alias f="fish"
 
 fish
+
+if [ -f /usr/bin/zsh ]; then
+  SHELL=zsh exec zsh
+fi
