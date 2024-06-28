@@ -1,4 +1,5 @@
-autoload -Uz promptinit; promptinit; prompt adam1
+autoload -U colors && colors
+PS1="%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}%(5~|%-1~/.../%3~|%4~)%{$reset_color%}%% "
 
 setopt histignorealldups sharehistory
 
