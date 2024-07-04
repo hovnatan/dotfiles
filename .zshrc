@@ -3,13 +3,21 @@ export EDITOR=vim
 autoload -U colors && colors
 PS1="%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}%(5~|%-1~/.../%3~|%4~)%{$reset_color%}%% "
 
-setopt histignorealldups sharehistory
+setopt histignorealldups
+setopt sharehistory
+setopt alwaystoend
+setopt automenu
+setopt noautolist
+setopt nobeep
+setopt incappendhistory
+setopt histsavenodups
+setopt nocaseglob
 
 bindkey -v
 
 bindkey "^P" up-line-or-search
 bindkey "^N" down-line-or-search
-bindkey "^R" history-incremental-search-backward
+bindkey "^R" history-incremental-pattern-search-backward
 bindkey "^A" vi-beginning-of-line
 bindkey "^E" vi-end-of-line
 
@@ -47,15 +55,12 @@ bindkey -M menuselect '^K' vi-up-line-or-history
 bindkey -M menuselect '^J' vi-down-line-or-history
 bindkey -M menuselect '^L' vi-forward-char
 bindkey -M menuselect '^?' backward-delete-char
+bindkey -M menuselect '^[[Z' reverse-menu-complete
 
 # Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
 HISTSIZE=1000
 SAVEHIST=1000
 HISTFILE=~/.zsh_history
-setopt INC_APPEND_HISTORY
-setopt HIST_SAVE_NO_DUPS
-
-setopt NO_CASE_GLOB
 
 alias ll='ls -lG'
 alias ta='tmux a -t'
@@ -76,14 +81,14 @@ zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
 zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
 zstyle ':completion:*' completer _expand_alias _expand _complete _correct _approximate
 zstyle ':completion:*' group-name ''
-zstyle ':completion:*' menu select
+zstyle ':completion:*' menu select search
 eval "$(dircolors -b)"
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' list-colors ''
-zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
+zstyle ':completion:*' list-prompt ''
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
-zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' select-prompt ''
 zstyle ':completion:*' use-compctl false
 zstyle ':completion:*' verbose true
 zstyle ':completion:*' file-sort modification
