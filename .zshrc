@@ -48,8 +48,8 @@ cursor_mode
 zmodload zsh/complist
 
 bindkey -M menuselect '^M' accept-line
-bindkey -M menuselect '^O' history-incremental-search-forward
-bindkey -M menuselect '^P' vi-insert
+# bindkey -M menuselect '^O' history-incremental-search-forward
+bindkey -M menuselect '^O' vi-insert
 bindkey -M menuselect '^H' vi-backward-char
 bindkey -M menuselect '^K' vi-up-line-or-history
 bindkey -M menuselect '^J' vi-down-line-or-history
@@ -82,7 +82,7 @@ zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
 zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
 zstyle ':completion:*' completer _expand_alias _expand _complete _correct _approximate
 zstyle ':completion:*' group-name ''
-zstyle ':completion:*' menu select search
+zstyle ':completion:*' menu select
 eval "$(dircolors -b)"
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' list-colors ''
