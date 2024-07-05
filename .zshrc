@@ -56,6 +56,7 @@ bindkey -M menuselect '^J' vi-down-line-or-history
 bindkey -M menuselect '^L' vi-forward-char
 bindkey -M menuselect '^?' backward-delete-char
 bindkey -M menuselect '^[[Z' reverse-menu-complete
+bindkey -M menuselect '^[' undo
 
 # Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
 HISTSIZE=1000
