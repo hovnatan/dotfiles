@@ -4,7 +4,6 @@ RUN apt-get update && apt-get install -y apt-utils adduser
 
 RUN yes | unminimize
 
-
 RUN apt-config dump | grep -we Recommends -e Suggests | sed s/1/0/ | tee /etc/apt/apt.conf.d/99norecommend
 RUN rm -f /etc/apt/apt.conf.d/docker-clean
 
@@ -30,7 +29,5 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 USER $UNAME
 WORKDIR /home/$UNAME
-
-ENV TERM=alacritty
 
 ENTRYPOINT ["/bin/bash", "-l"]
