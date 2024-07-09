@@ -1,5 +1,9 @@
 export EDITOR=vim
 
+export MAKEFLAGS="-j11"
+export CFLAGS="-march=native -O3"
+export CXXFLAGS="-march=native -O3"
+
 autoload -U colors && colors
 PS1="%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}%(5~|%-1~/.../%3~|%4~)%{$reset_color%}%% "
 

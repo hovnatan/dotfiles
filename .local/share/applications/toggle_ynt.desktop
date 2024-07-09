@@ -1,6 +1,0 @@
-[Desktop Entry]
-Type=Application
-Encoding=UTF-8
-Name=Toggle Ընտանիք
-Exec=toggle_ynt.sh
-Terminal=false
