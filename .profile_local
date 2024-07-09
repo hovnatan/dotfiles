@@ -4,74 +4,10 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 
-# export TERM="alacritty"
 export COLORTERM=truecolor
-export HK_DEV_ENV=1
-export TMUX_ONE_WINDOW=1
-# export LIBGL_ALWAYS_INDIRECT=1
 export MAKEFLAGS="-j11"
 export CFLAGS="-march=native -O3"
 export CXXFLAGS="-march=native -O3"
-
-export NVIM_LISTEN_ADDRESS=/tmp/nvimsocket
-export REVIEW_BASE=master
-
-PYPATH="`python3 -m site --user-base`/bin"
-pathprepend() {
-  for ((i=$#; i>0; i--)); 
-  do
-    ARG=${!i}
-
-    if [ -d "$ARG" ] && [[ ":$PATH:" != *":$ARG:"* ]]; then
-        PATH="$ARG${PATH:+":$PATH"}"
-    fi
-  done
-}
-pathprepend $PYPATH
-
-export PATH="$HOME/opt/usr/bin:$PATH"
-. "$HOME/.cargo/env"
-export PATH="$HOME/go/bin:$PATH"
-export PATH="$HOME/.fzf/bin:$PATH"
-export PATH="$HOME/.dotfiles/bin:$PATH"
-
-
-# export PYTHONBREAKPOINT=pudb.remote.set_trace
-export PYTHONBREAKPOINT=ipdb.set_trace
-
-# export QT_SCALE_FACTOR="1.5"
-export PYTHONBREAKPOINT=pudb.remote.set_trace
-
-export RIPGREP_CONFIG_PATH="$HOME/.dotfiles/.ripgreprc"
-
-# SSH_ENV="$HOME/.ssh/agent-environment"
-
-# function start_agent {
-#     /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
-#     chmod 600 "${SSH_ENV}"
-#     . "${SSH_ENV}" > /dev/null
-#     /usr/bin/ssh-add > /dev/null 2>&1
-
-#     ssh_keys=$(find ~/.ssh -type f -name '*.pem' -o -name "*.rsa")
-#     ssh_agent_keys=$(ssh-add -l | awk '{key=NF-1; print $key}')
-
-#     for k in "${ssh_keys}"; do
-#         for l in "${ssh_agent_keys}"; do
-#             if [[ ! "${k}" = "${l}" ]]; then
-#                 ssh-add "${k}" > /dev/null 2>&1
-#             fi
-#         done
-#     done
-# }
-
-# if [ -f "${SSH_ENV}" ]; then
-#     . "${SSH_ENV}" > /dev/null
-#     ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-#         start_agent;
-#     }
-# else
-#     start_agent;
-# fi
 
 import_miniconda() {
   # >>> conda initialize >>>
@@ -89,18 +25,3 @@ import_miniconda() {
   unset __conda_setup
   # <<< conda initialize <<<
 }
-
-shopt -s histappend
-PROMPT_COMMAND="history -a;$PROMPT_COMMAND"
-PROMPT_DIRTRIM=1
-
-if [ -z "${SSH_CONNECTION}" ]; then
-  export MY_IP="127.0.0.1"
-else
-  export MY_IP=$("$HOME/.dotfiles/bin/get_my_ip.sh")
-fi
-
-export CONDA_EXPERIMENTAL_SOLVER=libmamba
-export DOCKER_BUILDKIT=1
-
-alias export_from_env="export \$(grep -v '^#' .env | xargs -d '\n')"
