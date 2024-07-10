@@ -127,3 +127,9 @@ sudo dpkg-reconfigure tzdata
 # grep -vwE "Smulx" alacritty.info > alacritty_woundercurl.info
 # tic -xe alacritty,alacritty-direct alacritty_woundercurl.info
 # cd ~
+
+# add to ~/.profile
+# if [ -f "$HOME/.dotfiles/.profile_local" ] ; then
+#     source "$HOME/.dotfiles/.profile_local"
+# fi
+                                                     
