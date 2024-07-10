@@ -61,14 +61,6 @@ HISTSIZE=1000
 SAVEHIST=1000
 HISTFILE=~/.zsh_history
 
-alias ll='ls -lG'
-alias ta='tmux a -t'
-alias gd='git diff'
-alias gst='git status'
-alias gl='git pull'
-alias gau='git add -u'
-alias gcm='git commit -m'
-
 autoload -Uz compinit && compinit
 autoload -Uz bashcompinit && bashcompinit
 
@@ -98,6 +90,35 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 autoload -Uz edit-command-line
 zle -N edit-command-line
 bindkey -M vicmd v edit-command-line
+
+import_miniconda() {
+  # >>> conda initialize >>>
+  # !! Contents within this block are managed by 'conda init' !!
+  __conda_setup="$("$HOME/miniforge3/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
+  if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+  else
+    if [ -f "$HOME/miniforge3/etc/profile.d/conda.sh" ]; then
+      . "$HOME/miniforge3/etc/profile.d/conda.sh"  # commented out by conda initialize
+    else
+      export PATH="$HOME/miniforge3/bin:$PATH"  # commented out by conda initialize
+    fi
+  fi
+  unset __conda_setup
+  # <<< conda initialize <<<
+}
+
+alias update="sudo apt update && sudo apt -y dist-upgrade && sudo apt -y autoremove && sudo snap refresh --list && sudo snap refresh"
+alias ta="tmux a -t"
+alias tl="tmux ls"
+alias ll='ls -alG'
+alias ta='tmux a -t'
+alias gd='git diff'
+alias gst='git status'
+alias gl='git pull'
+alias gau='git add -u'
+alias gcm='git commit -m'
+
 
 if [[ -f "$HOME/.zshrc_local" ]]; then
     source "$HOME/.zshrc_local"
