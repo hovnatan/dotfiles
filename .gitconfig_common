@@ -21,4 +21,3 @@
   recurse = true
 [init]
   defaultBranch = main
-
