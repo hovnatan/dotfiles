@@ -11,7 +11,7 @@ RUN sed -i -e 's/http:\/\/archive\.ubuntu\.com\/ubuntu\//mirror:\/\/mirrors\.ubu
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
-COPY ubuntu2404_setup.sh ./
+COPY ./scripts/ubuntu2404_setup.sh ./
 RUN --mount=type=cache,target=/var/cache/apt ./ubuntu2404_setup.sh && rm ubuntu2404_setup.sh
 
 RUN echo 'debconf debconf/frontend select readline' | debconf-set-selections
