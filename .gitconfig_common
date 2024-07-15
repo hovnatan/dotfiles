@@ -3,31 +3,14 @@
 [diff]
   colorMoved = default
   algorithm = histogram
-[difftool]
-  prompt = false
-[difftool "fugitive"]
-  cmd = nvim -d "$LOCAL" "$MERGED" "$REMOTE"
-  trustExitCode = false
-  keepBackup = false
 [merge]
   conflictstyle = zdiff3
 [core]
-  editor = 'nvim'
+  editor = 'vim'
   #hooksPath = .githooks
 [filter "gitignoredebugsaveimage"]
   #clean = "sed '/DebugSaveImage/{/noignore/!d}'"
 	#smudge = cat
-[gui]
-	editor = nvim
-[alias]
-  # from https://blog.jez.io/cli-code-review/; usage in fish, e.g., eval REVIEW_BASE=HEAD~2 git review
-  files = !git diff --name-only $(git merge-base HEAD \"$REVIEW_BASE\")
-  stat = !git diff --stat $(git merge-base HEAD \"$REVIEW_BASE\")
-  review = !nvim -p $(git files) +\"tabdo Gdiff $REVIEW_BASE\"
-  reviewone = !nvim -p +\"tabdo Gdiff $REVIEW_BASE\"
-	lg = log --color --graph --date=relative --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ad) %C(bold blue)<%an>%Creset'
-[pager]
-  difftool = true
 [pull]
   rebase = true
 [push]
