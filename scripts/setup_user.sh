@@ -16,8 +16,8 @@ curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.profile_local -o 
 if ! grep -q ".profile_local" "$HOME/.profile"; then
     cat <<EOT >> $HOME/.profile
 
-    if [[ -f "\$HOME/.profile_local" ]]; then
-        source "\$HOME/.profile_local"
-    fi
+if [[ -f "\$HOME/.profile_local" ]]; then
+    source "\$HOME/.profile_local"
+fi
 EOT
 fi
