@@ -120,6 +120,19 @@ alias gl='git pull'
 alias gau='git add -u'
 alias gcm='git commit -m'
 
+umask 0077
+
+export EDITOR=vim
+
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US.UTF-8
+
+export COLORTERM=truecolor
+
+export MAKEFLAGS="-j11"
+export CFLAGS="-march=native -O3"
+export CXXFLAGS="-march=native -O3"
 
 if [[ -f "$HOME/.zshrc_local" ]]; then
     source "$HOME/.zshrc_local"
