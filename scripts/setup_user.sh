@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# curl -H 'Cache-Control: no-cache, no-store' https://raw.githubusercontent.com/hovnatan/dotfiles/main/scripts/setup_user.sh -o ~/setup_user.sh
+# curl -H 'cache-control: no-cache, no-store' https://raw.githubusercontent.com/hovnatan/dotfiles/main/scripts/setup_user.sh -o ~/setup_user.sh
 
 set -e
 
