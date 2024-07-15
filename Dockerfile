@@ -30,4 +30,6 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 USER $UNAME
 WORKDIR /home/$UNAME
 
+COPY ./scripts/setup_user.sh ./
+
 ENTRYPOINT ["/bin/bash", "-l"]
