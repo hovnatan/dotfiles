@@ -43,10 +43,7 @@ if stridx(&runtimepath, expand(vimDir)) == -1
   let &runtimepath.=','.vimDir
 endif
 
-let myUndoDir = expand(vimDir . '/undodir')
-call system('mkdir ' . vimDir)
-call system('mkdir ' . myUndoDir)
-let &undodir = myUndoDir
+let &undodir = expand(vimDir . '/undodir')
 set undofile
 
 let &t_SI = "\e[6 q"
