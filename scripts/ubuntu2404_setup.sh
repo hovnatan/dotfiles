@@ -4,7 +4,7 @@ set -e
 
 apt-get update
 apt-get -y dist-upgrade
-apt-get install -y software-properties-common curl gnupg wget locales sudo htop tmux zsh vim build-essential tzdata git
+apt-get install -y software-properties-common curl gnupg wget locales sudo htop tmux zsh vim build-essential tzdata git openssh-client
 
 locale-gen --no-purge en_US.UTF-8
 

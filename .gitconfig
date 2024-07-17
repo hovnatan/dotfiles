@@ -1,4 +1,4 @@
 [user]
   email =
 [include]
-  path = ~/.dotfiles/.gitconfig_common
+  path = ~/.gitconfig_common
