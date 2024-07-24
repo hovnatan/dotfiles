@@ -1,0 +1,5 @@
+if ! shopt -q login_shell; then
+    if [ -f /usr/bin/zsh ]; then
+        SHELL=zsh exec zsh
+    fi
+fi
