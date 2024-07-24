@@ -2,7 +2,7 @@
 
 # This script uses output of ScanTailor Advanced to create one pdf
 
-# sudo apt install imagemagick poppler-utils ocrmypdf mediainfo
+# sudo apt install imagemagick poppler-utils ocrmypdf mediainfo jbig2
 
 # pip install -U --user pdf.tocgen pymupdf==1.24.2
 
@@ -36,5 +36,5 @@ wait
 )
 
 pdfunite "$out_folder/"*.pdf "$out_folder/out.pdf"
-ocrmypdf "$out_folder/out.pdf" "$out_folder/out_ocr.pdf"
+ocrmypdf "$out_folder/out.pdf" --output-type pdf "$out_folder/out_ocr.pdf"
 # pdftocio "$out_folder/out_ocr.pdf" < toc.txt
