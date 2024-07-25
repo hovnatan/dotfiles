@@ -109,7 +109,7 @@ import_miniconda() {
   # <<< conda initialize <<<
 }
 
-alias update="sudo apt update && sudo apt -y dist-upgrade && sudo apt -y autoremove && sudo fwupdmgr update && sudo snap refresh --list && sudo snap refresh"
+alias update="sudo apt update && sudo apt -y dist-upgrade && sudo apt -y autoremove && sudo fwupdmgr update && sudo snap refresh --list && sudo snap refresh && cat /var/run/reboot-required"
 alias ta="tmux a -t"
 alias tl="tmux ls"
 alias ll='ls -alG'
