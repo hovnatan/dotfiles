@@ -121,7 +121,7 @@ alias gl='git pull'
 alias gau='git add -u'
 alias gcm='git commit -m'
 
-umask 0077
+# umask 0077
 
 export EDITOR=vim
 
