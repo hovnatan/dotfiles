@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/scripts/setup_user.sh -o ~/setup_user.sh
+# curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/scripts/setup_user.sh -o ~/setup_user.sh && bash -x ~/setup_user.sh
 
 set -e
 
