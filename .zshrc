@@ -1,5 +1,7 @@
+export SHELL="/bin/zsh"
+
 autoload -U colors && colors
-PS1="%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}%(5~|%-1~/.../%3~|%4~)%{$reset_color%}%% "
+PS1="%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}%(5~|%-1~/.../%3~|%4~)%{$reset_color%}%{$fg[red]%}%(?..[%?])%{$reset_color%}%% "
 
 setopt histignorealldups
 setopt sharehistory
