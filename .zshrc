@@ -18,7 +18,7 @@ path_abbrev() {
     if [[ ${path_parts[i]} == "~" ]]; then
       result+="~/"
     else
-      result+="${path_parts[i]:0:2}/"
+      result+="${path_parts[i]:0:1}/"
     fi
   done
 
