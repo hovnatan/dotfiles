@@ -1,7 +1,32 @@
 export SHELL="/bin/zsh"
 
 autoload -U colors && colors
-PS1="%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}%(5~|%-1~/.../%3~|%4~)%{$reset_color%}%{$fg[red]%}%(?..[%?])%{$reset_color%}%% "
+
+setopt PROMPT_SUBST
+
+path_abbrev() {
+  local full_path=${PWD/#$HOME/\~}
+  local path_parts=("${(s:/:)full_path}")
+  local result=""
+  local i
+
+  if [[ ${path_parts[1]} != "~" ]]; then
+    result="/"
+  fi
+
+  for ((i=1; i<${#path_parts[@]}; i++)); do
+    if [[ ${path_parts[i]} == "~" ]]; then
+      result+="~/"
+    else
+      result+="${path_parts[i]:0:2}/"
+    fi
+  done
+
+  result+="${path_parts[-1]}"
+  echo $result
+}
+
+PS1='%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}$(path_abbrev)%{$reset_color%}%{$fg[red]%}%(?..[%?])%{$reset_color%}%% '
 
 setopt histignorealldups
 setopt sharehistory
