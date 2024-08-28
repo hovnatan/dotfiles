@@ -25,6 +25,7 @@ set viminfo^=!
 set sessionoptions-=options
 set viewoptions-=options
 set number
+set whichwrap+=h,l,<,>
 
 if &t_Co == 8 && $TERM !~# '^Eterm'
   set t_Co=16
