@@ -4,7 +4,7 @@ set -e
 
 apt-get update
 apt-get -y dist-upgrade
-apt-get install -y software-properties-common curl gnupg wget locales sudo htop tmux zsh vim build-essential tzdata git openssh-client
+apt-get install -y software-properties-common curl gnupg wget locales sudo htop tmux zsh vim build-essential tzdata git openssh-client python3-venv python3-pip
 
 locale-gen --no-purge en_US.UTF-8
 
