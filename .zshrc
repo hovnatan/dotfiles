@@ -62,7 +62,7 @@ git_prompt_status() {
 }
 
 # Set the prompt
-PS1='%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}$(path_abbrev)%{$reset_color%}%{$fg[red]%}%(?..[%?])%{$reset_color%}$(git_prompt_status)$(git_prompt_info)%{$reset_color%}%% '
+PS1='%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}$(path_abbrev)%{$reset_color%}$(git_prompt_status)$(git_prompt_info)%{$reset_color%}%{$fg[red]%}%(?..%B[%?])%{$reset_color%}%% '
 
 setopt histignorealldups
 setopt sharehistory
