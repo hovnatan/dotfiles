@@ -30,7 +30,39 @@ path_abbrev() {
   echo $result
 }
 
-PS1='%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}$(path_abbrev)%{$reset_color%}%{$fg[red]%}%(?..[%?])%{$reset_color%}%% '
+# Function to get git information
+git_prompt_info() {
+  local ref
+  if [[ "$(command git config --get oh-my-zsh.hide-status 2>/dev/null)" != "1" ]]; then
+    ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
+    ref=$(command git rev-parse --short HEAD 2> /dev/null) || return 0
+    echo "(${ref#refs/heads/})"
+  fi
+}
+
+# Function to get git status
+git_prompt_status() {
+  local STATUS=""
+  local -a FLAGS
+  FLAGS=('--porcelain')
+  if [[ "$(command git config --get oh-my-zsh.hide-dirty)" != "1" ]]; then
+    if [[ $POST_1_7_2_GIT -gt 0 ]]; then
+      FLAGS+='--ignore-submodules=dirty'
+    fi
+    if [[ "$DISABLE_UNTRACKED_FILES_DIRTY" == "true" ]]; then
+      FLAGS+='--untracked-files=no'
+    fi
+    STATUS=$(command git status ${FLAGS} 2> /dev/null | tail -n1)
+  fi
+  if [[ -n $STATUS ]]; then
+    echo "%{$fg[red]%}"
+  else
+    echo "%{$fg[green]%}"
+  fi
+}
+
+# Set the prompt
+PS1='%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}$(path_abbrev)%{$reset_color%}%{$fg[red]%}%(?..[%?])%{$reset_color%}$(git_prompt_status)$(git_prompt_info)%{$reset_color%}%% '
 
 setopt histignorealldups
 setopt sharehistory
