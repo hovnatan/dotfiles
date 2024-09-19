@@ -22,6 +22,9 @@ EOT
 cat <<EOT >> ~/.gitconfig
 [include]
   path = ~/.gitconfig_common
+[user]
+  name = Hovnatan Karapetyan
+  email = 
 EOT
 
 mkdir -p ~/.ssh

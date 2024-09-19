@@ -1,6 +1,3 @@
-[user]
-  name = Hovnatan Karapetyan
-  email = 
 [diff]
   colorMoved = default
   algorithm = histogram
