@@ -86,6 +86,8 @@ bindkey -M viins '^[[A' up-line-or-history
 bindkey -M viins '^[[B' down-line-or-history
 bindkey -M viins '^[[D' backward-char
 bindkey -M viins '^[[C' forward-char
+bindkey -M viins '^?' backward-delete-char
+bindkey -M viins '^[[3~' delete-char
 
 export KEYTIMEOUT=1
 cursor_mode() {
