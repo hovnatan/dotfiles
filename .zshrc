@@ -82,6 +82,11 @@ bindkey "^R" history-incremental-pattern-search-backward
 bindkey "^A" vi-beginning-of-line
 bindkey "^E" vi-end-of-line
 
+bindkey -M viins '^[[A' up-line-or-history
+bindkey -M viins '^[[B' down-line-or-history
+bindkey -M viins '^[[D' backward-char
+bindkey -M viins '^[[C' forward-char
+
 export KEYTIMEOUT=1
 cursor_mode() {
     # See https://ttssh2.osdn.jp/manual/4/en/usage/tips/vim.html for cursor shapes
