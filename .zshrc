@@ -12,20 +12,29 @@ path_abbrev() {
   local full_path=${PWD/#$HOME/\~}
   local path_parts=("${(s:/:)full_path}")
   local result=""
-  local i
 
-  if [[ ${path_parts[1]} != "~" ]]; then
+  if [[ ${#path_parts[@]} -eq 1 ]]; then
+    # If there's only one component (root or home), just return it
+    echo $full_path
+    return
+  fi
+
+  if [[ ${path_parts[1]} == "~" ]]; then
+    result="~/"
+  else
     result="/"
   fi
 
-  for ((i=1; i<${#path_parts[@]}; i++)); do
-    if [[ ${path_parts[i]} == "~" ]]; then
-      result+="~/"
-    else
+  local i=2
+  for ((; i<${#path_parts[@]}; i++)); do
+    if [[ -n ${path_parts[i]} ]]; then
       result+="${path_parts[i]:0:1}/"
+    else
+      result+="/"
     fi
   done
 
+  # Add the last component without a trailing slash
   result+="${path_parts[-1]}"
   echo $result
 }
