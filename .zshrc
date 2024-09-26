@@ -25,8 +25,7 @@ path_abbrev() {
     result="/"
   fi
 
-  local i=2
-  for ((; i<${#path_parts[@]}; i++)); do
+  for ((i=2; i<${#path_parts[@]}; i++)); do
     if [[ -n ${path_parts[i]} ]]; then
       result+="${path_parts[i]:0:1}/"
     else
