@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Cursor
+Exec=/home/hovnatan/opt/bin/cursor.AppImage --no-sandbox
+Icon=/home/hovnatan/opt/share/cursor.svg
+Type=Application
+Categories=Development;
