@@ -9,4 +9,4 @@ wget -O ~/opt/bin/cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x
 chmod +x ~/opt/bin/cursor.AppImage
 
 ln -sf ~/.dotfiles/.local/share/applications/cursor.desktop ~/.local/share/applications
-update-desktop-database
+update-desktop-database ~/.local/share/applications
