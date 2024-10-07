@@ -72,6 +72,33 @@ git_prompt_status() {
 # Set the prompt
 PS1='%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}$(path_abbrev)%{$reset_color%}$(git_prompt_status)$(git_prompt_info)%{$reset_color%}%{$fg[red]%}%(?..%B[%?])%{$reset_color%}%% '
 
+# Function to set the terminal title
+set_terminal_title() {
+    print -Pn "\e]0;$1\a"
+}
+
+# Function to be executed before each prompt
+precmd_terminal_title() {
+    set_terminal_title "${PWD/#$HOME/~}"
+}
+
+# Function to be executed just before a command is executed
+preexec_terminal_title() {
+    local cmd="$1"
+    # Remove leading environment variables or sudo
+    # cmd="${cmd#*=}"
+    # cmd="${cmd#sudo }"
+    # Truncate the command if it's too long
+    if (( ${#cmd} > 30 )); then
+        cmd="${cmd:0:27}..."
+    fi
+    set_terminal_title "$cmd"
+}
+
+# Add our functions to the respective hook arrays
+precmd_functions+=(precmd_terminal_title)
+preexec_functions+=(preexec_terminal_title)
+
 setopt histignorealldups
 setopt sharehistory
 setopt alwaystoend
