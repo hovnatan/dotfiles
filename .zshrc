@@ -1,9 +1,5 @@
 export SHELL="/bin/zsh"
 
-if [[ -f "$HOME/.zshrc_local" ]]; then
-    source "$HOME/.zshrc_local"
-fi
-
 autoload -U colors && colors
 
 setopt PROMPT_SUBST
@@ -409,3 +405,8 @@ unset HISTFILE
 
 _per-directory-history-set-directory-history
 ########################################################################################
+
+
+if [[ -f "$HOME/.zshrc_local" ]]; then
+    source "$HOME/.zshrc_local"
+fi
