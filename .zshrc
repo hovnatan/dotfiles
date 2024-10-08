@@ -70,12 +70,17 @@ PS1='%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}$(path_a
 
 # Function to set the terminal title
 set_terminal_title() {
-    print -Pn "\e]0;$1\a"
+    local title="$1"
+    if (( ${#title} > 20 )); then
+        title="...${title: -17}"
+    fi
+    title=$(printf '%20.20s' "${title}")
+    print -P "\e]0;$title\a"
 }
 
 # Function to be executed before each prompt
 precmd_terminal_title() {
-    set_terminal_title "${PWD/#$HOME/~}"
+    set_terminal_title "$(path_abbrev)"
 }
 
 # Function to be executed just before a command is executed
@@ -85,9 +90,6 @@ preexec_terminal_title() {
     # cmd="${cmd#*=}"
     # cmd="${cmd#sudo }"
     # Truncate the command if it's too long
-    if (( ${#cmd} > 30 )); then
-        cmd="${cmd:0:27}..."
-    fi
     set_terminal_title "$cmd"
 }
 
