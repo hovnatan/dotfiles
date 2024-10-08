@@ -75,7 +75,7 @@ set_terminal_title() {
         title="...${title: -17}"
     fi
     title=$(printf '%20.20s' "${title}")
-    print -P "\e]0;$title\a"
+    print -Pn "\e]0;$title\a"
 }
 
 # Function to be executed before each prompt
