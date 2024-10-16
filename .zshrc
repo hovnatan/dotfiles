@@ -212,18 +212,55 @@ import_miniconda() {
   # <<< conda initialize <<<
 }
 
-alias regrep='grep -IiErn --color=auto --exclude=\*~ --exclude=\*.pyc --exclude-dir=.\* --exclude-dir=__\*'
-alias update="sudo apt update && sudo apt -y dist-upgrade && sudo apt -y autoremove && sudo fwupdmgr update && sudo snap refresh --list && sudo snap refresh && cat /var/run/reboot-required"
-alias ta="tmux a -t"
-alias tl="tmux ls"
-alias ll='ls -alG'
-alias ta='tmux a -t'
+# Grep alias with improved options
+alias regrep='grep -IiErn --color=auto --exclude=\*~ --exclude=\*.pyc --exclude-dir=.\* --exclude-dir=__\* --exclude-dir=node_modules'
+
+# System update alias with error handling and colorful output
+alias update='sudo apt update && \
+              sudo apt -y dist-upgrade && \
+              sudo apt -y autoremove && \
+              sudo fwupdmgr update && \
+              sudo snap refresh && \
+              { [ -f /var/run/reboot-required ] && echo "\e[31mReboot required\e[0m" || echo "\e[32mNo reboot needed\e[0m"; } || \
+              echo "\e[33mWarning: Some commands may have failed\e[0m"'
+
+# Tmux aliases
+alias ta="tmux a -t"  # Attach to tmux session
+alias tl="tmux ls"    # List tmux sessions
+
+# Improved ls alias
+alias ll='ls -alh'    # List all files in long format, human-readable sizes
+
+# Git aliases
 alias gd='git diff'
 alias gst='git status'
 alias gp='git push'
 alias gl='git pull'
 alias gau='git add -u'
 alias gcm='git commit -m'
+alias gb='git branch'
+alias gco='git checkout'
+alias glg='git log --oneline --graph --decorate --all'  # Pretty git log with all branches
+
+# File and directory management
+alias c='clear'
+alias h='history'
+alias mkdir='mkdir -pv'  # Create parent directories as needed and be verbose
+alias df='df -h'
+alias du='du -h'
+
+# Navigation shortcuts
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# Network related
+alias myip='curl http://ipecho.net/plain; echo'
+alias ports='netstat -tulanp'
+
+# Process management
+alias psa='ps auxf'
+alias psg='ps aux | grep -v grep | grep -i -e VSZ -e'
 
 # umask 0077
 
