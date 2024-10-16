@@ -2,7 +2,16 @@ export SHELL="/bin/zsh"
 
 autoload -U colors && colors
 
-setopt PROMPT_SUBST
+setopt promptsubst
+setopt histignorealldups
+setopt sharehistory
+setopt alwaystoend
+setopt automenu
+setopt noautolist
+setopt nobeep
+setopt incappendhistory
+setopt histsavenodups
+setopt nocaseglob
 
 path_abbrev() {
   local full_path=${PWD/#$HOME/\~}
@@ -97,15 +106,6 @@ preexec_terminal_title() {
 precmd_functions+=(precmd_terminal_title)
 preexec_functions+=(preexec_terminal_title)
 
-setopt histignorealldups
-setopt sharehistory
-setopt alwaystoend
-setopt automenu
-setopt noautolist
-setopt nobeep
-setopt incappendhistory
-setopt histsavenodups
-setopt nocaseglob
 
 bindkey -v
 
