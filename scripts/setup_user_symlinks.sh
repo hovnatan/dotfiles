@@ -25,7 +25,7 @@ ln -s ~/.dotfiles/.bashrc_local ~/.bashrc_local
 
 
 if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
-cat <<EOT >> ~/.gitconfig
+    cat <<EOT >> ~/.gitconfig
 [include]
   path = ~/.dotfiles/.gitconfig_common
 [user]
