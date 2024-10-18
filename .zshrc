@@ -253,7 +253,6 @@ alias glg='git log --oneline --graph --decorate --all'  # Pretty git log with al
 # File and directory management
 alias c='clear'
 alias h='history'
-alias mkdir='mkdir -pv'  # Create parent directories as needed and be verbose
 alias df='df -h'
 alias du='du -h'
 
