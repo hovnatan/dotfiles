@@ -215,6 +215,14 @@ import_miniconda() {
 # Grep alias with improved options
 alias regrep='grep -IiErn --color=auto --exclude=\*~ --exclude=\*.pyc --exclude-dir=.\* --exclude-dir=__\* --exclude-dir=node_modules'
 
+# Function to find files with a substring in their name
+find_files_with_substring() {
+    find . -iname "*$1*" -not -path '*/\.*' -not -path '*/__*' -not -path '*/node_modules/*'
+}
+
+# Alias for the function
+alias fh='find_files_with_substring'
+
 # System update alias with error handling and colorful output
 alias update='sudo apt update && \
               sudo apt -y dist-upgrade && \
