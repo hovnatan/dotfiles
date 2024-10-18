@@ -83,7 +83,7 @@ set_terminal_title() {
     if (( ${#title} > 20 )); then
         title="...${title: -17}"
     fi
-    title=$(printf '%20.20s' "${title}")
+    title=$(printf '%.20s' "${title}")
     print -Pn "\e]0;$title\a"
 }
 
