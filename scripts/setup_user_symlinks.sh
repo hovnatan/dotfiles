@@ -2,6 +2,8 @@
 
 set -e
 
+# rm -rf ~/.tmux.conf ~/.zshrc ~/.bashrc_local ~/.vimrc ~/.bashrc_local ~/.config/htop ~/.ssh/config
+
 cd ~
 
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf
@@ -11,14 +13,18 @@ ln -s ~/.dotfiles/.zshrc ~/.zshrc
 mkdir -p ~/.vimundo/
 ln -s ~/.dotfiles/.vimrc ~/.vimrc
 
-cat <<EOT >> ~/.bashrc
-if [[ -f "$HOME/.bashrc_local" ]]; then
-    source "$HOME/.bashrc_local"
+# Check if .bashrc_local is already sourced in .bashrc
+if ! grep -q '\.bashrc_local' ~/.bashrc; then
+    cat <<EOT >> ~/.bashrc
+if [[ -f "\$HOME/.bashrc_local" ]]; then
+    source "\$HOME/.bashrc_local"
 fi
 EOT
+fi
 ln -s ~/.dotfiles/.bashrc_local ~/.bashrc_local
 
 
+if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
 cat <<EOT >> ~/.gitconfig
 [include]
   path = ~/.dotfiles/.gitconfig_common
@@ -26,9 +32,9 @@ cat <<EOT >> ~/.gitconfig
   name = Hovnatan Karapetyan
   email = 
 EOT
+fi
 vim ~/.gitconfig # add email
 
-rm -rf ~/.config/htop
 ln -s ~/.dotfiles/.config/htop ~/.config/
 
 # cd ~
