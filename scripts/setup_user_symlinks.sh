@@ -56,3 +56,7 @@ mkdir -p ~/Downloads
 mkdir -p ~/opt
 
 # sudo gpasswd -a $USER docker
+
+# mkdir -p ~/.config/Cursor/User
+# ln -sf ~/Dropbox/scripts/Cursor/User/keybindings.json ~/.config/Cursor/User/keybindings.json
+# ln -sf ~/Dropbox/scripts/Cursor/User/settings.json ~/.config/Cursor/User/settings.json
