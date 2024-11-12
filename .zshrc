@@ -265,6 +265,7 @@ alias update='sudo apt update && \
               sudo apt -y autoremove && \
               sudo fwupdmgr update && \
               sudo snap refresh && \
+              echo -e "\e[31m$(sudo snap refresh --list)\e[0m" && \
               { [ -f /var/run/reboot-required ] && echo "\e[31mReboot required\e[0m" || echo "\e[32mNo reboot needed\e[0m"; } || \
               echo "\e[33mWarning: Some commands may have failed\e[0m"'
 
