@@ -1,3 +1,7 @@
+if [[ -f "$HOME/.zshrc_local_pre" ]]; then
+  source "$HOME/.zshrc_local_pre"
+fi
+
 export SHELL="/bin/zsh"
 
 autoload -U colors && colors
@@ -491,6 +495,6 @@ _per-directory-history-set-directory-history
 ########################################################################################
 
 
-if [[ -f "$HOME/.zshrc_local" ]]; then
-  source "$HOME/.zshrc_local"
+if [[ -f "$HOME/.zshrc_local_post" ]]; then
+  source "$HOME/.zshrc_local_post"
 fi
