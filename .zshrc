@@ -494,7 +494,6 @@ unset HISTFILE
 _per-directory-history-set-directory-history
 ########################################################################################
 
-
 if [[ -f "$HOME/.zshrc_local_post" ]]; then
   source "$HOME/.zshrc_local_post"
 fi
