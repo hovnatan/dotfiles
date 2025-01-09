@@ -253,7 +253,7 @@ import_miniconda() {
 }
 
 # Grep alias with improved options
-alias regrep='grep -IiErn --color=auto --exclude=\*~ --exclude=\*.pyc --exclude-dir=.\* --exclude-dir=__\* --exclude-dir=node_modules'
+alias rg='grep -IiErn --color=auto --exclude=\*~ --exclude=\*.pyc --exclude-dir=.\* --exclude-dir=__\* --exclude-dir=node_modules'
 
 # Function to find files with a substring in their name
 find_files_with_substring() {
@@ -279,6 +279,9 @@ alias tl="tmux ls"    # List tmux sessions
 
 # Improved ls alias
 alias ll='ls -alh'    # List all files in long format, human-readable sizes
+
+# Python alias
+alias py='python'
 
 # Git aliases
 alias gd='git diff'
