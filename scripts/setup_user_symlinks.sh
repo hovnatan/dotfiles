@@ -6,11 +6,14 @@ set -e
 
 cd ~
 
+rm ~/.tmux.conf
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf
 
+rm ~/.zshrc
 ln -s ~/.dotfiles/.zshrc ~/.zshrc
 
 mkdir -p ~/.vimundo/
+rm ~/.vimrc
 ln -s ~/.dotfiles/.vimrc ~/.vimrc
 
 # Check if .bashrc_local is already sourced in .bashrc
@@ -21,6 +24,7 @@ if [[ -f "\$HOME/.bashrc_local" ]]; then
 fi
 EOT
 fi
+rm ~/.bashrc_local
 ln -s ~/.dotfiles/.bashrc_local ~/.bashrc_local
 
 
@@ -35,6 +39,7 @@ EOT
 fi
 vim ~/.gitconfig # add email
 
+mkdir -p ~/.config
 ln -s ~/.dotfiles/.config/htop ~/.config/
 
 # cd ~
@@ -44,6 +49,7 @@ ln -s ~/.dotfiles/.config/htop ~/.config/
 # touch ~/.ssh/authorized_keys
 # chmod 600 ~/.ssh/authorized_keys
 mkdir -p ~/.ssh
+rm ~/.ssh/config
 ln -s ~/.dotfiles/.ssh/config ~/.ssh/config
 
 # To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_ed25519.pub into the field labeled 'Key'. with xclip -i -selection clipboard ~/.ssh/id_ed25519.pub
