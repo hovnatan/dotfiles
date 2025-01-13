@@ -13,8 +13,8 @@ mkdir -p ~/.local/share/applications
 cat << 'EOL' > ~/.local/share/applications/cursor.desktop
 [Desktop Entry]
 Name=Cursor
-Exec=/home/hovnatan/opt/bin/cursor.AppImage --no-sandbox
-Icon=/home/hovnatan/opt/share/cursor.svg
+Exec=bash -c "$HOME/opt/bin/cursor.AppImage --no-sandbox"
+Icon=bash -c "echo $HOME/opt/share/cursor.svg"
 Type=Application
 Categories=Development;
 EOL
