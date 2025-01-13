@@ -10,11 +10,11 @@ wget -O ~/opt/bin/cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x
 chmod +x ~/opt/bin/cursor.AppImage
 
 mkdir -p ~/.local/share/applications
-cat << 'EOL' > ~/.local/share/applications/cursor.desktop
+cat << EOL > ~/.local/share/applications/cursor.desktop
 [Desktop Entry]
 Name=Cursor
-Exec=bash -c "$HOME/opt/bin/cursor.AppImage --no-sandbox"
-Icon=bash -c "echo $HOME/opt/share/cursor.svg"
+Exec=$HOME/opt/bin/cursor.AppImage --no-sandbox
+Icon=$HOME/opt/share/cursor.svg
 Type=Application
 Categories=Development;
 EOL
