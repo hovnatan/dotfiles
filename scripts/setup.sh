@@ -112,20 +112,18 @@ ln -sf ~/.dotfiles/.config/atuin ~/.config/
 
 # ln -sf ~/.dotfiles/.config/autostart ~/.config/
 
-# ln -sf ~/.dotfiles/.local/share/applications/zotero.desktop ~/.local/share/applications/
-# ln -sf ~/.dotfiles/.local/share/applications/sioyek.desktop ~/.local/share/applications/
-mkdir -p ~/.local/share/applications
-cat << EOL > ~/.local/share/applications/sioyek.desktop
-[Desktop Entry]
-Name=Sioyek
-Exec=$HOME/.dotfiles/bin/sioyek.sh %U
-Icon=$HOME/.dotfiles/.config/sioyek/icon1.ico
-Type=Application
-Terminal=false
-Categories=Office;Viewer
-MimeType=application/pdf;application/x-bzpdf;application/x-ext-pdf;application/x-gzpdf;application/x-xzpdf
-X-GNOME-SingleWindow=true
-EOL
+# mkdir -p ~/.local/share/applications
+# cat << EOL > ~/.local/share/applications/sioyek.desktop
+# [Desktop Entry]
+# Name=Sioyek
+# Exec=$HOME/.dotfiles/bin/sioyek.sh %U
+# Icon=$HOME/.dotfiles/.config/sioyek/icon1.ico
+# Type=Application
+# Terminal=false
+# Categories=Office;Viewer
+# MimeType=application/pdf;application/x-bzpdf;application/x-ext-pdf;application/x-gzpdf;application/x-xzpdf
+# X-GNOME-SingleWindow=true
+# EOL
 # update-desktop-database ~/.local/share/applications/
 
 sudo dpkg-reconfigure tzdata
