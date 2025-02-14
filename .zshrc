@@ -252,43 +252,7 @@ import_miniconda() {
   # <<< conda initialize <<<
 }
 
-tmux-select() {
-    if [ -z "$TMUX" ]; then
-        tmux start-server 2>/dev/null
-
-        sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null)
-        if [ -n "$sessions" ]; then
-            echo "Available sessions:"
-            echo "$sessions" | nl
-            echo -n "Select session number (or press enter for new): "
-            read choice
-            if [ -n "$choice" ]; then
-                session=$(echo "$sessions" | sed -n "${choice}p")
-                if [ -n "$session" ]; then
-                    tmux attach -t "$session"
-                    return
-                fi
-            else
-                echo -n "Enter new session name (or press enter for default): "
-                read new_session
-                if [ -n "$new_session" ]; then
-                    tmux new -s "$new_session"
-                else
-                    tmux
-                fi
-            fi
-        else
-            echo -n "Enter new session name (or press enter for default): "
-            read new_session
-            if [ -n "$new_session" ]; then
-                tmux new -s "$new_session"
-            else
-                tmux
-            fi
-        fi
-    fi
-}
-alias ts='tmux-select'
+alias ts='~/.dotfiles/tmux_select.sh'
 
 
 # Grep alias with improved options
