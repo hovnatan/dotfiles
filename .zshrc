@@ -217,7 +217,7 @@ zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
 zstyle ':completion:*' completer _expand_alias _expand _complete _correct _approximate
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select
-eval "$(dircolors -b)"
+# eval "$(dircolors -b)"
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' list-colors ''
 zstyle ':completion:*' list-prompt ''
