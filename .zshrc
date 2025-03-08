@@ -509,8 +509,6 @@ case ":${PATH}:" in
         ;;
 esac
 
-export DOCKER_DEFAULT_PLATFORM=linux/amd64
-
 if [[ -f "$HOME/.zshrc_local_post" ]]; then
   source "$HOME/.zshrc_local_post"
 fi

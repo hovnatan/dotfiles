@@ -1,0 +1,20 @@
+set font "Cantarell 11"
+set adjust-open best-fit
+set statusbar-home-tilde true
+set guioptions ''
+map d scroll half-down
+map u scroll half-up
+map <PageDown> scroll half-down
+map <PageUp> scroll half-up
+map <S-PageDown> navigate next
+map <S-PageUp> navigate previous
+map <C-D> toggle_page_mode
+map <C-n> toggle_statusbar
+
+set recolor-lightcolor "#fbf1c7"
+set recolor-darkcolor "#3c3836"
+set default-bg "#fbf1c7"
+set statusbar-bg "#fbf1c7"
+set statusbar-fg "#3c3836"
+map r recolor
+set selection-clipboard clipboard
