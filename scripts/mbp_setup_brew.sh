@@ -9,6 +9,11 @@ brew update
 brew install llvm bear fzf fd ripgrep neovim gtk+3 nodejs tmux fish wget less coreutils diffutils git bash gawk man-db dust bat graphviz htop conan git-lfs bazel rustup-init go pyright findutils git-delta diskonaut exa efm-langserver mupdf prettier shellcheck bash-language-server stylua difftastic rga pandoc tesseract ffmpeg
 brew install --cask cmake alacritty time-out zotero netron karabiner-elements alt-tab
 
+brew tap homebrew-zathura/zathura
+brew install zathura zathura-pdf-mupdf zathura-djvu
+mkdir -p $(brew --prefix zathura)/lib/zathura
+ln -s $(brew --prefix zathura-pdf-mupdf)/libpdf-mupdf.dylib $(brew --prefix zathura)/lib/zathura/libpdf-mupdf.dylib
+ln -s $(brew --prefix zathura-djvu)/libdjvu.dylib $(brew --prefix zathura)/lib/zathura/libdjvu.dyli
 rustup-init
 
 # /usr/local/opt/ncurses/bin/infocmp tmux-256color > ~/tmux-256color.info
