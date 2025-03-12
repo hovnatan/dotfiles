@@ -16,15 +16,10 @@ ln -s $(brew --prefix zathura-pdf-mupdf)/libpdf-mupdf.dylib $(brew --prefix zath
 ln -s $(brew --prefix zathura-djvu)/libdjvu.dylib $(brew --prefix zathura)/lib/zathura/libdjvu.dyli
 rustup-init
 
-# /usr/local/opt/ncurses/bin/infocmp tmux-256color > ~/tmux-256color.info
-# tic -xe tmux-256color ~/tmux-256color.info
-# rm ~/tmux-256color.info
-
-pip3 install --user pynvim ranger-fm ipdb
-
 defaults write com.apple.screencapture disable-shadow -bool TRUE
 defaults write -g ApplePressAndHoldEnabled -bool false
 defaults write com.apple.Terminal FocusFollowsMouse -bool true
+defaults write com.apple.dock autohide-delay -float 0; killall Dock
 
 # to remove from quarantine
 # xattr -rd com.apple.quarantine /path/to/MyApp.app
