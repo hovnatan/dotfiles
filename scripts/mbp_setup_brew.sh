@@ -13,7 +13,7 @@ brew tap homebrew-zathura/zathura
 brew install zathura zathura-pdf-mupdf zathura-djvu
 mkdir -p $(brew --prefix zathura)/lib/zathura
 ln -s $(brew --prefix zathura-pdf-mupdf)/libpdf-mupdf.dylib $(brew --prefix zathura)/lib/zathura/libpdf-mupdf.dylib
-ln -s $(brew --prefix zathura-djvu)/libdjvu.dylib $(brew --prefix zathura)/lib/zathura/libdjvu.dyli
+ln -s $(brew --prefix zathura-djvu)/libdjvu.dylib $(brew --prefix zathura)/lib/zathura/libdjvu.dylib
 rustup-init
 
 defaults write com.apple.screencapture disable-shadow -bool TRUE
