@@ -11,10 +11,10 @@ map <S-PageUp> navigate previous
 map <C-D> toggle_page_mode
 map <C-n> toggle_statusbar
 
-set recolor-lightcolor "#fbf1c7"
-set recolor-darkcolor "#3c3836"
-set default-bg "#fbf1c7"
-set statusbar-bg "#fbf1c7"
-set statusbar-fg "#3c3836"
+# set recolor-lightcolor "#fbf1c7"
+# set recolor-darkcolor "#3c3836"
+# set default-bg "#fbf1c7"
+# set statusbar-bg "#fbf1c7"
+# set statusbar-fg "#3c3836"
 map r recolor
 set selection-clipboard clipboard
