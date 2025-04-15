@@ -115,7 +115,7 @@ function loadenv() {
 }
 
 # Set the prompt
-PS1='%B%{$fg[green]%}%n@%{$fg[green]%}%m%{$reset_color%}:%B%{$fg[blue]%}$(path_abbrev)%{$reset_color%}$(git_prompt_status)$(git_prompt_info)%{$reset_color%}%{$fg[red]%}%(?..%B[%?])%{$reset_color%}%% '
+PS1='%B%{$fg[green]%}%5>.>%n%>>@%{$fg[green]%}%5>.>%m%>>%{$reset_color%}:%B%{$fg[blue]%}$(path_abbrev)%{$reset_color%}$(git_prompt_status)$(git_prompt_info)%{$reset_color%}%{$fg[red]%}%(?..%B[%?])%{$reset_color%}%% '
 
 # Function to set the terminal title
 set_terminal_title() {
