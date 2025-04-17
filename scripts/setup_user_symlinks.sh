@@ -35,6 +35,8 @@ if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
 [user]
   name = Hovnatan Karapetyan
   email = 
+# [core]
+#   sshCommand = ssh -i ~/.ssh/hk_dev.pem -F /dev/null
 EOT
 fi
 vim ~/.gitconfig # add email
