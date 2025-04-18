@@ -1,4 +1,4 @@
-set font "Cantarell 12"
+set font 'monospace normal 14'
 set adjust-open best-fit
 set statusbar-home-tilde true
 set guioptions ''
@@ -10,6 +10,8 @@ map <S-PageDown> navigate next
 map <S-PageUp> navigate previous
 map <C-D> toggle_page_mode
 map <C-n> toggle_statusbar
+unmap o
+map <S-o> open
 
 # set recolor-lightcolor "#fbf1c7"
 # set recolor-darkcolor "#3c3836"
