@@ -316,6 +316,9 @@ alias ports='netstat -tulanp'
 alias psa='ps auxf'
 alias psg='ps aux | grep -v grep | grep -i -e VSZ -e'
 
+# Source alias
+alias s='source'
+
 # umask 0077
 
 export EDITOR=vim
@@ -497,7 +500,8 @@ add-zsh-hook preexec _per-directory-history-preexec
 _per_directory_history_main_histfile=$HISTFILE
 unset HISTFILE
 
-_per-directory-history-set-directory-history
+# start in global mode
+_per-directory-history-set-global-history
 ########################################################################################
 
 case ":${PATH}:" in
