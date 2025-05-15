@@ -29,8 +29,6 @@
 	#smudge = cat
 [pull]
   rebase = true
-[submodule]
-  recurse = true
 [help]
   autocorrect = prompt
 [commit]
