@@ -25,3 +25,8 @@ defaults write com.apple.dock autohide-delay -float 0; killall Dock
 # xattr -rd com.apple.quarantine /path/to/MyApp.app
 
 cp ~/.dotfiles/.npmrc ~/.npmrc
+
+ln -sf /Users/hovnatan/Library/CloudStorage/Dropbox/scripts/Cursor/User/settings.json ~/Library/Application\ Support/Cursor/User/settings.json
+ln -sf /Users/hovnatan/Library/CloudStorage/Dropbox/scripts/Cursor/User/keybindings.json ~/Library/Application\ Support/Cursor/User/keybindings.json
+
+ln -sf /Users/hovnatan/Library/CloudStorage/Dropbox/scripts/ssh_config ~/.ssh/local_config
