@@ -146,6 +146,7 @@ preexec_terminal_title() {
 precmd_functions+=(precmd_terminal_title)
 preexec_functions+=(preexec_terminal_title)
 
+tmux pipe-pane -o "cat >> $HOME/.tmux/logs/tmux_session_#S_#I_#P_$(date +%Y%m%d%H%M%S).log" 2> /dev/null
 
 bindkey -v
 
@@ -516,3 +517,13 @@ esac
 if [[ -f "$HOME/.zshrc_local_post" ]]; then
   source "$HOME/.zshrc_local_post"
 fi
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/hovnatan/.lmstudio/bin"
+# End of LM Studio CLI section
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/hovnatan/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions

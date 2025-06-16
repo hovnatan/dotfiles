@@ -8,6 +8,7 @@ cd ~
 
 rm -rf ~/.tmux.conf
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf
+mkdir -p ~/.tmux/logs
 
 rm -rf ~/.zshrc
 ln -s ~/.dotfiles/.zshrc ~/.zshrc

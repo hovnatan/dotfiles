@@ -6,11 +6,13 @@ set -e
 
 cd ~
 
-mkdir -p ~/.vim/undodir
+curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.zshrc -o ~/.zshrc
 
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.tmux.conf -o ~/.tmux.conf
-curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.zshrc -o ~/.zshrc
+mkdir -p ~/.tmux/logs
+
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.vimrc -o ~/.vimrc
+mkdir -p ~/.vim/undodir
 
 if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
     cat <<EOT >> ~/.gitconfig
