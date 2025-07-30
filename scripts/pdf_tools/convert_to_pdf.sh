@@ -2,13 +2,12 @@
 
 # This script uses output of ScanTailor Advanced to create one pdf
 
+# for Ubuntu Linux
 # sudo apt install imagemagick poppler-utils ocrmypdf mediainfo jbig2
 
-# for macos
-# brew install imagemagick poppler ocrmypdf mediainfo
+# for MacOS
+# brew install imagemagick poppler ocrmypdf mediainfo jbig2
 # ulimit -n 10000
-
-# pip install -U --user pdf.tocgen pymupdf==1.24.2
 
 # Function to convert TIFF files to PDF in parallel
 convert_tiffs_to_pdf() {
@@ -30,7 +29,7 @@ convert_tiffs_to_pdf() {
             size=$(stat -c%s "$f")  # Linux/GNU
         fi
         if [ $size -ge 200000 ] && mediainfo "$f" | grep RGB > /dev/null; then
-            magick -quality 20 -compress JPEG "$f" "$out_folder/$filename.pdf" &
+            magick "$f" -quality 20 -compress JPEG "$out_folder/$filename.pdf" &
             echo "$filename" $size yes_convert_JPEG
         else
             magick "$f" "$out_folder/$filename.pdf" &
