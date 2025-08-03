@@ -7,7 +7,7 @@
 
 # for MacOS
 # brew install imagemagick poppler ocrmypdf mediainfo jbig2
-# ulimit -n 10000
+ulimit -n 10000
 
 # Function to convert TIFF files to PDF in parallel
 convert_tiffs_to_pdf() {
