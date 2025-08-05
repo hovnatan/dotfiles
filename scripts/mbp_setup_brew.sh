@@ -30,3 +30,34 @@ ln -sf /Users/hovnatan/Library/CloudStorage/Dropbox/scripts/Cursor/User/settings
 ln -sf /Users/hovnatan/Library/CloudStorage/Dropbox/scripts/Cursor/User/keybindings.json ~/Library/Application\ Support/Cursor/User/keybindings.json
 
 ln -sf /Users/hovnatan/Library/CloudStorage/Dropbox/scripts/ssh_config ~/.ssh/local_config
+
+# needs to be tested 
+# ln -s ~/.dotfiles/.zprofile_mac ~/.zprofile
+
+
+# `~/.zprofile` is sourced **only when Z-shell starts a *login* shell**, which is the shell you get when you:
+
+# • log in on a console/tty  
+# • open a new terminal app that launches the shell as a login shell (common on macOS: Terminal & iTerm run `zsh -l`)  
+# • connect via SSH (the remote shell is started as a login shell)  
+# • run `zsh -l` explicitly
+
+# Startup order (simplified):
+
+# 1. `/etc/zshenv`  
+# 2. `~/.zshenv`        ← always, every shell  
+# —— if login shell:  
+# 3. `/etc/zprofile`  
+# 4. `~/.zprofile`      ← your place for login-only setup (PATH changes, env vars, locale, …)  
+# —— continue if interactive:  
+# 5. `/etc/zshrc`  
+# 6. `~/.zshrc`         ← interactive config, aliases, key-bindings, prompts, …  
+# —— after commands have run:  
+# 7. `/etc/zlogin`  
+# 8. `~/.zlogin`        ← end-of-login tasks (messages, tmux attach, etc.)  
+# —— on logout:  
+# 9. `/etc/zlogout` and `~/.zlogout` (only for login shells)
+
+# Non-login subshells (e.g. those created by scripts or by typing `zsh` in an existing session) skip steps 3–4 and 7–9; they source only the `zshenv` files and—if interactive—the `zshrc` files.
+
+# So: `~/.zprofile` runs **once per new login session**, before `~/.zshrc`.
