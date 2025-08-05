@@ -505,25 +505,6 @@ unset HISTFILE
 _per-directory-history-set-global-history
 ########################################################################################
 
-case ":${PATH}:" in
-    *:"$HOME/.local/bin":*)
-        ;;
-    *)
-        # Prepending path in case a system-installed binary needs to be overridden
-        export PATH="$HOME/.local/bin:$PATH"
-        ;;
-esac
-
 if [[ -f "$HOME/.zshrc_local_post" ]]; then
   source "$HOME/.zshrc_local_post"
 fi
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/hovnatan/.lmstudio/bin"
-# End of LM Studio CLI section
-
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/hovnatan/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
-# End of Docker CLI completions
