@@ -1,8 +1,21 @@
+
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 # Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/hovnatan/.lmstudio/bin"
+export PATH="/Users/hovnatan/.lmstudio/bin:$PATH"
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/hovnatan/work/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/hovnatan/work/google-cloud-sdk/path.zsh.inc'; fi
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/hovnatan/work/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/hovnatan/work/google-cloud-sdk/completion.zsh.inc'; fi
+
+case ":${PATH}:" in
+    *:"$HOME/.local/bin":*)
+        ;;
+    *)
+        # Prepending path in case a system-installed binary needs to be overridden
+        export PATH="$HOME/.local/bin:$PATH"
+        ;;
+esac
+
