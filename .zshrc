@@ -257,7 +257,7 @@ alias ts='~/.dotfiles/tmux_select.sh'
 
 
 # Grep alias with improved options
-alias rg='grep -IiErn --color=auto --exclude=\*~ --exclude=\*.pyc --exclude-dir=.\* --exclude-dir=__\* --exclude-dir=node_modules'
+alias rg="grep -IiErn --color=auto --exclude='*~' --exclude='*.pyc' --exclude-dir='**/.*' --exclude-dir='__*' --exclude-dir='node_modules'"
 
 # Function to find files with a substring in their name
 find_files_with_substring() {
