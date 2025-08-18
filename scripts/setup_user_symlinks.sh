@@ -4,6 +4,19 @@
 
 # rm -rf ~/.tmux.conf ~/.zshrc ~/.bashrc_local ~/.vimrc ~/.bashrc_local ~/.config/htop ~/.ssh/config
 
+if ! command -v sudo &> /dev/null; then
+  SUDO=""
+else
+  SUDO=sudo
+fi
+$SUDO apt-get update
+$SUDO apt-get install -y software-properties-common curl gnupg wget locales sudo htop tmux zsh vim build-essential tzdata git openssh-client python3-venv python3-pip
+$SUDO locale-gen --no-purge en_US.UTF-8
+
+if ! command -v uv &> /dev/null; then
+    curl -LsSf 'astral.sh/uv/install.sh' | sh
+fi
+
 cd ~
 
 rm -rf ~/.tmux.conf
