@@ -11,7 +11,7 @@ else
 fi
 export DEBIAN_FRONTEND=noninteractive
 $SUDO apt-get update
-$SUDO apt-get install -y software-properties-common curl gnupg wget sudo htop tmux zsh vim build-essential git openssh-client
+$SUDO apt-get install -y software-properties-common curl gnupg wget sudo htop tmux zsh vim git openssh-client
 $SUDO locale-gen --no-purge en_US.UTF-8
 
 if ! command -v uv &> /dev/null; then
