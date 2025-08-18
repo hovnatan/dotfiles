@@ -9,6 +9,7 @@ if ! command -v sudo &> /dev/null; then
 else
   SUDO=sudo
 fi
+export DEBIAN_FRONTEND=noninteractive
 $SUDO apt-get update
 $SUDO apt-get install -y software-properties-common curl gnupg wget locales sudo htop tmux zsh vim build-essential tzdata git openssh-client python3-venv python3-pip
 $SUDO locale-gen --no-purge en_US.UTF-8
@@ -52,8 +53,8 @@ if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
 # [core]
 #   sshCommand = ssh -i ~/.ssh/hk_dev.pem -F /dev/null
 EOT
-fi
 vim ~/.gitconfig # add email
+fi
 
 mkdir -p ~/.config
 rm -rf ~/.config/htop
