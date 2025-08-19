@@ -11,7 +11,8 @@ else
 fi
 export DEBIAN_FRONTEND=noninteractive
 $SUDO apt-get update
-$SUDO apt-get install -y --no-install-recommends curl wget sudo htop tmux zsh vim git openssh-client make
+$SUDO apt-get install -y --no-install-recommends curl wget sudo htop tmux zsh vim git openssh-client make locales
+$SUDO locale-gen --no-purge en_US.UTF-8
 
 if ! command -v uv &> /dev/null; then
     curl -LsSf 'astral.sh/uv/install.sh' | sh
