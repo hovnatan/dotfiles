@@ -76,7 +76,7 @@
   "Blinking Cursor" : false,
   "Selected Text Color (Light)" : {
     "Red Component" : 0,
-    "Color Space" : "sRGB",
+    "Color Space" : "P3",
     "Blue Component" : 0,
     "Alpha Component" : 1,
     "Green Component" : 0
@@ -88,15 +88,16 @@
     "Alpha Component" : 1,
     "Green Component" : 0
   },
+  "Cursor Type" : 2,
+  "Keyboard Map" : {
+
+  },
   "Ansi 3 Color (Dark)" : {
     "Red Component" : 0.78058648109436035,
     "Color Space" : "sRGB",
     "Blue Component" : 0,
     "Alpha Component" : 1,
     "Green Component" : 0.76959484815597534
-  },
-  "Keyboard Map" : {
-
   },
   "Visual Bell" : true,
   "Cursor Text Color" : {
@@ -108,11 +109,11 @@
   },
   "Scrollback Lines" : 100000,
   "Selection Color (Light)" : {
-    "Red Component" : 0.70196080207824707,
-    "Color Space" : "sRGB",
+    "Red Component" : 0.67841005325317383,
+    "Color Space" : "P3",
     "Blue Component" : 1,
     "Alpha Component" : 1,
-    "Green Component" : 0.84313726425170898
+    "Green Component" : 0.79934310913085938
   },
   "Ansi 0 Color" : {
     "Red Component" : 0.078431375324726105,
@@ -137,7 +138,7 @@
   },
   "Cursor Text Color (Light)" : {
     "Red Component" : 1,
-    "Color Space" : "sRGB",
+    "Color Space" : "P3",
     "Blue Component" : 1,
     "Alpha Component" : 1,
     "Green Component" : 1
@@ -180,6 +181,7 @@
   "BM Growl" : true,
   "Prompt Before Closing 2" : false,
   "Command" : "",
+  "Use Bright Bold (Light)" : false,
   "Selected Text Color" : {
     "Red Component" : 0,
     "Color Space" : "sRGB",
@@ -430,11 +432,11 @@
     "Green Component" : 0.8833775520324707
   },
   "Bold Color (Light)" : {
-    "Red Component" : 0.062745098039215685,
-    "Color Space" : "sRGB",
-    "Blue Component" : 0.062745098039215685,
+    "Red Component" : 0.062745101749897003,
+    "Color Space" : "P3",
+    "Blue Component" : 0.062745101749897003,
     "Alpha Component" : 1,
-    "Green Component" : 0.062745098039215685
+    "Green Component" : 0.062745101749897003
   },
   "Ansi 12 Color (Dark)" : {
     "Red Component" : 0.65349078178405762,
@@ -465,6 +467,7 @@
     "Alpha Component" : 0.25,
     "Green Component" : 0.77217715978622437
   },
+  "Use Cursor Guide (Light)" : false,
   "Custom Directory" : "No",
   "Working Directory" : "\/Users\/hovnatan",
   "ASCII Anti Aliased" : true,
@@ -489,7 +492,7 @@
   },
   "Background Image Location" : "",
   "Ansi 1 Color (Light)" : {
-    "Red Component" : 0.40392156862745099,
+    "Red Component" : 0.59999999999999998,
     "Color Space" : "P3",
     "Blue Component" : 0,
     "Alpha Component" : 1,
@@ -497,11 +500,11 @@
   },
   "Use Bold Font" : true,
   "Ansi 8 Color (Light)" : {
-    "Red Component" : 0.40000000000000002,
+    "Red Component" : 0.40000000596046448,
     "Color Space" : "P3",
-    "Blue Component" : 0.40000000000000002,
+    "Blue Component" : 0.40000000596046448,
     "Alpha Component" : 1,
-    "Green Component" : 0.40000000000000002
+    "Green Component" : 0.40000000596046448
   },
   "Ansi 2 Color" : {
     "Red Component" : 0,
