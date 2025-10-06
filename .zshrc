@@ -439,7 +439,12 @@ function _per-directory-history-addhistory() {
   # respect hist_ignore_space
   if [[ -o hist_ignore_space ]] && [[ "$1" == \ * ]]
   then
-    return
+    return 1
+  fi
+
+  # Ignore commands containing shellIntegration-rc.zsh
+  if [[ "$1" == *shellIntegration-rc.zsh* ]]; then
+    return 1
   fi
 
   # Can't write to history (print -S) from addhistory,
