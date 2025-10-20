@@ -81,5 +81,5 @@ mkdir -p ~/opt
 # ln -sf ~/Dropbox/scripts/Cursor/User/keybindings.json ~/.config/Cursor/User/keybindings.json
 # ln -sf ~/Dropbox/scripts/Cursor/User/settings.json ~/.config/Cursor/User/settings.json
 
-echo "Add email to ~/.gitconfig"
+echo -e "\033[33mAdd email to ~/.gitconfig\033[0m"
 echo "Done"
