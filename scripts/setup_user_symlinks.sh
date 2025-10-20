@@ -14,10 +14,6 @@ $SUDO apt-get update
 $SUDO apt-get install -y --no-install-recommends curl wget sudo htop tmux zsh vim git openssh-client make locales
 $SUDO locale-gen --no-purge en_US.UTF-8
 
-if ! command -v uv &> /dev/null; then
-    curl -LsSf 'astral.sh/uv/install.sh' | sh
-fi
-
 cd ~
 
 rm -rf ~/.tmux.conf
@@ -53,7 +49,7 @@ if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
 # [core]
 #   sshCommand = ssh -i ~/.ssh/hk_dev.pem -F /dev/null
 EOT
-vim ~/.gitconfig # add email
+# vim ~/.gitconfig # add email
 fi
 
 mkdir -p ~/.config
@@ -84,3 +80,6 @@ mkdir -p ~/opt
 # mkdir -p ~/.config/Cursor/User
 # ln -sf ~/Dropbox/scripts/Cursor/User/keybindings.json ~/.config/Cursor/User/keybindings.json
 # ln -sf ~/Dropbox/scripts/Cursor/User/settings.json ~/.config/Cursor/User/settings.json
+
+echo "Add email to ~/.gitconfig"
+echo "Done"
