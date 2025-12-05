@@ -282,6 +282,7 @@ alias ta="tmux a -t"  # Attach to tmux session
 alias tl="tmux ls"    # List tmux sessions
 
 # Improved ls alias
+alias ls='ls --color=auto'
 alias ll='ls -alh'    # List all files in long format, human-readable sizes
 
 # Python alias
@@ -522,3 +523,11 @@ esac
 if [[ -f "$HOME/.zshrc_local_post" ]]; then
   source "$HOME/.zshrc_local_post"
 fi
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/hovnatan/.lmstudio/bin"
+# End of LM Studio CLI section
+
+
+# Added by Antigravity
+export PATH="/Users/hovnatan/.antigravity/antigravity/bin:$PATH"
