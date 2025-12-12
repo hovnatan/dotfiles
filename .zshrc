@@ -2,6 +2,8 @@ if [[ -f "$HOME/.zshrc_local_pre" ]]; then
   source "$HOME/.zshrc_local_pre"
 fi
 
+typeset -aU path
+
 export SHELL="/bin/zsh"
 
 autoload -U colors && colors
