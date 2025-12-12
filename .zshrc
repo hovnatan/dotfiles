@@ -523,11 +523,3 @@ esac
 if [[ -f "$HOME/.zshrc_local_post" ]]; then
   source "$HOME/.zshrc_local_post"
 fi
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/hovnatan/.lmstudio/bin"
-# End of LM Studio CLI section
-
-
-# Added by Antigravity
-export PATH="/Users/hovnatan/.antigravity/antigravity/bin:$PATH"
