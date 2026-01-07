@@ -19,6 +19,11 @@ setopt incappendhistory
 setopt histsavenodups
 setopt nocaseglob
 
+# Prevent terminal software flow control (Ctrl+S/Ctrl+Q), which can make iTerm2
+# look "frozen" / like paste isn't working (common when tools inject keystrokes).
+setopt noflowcontrol
+stty -ixon -ixoff
+
 path_abbrev() {
   local full_path=${PWD/#$HOME/\~}
   local path_parts=("${(s:/:)full_path}")
@@ -210,6 +215,10 @@ HISTFILE=~/.zsh_history
 fpath=(~/.docker/completions \\$fpath)
 autoload -Uz compinit && compinit
 autoload -Uz bashcompinit && bashcompinit
+
+# Better paste handling (esp. multiline / fast injected paste).
+autoload -Uz bracketed-paste-magic
+zle -N bracketed-paste bracketed-paste-magic
 
 _comp_options+=(globdots)
 
