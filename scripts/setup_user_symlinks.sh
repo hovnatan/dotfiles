@@ -27,16 +27,16 @@ mkdir -p ~/.vimundo/
 rm -rf ~/.vimrc
 ln -s ~/.dotfiles/.vimrc ~/.vimrc
 
-# Check if .bashrc_local is already sourced in .bashrc
-if ! grep -q '\.bashrc_local' ~/.bashrc; then
-    cat <<EOT >> ~/.bashrc
-if [[ -f "\$HOME/.bashrc_local" ]]; then
-    source "\$HOME/.bashrc_local"
-fi
-EOT
-fi
-rm -rf ~/.bashrc_local
-ln -s ~/.dotfiles/.bashrc_local ~/.bashrc_local
+# # Check if .bashrc_local is already sourced in .bashrc
+# if ! grep -q '\.bashrc_local' ~/.bashrc; then
+#     cat <<EOT >> ~/.bashrc
+# if [[ -f "\$HOME/.bashrc_local" ]]; then
+#     source "\$HOME/.bashrc_local"
+# fi
+# EOT
+# fi
+# rm -rf ~/.bashrc_local
+# ln -s ~/.dotfiles/.bashrc_local ~/.bashrc_local
 
 
 if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
