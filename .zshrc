@@ -553,7 +553,7 @@ _command_time_preexec() {
 _command_time_precmd() {
   if [ $timer ]; then
     timer_show=$(($SECONDS - $timer))
-    if [ -n "$TTY" ] && [ $timer_show -ge ${ZSH_COMMAND_TIME_MIN_SECONDS:-3} ]; then
+    if [ -n "$TTY" ] && [ $timer_show -ge ${ZSH_COMMAND_TIME_MIN_SECONDS:-30} ]; then
       export ZSH_COMMAND_TIME="$timer_show"
       if [ ! -z ${ZSH_COMMAND_TIME_MSG} ]; then
         zsh_command_time
