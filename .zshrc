@@ -531,7 +531,7 @@ case ":${PATH}:" in
         ;;
 esac
 
-ZSH_COMMAND_TIME_EXCLUDE=(vim mcedit)
+ZSH_COMMAND_TIME_EXCLUDE=(vim mcedit htop top man)
 _command_time_preexec() {
   # check excluded
   if [ -n "$ZSH_COMMAND_TIME_EXCLUDE" ]; then
