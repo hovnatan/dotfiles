@@ -10,7 +10,6 @@ autoload -U colors && colors
 
 setopt promptsubst
 setopt histignorealldups
-setopt sharehistory
 setopt alwaystoend
 setopt automenu
 setopt noautolist
@@ -313,6 +312,7 @@ alias glg='git log --oneline --graph --decorate --all'  # Pretty git log with al
 # File and directory management
 alias c='clear'
 alias h='history'
+alias rh='fc -RI'  # reload history from other shells
 alias df='df -h'
 alias du='du -h'
 
