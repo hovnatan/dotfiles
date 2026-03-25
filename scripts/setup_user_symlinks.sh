@@ -86,5 +86,7 @@ ln -sf ~/.dotfiles/.codex/config.toml ~/.codex/config.toml
 mkdir -p ~/.claude
 ln -sf ~/.dotfiles/.claude/settings.json ~/.claude/settings.json
 
+ln -s ~/.dotfiles/.config/ghostty ~/.config/
+
 echo -e "\033[33mAdd email to ~/.gitconfig\033[0m"
 echo "Done"
