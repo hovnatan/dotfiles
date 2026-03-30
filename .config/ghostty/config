@@ -1,5 +1,5 @@
 theme = light:GitLab Light,dark:GitLab Dark
-font-size = 14
+font-size = 15
 font-family = SF Mono
 font-thicken = true
 
