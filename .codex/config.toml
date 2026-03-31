@@ -5,3 +5,6 @@ model_reasoning_effort = "high"
 [mcp_servers.chrome-devtools]
 command = "npx"
 args = ["chrome-devtools-mcp@latest", "--autoConnect"]
+
+[plugins."github@openai-curated"]
+enabled = true
