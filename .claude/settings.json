@@ -5,6 +5,7 @@
     "defaultMode": "dontAsk"
   },
   "model": "opus",
+  "effortLevel": "high",
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true
   },

@@ -1,6 +1,6 @@
 personality = "pragmatic"
 model = "gpt-5.4"
-model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
 
 [mcp_servers.chrome-devtools]
 command = "npx"
