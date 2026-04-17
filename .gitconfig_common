@@ -38,5 +38,5 @@
   autoupdate = true
 [rebase]
   autoSquash = true
-  autoStash = true
+  autoStash = false
   updateRefs = true

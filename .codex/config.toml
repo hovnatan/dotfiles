@@ -8,3 +8,8 @@ args = ["chrome-devtools-mcp@latest", "--autoConnect"]
 
 [plugins."github@openai-curated"]
 enabled = true
+
+[marketplaces.openai-bundled]
+last_updated = "2026-04-16T18:18:40Z"
+source_type = "local"
+source = "/Users/hovnatan/.codex/.tmp/bundled-marketplaces/openai-bundled"
