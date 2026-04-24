@@ -1,9 +1,18 @@
 {
   "permissions": {
-    "allow": [],
+    "allow": [
+      "Bash(git log *)",
+      "Bash(git -C * log *)",
+      "Bash(git status *)",
+      "Bash(git -C * status *)",
+      "Bash(git diff *)",
+      "Bash(git -C * diff *)",
+      "Bash(git show *)",
+      "Bash(git -C * show *)"
+    ],
     "defaultMode": "dontAsk"
   },
-  "model": "opus",
+  "model": "sonnet[1m]",
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true
   },
