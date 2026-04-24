@@ -1,13 +1,15 @@
 {
   "permissions": {
-    "allow": [
-    ],
+    "allow": [],
     "defaultMode": "dontAsk"
   },
   "model": "opus",
-  "effortLevel": "high",
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true
   },
-  "skipDangerousModePermissionPrompt": true
+  "effortLevel": "high",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "light",
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true
 }

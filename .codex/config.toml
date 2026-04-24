@@ -1,5 +1,5 @@
 personality = "pragmatic"
-model = "gpt-5.4"
+model = "gpt-5.5"
 model_reasoning_effort = "xhigh"
 
 [mcp_servers.chrome-devtools]
@@ -7,6 +7,12 @@ command = "npx"
 args = ["chrome-devtools-mcp@latest", "--autoConnect"]
 
 [plugins."github@openai-curated"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."browser-use@openai-bundled"]
 enabled = true
 
 [marketplaces.openai-bundled]
