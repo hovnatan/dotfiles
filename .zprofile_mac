@@ -9,3 +9,6 @@ if [ -f '/Users/hovnatan/work/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/h
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/hovnatan/work/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/hovnatan/work/google-cloud-sdk/completion.zsh.inc'; fi
+# Added by OrbStack: command-line tools and integration
+# This won't be added again if you remove it.
+source ~/.orbstack/shell/init.zsh 2>/dev/null || :
