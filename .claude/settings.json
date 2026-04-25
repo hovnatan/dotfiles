@@ -9,9 +9,13 @@
       "Bash(git -C * diff *)",
       "Bash(git show *)",
       "Bash(git -C * show *)",
-      "Bash(tmux list-sessions *)",
-      "Bash(tmux show-messages *)"
+      "Bash(tmux list-*)",
+      "Bash(tmux show-*)",
+      "Bash(tmux display-message *)",
+      "Bash(tmux capture-pane *)",
+      "Bash(tmux info *)"
     ],
+    "ask": [],
     "defaultMode": "dontAsk"
   },
   "model": "opus",
