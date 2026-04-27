@@ -18,11 +18,11 @@
     "ask": [],
     "defaultMode": "dontAsk"
   },
-  "model": "opus",
+  "model": "opus[1m]",
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true
   },
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true,
   "theme": "light",
   "remoteControlAtStartup": true,
