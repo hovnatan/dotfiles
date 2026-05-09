@@ -15,6 +15,20 @@
       "Bash(tmux capture-pane *)",
       "Bash(tmux info *)"
     ],
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~*)",
+      "Bash(rm -rf $HOME*)",
+      "Bash(sudo rm -rf *)",
+      "Bash(git push --force *main*)",
+      "Bash(git push --force *master*)",
+      "Bash(git push -f *main*)",
+      "Bash(git push -f *master*)",
+      "Bash(git push --force *develop*)",
+      "Bash(git push -f *develop*)",
+      "Bash(dd if=* of=/dev/*)",
+      "Bash(mkfs*)"
+    ],
     "ask": [
       "Bash(git push*)",
       "Bash(git reset --hard*)",
@@ -31,29 +45,16 @@
       "Bash(gh issue close*)",
       "Bash(gh release create*)"
     ],
-    "deny": [
-      "Bash(rm -rf /*)",
-      "Bash(rm -rf ~*)",
-      "Bash(rm -rf $HOME*)",
-      "Bash(sudo rm -rf *)",
-      "Bash(git push --force *main*)",
-      "Bash(git push --force *master*)",
-      "Bash(git push -f *main*)",
-      "Bash(git push -f *master*)",
-      "Bash(git push --force *develop*)",
-      "Bash(git push -f *develop*)",
-      "Bash(dd if=* of=/dev/*)",
-      "Bash(mkfs*)"
-    ],
     "defaultMode": "auto"
   },
+  "model": "claude-opus-4-7[1m]",
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true
   },
-  "model": "claude-opus-4-7[1m]",
   "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "remoteControlAtStartup": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true
 }
