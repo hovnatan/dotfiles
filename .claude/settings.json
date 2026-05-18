@@ -48,10 +48,19 @@
     "defaultMode": "auto"
   },
   "model": "claude-opus-4-7[1m]",
-  "enabledPlugins": {
-    "chrome-devtools-mcp@claude-plugins-official": true
-  },
   "effortLevel": "xhigh",
+  "enabledPlugins": {
+    "chrome-devtools-mcp@claude-plugins-official": true,
+    "andrej-karpathy-skills@karpathy-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "karpathy-skills": {
+      "source": {
+        "source": "github",
+        "repo": "multica-ai/andrej-karpathy-skills"
+      }
+    }
+  },
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "remoteControlAtStartup": true,
