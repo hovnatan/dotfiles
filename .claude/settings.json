@@ -48,10 +48,10 @@
     "defaultMode": "auto"
   },
   "model": "claude-opus-4-7[1m]",
-  "effortLevel": "xhigh",
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true,
-    "andrej-karpathy-skills@karpathy-skills": true
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "claude-code-setup@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "karpathy-skills": {
@@ -61,6 +61,7 @@
       }
     }
   },
+  "effortLevel": "max",
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "remoteControlAtStartup": true,
