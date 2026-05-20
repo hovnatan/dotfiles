@@ -39,17 +39,21 @@ ln -s ~/.dotfiles/.vimrc ~/.vimrc
 # ln -s ~/.dotfiles/.bashrc_local ~/.bashrc_local
 
 
-if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
+rm -rf ~/.config/git
+ln -s ~/.dotfiles/.config/git ~/.config/git
+
+# Machine-local git config — not tracked in dotfiles. It pulls in the shared,
+# tracked config.shared via [include], and also receives `git config --global`
+# writes and tool injections (safe.directory, ...), keeping config.shared clean.
+if ! grep -qs 'config\.shared' ~/.gitconfig; then
     cat <<EOT >> ~/.gitconfig
 [include]
-  path = ~/.dotfiles/.gitconfig_common
+  path = ~/.config/git/config.shared
 [user]
-  name = Hovnatan Karapetyan
-  email = 
+  email =
 # [core]
 #   sshCommand = ssh -i ~/.ssh/hk_dev.pem -F /dev/null
 EOT
-# vim ~/.gitconfig # add email
 fi
 
 mkdir -p ~/.config
