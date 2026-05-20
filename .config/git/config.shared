@@ -1,3 +1,8 @@
+# Shared git config — tracked in the dotfiles repo. Pulled in via [include] by
+# ~/.gitconfig, the machine-local file git reads as global config.
+# Machine-specific settings (user.email, tool injections) live in ~/.gitconfig.
+[user]
+  name = Hovnatan Karapetyan
 [column]
   ui = auto
 [branch]
