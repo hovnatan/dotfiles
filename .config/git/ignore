@@ -1,0 +1,30 @@
+# Global gitignore — patterns tied to this machine/OS/editor, not to any project.
+# Project-specific artifacts belong in each project's own .gitignore.
+
+# --- Scratch ---
+temp
+tmp
+
+# --- macOS ---
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+.fseventsd
+.DocumentRevisions-V100
+
+# --- Vim ---
+*~
+*.sw[a-p]
+*.un~
+Session.vim
+.netrwhist
+
+# --- ctags / tooling ---
+tags
+TAGS
+
+# --- Secrets safety net ---
+.env
