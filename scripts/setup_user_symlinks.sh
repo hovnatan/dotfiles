@@ -90,6 +90,16 @@ ln -sf ~/.dotfiles/.codex/config.toml ~/.codex/config.toml
 mkdir -p ~/.claude
 ln -sf ~/.dotfiles/.claude/settings.json ~/.claude/settings.json
 
+# Claude Code personal skills — keep ~/.claude/skills as a real directory so
+# skills installed by other means are left alone, and symlink in each skill
+# vendored under .dotfiles/.claude/skills/ (pinned per skill via .upstream;
+# see scripts/check_skill_updates.sh).
+mkdir -p ~/.claude/skills
+for skill in ~/.dotfiles/.claude/skills/*/; do
+  [ -d "$skill" ] || continue
+  ln -sfn "${skill%/}" ~/.claude/skills/"$(basename "$skill")"
+done
+
 ln -s ~/.dotfiles/.config/ghostty ~/.config/
 
 mkdir -p ~/.local/{bin,local}
