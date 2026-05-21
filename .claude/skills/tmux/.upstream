@@ -1,0 +1,4 @@
+repo=https://github.com/mitsuhiko/agent-stuff
+subdir=skills/tmux
+branch=main
+commit=7b9f32efa00c4d90b5dc1480f3d472f38769bcdd
