@@ -66,5 +66,18 @@
   "theme": "auto",
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.dotfiles/.claude/hooks/skill-notify.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
