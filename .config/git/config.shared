@@ -24,6 +24,7 @@
   prune = true
   pruneTags = true
   all = true
+  recurseSubmodules = on-demand
 [merge]
   conflictstyle = zdiff3
 [core]
@@ -45,3 +46,5 @@
   autoSquash = true
   autoStash = false
   updateRefs = true
+[submodule]
+  recurse = true
