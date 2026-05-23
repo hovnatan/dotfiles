@@ -89,6 +89,7 @@ ln -sf ~/.dotfiles/.codex/config.toml ~/.codex/config.toml
 
 mkdir -p ~/.claude
 ln -sf ~/.dotfiles/.claude/settings.json ~/.claude/settings.json
+ln -sf ~/.dotfiles/.claude/CLAUDE.md ~/.claude/CLAUDE.md
 
 # Claude Code personal skills — keep ~/.claude/skills as a real directory so
 # skills installed by other means are left alone, and symlink in each skill
