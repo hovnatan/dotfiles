@@ -63,17 +63,11 @@
   },
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true,
-    "andrej-karpathy-skills@karpathy-skills": true,
     "claude-code-setup@claude-plugins-official": true,
-    "astral@astral-sh": true
+    "astral@astral-sh": true,
+    "feature-dev@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
-    "karpathy-skills": {
-      "source": {
-        "source": "github",
-        "repo": "multica-ai/andrej-karpathy-skills"
-      }
-    },
     "astral-sh": {
       "source": {
         "source": "github",
@@ -85,5 +79,6 @@
   "theme": "auto",
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "effortLevel": "max"
 }
