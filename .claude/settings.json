@@ -47,7 +47,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-opus-4-7[1m]",
+  "model": "claude-opus-4-8[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -80,5 +80,5 @@
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "effortLevel": "max"
+  "effortLevel": "xhigh"
 }
