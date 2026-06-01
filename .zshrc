@@ -87,31 +87,31 @@ git_prompt_status() {
 # Function to load environment variables from a file, defaults to .env
 function loadenv() {
   local env_file="${1:-.env}"  # Use first argument if provided, otherwise default to .env
-  
+
   if [[ -f "$env_file" ]]; then
     echo "Loading environment variables from: $env_file"
-    
+
     # Store original environment
     local orig_env=$(env)
-    
+
     # Load the environment file
     setopt allexport
     source "$env_file"
     unsetopt allexport
-    
+
     # Compare and show new/modified variables
     echo "\nNewly set/modified environment variables:"
     echo "======================================="
     local new_env=$(env)
     local new_vars=()
-    
+
     while IFS= read -r line; do
       if ! echo "$orig_env" | grep -Fq "$line"; then
         local var_name="${line%%=*}"
         echo "$var_name=${(P)var_name}"
       fi
     done < <(echo "$new_env")
-    
+
     echo "\nEnvironment variables loaded successfully"
     return 0
   else
@@ -344,8 +344,8 @@ export EDITOR=vim
 export COLORTERM=truecolor
 
 export MAKEFLAGS="-j11"
-export CFLAGS="-march=native -O3"
-export CXXFLAGS="-march=native -O3"
+export CFLAGS="-march=native -O3" # -march=apple-m3 sometimes needed for Macs
+export CXXFLAGS="-march=native -O3" # -march=apple-m3 sometimes needed for Macs
 
 ########################################################################################
 
