@@ -101,6 +101,11 @@ for skill in ~/.dotfiles/.claude/skills/*/; do
   ln -sfn "${skill%/}" ~/.claude/skills/"$(basename "$skill")"
 done
 
+# Expose the same skills under ~/.agents/skills for tools that look there.
+mkdir -p ~/.agents
+rm -rf ~/.agents/skills
+ln -s ~/.claude/skills ~/.agents/skills
+
 ln -s ~/.dotfiles/.config/ghostty ~/.config/
 
 mkdir -p ~/.local/{bin,local}
