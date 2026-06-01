@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-SSH_DIR="$HOME/.ssh_pinggy"
+SSH_DIR="$HOME/.ssh_current_user"
 mkdir -p "$SSH_DIR"
 HOST_KEY="$SSH_DIR/host_key"
 AUTHORIZED_KEYS="$SSH_DIR/authorized_keys"
@@ -35,8 +35,11 @@ echo "Starting sshd on port $SSHD_PORT..."
 
 echo "sshd running on port $SSHD_PORT"
 
-# Start Pinggy tunnel
-echo "Starting Pinggy tunnel..."
-ssh -p 443 -R0:localhost:$SSHD_PORT tcp@a.pinggy.io
 
-# to connect: ssh -i <private-key-file> -p <pinggy-port> <remote-user>@<pinggy-hostname>
+# if you want to connect to the local machine from the internet, you can use the following setup:
+
+# Start Pinggy tunnel
+# echo "Starting Pinggy tunnel..."
+# ssh -p 443 -R0:localhost:$SSHD_PORT tcp@a.pinggy.io
+
+# ssh -i <private-key-file> -p <pinggy-port> <remote-user>@<pinggy-hostname>
