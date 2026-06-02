@@ -15,36 +15,6 @@
       "Bash(tmux capture-pane *)",
       "Bash(tmux info *)"
     ],
-    "deny": [
-      "Bash(rm -rf /*)",
-      "Bash(rm -rf ~*)",
-      "Bash(rm -rf $HOME*)",
-      "Bash(sudo rm -rf *)",
-      "Bash(git push --force *main*)",
-      "Bash(git push --force *master*)",
-      "Bash(git push -f *main*)",
-      "Bash(git push -f *master*)",
-      "Bash(git push --force *develop*)",
-      "Bash(git push -f *develop*)",
-      "Bash(dd if=* of=/dev/*)",
-      "Bash(mkfs*)"
-    ],
-    "ask": [
-      "Bash(git push*)",
-      "Bash(git reset --hard*)",
-      "Bash(git clean -f*)",
-      "Bash(git branch -D *)",
-      "Bash(git checkout -- *)",
-      "Bash(git checkout .*)",
-      "Bash(git restore .*)",
-      "Bash(rm -rf *)",
-      "Bash(sudo *)",
-      "Bash(npm publish*)",
-      "Bash(gh pr merge*)",
-      "Bash(gh pr close*)",
-      "Bash(gh issue close*)",
-      "Bash(gh release create*)"
-    ],
     "defaultMode": "auto"
   },
   "model": "claude-opus-4-8[1m]",
