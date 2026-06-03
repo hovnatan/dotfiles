@@ -2,6 +2,21 @@
 
 When working with Python, invoke the relevant /astral:<skill> for uv, ty, and ruff to ensure best practices are followed.
 
+# Use plain ASCII, avoid ambiguous Unicode characters
+
+Default to plain ASCII everywhere -- code, strings, comments, identifiers, commit messages, and prose/Markdown -- unless a non-ASCII character is genuinely required (e.g. a proper noun, a real math symbol, an existing API). Two reasons:
+- In prose, fancy typography (especially the em dash) reads as an LLM tell. Prefer plain `-` / `--`.
+- In code, many Unicode characters look like ASCII but are not, and linters (e.g. ruff RUF001/RUF002/RUF003) reject them: "String contains ambiguous `×` (MULTIPLICATION SIGN). Did you mean `x`?".
+
+Common offenders and their ASCII replacements:
+- `–` `—` (en/em dash) -> `-` or `--`
+- `“` `”` `‘` `’` (smart quotes) -> `"` `'`
+- `…` (ellipsis) -> `...`
+- `×` (multiplication sign) -> `x` or `*`
+- `→` (arrow) -> `->`
+- `·` (middle dot) -> `.` or `*`
+- non-breaking space (U+00A0) -> regular space
+
 # Andrej Karpathy behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
@@ -15,6 +30,7 @@ Before implementing:
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- Look for opportunities to prefactor the code to make the implementation easier. "Make the change easy, then make the easy change."
 
 ## 2. Simplicity First
 
@@ -37,6 +53,8 @@ When editing existing code:
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it - don't delete it.
+
+Prefactoring (Section 1) is the deliberate exception: refactoring purely to make the upcoming change easy is allowed, but keep it a separate, self-contained step (ideally its own commit) - not opportunistic cleanup mixed into the feature change.
 
 When your changes create orphans:
 - Remove imports/variables/functions that YOUR changes made unused.
