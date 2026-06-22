@@ -17,7 +17,6 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -45,7 +44,7 @@
       }
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "max",
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "remoteControlAtStartup": true,
