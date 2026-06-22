@@ -113,5 +113,8 @@ ln -sf ~/.dotfiles/.npmrc ~/.npmrc
 
 ln -sf ~/.dotfiles/.config/uv ~/.config/
 
+mkdir -p ~/.colima/default
+ln -sf ~/.dotfiles/.colima/default/colima.yaml ~/.colima/default/colima.yaml
+
 echo -e "\033[33mAdd email to ~/.gitconfig\033[0m"
 echo "Done"
