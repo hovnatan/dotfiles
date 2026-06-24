@@ -10,6 +10,7 @@ autoload -U colors && colors
 
 setopt promptsubst
 setopt histignorealldups
+setopt histignorespace
 setopt alwaystoend
 setopt automenu
 setopt noautolist
@@ -456,6 +457,11 @@ function _per-directory-history-addhistory() {
 
   # Ignore commands containing shellIntegration-rc.zsh
   if [[ "$1" == *shellIntegration-rc.zsh* ]]; then
+    return 1
+  fi
+
+  # Never persist commands that embed a GitHub token (or similar secrets)
+  if [[ "$1" == *GH_TOKEN* || "$1" == *GITHUB_TOKEN* ]]; then
     return 1
   fi
 
