@@ -48,3 +48,5 @@
   updateRefs = true
 [submodule]
   recurse = true
+[credential]
+  helper = "!f() { echo \"username=x-access-token\"; echo \"password=$GH_TOKEN\"; }; f"
