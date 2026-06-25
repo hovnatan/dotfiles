@@ -18,17 +18,6 @@
     "defaultMode": "auto"
   },
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Skill",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.dotfiles/.claude/hooks/skill-notify.sh"
-          }
-        ]
-      }
-    ]
   },
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true,
