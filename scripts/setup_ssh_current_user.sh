@@ -12,7 +12,9 @@ AUTHORIZED_KEYS="$SSH_DIR/authorized_keys"
 #   export PUB_KEY_FILES="$HOME/.ssh/id_ed25519.pub /path/to/other.pub"
 #   export PUB_KEY_URL="https://example.com/key.pub"
 #
-# Generate a new key pair (the .pub file is what you point PUB_KEY_FILES at):
+# Generate a new key pair on the host machine you will connect FROM, keep the
+# private key there, and copy only the public (.pub) part here to point
+# PUB_KEY_FILES at:
 #   ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -C "your_comment"
 PUB_KEY_FILES="${PUB_KEY_FILES:-}"
 PUB_KEY_URL="${PUB_KEY_URL:-https://raw.githubusercontent.com/hovnatan/dotfiles/refs/heads/main/.ssh/id_ed25519.pub}"
