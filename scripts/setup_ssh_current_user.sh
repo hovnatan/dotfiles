@@ -6,7 +6,6 @@ SSH_DIR="$HOME/.ssh_current_user"
 mkdir -p "$SSH_DIR"
 HOST_KEY="$SSH_DIR/host_key"
 AUTHORIZED_KEYS="$SSH_DIR/authorized_keys"
-# My public key: https://raw.githubusercontent.com/hovnatan/dotfiles/refs/heads/main/.ssh/id_ed25519.pub
 SSHD_PORT=2222
 
 # Generate host key if it doesn't exist
@@ -20,6 +19,7 @@ fi
 echo "Generate a key pair on the host you will connect FROM, keep the private key there,"
 echo "and copy only the public (.pub) part into: $AUTHORIZED_KEYS"
 echo "  ssh-keygen -t ed25519 -f \"\$HOME/.ssh/id_ed25519\" -C \"your_comment\""
+echo "Hovnatan's pub key: https://raw.githubusercontent.com/hovnatan/dotfiles/refs/heads/main/.ssh/id_ed25519.pub"
 
 # Kill any existing sshd on this port
 pkill -f "sshd -p $SSHD_PORT" 2>/dev/null || true
