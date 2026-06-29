@@ -40,4 +40,6 @@ echo "sshd running on port $SSHD_PORT"
 # echo "Starting Pinggy tunnel..."
 # ssh -p 443 -R0:localhost:$SSHD_PORT tcp@a.pinggy.io
 
+# <private-key-file> must be the private key paired with the public key in $AUTHORIZED_KEYS
+# (either the one generated above on the connecting host, or the one paired to Hovnatan's pub key).
 # ssh -i <private-key-file> -p <pinggy-port> <remote-user>@<pinggy-hostname>
