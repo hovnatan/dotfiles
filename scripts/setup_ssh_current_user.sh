@@ -6,18 +6,7 @@ SSH_DIR="$HOME/.ssh_current_user"
 mkdir -p "$SSH_DIR"
 HOST_KEY="$SSH_DIR/host_key"
 AUTHORIZED_KEYS="$SSH_DIR/authorized_keys"
-# Source of the authorized public key(s). Export PUB_KEY_FILES with one or more
-# local files (space-separated) to use them as the base instead of fetching
-# from PUB_KEY_URL. Both can be overridden from the environment, e.g.:
-#   export PUB_KEY_FILES="$HOME/.ssh/id_ed25519.pub /path/to/other.pub"
-#   export PUB_KEY_URL="https://example.com/key.pub"
-#
-# Generate a new key pair on the host machine you will connect FROM, keep the
-# private key there, and copy only the public (.pub) part here to point
-# PUB_KEY_FILES at:
-#   ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -C "your_comment"
-PUB_KEY_FILES="${PUB_KEY_FILES:-}"
-PUB_KEY_URL="${PUB_KEY_URL:-https://raw.githubusercontent.com/hovnatan/dotfiles/refs/heads/main/.ssh/id_ed25519.pub}"
+# My public key: https://raw.githubusercontent.com/hovnatan/dotfiles/refs/heads/main/.ssh/id_ed25519.pub
 SSHD_PORT=2222
 
 # Generate host key if it doesn't exist
@@ -28,16 +17,7 @@ else
     echo "Host key already exists at $HOST_KEY"
 fi
 
-# Build authorized_keys from local files if given, otherwise fetch from the URL
-if [ -n "$PUB_KEY_FILES" ]; then
-    echo "Reading public key(s) from local file(s): $PUB_KEY_FILES"
-    cat $PUB_KEY_FILES > "$AUTHORIZED_KEYS"
-else
-    echo "Fetching public key from GitHub..."
-    curl -fsSL "$PUB_KEY_URL" > "$AUTHORIZED_KEYS"
-fi
-chmod 600 "$AUTHORIZED_KEYS"
-echo "Authorized key written to $AUTHORIZED_KEYS"
+echo "Add your public key to: $AUTHORIZED_KEYS"
 
 # Kill any existing sshd on this port
 pkill -f "sshd -p $SSHD_PORT" 2>/dev/null || true
