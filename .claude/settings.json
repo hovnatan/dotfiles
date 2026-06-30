@@ -17,8 +17,7 @@
     ],
     "defaultMode": "auto"
   },
-  "hooks": {
-  },
+  "hooks": {},
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
@@ -33,10 +32,11 @@
       }
     }
   },
-  "effortLevel": "max",
+  "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "tui": "fullscreen"
 }
