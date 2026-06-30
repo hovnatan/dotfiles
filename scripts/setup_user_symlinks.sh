@@ -59,6 +59,8 @@ if ! grep -qs 'config\.shared' ~/.gitconfig; then
   email =
 # [core]
 #   sshCommand = ssh -i ~/.ssh/hk_dev.pem -F /dev/null
+[credential]
+  helper = "!f() { echo \"username=x-access-token\"; echo \"password=\$GH_TOKEN\"; }; f"
 EOT
 fi
 
