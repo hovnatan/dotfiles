@@ -20,8 +20,14 @@ rm -rf ~/.tmux.conf
 ln -s ~/.dotfiles/.tmux.conf ~/.tmux.conf
 mkdir -p ~/.tmux/logs
 
-rm -rf ~/.zshrc
-ln -s ~/.dotfiles/.zshrc ~/.zshrc
+[ -L ~/.zshrc ] && rm -f ~/.zshrc
+if ! grep -qs '\.zshrc\.shared' ~/.zshrc; then
+cat <<EOT >> ~/.zshrc
+if [[ -f "\$HOME/.dotfiles/.zshrc.shared" ]]; then
+  source "\$HOME/.dotfiles/.zshrc.shared"
+fi
+EOT
+fi
 
 mkdir -p ~/.vimundo/
 rm -rf ~/.vimrc

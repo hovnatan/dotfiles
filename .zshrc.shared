@@ -1,7 +1,3 @@
-if [[ -f "$HOME/.zshrc_local_pre" ]]; then
-  source "$HOME/.zshrc_local_pre"
-fi
-
 typeset -aU path
 
 export SHELL="/bin/zsh"
@@ -579,7 +575,3 @@ zsh_command_time() {
 
 precmd_functions+=(_command_time_precmd)
 preexec_functions+=(_command_time_preexec)
-
-if [[ -f "$HOME/.zshrc_local_post" ]]; then
-  source "$HOME/.zshrc_local_post"
-fi
