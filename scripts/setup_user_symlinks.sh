@@ -52,6 +52,7 @@ ln -s ~/.dotfiles/.config/git ~/.config/git
 # tracked config.shared via [include], and also receives `git config --global`
 # writes and tool injections (safe.directory, ...), keeping config.shared clean.
 if ! grep -qs 'config\.shared' ~/.gitconfig; then
+    echo -e "\033[33mAdd email to ~/.gitconfig\033[0m"
     cat <<EOT >> ~/.gitconfig
 [include]
   path = ~/.config/git/config.shared
@@ -127,5 +128,4 @@ ln -sf ~/.dotfiles/.config/uv ~/.config/
 mkdir -p ~/.colima/default
 ln -sf ~/.dotfiles/.colima/default/colima.yaml ~/.colima/default/colima.yaml
 
-echo -e "\033[33mAdd email to ~/.gitconfig\033[0m"
 echo "Done"
