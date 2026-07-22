@@ -3,5 +3,9 @@ font-size = 15
 font-family = SF Mono
 font-thicken = true
 
+# Auto-install xterm-ghostty terminfo on remote hosts over ssh,
+# falling back to TERM=xterm-256color where that fails.
+shell-integration-features = ssh-env,ssh-terminfo
+
 keybind = super+j=previous_tab
 keybind = super+k=next_tab
