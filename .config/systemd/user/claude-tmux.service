@@ -1,0 +1,39 @@
+[Unit]
+Description=tmux session "claude" running Claude Code
+Documentation=man:tmux(1)
+After=default.target
+# Safety valve: if claude exits immediately (bad auth, bad config), give up
+# after 10 restarts in 5 minutes instead of looping forever.
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+[Service]
+Type=simple
+
+# Directory the session starts in. Set by scripts/setup_claude_tmux_service.sh;
+# edit ~/.config/claude-tmux.env to change it.
+Environment=CLAUDE_TMUX_DIR=%h
+EnvironmentFile=-%h/.config/claude-tmux.env
+
+# systemd has to track the *session*, not the tmux server. The server is shared
+# with your interactive sessions and lives as long as any one of them exists
+# (and with "exit-empty off" even when none do), so its lifetime says nothing
+# about whether claude is still running. The loop below exits when the "claude"
+# session disappears, which is what triggers Restart=always.
+#
+# bash -lc runs the login shell so PATH (~/.local/bin) and anything else exported
+# from ~/.profile is present -- systemd does not source it.
+ExecStart=/bin/bash -c 'tmux new-session -d -A -s claude -c "$${CLAUDE_TMUX_DIR}" \
+    /bin/bash -lc "claude --dangerously-skip-permissions"; \
+    while tmux has-session -t =claude 2>/dev/null; do sleep 5; done'
+ExecStop=/bin/bash -c 'tmux kill-session -t =claude'
+
+Restart=always
+RestartSec=5
+
+# Only kill the waiter on stop. The default (control-group) would take the
+# shared tmux server -- and every other session on it -- down with it.
+KillMode=process
+
+[Install]
+WantedBy=default.target
