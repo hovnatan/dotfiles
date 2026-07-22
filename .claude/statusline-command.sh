@@ -15,6 +15,7 @@ ctx_used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 agent_name=$(echo "$input" | jq -r '.agent.name // empty')
 rl_five_used=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 rl_week_used=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+running_version=$(echo "$input" | jq -r '.version // empty')
 
 # Abbreviate cwd to match PS1's path_abbrev: $HOME -> ~, then shorten every
 # parent path component to its first character, keeping the last component full.
@@ -122,4 +123,13 @@ if [ -n "$rl_parts" ]; then
   rl=" \033[2m|\033[0m ${rl_parts}"
 fi
 
-printf '\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m \033[2m[%s]\033[0m%b%b' "$path" "$branch" "$agent" "$model" "$effort" "$ctx" "$rl"
+# Pending upgrade: the native installer points ~/.local/bin/claude at the newest
+# downloaded version, but this process keeps running the one it started with.
+# A mismatch means a restart picks up a newer Claude Code.
+upd=""
+installed_version=$(basename "$(readlink "$HOME/.local/bin/claude" 2>/dev/null)" 2>/dev/null)
+if [ -n "$installed_version" ] && [ -n "$running_version" ] && [ "$installed_version" != "$running_version" ]; then
+  upd=" \033[2m|\033[0m \033[1;33mupd ${installed_version}\033[0m"
+fi
+
+printf '\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m \033[2m[%s]\033[0m%b%b%b' "$path" "$branch" "$agent" "$model" "$effort" "$ctx" "$rl" "$upd"
