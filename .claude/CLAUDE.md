@@ -2,6 +2,22 @@
 
 When working with Python, invoke the relevant /astral:<skill> for uv, ty, and ruff to ensure best practices are followed.
 
+# Memory updates: consider promoting to repo-tracked docs
+
+Whenever you create or update a file in the Claude memory directory
+(~/.claude/projects/*/memory/), explicitly consider in the same turn whether
+the fact belongs in the git-tracked layer instead of (or in addition to)
+memory, and say what you decided:
+
+- project skills (e.g. `sdk/.claude/skills/...`) for operational pipeline
+  knowledge and lessons from runs;
+- repo CLAUDE.md / AGENTS.md for repo-wide conventions and procedures.
+
+Memory is machine-local; repo files reach every VM and teammate via git.
+Do NOT promote personal preferences or machine/account specifics (VM names,
+SSH details, my workflow choices) into team-shared repo files - those stay
+in memory.
+
 # Use plain ASCII, avoid ambiguous Unicode characters
 
 Default to plain ASCII everywhere -- code, strings, comments, identifiers, commit messages, and prose/Markdown -- unless a non-ASCII character is genuinely required (e.g. a proper noun, a real math symbol, an existing API). Two reasons:
