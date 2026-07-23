@@ -24,7 +24,7 @@ EnvironmentFile=-%h/.config/claude-tmux.env
 # bash -lc runs the login shell so PATH (~/.local/bin) and anything else exported
 # from ~/.profile is present -- systemd does not source it.
 ExecStart=/bin/bash -c 'tmux new-session -d -A -s claude -c "$${CLAUDE_TMUX_DIR}" \
-    /bin/bash -lc "claude --remote-control --dangerously-skip-permissions"; \
+    /bin/bash -lc "claude --continue --remote-control --dangerously-skip-permissions"; \
     while tmux has-session -t =claude 2>/dev/null; do sleep 5; done'
 ExecStop=/bin/bash -c 'tmux kill-session -t =claude'
 
