@@ -14,6 +14,15 @@
       "bindings": {
         "escape": null
       }
+    },
+    {
+      "context": "Scroll",
+      "bindings": {
+        "meta+k": "scroll:pageUp",
+        "meta+j": "scroll:pageDown",
+        "meta+g": "scroll:top",
+        "meta+shift+g": "scroll:bottom"
+      }
     }
   ]
 }
