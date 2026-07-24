@@ -2,6 +2,11 @@
 
 When working with Python, invoke the relevant /astral:<skill> for uv, ty, and ruff to ensure best practices are followed.
 
+# Never commit unless explicitly asked
+
+Do NOT run `git commit` (or `git push`) unless I explicitly ask you to commit.
+Make and stage changes as needed, but leave committing to me unless I say so.
+
 # Memory updates: consider promoting to repo-tracked docs
 
 Whenever you create or update a file in the Claude memory directory
