@@ -123,13 +123,17 @@ if [ -n "$rl_parts" ]; then
   rl=" \033[2m|\033[0m ${rl_parts}"
 fi
 
-# Pending upgrade: the native installer points ~/.local/bin/claude at the newest
-# downloaded version, but this process keeps running the one it started with.
-# A mismatch means a restart picks up a newer Claude Code.
-upd=""
+# Currently running Claude Code version. Red when a newer version is installed
+# (a restart would pick it up); dim otherwise.
 installed_version=$(basename "$(readlink "$HOME/.local/bin/claude" 2>/dev/null)" 2>/dev/null)
-if [ -n "$installed_version" ] && [ -n "$running_version" ] && [ "$installed_version" != "$running_version" ]; then
-  upd=" \033[2m|\033[0m \033[1;33mupd ${installed_version}\033[0m"
+ver=""
+if [ -n "$running_version" ]; then
+  if [ -n "$installed_version" ] && [ "$installed_version" != "$running_version" ]; then
+    vcolor='\033[1;31m'
+  else
+    vcolor='\033[2m'
+  fi
+  ver=" \033[2m|\033[0m ${vcolor}v${running_version}\033[0m"
 fi
 
-printf '\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m \033[2m[%s]\033[0m%b%b%b' "$path" "$branch" "$agent" "$model" "$effort" "$ctx" "$rl" "$upd"
+printf '\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m \033[2m[%s]\033[0m%b%b%b' "$path" "$branch" "$agent" "$model" "$effort" "$ctx" "$rl" "$ver"
