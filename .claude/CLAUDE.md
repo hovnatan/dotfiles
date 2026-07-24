@@ -38,6 +38,18 @@ Common offenders and their ASCII replacements:
 - `·` (middle dot) -> `.` or `*`
 - non-breaking space (U+00A0) -> regular space
 
+# Slack: I paste raw markup, not rich formatting
+
+My Slack client has "Format messages with markup" enabled (no WYSIWYG editor).
+When drafting Slack-bound messages for me, give raw mrkdwn I can paste as-is:
+- *bold*, _italic_, `inline code`, and literal ``` fences typed inline (they
+  become code blocks on send); bullets as `*` or `-` lines.
+- Slack has no tables: put tabular data inside a ``` block with space-aligned
+  columns and no leading indentation (outside a block Slack's proportional
+  font destroys alignment).
+- Slack mrkdwn is not GitHub markdown: no headers, no [text](url) links
+  (use <url|text> instead), and single *asterisks* mean bold, not italic.
+
 # Andrej Karpathy behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
