@@ -126,6 +126,9 @@ ln -sf ~/.dotfiles/.npmrc ~/.npmrc
 
 ln -sf ~/.dotfiles/.config/uv ~/.config/
 
+# IINA (macOS) reads ~/.config/iina as its mpv config dir, incl. scripts/
+ln -sf ~/.dotfiles/.config/iina ~/.config/
+
 mkdir -p ~/.colima/default
 ln -sf ~/.dotfiles/.colima/default/colima.yaml ~/.colima/default/colima.yaml
 
