@@ -6,6 +6,8 @@ When working with Python, invoke the relevant /astral:<skill> for uv, ty, and ru
 
 Do NOT run `git commit` (or `git push`) unless I explicitly ask you to commit.
 Make and stage changes as needed, but leave committing to me unless I say so.
+NEVER force push (`git push --force` or `--force-with-lease`) unless I
+explicitly ask for a force push - asking for a regular push does not count.
 
 # Memory updates: consider promoting to repo-tracked docs
 
