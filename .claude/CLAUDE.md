@@ -9,6 +9,12 @@ Make and stage changes as needed, but leave committing to me unless I say so.
 NEVER force push (`git push --force` or `--force-with-lease`) unless I
 explicitly ask for a force push - asking for a regular push does not count.
 
+These rules are also enforced by a PreToolUse hook
+(~/.dotfiles/.claude/git-guard.sh): every git commit and push - force pushes
+included - triggers a permission prompt so I approve each one explicitly.
+If the hook prompts, that is expected; do NOT try to work around it (e.g.
+`sh -c`, editing settings.json, disabling hooks).
+
 # Memory updates: consider promoting to repo-tracked docs
 
 Whenever you create or update a file in the Claude memory directory
