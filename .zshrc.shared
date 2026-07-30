@@ -1,6 +1,6 @@
 typeset -aU path
 
-export SHELL="/bin/zsh"
+export SHELL="$(command -v zsh)"
 
 autoload -U colors && colors
 
@@ -11,14 +11,15 @@ setopt alwaystoend
 setopt automenu
 setopt noautolist
 setopt nobeep
-setopt incappendhistory
+setopt extendedhistory
+setopt incappendhistorytime
 setopt histsavenodups
 setopt nocaseglob
 
 # Prevent terminal software flow control (Ctrl+S/Ctrl+Q), which can make iTerm2
 # look "frozen" / like paste isn't working (common when tools inject keystrokes).
 setopt noflowcontrol
-stty -ixon -ixoff
+[[ -t 0 ]] && stty -ixon -ixoff
 
 path_abbrev() {
   local full_path=${PWD/#$HOME/\~}
@@ -91,8 +92,8 @@ function loadenv() {
     # Store original environment
     local orig_env=$(env)
 
-    # Load the environment file
-    setopt allexport
+    # Load the environment file; localoptions restores allexport state on return
+    setopt localoptions allexport
     source "$env_file"
     unsetopt allexport
 
@@ -100,7 +101,6 @@ function loadenv() {
     echo "\nNewly set/modified environment variables:"
     echo "======================================="
     local new_env=$(env)
-    local new_vars=()
 
     while IFS= read -r line; do
       if ! echo "$orig_env" | grep -Fq "$line"; then
@@ -203,12 +203,14 @@ bindkey -M menuselect '^?' backward-delete-char
 bindkey -M menuselect '^[[Z' reverse-menu-complete
 bindkey -M menuselect '^[' undo
 
-# Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
-HISTSIZE=1000
-SAVEHIST=1000
+# ~100 MB of history at roughly 70 bytes per extended-history entry
+HISTSIZE=1500000
+SAVEHIST=1500000
 HISTFILE=~/.zsh_history
+# Never write commands embedding secrets (or VSCode shell-integration noise) to the history file
+HISTORY_IGNORE='(*GH_TOKEN*|*GITHUB_TOKEN*|*shellIntegration-rc.zsh*)'
 
-fpath=(~/.docker/completions \\$fpath)
+fpath=(~/.docker/completions $fpath)
 autoload -Uz compinit && compinit
 autoload -Uz bashcompinit && bashcompinit
 
@@ -229,7 +231,6 @@ zstyle ':completion:*' menu select
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' list-colors ''
 zstyle ':completion:*' list-prompt ''
-zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' select-prompt ''
 zstyle ':completion:*' use-compctl false
@@ -237,34 +238,16 @@ zstyle ':completion:*' verbose true
 zstyle ':completion:*' file-sort modification
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
-zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,command'
 
 autoload -Uz edit-command-line
 zle -N edit-command-line
 bindkey -M vicmd v edit-command-line
 
-import_miniconda() {
-  # >>> conda initialize >>>
-  # !! Contents within this block are managed by 'conda init' !!
-  __conda_setup="$("$HOME/miniforge3/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
-  if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-  else
-    if [ -f "$HOME/miniforge3/etc/profile.d/conda.sh" ]; then
-      . "$HOME/miniforge3/etc/profile.d/conda.sh"  # commented out by conda initialize
-    else
-      export PATH="$HOME/miniforge3/bin:$PATH"  # commented out by conda initialize
-    fi
-  fi
-  unset __conda_setup
-  # <<< conda initialize <<<
-}
-
-alias ts='~/.dotfiles/tmux_select.sh'
-
-
-# Grep alias with improved options
-alias rg="grep -IiErn --color=auto --exclude='*~' --exclude='*.pyc' --exclude-dir='**/.*' --exclude-dir='__*' --exclude-dir='node_modules'"
+# Grep alias with improved options; skipped when real ripgrep is installed
+if ! command -v rg >/dev/null; then
+  alias rg="grep -IiErn --color=auto --exclude='*~' --exclude='*.pyc' --exclude-dir='**/.*' --exclude-dir='__*' --exclude-dir='node_modules'"
+fi
 
 # Function to find files with a substring in their name
 find_files_with_substring() {
@@ -274,7 +257,8 @@ find_files_with_substring() {
 # Alias for the function
 alias fh='find_files_with_substring'
 
-# System update alias with error handling and colorful output
+# System update alias with error handling and colorful output (Linux only)
+if [[ "$OSTYPE" == linux* ]]; then
 alias update='sudo apt update && \
               sudo apt -y dist-upgrade && \
               sudo apt -y autoremove && \
@@ -283,17 +267,11 @@ alias update='sudo apt update && \
               echo -e "\e[31m$(sudo snap refresh --list)\e[0m" && \
               { [ -f /var/run/reboot-required ] && echo "\e[31mReboot required\e[0m" || echo "\e[32mNo reboot needed\e[0m"; } || \
               echo "\e[33mWarning: Some commands may have failed\e[0m"'
-
-# Tmux aliases
-alias ta="tmux a -t"  # Attach to tmux session
-alias tl="tmux ls"    # List tmux sessions
+fi
 
 # Improved ls alias
 alias ls='ls --color=auto'
 alias ll='ls -alh'    # List all files in long format, human-readable sizes
-
-# Python alias
-alias py='python'
 
 # Git aliases
 alias gd='git diff'
@@ -307,8 +285,6 @@ alias gco='git checkout'
 alias glg='git log --oneline --graph --decorate --all'  # Pretty git log with all branches
 
 # File and directory management
-alias c='clear'
-alias h='history'
 alias rh='fc -RI'  # reload history from other shells
 alias df='df -h'
 alias du='du -h'
@@ -320,209 +296,28 @@ alias ....='cd ../../..'
 
 # Network related
 alias myip='curl http://ipecho.net/plain; echo'
-alias ports='netstat -tulanp'
+[[ "$OSTYPE" == linux* ]] && alias ports='netstat -tulanp'
 
 # Process management
 alias psa='ps auxf'
 alias psg='ps aux | grep -v grep | grep -i -e VSZ -e'
 
-# Source alias
-alias s='source'
-
 # umask 0077
 
 export EDITOR=vim
 
-# export LC_ALL=en_US.UTF-8
-# export LANG=en_US.UTF-8
-# export LANGUAGE=en_US.UTF-8
-# export LC_ALL=C.utf-8
+# Fallback for environments that don't set a locale (bare SSH, cron); plain C breaks UTF-8
+export LANG="${LANG:-en_US.UTF-8}"
 
 export COLORTERM=truecolor
 
-export MAKEFLAGS="-j11"
-export CFLAGS="-march=native -O3" # -march=apple-m3 sometimes needed for Macs
-export CXXFLAGS="-march=native -O3" # -march=apple-m3 sometimes needed for Macs
+export MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"
 
-########################################################################################
-
-_hydra_bash_completion()
-{
-    words=($COMP_LINE)
-    if [ "${words[0]}" == "python" ]; then
-      if (( ${#words[@]} < 2 )); then
-          return
-      fi
-      file_path=$(pwd)/${words[1]}
-      if [ ! -f "$file_path" ]; then
-          return
-      fi
-      grep "@hydra.main" $file_path -q
-      helper="${words[0]} ${words[1]}"
-    else
-        helper="${words[0]}"
-        true
-    fi
-
-    EXECUTABLE=($(command -v $helper))
-    if [ "$HYDRA_COMP_DEBUG" == "1" ]; then
-        printf "EXECUTABLE_FIRST='${EXECUTABLE[0]}'\n"
-    fi
-    if ! [ -x "${EXECUTABLE[0]}" ]; then
-        false
-    fi
-
-    if [ $? == 0 ]; then
-      choices=$( COMP_POINT=$COMP_POINT COMP_LINE=$COMP_LINE $helper -sc query=bash)
-      word=${words[$COMP_CWORD]}
-
-      if [ "$HYDRA_COMP_DEBUG" == "1" ]; then
-        printf "\n"
-        printf "COMP_LINE='$COMP_LINE'\n"
-        printf "COMP_POINT='$COMP_POINT'\n"
-        printf "Word='$word'\n"
-        printf "Output suggestions:\n"
-        printf "\t%s\n" ${choices[@]}
-      fi
-      COMPREPLY=($( compgen -o nospace -o default -W "$choices" -- "$word" ));
-    fi
+# Opt-in aggressive optimization flags; run before building performance-sensitive code
+native_flags() {
+  export CFLAGS="-march=native -O3" # -march=apple-m3 sometimes needed for Macs
+  export CXXFLAGS="-march=native -O3"
 }
-
-
-hydra_completion() {
-  export _HYDRA_OLD_COMP=$(complete -p python 2> /dev/null)
-  COMP_WORDBREAKS=${COMP_WORDBREAKS//=}
-  COMP_WORDBREAKS=$COMP_WORDBREAKS complete -o nospace -o default -F _hydra_bash_completion python
-}
-
-########################################################################################
-# from https://github.com/kadaan/per-directory-history/blob/master/per-directory-history.zsh
-
-# An implementation of per-directory history.
-# See README.md for more information.
-
-[[ -z $_per_directory_history_is_global ]] && _per_directory_history_is_global=true
-[[ -z $PER_DIRECTORY_HISTORY_BASE ]] && PER_DIRECTORY_HISTORY_BASE="$HOME/.zsh_history_dirs"
-[[ -z $PER_DIRECTORY_HISTORY_FILE ]] && PER_DIRECTORY_HISTORY_FILE="zsh-per-directory-history"
-[[ -z $PER_DIRECTORY_HISTORY_TOGGLE ]] && PER_DIRECTORY_HISTORY_TOGGLE='^g'
-
-#-------------------------------------------------------------------------------
-# toggle global/directory history used for searching - alt-l by default
-#-------------------------------------------------------------------------------
-
-function per-directory-history-toggle-history() {
-  if $_per_directory_history_is_global
-  then
-    _per-directory-history-set-directory-history
-    zle -I
-    echo "using local history"
-  else
-    _per-directory-history-set-global-history
-    zle -I
-  echo "using global history"
-  fi
-}
-
-autoload per-directory-history-toggle-history
-zle -N per-directory-history-toggle-history
-bindkey $PER_DIRECTORY_HISTORY_TOGGLE per-directory-history-toggle-history
-bindkey -M vicmd $PER_DIRECTORY_HISTORY_TOGGLE per-directory-history-toggle-history
-
-#-------------------------------------------------------------------------------
-# implementation details
-#-------------------------------------------------------------------------------
-
-_per_directory_history_path="$PER_DIRECTORY_HISTORY_BASE${PWD:A}/$PER_DIRECTORY_HISTORY_FILE"
-
-function _per-directory-history-change-directory() {
-  _per_directory_history_path="$PER_DIRECTORY_HISTORY_BASE${PWD:A}/$PER_DIRECTORY_HISTORY_FILE"
-  if ! $_per_directory_history_is_global
-  then
-    fc -P
-    mkdir -p ${_per_directory_history_path:h}
-    fc -p $_per_directory_history_path
-  fi
-}
-
-function _per-directory-history-addhistory() {
-  # respect hist_ignore_space
-  if [[ -o hist_ignore_space ]] && [[ "$1" == \ * ]]
-  then
-    return 1
-  fi
-
-  # Ignore commands containing shellIntegration-rc.zsh
-  if [[ "$1" == *shellIntegration-rc.zsh* ]]; then
-    return 1
-  fi
-
-  # Never persist commands that embed a GitHub token (or similar secrets)
-  if [[ "$1" == *GH_TOKEN* || "$1" == *GITHUB_TOKEN* ]]; then
-    return 1
-  fi
-
-  # Can't write to history (print -S) from addhistory,
-  # save command to be added later from preexec hook
-  _per_directory_history_pending_cmd="${1%%$'\n'}"
-}
-
-_per_directory_history_last_cmd=''
-
-function _per-directory-history-preexec() {
-  if [[ -v _per_directory_history_pending_cmd ]]
-  then
-    if [[ "$_per_directory_history_pending_cmd" != "$_per_directory_history_last_cmd" ]]
-    then
-      local fn
-      if $_per_directory_history_is_global
-      then
-          mkdir -p ${_per_directory_history_path:h}
-          fn=$_per_directory_history_path
-      else
-          fn=$_per_directory_history_main_histfile
-      fi
-
-      fc -p
-      print -Sr -- $_per_directory_history_pending_cmd
-      SAVEHIST=1
-      fc -A $fn
-      fc -P
-
-      _per_directory_history_last_cmd=$_per_directory_history_pending_cmd
-    fi
-
-    unset _per_directory_history_pending_cmd
-  fi
-}
-
-
-function _per-directory-history-set-directory-history() {
-  fc -P
-
-  mkdir -p ${_per_directory_history_path:h}
-  fc -p $_per_directory_history_path
-  _per_directory_history_is_global=false
-}
-function _per-directory-history-set-global-history() {
-  fc -P
-
-  fc -p $_per_directory_history_main_histfile
-  _per_directory_history_is_global=true
-}
-
-
-#add functions to the exec list for chpwd and zshaddhistory
-autoload -U add-zsh-hook
-add-zsh-hook chpwd _per-directory-history-change-directory
-add-zsh-hook zshaddhistory _per-directory-history-addhistory
-add-zsh-hook preexec _per-directory-history-preexec
-
-_per_directory_history_main_histfile=$HISTFILE
-unset HISTFILE
-
-# start in global mode
-_per-directory-history-set-global-history
-########################################################################################
 
 case ":${PATH}:" in
     *:"$HOME/.local/bin":*)
@@ -533,45 +328,3 @@ case ":${PATH}:" in
         ;;
 esac
 
-ZSH_COMMAND_TIME_EXCLUDE=(vim mcedit htop top man)
-_command_time_preexec() {
-  # check excluded
-  if [ -n "$ZSH_COMMAND_TIME_EXCLUDE" ]; then
-    cmd="$1"
-    for exc ($ZSH_COMMAND_TIME_EXCLUDE) do;
-      if [ "$(echo $cmd | grep -c "$exc")" -gt 0 ]; then
-        # echo "command excluded: $exc"
-        return
-      fi
-    done
-  fi
-
-  timer=${timer:-$SECONDS}
-  ZSH_COMMAND_TIME_MSG=${ZSH_COMMAND_TIME_MSG-"Time: %s"}
-  ZSH_COMMAND_TIME_COLOR=${ZSH_COMMAND_TIME_COLOR-"245"}
-  export ZSH_COMMAND_TIME=""
-}
-
-_command_time_precmd() {
-  if [ $timer ]; then
-    timer_show=$(($SECONDS - $timer))
-    if [ -n "$TTY" ] && [ $timer_show -ge ${ZSH_COMMAND_TIME_MIN_SECONDS:-30} ]; then
-      export ZSH_COMMAND_TIME="$timer_show"
-      if [ ! -z ${ZSH_COMMAND_TIME_MSG} ]; then
-        zsh_command_time
-      fi
-    fi
-    unset timer
-  fi
-}
-
-zsh_command_time() {
-  if [ -n "$ZSH_COMMAND_TIME" ]; then
-    timer_show=$(printf '%dh:%02dm:%02ds\n' $(($ZSH_COMMAND_TIME/3600)) $(($ZSH_COMMAND_TIME%3600/60)) $(($ZSH_COMMAND_TIME%60)))
-    current_date=$(date)
-    print -P "%F{$ZSH_COMMAND_TIME_COLOR}$(printf "${ZSH_COMMAND_TIME_MSG} # $current_date\n" "$timer_show")%f"
-  fi
-}
-
-precmd_functions+=(_command_time_precmd)
-preexec_functions+=(_command_time_preexec)
