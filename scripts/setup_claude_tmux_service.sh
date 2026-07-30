@@ -6,7 +6,7 @@
 #   bash -x ~/.dotfiles/scripts/setup_claude_tmux_service.sh [WORKDIR]
 #
 # WORKDIR is where the session starts, default $HOME.
-# Attach with: tmux attach -t claude
+# Attach with: tmux -L claude attach -t claude
 
 set -e
 
@@ -37,4 +37,4 @@ systemctl --user restart claude-tmux.service
 echo
 systemctl --user --no-pager status claude-tmux.service | head -4
 echo
-echo "Attach with: tmux attach -t claude"
+echo "Attach with: tmux -L claude attach -t claude"

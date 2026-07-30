@@ -15,26 +15,41 @@ Type=simple
 Environment=CLAUDE_TMUX_DIR=%h
 EnvironmentFile=-%h/.config/claude-tmux.env
 
-# systemd has to track the *session*, not the tmux server. The server is shared
-# with your interactive sessions and lives as long as any one of them exists
-# (and with "exit-empty off" even when none do), so its lifetime says nothing
-# about whether claude is still running. The loop below exits when the "claude"
-# session disappears, which is what triggers Restart=always.
+# Pin SHELL to zsh for the server (under systemd the passwd shell, bash,
+# would otherwise win): tmux derives default-shell from it and stamps that
+# into every pane's SHELL variable, which $SHELL-reading programs see
+# whenever no interactive zsh (whose .zshrc exports SHELL) ran in between.
+# New windows are zsh regardless -- tmux.conf hardcodes `default-command zsh`.
+Environment=SHELL=/usr/bin/zsh
+
+# The session runs on a dedicated socket (tmux -L claude), not the default
+# one, so this service never shares a server with interactive tmux sessions.
+# Attach with: tmux -L claude attach -t claude
 #
-# zsh -ilc: login so PATH (~/.local/bin) and ~/.profile exports are present
-# (systemd sources neither); interactive so .zshrc runs and sets up tmux
-# pipe-pane logging for this pane before starting claude.
-ExecStart=/bin/sh -c 'tmux new-session -d -A -s claude -c "$${CLAUDE_TMUX_DIR}" \
-    /usr/bin/zsh -ilc "claude --continue --remote-control --dangerously-skip-permissions"; \
-    while tmux has-session -t =claude 2>/dev/null; do sleep 5; done'
-ExecStop=/bin/sh -c 'tmux kill-session -t =claude'
+# systemd still has to track the *session*, not the server: the server
+# daemonizes out of ExecStart, so the loop below is what keeps the unit
+# alive, and it exits when the "claude" session disappears, which is what
+# triggers Restart=always.
+#
+# The wrapper is a login (non-interactive) zsh: the tmux server forks from
+# it and inherits the full login environment (.zprofile -> ~/.profile:
+# ~/.local/bin on PATH, exports) once, for every future pane and window. The
+# pane then runs a plain interactive non-login zsh: .zshrc runs -- opening
+# this pane's pipe-pane log -- before starting claude.
+# With "exit-empty on" the dedicated server dies with the session, so every
+# start is a cold start and this login environment always applies (-A only
+# guards against double starts).
+#
+# NB: "=claude" must stay quoted: the wrapper is zsh, where a bare =name
+# undergoes equals expansion (=claude -> /path/to/claude), silently breaking
+# the has-session check (this exact bug start-limited the unit at boot once).
+ExecStart=/usr/bin/zsh -lc 'tmux -L claude new-session -d -A -s claude -c "$${CLAUDE_TMUX_DIR}" \
+    /usr/bin/zsh -ic "claude --continue --remote-control --dangerously-skip-permissions"; \
+    while tmux -L claude has-session -t "=claude" 2>/dev/null; do sleep 5; done'
+ExecStop=/bin/sh -c 'tmux -L claude kill-session -t =claude'
 
 Restart=always
 RestartSec=5
-
-# Only kill the waiter on stop. The default (control-group) would take the
-# shared tmux server -- and every other session on it -- down with it.
-KillMode=process
 
 [Install]
 WantedBy=default.target
