@@ -29,6 +29,14 @@ fi
 EOT
 fi
 
+if ! grep -qs '\.dotfiles/\.zprofile' ~/.zprofile; then
+cat <<EOT >> ~/.zprofile
+if [[ -f "\$HOME/.dotfiles/.zprofile" ]]; then
+  source "\$HOME/.dotfiles/.zprofile"
+fi
+EOT
+fi
+
 mkdir -p ~/.vimundo/
 rm -rf ~/.vimrc
 ln -s ~/.dotfiles/.vimrc ~/.vimrc
