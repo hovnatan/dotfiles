@@ -21,12 +21,13 @@ EnvironmentFile=-%h/.config/claude-tmux.env
 # about whether claude is still running. The loop below exits when the "claude"
 # session disappears, which is what triggers Restart=always.
 #
-# bash -lc runs the login shell so PATH (~/.local/bin) and anything else exported
-# from ~/.profile is present -- systemd does not source it.
-ExecStart=/bin/bash -c 'tmux new-session -d -A -s claude -c "$${CLAUDE_TMUX_DIR}" \
-    /bin/bash -lc "claude --continue --remote-control --dangerously-skip-permissions"; \
+# zsh -ilc: login so PATH (~/.local/bin) and ~/.profile exports are present
+# (systemd sources neither); interactive so .zshrc runs and sets up tmux
+# pipe-pane logging for this pane before starting claude.
+ExecStart=/bin/sh -c 'tmux new-session -d -A -s claude -c "$${CLAUDE_TMUX_DIR}" \
+    /usr/bin/zsh -ilc "claude --continue --remote-control --dangerously-skip-permissions"; \
     while tmux has-session -t =claude 2>/dev/null; do sleep 5; done'
-ExecStop=/bin/bash -c 'tmux kill-session -t =claude'
+ExecStop=/bin/sh -c 'tmux kill-session -t =claude'
 
 Restart=always
 RestartSec=5
