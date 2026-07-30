@@ -152,7 +152,7 @@ preexec_functions+=(preexec_terminal_title)
 # Only pipe when this shell is inside tmux: run from outside, an untargeted
 # pipe-pane lands on (and, being -o, toggles!) the most recently used
 # session's active pane
-[[ -n $TMUX ]] && tmux pipe-pane -o "cat >> $HOME/.tmux/logs/tmux_session_#S_#I_#P_$(date +%Y%m%d%H%M%S).log" 2> /dev/null
+[[ -n $TMUX ]] && tmux pipe-pane -o "cat >> $HOME/.tmux/logs/tmux_session_#{b:socket_path}_#S_#I_#P_$(date +%Y%m%d%H%M%S).log" 2> /dev/null
 # Prune pane logs untouched for 14+ days (an active pane's log has a fresh
 # mtime), but always keep the newest 100 logs regardless of age
 () {
