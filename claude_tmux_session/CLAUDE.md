@@ -31,7 +31,9 @@ It is idempotent. It resumes the conversation named `<hostname>-<name>` in
 the directory that conversation belongs to; when no such conversation
 exists it starts a new one in `<dir>` -- required only in that case, so ask
 which directory if it was not said. Spawned sessions run in auto permission
-mode with Remote Control enabled.
+mode with Remote Control enabled. Append `--dangerous` only when the user
+explicitly asks for a session with permissions bypassed -- never choose it
+yourself.
 
 To stop a session: `tmux -L claude kill-session -t '=<name>'` (keep the
 `=name` quoted -- zsh equals-expands a bare `=word`).
@@ -40,5 +42,5 @@ To stop a session: `tmux -L claude kill-session -t '=<name>'` (keep the
 
 - Do not kill or restart sessions you were not asked to touch, and do not
   kill the tmux server (it hosts all of them).
-- Only this manager session runs with permissions bypassed; leave spawned
-  sessions in the auto permission mode the spawn command gives them.
+- Permissions bypass is reserved for this manager session and for spawns
+  the user explicitly requested with it (`--dangerous`).
