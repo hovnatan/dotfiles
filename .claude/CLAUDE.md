@@ -2,10 +2,11 @@
 
 When working with Python, invoke the relevant /astral:<skill> for uv, ty, and ruff to ensure best practices are followed.
 
-# Never commit unless explicitly asked
+# Never stage, commit, or push unless explicitly asked
 
-Do NOT run `git commit` (or `git push`) unless I explicitly ask you to commit.
-Make and stage changes as needed, but leave committing to me unless I say so.
+Do NOT run `git add` (or otherwise stage files), `git commit`, or `git push`
+unless I explicitly ask for it. Make changes to the working tree as needed,
+but leave staging and committing to me unless I say so.
 NEVER force push (`git push --force` or `--force-with-lease`) unless I
 explicitly ask for a force push - asking for a regular push does not count.
 
