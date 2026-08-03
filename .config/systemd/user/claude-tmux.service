@@ -1,5 +1,5 @@
 [Unit]
-Description=tmux session "claude" running Claude Code
+Description=tmux sessions running Claude Code
 Documentation=man:tmux(1)
 After=default.target
 # Safety valve: if claude exits immediately (bad auth, bad config), give up
@@ -10,10 +10,9 @@ StartLimitBurst=10
 [Service]
 Type=simple
 
-# Directory the session starts in. Set by scripts/setup_claude_tmux_service.sh;
-# edit ~/.config/claude-tmux.env to change it.
-Environment=CLAUDE_TMUX_DIR=%h
-EnvironmentFile=-%h/.config/claude-tmux.env
+# Which sessions run and the directory they start in come from
+# ~/.config/claude-tmux.conf (each session resumes the Claude Code
+# conversation with the same name -- see scripts/claude_tmux_run.sh).
 
 # Pin SHELL to zsh for the server (under systemd the passwd shell, bash,
 # would otherwise win): tmux derives default-shell from it and stamps that
@@ -22,31 +21,36 @@ EnvironmentFile=-%h/.config/claude-tmux.env
 # New windows are zsh regardless -- tmux.conf hardcodes `default-command zsh`.
 Environment=SHELL=/usr/bin/zsh
 
-# The session runs on a dedicated socket (tmux -L claude), not the default
+# The sessions run on a dedicated socket (tmux -L claude), not the default
 # one, so this service never shares a server with interactive tmux sessions.
-# Attach with: tmux -L claude attach -t claude
+# Attach with: tmux -L claude attach -t <name>
 #
-# systemd still has to track the *session*, not the server: the server
-# daemonizes out of ExecStart, so the loop below is what keeps the unit
-# alive, and it exits when the "claude" session disappears, which is what
-# triggers Restart=always.
+# systemd still has to track the *sessions*, not the server: the server
+# daemonizes out of ExecStart, so the watch loop in claude_tmux_run.sh is
+# what keeps the unit alive, and it exits when any listed session
+# disappears, which is what triggers Restart=always; the rerun recreates
+# only the missing sessions. ExecStop kills just the listed sessions, so
+# sessions created by hand on this socket survive a service stop.
 #
-# The wrapper is a login (non-interactive) zsh: the tmux server forks from
-# it and inherits the full login environment (.zprofile -> ~/.profile:
-# ~/.local/bin on PATH, exports) once, for every future pane and window. The
-# pane then runs a plain interactive non-login zsh: .zshrc runs -- opening
-# this pane's pipe-pane log -- before starting claude.
-# With "exit-empty on" the dedicated server dies with the session, so every
-# start is a cold start and this login environment always applies (-A only
-# guards against double starts).
-#
-# NB: "=claude" must stay quoted: the wrapper is zsh, where a bare =name
-# undergoes equals expansion (=claude -> /path/to/claude), silently breaking
-# the has-session check (this exact bug start-limited the unit at boot once).
-ExecStart=/usr/bin/zsh -lc 'tmux -L claude new-session -d -A -s claude -c "$${CLAUDE_TMUX_DIR}" \
-    /usr/bin/zsh -ic "claude --continue --remote-control --dangerously-skip-permissions"; \
-    while tmux -L claude has-session -t "=claude" 2>/dev/null; do sleep 5; done'
-ExecStop=/bin/sh -c 'tmux -L claude kill-session -t =claude'
+# The login zsh matters: the tmux server forks from it and inherits the
+# full login environment for every future pane -- claude_tmux_run.sh's
+# header has the details.
+ExecStart=/usr/bin/zsh -lc '%h/.dotfiles/scripts/claude_tmux_run.sh'
+# ExecStop runs on EVERY deactivation, including the self-exit restart
+# cycles the watcher relies on (systemd.service: "the stop operation is
+# always performed ... even if the processes in the service terminated on
+# their own"). Killing the listed sessions is only wanted on a real stop
+# request, so guard on ${MAINPID}: it is unset when the watcher already
+# exited by itself (restart cycle), set when a live service is being
+# stopped.
+ExecStop=/bin/sh -c 'test -z "${MAINPID}" || exec %h/.dotfiles/scripts/claude_tmux_run.sh stop'
+
+# Kill only the watcher when the unit deactivates: the tmux server
+# daemonizes into this cgroup, and the default control-group kill would
+# take down every session on each watcher-exit/restart cycle -- exactly
+# what the recreate-only-missing design must avoid. ExecStop above already
+# kills precisely the listed sessions.
+KillMode=process
 
 Restart=always
 RestartSec=5
