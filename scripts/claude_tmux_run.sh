@@ -9,11 +9,12 @@
 #   claude_tmux_run.sh                 ExecStart: ensure the managed "claude"
 #                                      session (the manager) exists, then watch
 #   claude_tmux_run.sh stop            ExecStop: kill the managed session
-#   claude_tmux_run.sh spawn <name> [dir]
+#   claude_tmux_run.sh spawn <name> [dir] [--dangerous]
 #                                      idempotently bring up an unmanaged
-#                                      session in auto permission mode:
-#                                      resume its conversation where it
-#                                      belongs, or start a new one in <dir>
+#                                      session: resume its conversation where
+#                                      it belongs, or start a new one in
+#                                      <dir>. Auto permission mode unless
+#                                      --dangerous (bypass) is given.
 #
 # The manager runs in ~/.dotfiles/claude_tmux_session with permissions
 # bypassed; the CLAUDE.md there tells it when to call spawn. Spawned
@@ -79,9 +80,18 @@ spawn)
   # The name is interpolated into a zsh -c string and must be valid for
   # both tmux (no . or :) and a Claude Code conversation title.
   if [ -z "$name" ] || [[ "$name" == *[^A-Za-z0-9_-]* ]]; then
-    echo "usage: $0 spawn <name> [dir]  (name: A-Za-z0-9_- only)" >&2
+    echo "usage: $0 spawn <name> [dir] [--dangerous]  (name: A-Za-z0-9_- only)" >&2
     exit 1
   fi
+  mode="--permission-mode auto"
+  dir=""
+  shift 2
+  for a in "$@"; do
+    case "$a" in
+    --dangerous) mode="--dangerously-skip-permissions" ;;
+    *) dir="$a" ;;
+    esac
+  done
   if tmux -L "$SOCKET" has-session -t "=$name" 2>/dev/null; then
     echo "session $name already running"
     exit 0
@@ -92,16 +102,15 @@ spawn)
     # Resume by id, not by name (a non-id --resume argument opens the
     # picker), in the conversation's own directory (conversations only
     # resume from the directory they belong to).
-    launch "$name" "$cwd" --resume "$id" --permission-mode auto
-    echo "session $name: resumed conversation $id in $cwd"
+    launch "$name" "$cwd" --resume "$id" $mode
+    echo "session $name: resumed conversation $id in $cwd ($mode)"
   else
-    dir="${3:-}"
     if [ ! -d "$dir" ]; then
       echo "no conversation named $conv; pass an existing directory to start a new one in" >&2
       exit 1
     fi
-    launch "$name" "$dir" -n "$conv" --permission-mode auto
-    echo "session $name: new conversation $conv in $dir"
+    launch "$name" "$dir" -n "$conv" $mode
+    echo "session $name: new conversation $conv in $dir ($mode)"
   fi
   exit 0
   ;;
