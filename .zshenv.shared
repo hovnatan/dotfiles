@@ -1,0 +1,10 @@
+# Sourced by every zsh, interactive or not, via ~/.zshenv (see
+# scripts/setup_user_symlinks.sh).
+
+# Scrub FORCE_COLOR inherited from the claude-tmux launcher: it is meant
+# only for the claude TUI (truecolor rendering in detached tmux spawns,
+# see scripts/claude_tmux_run.sh); leaking it into Claude Code's tool
+# subshells makes node CLIs write ANSI codes into pipes. Per-command
+# "FORCE_COLOR=1 cmd" still works -- that assignment happens after this
+# file runs.
+unset FORCE_COLOR
