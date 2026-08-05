@@ -5,6 +5,10 @@
 # to the claude process and write to its terminal device directly. Inside
 # tmux the OSC needs the passthrough envelope (allow-passthrough in
 # .tmux.conf), while the bell is forwarded natively.
+
+# Hooks run via /bin/sh, skipping the ~/.zshenv FORCE_COLOR scrub
+# (see .zshenv.shared); drop the claude-tmux launcher's copy here
+unset FORCE_COLOR
 p=$PPID
 t=""
 i=0

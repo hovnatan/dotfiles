@@ -4,6 +4,10 @@
 # permission prompt so the user approves each one explicitly.
 set -euo pipefail
 
+# Hooks run via /bin/sh, skipping the ~/.zshenv FORCE_COLOR scrub
+# (see .zshenv.shared); drop the claude-tmux launcher's copy here
+unset FORCE_COLOR
+
 cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null) || exit 0
 
 case "$cmd" in
