@@ -9,3 +9,6 @@ shell-integration-features = ssh-env,ssh-terminfo
 
 keybind = super+j=previous_tab
 keybind = super+k=next_tab
+
+# Don't ask for confirmation when closing a surface/window
+confirm-close-surface = false
