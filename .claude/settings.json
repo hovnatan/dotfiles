@@ -67,7 +67,7 @@
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
-  "theme": "light-ansi",
+  "theme": "auto",
   "editorMode": "vim",
   "preferredNotifChannel": "terminal_bell",
   "remoteControlAtStartup": false,
