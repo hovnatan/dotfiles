@@ -17,6 +17,7 @@
     ],
     "defaultMode": "auto"
   },
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -25,6 +26,17 @@
           {
             "type": "command",
             "command": "~/.dotfiles/.claude/git-guard.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.dotfiles/.claude/notify-stop.sh",
+            "timeout": 5
           }
         ]
       }
@@ -58,9 +70,9 @@
   "theme": "auto",
   "editorMode": "vim",
   "remoteControlAtStartup": false,
+  "preferredNotifChannel": "terminal_bell",
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "model": "claude-fable-5[1m]"
+  "voiceEnabled": true
 }
