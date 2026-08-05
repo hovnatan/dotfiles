@@ -11,7 +11,8 @@ else
 fi
 export DEBIAN_FRONTEND=noninteractive
 $SUDO apt-get update
-$SUDO apt-get install -y --no-install-recommends curl wget sudo htop tmux zsh vim git openssh-client make locales
+# procps: `ps` is needed by .claude/notify-stop.sh and absent from slim images
+$SUDO apt-get install -y --no-install-recommends curl wget sudo htop tmux zsh vim git openssh-client make locales procps
 $SUDO locale-gen --no-purge en_US.UTF-8
 
 cd ~
