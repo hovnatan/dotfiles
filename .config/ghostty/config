@@ -1,4 +1,6 @@
 theme = light:GitLab Light,dark:GitLab Dark
+# Start new windows in (native macOS) fullscreen; non-native would break tabs
+fullscreen = true
 font-size = 15
 font-family = SF Mono
 font-thicken = true
@@ -12,3 +14,8 @@ keybind = super+k=next_tab
 
 # Don't ask for confirmation when closing a surface/window
 confirm-close-surface = false
+
+# Selected text goes straight to the system clipboard
+copy-on-select = clipboard
+
+mouse-hide-while-typing = true

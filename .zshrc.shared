@@ -338,3 +338,31 @@ case ":${PATH}:" in
         ;;
 esac
 
+
+# When a command finishes: ring the terminal bell (tmux window flag, Ghostty
+# dock bounce + title mark) and post a macOS notification via OSC 777
+# (Ghostty desktop-notifications; suppressed by Ghostty while the surface is
+# focused). Inside tmux the OSC must be wrapped in the passthrough envelope
+# (needs allow-passthrough, .tmux.conf); the bell needs no wrapping
+# (monitor-bell/bell-action forward it).
+autoload -Uz add-zsh-hook
+_bell_preexec() {
+  _bell_start=$SECONDS
+  _bell_cmd=${1//$'\n'/ }
+}
+_bell_precmd() {
+  local elapsed osc
+  if [[ -n "$_bell_start" ]]; then
+    elapsed=$(( SECONDS - _bell_start ))
+    print -rn -- $'\a'
+    osc=$'\e]777;notify;'"Command finished (${elapsed}s);${_bell_cmd[1,80]}"$'\a'
+    if [[ -n "$TMUX" ]]; then
+      print -rn -- $'\ePtmux;'"${osc//$'\e'/$'\e\e'}"$'\e\\'
+    else
+      print -rn -- "$osc"
+    fi
+  fi
+  unset _bell_start _bell_cmd
+}
+add-zsh-hook preexec _bell_preexec
+add-zsh-hook precmd _bell_precmd
