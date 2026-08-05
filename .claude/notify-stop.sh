@@ -10,15 +10,17 @@ t=""
 i=0
 while [ "$i" -lt 5 ] && [ -n "$p" ] && [ "$p" != "1" ]; do
   t=$(ps -o tty= -p "$p" 2>/dev/null | tr -d ' ')
-  if [ -n "$t" ] && [ "$t" != "??" ]; then
-    break
-  fi
+  # "??" (macOS) and "?" (Linux) mean no controlling tty; keep walking up
+  case "$t" in
+    ""|"?"|"??") ;;
+    *) break ;;
+  esac
   p=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
   i=$((i + 1))
 done
-if [ -z "$t" ] || [ "$t" = "??" ]; then
-  exit 0
-fi
+case "$t" in
+  ""|"?"|"??") exit 0 ;;
+esac
 T="/dev/$t"
 {
   printf '\a' > "$T"
