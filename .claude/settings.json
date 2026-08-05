@@ -26,6 +26,10 @@
           {
             "type": "command",
             "command": "~/.dotfiles/.claude/git-guard.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.dotfiles/.claude/force-color-strip.sh"
           }
         ]
       }

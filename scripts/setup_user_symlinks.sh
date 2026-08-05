@@ -30,14 +30,6 @@ fi
 EOT
 fi
 
-if ! grep -qs '\.zshenv\.shared' ~/.zshenv; then
-cat <<EOT >> ~/.zshenv
-if [[ -f "\$HOME/.dotfiles/.zshenv.shared" ]]; then
-  source "\$HOME/.dotfiles/.zshenv.shared"
-fi
-EOT
-fi
-
 if ! grep -qs '\.dotfiles/\.zprofile' ~/.zprofile; then
 cat <<EOT >> ~/.zprofile
 if [[ -f "\$HOME/.dotfiles/.zprofile" ]]; then
