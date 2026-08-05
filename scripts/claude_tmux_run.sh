@@ -65,8 +65,10 @@ resolve_conversation() {
 # claude with Remote Control under the conversation name.
 launch() {
   local name="$1" dir="$2"; shift 2
+  # FORCE_COLOR=3: sessions start detached, so claude's color probe finds no
+  # client and downgrades to 256 colors; force 24-bit (tmux relays RGB fine)
   tmux -L "$SOCKET" new-session -d -s "$name" -c "$dir" \
-    /usr/bin/zsh -ic "claude $* --remote-control $HOST-$name"
+    /usr/bin/zsh -ic "FORCE_COLOR=3 claude $* --remote-control $HOST-$name"
 }
 
 # "=$name" pins has-session/kill-session to an exact name match.
