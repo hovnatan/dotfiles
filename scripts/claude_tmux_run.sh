@@ -65,11 +65,11 @@ resolve_conversation() {
 # claude with Remote Control under the conversation name.
 launch() {
   local name="$1" dir="$2"; shift 2
-  # env -u TMUX: claude clamps its TUI to 256 colors whenever $TMUX is set
-  # (TERM/COLORTERM/FORCE_COLOR are ignored); hide it to get truecolor.
-  # tmux relays RGB to capable clients fine.
+  # Note: claude clamps its TUI to 256 colors under tmux ($TMUX set;
+  # TERM/COLORTERM/FORCE_COLOR are ignored). Accepted as cosmetic --
+  # hiding TMUX from claude works but is a hack; upstream should fix.
   tmux -L "$SOCKET" new-session -d -s "$name" -c "$dir" \
-    /usr/bin/zsh -ic "env -u TMUX -u TMUX_PANE claude $* --remote-control $HOST-$name"
+    /usr/bin/zsh -ic "claude $* --remote-control $HOST-$name"
 }
 
 # "=$name" pins has-session/kill-session to an exact name match.
