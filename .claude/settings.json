@@ -67,10 +67,10 @@
     "mode": "hold"
   },
   "skipDangerousModePermissionPrompt": true,
-  "theme": "auto",
+  "theme": "dark-ansi",
   "editorMode": "vim",
-  "remoteControlAtStartup": false,
   "preferredNotifChannel": "terminal_bell",
+  "remoteControlAtStartup": false,
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
