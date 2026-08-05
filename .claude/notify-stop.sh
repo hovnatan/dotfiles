@@ -4,11 +4,9 @@
 # may lack a controlling tty (/dev/tty fails), so walk up the process tree
 # to the claude process and write to its terminal device directly. Inside
 # tmux the OSC needs the passthrough envelope (allow-passthrough in
-# .tmux.conf), while the bell is forwarded natively.
-
-# Hooks run via /bin/sh, skipping the ~/.zshenv FORCE_COLOR scrub
-# (see .zshenv.shared); drop the claude-tmux launcher's copy here
-unset FORCE_COLOR
+# .tmux.conf), while the bell is forwarded natively. Detect tmux via TERM,
+# not $TMUX: the claude-tmux launcher hides TMUX from claude (see
+# claude_tmux_run.sh) and hooks inherit that environment.
 p=$PPID
 t=""
 i=0
@@ -28,7 +26,8 @@ esac
 T="/dev/$t"
 {
   printf '\a' > "$T"
-  if [ -n "$TMUX" ]; then
+  case "$TERM" in tmux*|screen*) in_tmux=1 ;; *) in_tmux= ;; esac
+  if [ -n "$in_tmux" ]; then
     printf '\033Ptmux;\033\033]777;notify;Claude Code;Finished responding\007\033\\' > "$T"
   else
     printf '\033]777;notify;Claude Code;Finished responding\007' > "$T"
