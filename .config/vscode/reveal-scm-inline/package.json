@@ -1,0 +1,43 @@
+{
+  "name": "reveal-scm-inline",
+  "displayName": "Reveal in Explorer View (SCM inline)",
+  "description": "Adds an inline 'Reveal in Explorer View' icon to rows in the Source Control view",
+  "version": "0.0.1",
+  "publisher": "hovnatan",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "revealScmInline.reveal",
+        "title": "Reveal in Explorer View",
+        "icon": "$(list-tree)"
+      }
+    ],
+    "menus": {
+      "scm/resourceState/context": [
+        {
+          "command": "revealScmInline.reveal",
+          "when": "scmProvider == git",
+          "group": "inline@0"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "revealScmInline.reveal",
+          "when": "false"
+        }
+      ]
+    }
+  }
+}
