@@ -44,3 +44,23 @@ To stop a session: `tmux -L claude kill-session -t '=<name>'` (keep the
   kill the tmux server (it hosts all of them).
 - Permissions bypass is reserved for this manager session and for spawns
   the user explicitly requested with it (`--dangerous`).
+- Never use background agents in this flow. Every session is an interactive
+  Claude Code process in a tmux window, spawned by `claude_tmux_run.sh`.
+  Do not run `claude --bg`, do not dispatch work from the `claude agents`
+  view, and do not leave a daemon running: a background agent holds the
+  conversation's transcript open, so the next spawn of that name is refused
+  ("already open in another claude process"), and the daemon respawns a
+  worker you kill with a signal, under a new pid. Note that merely opening
+  `claude agents` starts a transient daemon -- if you open it (it is the
+  only way to stop one background agent without touching the others: select
+  the row, `ctrl+x`), run `claude daemon stop --any` afterwards.
+  `claude daemon stop --any` terminates every background session and the
+  supervisor; interactive tmux sessions are unaffected.
+- Sessions are launched with `CLAUDE_CODE_DISABLE_AGENT_VIEW=1`, which
+  turns off `claude agents`, `--bg`, `/background` and the supervisor for
+  them -- including the left arrow that opens the agent strip, which
+  otherwise starts a daemon and leaves a background session behind on every
+  press. The variable is inherited by anything a session runs, and under it
+  `claude agents --json` prints a refusal and exits 0, so the spawn guard
+  calls it via `env -u CLAUDE_CODE_DISABLE_AGENT_VIEW` -- keep that wrapper,
+  or the guard goes blind and double-opens a conversation.

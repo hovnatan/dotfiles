@@ -68,8 +68,12 @@ launch() {
   # Note: claude clamps its TUI to 256 colors under tmux ($TMUX set;
   # TERM/COLORTERM/FORCE_COLOR are ignored). Accepted as cosmetic --
   # hiding TMUX from claude works but is a hack; upstream should fix.
+  # CLAUDE_CODE_DISABLE_AGENT_VIEW: this flow is interactive tmux sessions
+  # only (see ../claude_tmux_session/CLAUDE.md). It also disables the left
+  # arrow that opens the agent strip, which spawns a daemon and leaves a
+  # background session behind on every press.
   tmux -L "$SOCKET" new-session -d -s "$name" -c "$dir" \
-    /usr/bin/zsh -ic "claude $* --remote-control $HOST-$name"
+    /usr/bin/zsh -ic "CLAUDE_CODE_DISABLE_AGENT_VIEW=1 claude $* --remote-control $HOST-$name"
 }
 
 # "=$name" pins has-session/kill-session to an exact name match.
@@ -108,7 +112,11 @@ spawn)
     # conversation interleave their records into one corrupted history.
     # `claude agents --json` lists every live session on the machine,
     # tmux-hosted and background alike.
-    if claude agents --json 2>/dev/null | grep -qF "$id"; then
+    # env -u: sessions run with CLAUDE_CODE_DISABLE_AGENT_VIEW=1 (see
+    # launch) and a spawn issued from one inherits it, under which this
+    # command prints a refusal and exits 0 -- the grep would then find
+    # nothing and wave through a double-open.
+    if env -u CLAUDE_CODE_DISABLE_AGENT_VIEW claude agents --json 2>/dev/null | grep -qF "$id"; then
       echo "conversation $conv ($id) is already open in another claude process; attach to that instead of spawning" >&2
       exit 1
     fi
