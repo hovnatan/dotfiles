@@ -13,6 +13,7 @@ effort=$(echo "$input" | jq -r '.effort.level // "n/a"')
 cwd=$(echo "$input" | jq -r '.workspace.current_dir')
 ctx_used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 agent_name=$(echo "$input" | jq -r '.agent.name // empty')
+session_name=$(echo "$input" | jq -r '.session_name // empty')
 rl_five_used=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 rl_week_used=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 running_version=$(echo "$input" | jq -r '.version // empty')
@@ -66,6 +67,12 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
     fi
     branch=" ${gcolor}(${ref})\033[0m"
   fi
+fi
+
+# Session name (set via -n or /rename; absent on unnamed sessions)
+sname=""
+if [ -n "$session_name" ]; then
+  sname="\033[2m${session_name}\033[0m "
 fi
 
 # Main-thread agent name (absent unless the session is running as a custom
@@ -136,4 +143,4 @@ if [ -n "$running_version" ]; then
   ver=" \033[2m|\033[0m ${vcolor}v${running_version}\033[0m"
 fi
 
-printf '\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m \033[2m[%s]\033[0m%b%b%b' "$path" "$branch" "$agent" "$model" "$effort" "$ctx" "$rl" "$ver"
+printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m \033[2m[%s]\033[0m%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$effort" "$ctx" "$rl" "$ver"
