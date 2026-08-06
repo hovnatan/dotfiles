@@ -68,6 +68,7 @@
   },
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
+  "cleanupPeriodDays": 730,
   "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
   "remoteControlAtStartup": false,
