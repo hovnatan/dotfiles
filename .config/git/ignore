@@ -4,6 +4,7 @@
 # --- Scratch ---
 temp
 tmp
+scratch
 
 # --- macOS ---
 .DS_Store
