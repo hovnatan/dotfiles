@@ -7,6 +7,10 @@
 # -- not part of setup_user_symlinks.sh.
 #
 #   bash -x ~/.dotfiles/scripts/setup_claude_tmux_service.sh
+#
+# On a fresh machine, run `claude` once in ~/.dotfiles first and accept the
+# workspace trust dialog -- the manager starts inside the repo and would
+# otherwise sit at that prompt, invisible, in its detached pane.
 
 set -e
 

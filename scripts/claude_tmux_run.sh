@@ -102,6 +102,16 @@ spawn)
   conv="$HOST-$name"
   { read -r id; read -r cwd; } < <(resolve_conversation "$conv" "$HOME"/.claude/projects/*/*.jsonl)
   if [ -n "$id" ]; then
+    # Refuse to resume a conversation that is already open in some other
+    # claude process (a manual resume over SSH, a background agent, ...):
+    # transcripts are not locked, so two processes resuming the same
+    # conversation interleave their records into one corrupted history.
+    # `claude agents --json` lists every live session on the machine,
+    # tmux-hosted and background alike.
+    if claude agents --json 2>/dev/null | grep -qF "$id"; then
+      echo "conversation $conv ($id) is already open in another claude process; attach to that instead of spawning" >&2
+      exit 1
+    fi
     # Resume by id, not by name (a non-id --resume argument opens the
     # picker), in the conversation's own directory (conversations only
     # resume from the directory they belong to).
