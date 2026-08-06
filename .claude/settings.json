@@ -68,7 +68,7 @@
   },
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
-  "editorMode": "vim",
+  "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
   "remoteControlAtStartup": false,
   "inputNeededNotifEnabled": true,
