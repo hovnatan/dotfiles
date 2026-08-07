@@ -44,7 +44,7 @@
   autoupdate = true
 [rebase]
   autoSquash = true
-  autoStash = false
+  autoStash = true
   updateRefs = true
 [submodule]
   recurse = true
