@@ -36,7 +36,16 @@ end
 
 local function openInChrome(url, profile)
   if profile then
-    hs.task.new("/usr/bin/open", nil, {
+    -- open -n hands the URL to the running Chrome via a short-lived second
+    -- instance, so macOS never activates Chrome itself; raise it once the
+    -- handoff is done (Chrome has already raised the profile's window
+    -- within its own window stack by then).
+    hs.task.new("/usr/bin/open", function()
+      hs.timer.doAfter(0.2, function()
+        local chrome = hs.application.applicationsForBundleID("com.google.Chrome")[1]
+        if chrome then chrome:activate() end
+      end)
+    end, {
       "-na", "Google Chrome", "--args",
       "--profile-directory=" .. profile, url,
     }):start()
