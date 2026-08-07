@@ -64,3 +64,9 @@ To stop a session: `tmux -L claude kill-session -t '=<name>'` (keep the
   `claude agents --json` prints a refusal and exits 0, so the spawn guard
   calls it via `env -u CLAUDE_CODE_DISABLE_AGENT_VIEW` -- keep that wrapper,
   or the guard goes blind and double-opens a conversation.
+- A turn can resume long after the previous one, on a machine that rebooted
+  in between: the VM gets deallocated and started again, and systemd
+  recreates this session. Before explaining current state by something you
+  did earlier, re-establish the clock -- `date`, `uptime -s`,
+  `journalctl --list-boots`. A VM running now is not evidence that an
+  earlier deallocate failed.
