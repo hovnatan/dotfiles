@@ -1,12 +1,13 @@
--- URL dispatcher: Hammerspoon is the default browser; Google Cloud links
--- open in a dedicated Chrome profile, everything else in the default one.
--- Only links from outside Chrome hit this.
+-- URL dispatcher: Hammerspoon is the default browser; Google Cloud links and
+-- work URLs open in the work Chrome profile, everything else in the default
+-- one. Only links from outside Chrome hit this.
 --
--- Chrome profile directories map to accounts, so they live in the
--- gitignored local_config.lua:
+-- Chrome profile directories map to accounts and work URLs name the
+-- employer, so both live in the gitignored local_config.lua:
 --   return {
---     gcloud_chrome_profile = "...",  -- e.g. "Default", "Profile 1"
+--     work_chrome_profile = "...",  -- e.g. "Default", "Profile 1"
 --     default_chrome_profile = "...",
+--     work_url_prefixes = { "https://github.com/someorg" },  -- optional
 --   }
 -- Without it, links open in Chrome with no profile forcing.
 local ok, cfg = pcall(require, "local_config")
@@ -17,6 +18,21 @@ local GCLOUD_HOSTS = {
   ["console.developers.google.com"] = true,
   ["shell.cloud.google.com"] = true,
 }
+
+-- gcloud CLI auth flows: accounts.google.com serves every Google login, so
+-- only claim it when the OAuth scope includes cloud-platform (true for both
+-- gcloud auth login and application-default login).
+local function isGcloudAuth(host, url)
+  return host == "accounts.google.com" and url:find("cloud-platform", 1, true) ~= nil
+end
+
+local function isWorkURL(url)
+  local lower = url:lower()
+  for _, prefix in ipairs(cfg.work_url_prefixes or {}) do
+    if lower:sub(1, #prefix) == prefix:lower() then return true end
+  end
+  return false
+end
 
 local function openInChrome(url, profile)
   if profile then
@@ -30,8 +46,9 @@ local function openInChrome(url, profile)
 end
 
 hs.urlevent.httpCallback = function(_, host, _, fullURL)
-  if host and GCLOUD_HOSTS[host] then
-    openInChrome(fullURL, cfg.gcloud_chrome_profile)
+  host = host and host:lower()
+  if (host and (GCLOUD_HOSTS[host] or isGcloudAuth(host, fullURL))) or isWorkURL(fullURL) then
+    openInChrome(fullURL, cfg.work_chrome_profile)
   else
     openInChrome(fullURL, cfg.default_chrome_profile)
   end
