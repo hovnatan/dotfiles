@@ -135,10 +135,18 @@ ln -sf ~/.dotfiles/.npmrc ~/.npmrc
 
 ln -sf ~/.dotfiles/.config/uv ~/.config/
 
-# IINA (macOS) reads ~/.config/iina as its mpv config dir, incl. scripts/
-ln -sf ~/.dotfiles/.config/iina ~/.config/
+# macOS only: IINA, colima, Hammerspoon
+if [ "$(uname)" = "Darwin" ]; then
+  # IINA reads ~/.config/iina as its mpv config dir, incl. scripts/
+  ln -sf ~/.dotfiles/.config/iina ~/.config/
 
-mkdir -p ~/.colima/default
-ln -sf ~/.dotfiles/.colima/default/colima.yaml ~/.colima/default/colima.yaml
+  mkdir -p ~/.colima/default
+  ln -sf ~/.dotfiles/.colima/default/colima.yaml ~/.colima/default/colima.yaml
+
+  ln -sfn ~/.dotfiles/.hammerspoon ~/.hammerspoon
+  if [ ! -f ~/.dotfiles/.hammerspoon/local_config.lua ]; then
+    echo -e "\033[33mCreate ~/.hammerspoon/local_config.lua (Chrome profile dirs for url_dispatcher, gitignored)\033[0m"
+  fi
+fi
 
 echo "Done"
