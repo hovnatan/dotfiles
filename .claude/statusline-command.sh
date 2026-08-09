@@ -69,9 +69,13 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
   fi
 fi
 
-# Session name (set via -n or /rename; absent on unnamed sessions)
+# Session name (set via -n or /rename; absent on unnamed sessions), trimmed
+# to at most 20 characters (17 + "...") to keep the line short
 sname=""
 if [ -n "$session_name" ]; then
+  if [ "${#session_name}" -gt 20 ]; then
+    session_name="$(printf '%.17s' "$session_name")..."
+  fi
   sname="\033[2m${session_name}\033[0m "
 fi
 
