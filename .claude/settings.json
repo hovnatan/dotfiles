@@ -72,6 +72,7 @@
   "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
   "remoteControlAtStartup": false,
+  "dialogExpiry": "never",
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
