@@ -17,7 +17,12 @@ sessions on this machine.
 - tmux session names are short (letters, digits, `-` and `_` only; the
   window title shows the first two characters). The Claude Code conversation
   behind a session is named `<hostname>-<session name>`, which is also its
-  Remote Control name on claude.ai.
+  Remote Control name on claude.ai and its local peer name -- what
+  `/list-agents` shows and what SendMessage addresses. `claude_tmux_run.sh`
+  passes `-n <hostname>-<session name>` on every launch, resumes included
+  (a resume by id alone reverts the peer name to an auto-generated
+  directory-based one). If a running session still shows an auto-generated
+  peer name, `/rename <hostname>-<session name>` inside it fixes it live.
 
 ## Bringing up a session
 
