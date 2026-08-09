@@ -4,7 +4,8 @@
 # helper its manager session uses. All sessions live on the dedicated
 # "claude" tmux socket; the Claude Code conversation behind tmux session
 # <name> is named "<hostname>-<name>", which is also its Remote Control name
-# on claude.ai.
+# on claude.ai and its local peer name (what /list-agents shows). The name
+# is passed with -n on every launch, resumes included.
 #
 #   claude_tmux_run.sh                 ExecStart: ensure the managed "claude"
 #                                      session (the manager) exists, then watch
@@ -122,8 +123,10 @@ spawn)
     fi
     # Resume by id, not by name (a non-id --resume argument opens the
     # picker), in the conversation's own directory (conversations only
-    # resume from the directory they belong to).
-    launch "$name" "$cwd" --resume "$id" $mode
+    # resume from the directory they belong to). -n re-asserts the name:
+    # a resume by id alone reverts the session's display/peer name (what
+    # /list-agents shows) to an auto-generated directory-based one.
+    launch "$name" "$cwd" --resume "$id" -n "$conv" $mode
     echo "session $name: resumed conversation $id in $cwd ($mode)"
   else
     if [ ! -d "$dir" ]; then
@@ -141,7 +144,7 @@ if ! tmux -L "$SOCKET" has-session -t "=claude" 2>/dev/null; then
   { read -r id; read -r _; } < <(resolve_conversation "$HOST-claude" \
       "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl)
   if [ -n "$id" ]; then
-    launch claude "$MANAGER_DIR" --resume "$id" --dangerously-skip-permissions
+    launch claude "$MANAGER_DIR" --resume "$id" -n "$HOST-claude" --dangerously-skip-permissions
     echo "resuming manager conversation $id"
   else
     launch claude "$MANAGER_DIR" -n "$HOST-claude" --dangerously-skip-permissions
