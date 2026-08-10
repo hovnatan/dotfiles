@@ -2,6 +2,10 @@
 
 When working with Python, invoke the relevant /astral:<skill> for uv, ty, and ruff to ensure best practices are followed.
 
+For standalone Python scripts, prefer PEP 723 inline script metadata blocks
+(`# /// script` with `dependencies = [...]` and `requires-python`) over ad-hoc
+requirements files or project scaffolding, so they run with `uv run script.py`.
+
 # Never stage, commit, or push unless explicitly asked
 
 Do NOT run `git add` (or otherwise stage files), `git commit`, or `git push`
