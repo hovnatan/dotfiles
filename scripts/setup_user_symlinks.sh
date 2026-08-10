@@ -154,6 +154,9 @@ if [ "$(uname)" = "Darwin" ]; then
   ln -sf ~/.dotfiles/LaunchAgents/com.hovnatan.keyremap.plist ~/Library/LaunchAgents/
   launchctl bootout "gui/$(id -u)/com.hovnatan.keyremap" 2>/dev/null
   launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.hovnatan.keyremap.plist
+
+  # Preview markup colors (magenta annotations for LLM screenshot review)
+  ~/.dotfiles/scripts/macos/setup_preview_markup.sh
 fi
 
 echo "Done"
