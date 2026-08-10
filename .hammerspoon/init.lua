@@ -9,3 +9,8 @@ end
 
 require("force_us_layout")
 require("url_dispatcher")
+require("app_hotkeys")
+
+-- hs CLI (`hs -c "..."`) for scripting and debugging from the shell
+require("hs.ipc")
+hs.ipc.cliInstall(os.getenv("HOME") .. "/.local")
