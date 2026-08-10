@@ -148,6 +148,12 @@ if [ "$(uname)" = "Darwin" ]; then
       && [ ! -f ~/Dropbox/Scripts/hammerspoon/local_config.lua ]; then
     echo -e "\033[33mDropbox Scripts/hammerspoon/local_config.lua not found (Chrome profiles for Hammerspoon) - sync Dropbox or create it\033[0m"
   fi
+
+  # Login key remaps (caps lock -> ctrl, PC menu key -> right option)
+  mkdir -p ~/Library/LaunchAgents
+  ln -sf ~/.dotfiles/LaunchAgents/com.hovnatan.keyremap.plist ~/Library/LaunchAgents/
+  launchctl bootout "gui/$(id -u)/com.hovnatan.keyremap" 2>/dev/null
+  launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.hovnatan.keyremap.plist
 fi
 
 echo "Done"
