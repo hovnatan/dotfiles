@@ -6,4 +6,3 @@ venv_python_neovim
 .DS_Store
 *.bak
 *.swp
-.hammerspoon/local_config.lua

@@ -144,8 +144,9 @@ if [ "$(uname)" = "Darwin" ]; then
   ln -sf ~/.dotfiles/.colima/default/colima.yaml ~/.colima/default/colima.yaml
 
   ln -sfn ~/.dotfiles/.hammerspoon ~/.hammerspoon
-  if [ ! -f ~/.dotfiles/.hammerspoon/local_config.lua ]; then
-    echo -e "\033[33mCreate ~/.hammerspoon/local_config.lua (Chrome profile dirs for url_dispatcher, gitignored)\033[0m"
+  if [ ! -f ~/Library/CloudStorage/Dropbox/Scripts/hammerspoon/local_config.lua ] \
+      && [ ! -f ~/Dropbox/Scripts/hammerspoon/local_config.lua ]; then
+    echo -e "\033[33mDropbox Scripts/hammerspoon/local_config.lua not found (Chrome profiles for Hammerspoon) - sync Dropbox or create it\033[0m"
   fi
 fi
 
