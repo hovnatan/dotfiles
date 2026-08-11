@@ -49,4 +49,11 @@
 [submodule]
   recurse = true
 [credential]
-  helper = "!f() { echo \"username=x-access-token\"; echo \"password=$GH_TOKEN\"; }; f"
+  # Let gh supply the credential instead of hardcoding $GH_TOKEN. gh uses
+  # GH_TOKEN when a shell exports one -- VMs that source it from a .env are
+  # unaffected -- and otherwise falls back to the OAuth token in
+  # ~/.config/gh/hosts.yml. The old helper had two failure modes: it handed
+  # git an empty password wherever GH_TOKEN was unset, and it pinned git to
+  # that token even when a broader credential existed, so a fine-grained PAT
+  # that omitted a repo returned 403 on push instead of falling back.
+  helper = "!gh auth git-credential"
