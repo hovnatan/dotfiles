@@ -27,6 +27,35 @@ submodule has local edits, tell me rather than forcing past them (`--force`
 discards them). Pins exist so results stay reproducible against a known
 dependency version.
 
+# Observability: report progress as it happens, not only at the end
+
+Write code and experiments so I can watch them work, at whatever cadence
+suits the loop - per step when steps are slow, every N steps or few seconds
+when they are fast - stamping each line with a time and an index or key so it
+means something on its own. Mind buffering only where it bites: stdout goes
+block-buffered once piped or redirected to a file, while a terminal, stderr
+and `logging` stay line-buffered on their own. Flush at the emit site with
+`print(..., flush=True)` and line-buffered result files; save
+PYTHONUNBUFFERED=1 for programs you cannot edit (`stdbuf` has no effect on
+Python).
+
+Persist as you go, not only to the terminal. Append results as they are
+produced, and write anything expensive to recompute to a temp file in the
+same directory and rename it into place, so a kill mid-write cannot corrupt
+it. A run killed at 80% should leave 80% of its output on disk and be
+inspectable mid-flight. Unless the project has its own layout, put it under
+`.logs/<timestamp>_<work_description>/` (UTC `YYYYMMDD_HHMMSS`), placed by
+the same rule as "Remote runs" below, whose naming wins when the work is
+remote. `.logs` is gitignored on this machine only - add it to the project's
+.gitignore anywhere else. Tell me the path when the run starts (for a remote
+mirror, once the first refresh lands).
+
+Keep it proportionate: where reporting genuinely costs real performance,
+lengthen the interval rather than dropping it, and say when you make that
+trade. The same goes for your own long tasks - surface a finding when you
+have it instead of holding everything for the final report, unless the task's
+output contract is a single structured payload.
+
 # Remote runs: keep a live local copy of the logs
 
 When you start a long-running process on a remote machine, do not leave its
