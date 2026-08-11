@@ -15,7 +15,12 @@
 #                                      session: resume its conversation where
 #                                      it belongs, or start a new one in
 #                                      <dir>. Auto permission mode unless
-#                                      --dangerous (bypass) is given.
+#                                      --dangerous (bypass) is given. Reports
+#                                      success only once the session has
+#                                      survived startup (see wait_alive).
+#   claude_tmux_run.sh status [lines]  every session on the socket: whether
+#                                      claude is really running in it, which
+#                                      conversation, and the tail of its pane
 #
 # The manager runs in ~/.dotfiles/claude_tmux_session with permissions
 # bypassed; the CLAUDE.md there tells it when to call spawn. Spawned
@@ -38,6 +43,7 @@ set -u
 SOCKET="${CLAUDE_TMUX_SOCKET:-claude}"   # overridable so tests don't touch the live server
 HOST=$(hostname)
 MANAGER_DIR="$HOME/.dotfiles/claude_tmux_session"
+ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}"   # startup window spawn waits out
 
 # Print the session id and cwd (two lines) of the newest conversation named
 # "$1" among the given jsonl files; print nothing if there is none.
@@ -75,6 +81,26 @@ launch() {
   # background session behind on every press.
   tmux -L "$SOCKET" new-session -d -s "$name" -c "$dir" \
     /usr/bin/zsh -ic "CLAUDE_CODE_DISABLE_AGENT_VIEW=1 claude $* --remote-control $HOST-$name"
+}
+
+# wait_alive <session name>: true once the session has stayed up for the
+# whole startup window with claude running in it. new-session returns as
+# soon as it forks, so without this a caller reports success for a claude
+# that exits immediately -- a rejected flag, a refused resume -- leaving no
+# session behind at all, and the printed "resumed ..." is a lie. The pane
+# runs `zsh -ic`, which execs claude as its last command, so once claude is
+# up the pane's own process is claude; before that it is still zsh running
+# .zshrc, which is why the process check only has to hold at the end.
+wait_alive() {
+  local name="$1" i pane_pid
+  for ((i = 0; i < ALIVE_SECONDS; i++)); do
+    sleep 1
+    tmux -L "$SOCKET" has-session -t "=$name" 2>/dev/null || return 1
+  done
+  pane_pid=$(tmux -L "$SOCKET" list-panes -t "=$name" -f '#{pane_active}' \
+      -F '#{pane_pid}' 2>/dev/null)
+  [ -n "$pane_pid" ] || return 1
+  [ "$(ps -o comm= -p "$pane_pid" 2>/dev/null)" = claude ]
 }
 
 # "=$name" pins has-session/kill-session to an exact name match.
@@ -127,15 +153,56 @@ spawn)
     # a resume by id alone reverts the session's display/peer name (what
     # /list-agents shows) to an auto-generated directory-based one.
     launch "$name" "$cwd" --resume "$id" -n "$conv" $mode
-    echo "session $name: resumed conversation $id in $cwd ($mode)"
+    started="resumed conversation $id in $cwd ($mode)"
   else
     if [ ! -d "$dir" ]; then
       echo "no conversation named $conv; pass an existing directory to start a new one in" >&2
       exit 1
     fi
     launch "$name" "$dir" -n "$conv" $mode
-    echo "session $name: new conversation $conv in $dir ($mode)"
+    started="new conversation $conv in $dir ($mode)"
   fi
+  # Only now is the launch worth reporting: see wait_alive.
+  if ! wait_alive "$name"; then
+    echo "session $name: $started -- but it exited during startup; nothing is running" >&2
+    exit 1
+  fi
+  echo "session $name: $started"
+  exit 0
+  ;;
+status)
+  # Whether each session is really running claude, which conversation it
+  # holds, and where its pane got to -- the three things worth knowing after
+  # a spawn or a reboot, in one command.
+  lines="${2:-6}"
+  names=$(tmux -L "$SOCKET" list-sessions -F '#{session_name}' 2>/dev/null | sort)
+  if [ -z "$names" ]; then
+    echo "no sessions on tmux socket $SOCKET"
+    exit 0
+  fi
+  for s in $names; do
+    read -r pane_id pane_pid pane_cwd < <(tmux -L "$SOCKET" list-panes -t "=$s" \
+        -f '#{pane_active}' -F '#{pane_id} #{pane_pid} #{pane_current_path}')
+    comm=$(ps -o comm= -p "$pane_pid" 2>/dev/null)
+    args=$(ps -o args= -p "$pane_pid" 2>/dev/null)
+    if [ "$comm" = claude ]; then
+      state="claude pid $pane_pid"
+    else
+      state="NO CLAUDE -- pane runs ${comm:-nothing}"
+    fi
+    printf '== %s [%s]\n' "$s" "$state"
+    printf '   dir  %s\n' "$pane_cwd"
+    printf '   conv %s\n' "$(sed -n 's/.*--resume \([^ ]*\).*/\1/p' <<<"$args" | head -1)"
+    # The bottom of a pane is always the same TUI chrome: the input box (two
+    # rules and the prompt) plus the footer. An unfiltered tail shows only
+    # that, so drop the last six lines and then any remaining rule -- the
+    # box's top rule carries the session name, so "has no alphanumerics" is
+    # not enough to recognise it on its own.
+    tmux -L "$SOCKET" capture-pane -p -t "$pane_id" 2>/dev/null |
+      head -n -6 | grep -E '[A-Za-z0-9]' |
+      tail -n "$lines" | cut -c1-160 | sed 's/^/   | /'
+    echo
+  done
   exit 0
   ;;
 esac
