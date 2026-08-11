@@ -32,12 +32,12 @@ dependency version.
 When you start a long-running process on a remote machine, do not leave its
 output only in the remote tmux pane or on remote disk. Mirror it to a file I
 can open in VS Code on this VM: a background rsync loop (every ~30s, bounded
-lifetime) from the remote output directory into
-`.logs/<timestamp>_remotework_<remote_name>_<work_description>/` inside the
-repo the work belongs to, e.g.
-`.logs/20260811_143000_remotework_hov-128cpu_spsa_vs_autodiff/` (timestamp
-`YYYYMMDD_HHMMSS` in UTC, as in the config filenames). Tell me the local path
-once the first refresh lands.
+lifetime) from the remote output directory into a
+`.logs/<timestamp>_remotework_<remote_name>_<work_description>/` directory
+placed in the most specific folder the work belongs to - the experiment's
+own package/environment folder, not the repo root. Fall back to the repo root
+`.logs/` only when no subfolder clearly owns the
+work. Timestamp `YYYYMMDD_HHMMSS` in UTC. Tell me the local path once the first refresh lands.
 
 # Memory updates: consider promoting to repo-tracked docs
 
