@@ -31,3 +31,10 @@ My Slack client has "Format messages with markup" enabled: draft Slack-bound
 messages as raw mrkdwn I can paste as-is. Slack mrkdwn is not GitHub markdown
 (no headers, `<url|text>` links, single `*` = bold). Tabular data goes in a
 ``` fence with space-aligned columns, no leading indentation.
+
+When sending through the Slack MCP tools, never send directly to the real
+recipient: direct sends carry an unsuppressible "Sent using @Claude" footer,
+and slack_send_message_draft drops markdown links (only the label text
+survives). Instead post the message to my self-DM (my own user id as
+channel_id) and give me the message link; I copy-paste from there. Put bare
+URLs on their own lines so Slack linkifies them on send.
