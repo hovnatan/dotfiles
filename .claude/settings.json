@@ -62,6 +62,8 @@
     }
   },
   "effortLevel": "xhigh",
+  "autoCompactWindow": 700000,
+  "precomputeCompactionEnabled": true,
   "dialogExpiry": "never",
   "tui": "fullscreen",
   "voice": {
