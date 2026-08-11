@@ -11,6 +11,34 @@ push unless I explicitly ask for a force push - a regular push request does not
 count. A PreToolUse hook (~/.dotfiles/.claude/git-guard.sh) prompts on every
 commit/push; that is expected, do not work around it.
 
+Never move a pinned git submodule off the commit its superproject records
+unless I explicitly ask. That means no picking a different commit from inside
+a submodule (`git -C <sub> checkout/pull`) and no advancing pins from the
+superproject (`git submodule update --remote`, `git submodule foreach git
+pull`) - my submodules pin tracked branches, so those commands drift silently.
+
+"Update the sources" for a repo with submodules means updating the
+superproject and then restoring its pins with `git submodule update --init
+--recursive`; without `--init`, an uninitialized submodule is skipped with no
+output and left empty. Verify with `git submodule status` (leading `-` =
+uninitialized, `+` = wrong commit), not `git -C <sub> rev-parse HEAD`, which
+returns the superproject's HEAD when the submodule directory is empty. If a
+submodule has local edits, tell me rather than forcing past them (`--force`
+discards them). Pins exist so results stay reproducible against a known
+dependency version.
+
+# Remote runs: keep a live local copy of the logs
+
+When you start a long-running process on a remote machine, do not leave its
+output only in the remote tmux pane or on remote disk. Mirror it to a file I
+can open in VS Code on this VM: a background rsync loop (every ~30s, bounded
+lifetime) from the remote output directory into
+`.logs/<timestamp>_remotework_<remote_name>_<work_description>/` inside the
+repo the work belongs to, e.g.
+`.logs/20260811_143000_remotework_hov-128cpu_spsa_vs_autodiff/` (timestamp
+`YYYYMMDD_HHMMSS` in UTC, as in the config filenames). Tell me the local path
+once the first refresh lands.
+
 # Memory updates: consider promoting to repo-tracked docs
 
 When you write to the memory directory, decide in the same turn (and say)
