@@ -5,6 +5,7 @@
 temp
 tmp
 scratch
+.logs
 
 # --- macOS ---
 .DS_Store
