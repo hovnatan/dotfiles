@@ -21,6 +21,11 @@
 #   claude_tmux_run.sh status [lines]  every session on the socket: whether
 #                                      claude is really running in it, which
 #                                      conversation, and the tail of its pane
+#   claude_tmux_run.sh conversations [pattern]
+#                                      every conversation spawn could resume
+#                                      on this host, with the directory it
+#                                      belongs to -- what to consult before
+#                                      starting a NEW one
 #
 # The manager runs in ~/.dotfiles/claude_tmux_session with permissions
 # bypassed; the CLAUDE.md there tells it when to call spawn. Spawned
@@ -203,6 +208,36 @@ status)
       tail -n "$lines" | cut -c1-160 | sed 's/^/   | /'
     echo
   done
+  exit 0
+  ;;
+conversations)
+  # Every conversation spawn could resume here, newest activity per name.
+  # A session name says nothing about the directory its conversation lives
+  # in -- work on a subfolder is usually done from a session rooted higher
+  # up -- so the only way to tell whether some existing session already
+  # owns a piece of work is to look at this list. Spawning a name nobody
+  # used before always succeeds, silently starting an empty second
+  # conversation beside the one that has the history.
+  # Conversations with no custom title are auto-named and cannot be
+  # resumed by name, so they are left out; same for other hosts' names,
+  # which this machine cannot spawn.
+  filter="${2:-}"
+  live=$(tmux -L "$SOCKET" list-sessions -F '#{session_name}' 2>/dev/null | tr '\n' ' ')
+  printf '%-22s %-5s %-17s %s\n' NAME LIVE 'LAST ACTIVE' DIRECTORY
+  for f in "$HOME"/.claude/projects/*/*.jsonl; do
+    # Same last-record-wins reading as resolve_conversation; tac stops the
+    # scan at the end of the file instead of reading 200MB of transcripts.
+    rec=$(tac "$f" 2>/dev/null | grep -m 1 '^{"type":"custom-title"') || continue
+    title=$(sed -n 's/.*"customTitle":"\([^"]*\)".*/\1/p' <<<"$rec")
+    case "$title" in "$HOST-"?*) name=${title#"$HOST-"} ;; *) continue ;; esac
+    [ -z "$filter" ] || [[ "$name" == *"$filter"* ]] || continue
+    printf '%s\t%s\t%s\n' "$name" "$(date -r "$f" '+%Y-%m-%d %H:%M')" \
+      "$(grep -m 1 -o '"cwd":"[^"]*"' "$f" | cut -d'"' -f4)"
+  done | sort -t$'\t' -k1,1 -k2,2r | awk -F'\t' '!seen[$1]++' |
+    while IFS=$'\t' read -r name when dir; do
+      case " $live " in *" $name "*) l=yes ;; *) l="" ;; esac
+      printf '%-22s %-5s %-17s %s\n' "$name" "$l" "$when" "$dir"
+    done
   exit 0
   ;;
 esac
