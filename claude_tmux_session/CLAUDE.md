@@ -40,8 +40,37 @@ mode with Remote Control enabled. Append `--dangerous` only when the user
 explicitly asks for a session with permissions bypassed -- never choose it
 yourself.
 
+Before starting a NEW conversation, list what already exists:
+
+```
+~/.dotfiles/scripts/claude_tmux_run.sh conversations [pattern]
+```
+
+A session name says nothing about the directory behind it -- work on a
+subfolder is usually done from a session rooted higher up, so the history
+for `summit/project/bq-bench` lives in `bench`, rooted at
+`~/deqart_workspace`. Spawning a name nobody used before always succeeds,
+so a name that merely sounds right silently creates an empty second
+conversation next to the one holding the work. If the listing shows a
+plausible owner under another name, say so and offer it rather than
+starting from nothing.
+
 To stop a session: `tmux -L claude kill-session -t '=<name>'` (keep the
 `=name` quoted -- zsh equals-expands a bare `=word`).
+
+## Azure
+
+This file is public, so VM and resource-group names stay out of it; look
+them up: `az vm list --query "[?name=='<vm>'].resourceGroup" -o tsv` (fast
+without `-d`). Deallocating is then `az vm deallocate --no-wait -g <group>
+-n <vm>`; run it unpiped, or the exit status you check belongs to the last
+command of the pipe.
+
+`az vm list -d` is the power-state query, and `-d` makes it fetch an
+instance view per VM: it needs **five minutes or more**, well past the
+default command timeout, after which it is still running in the background
+rather than finished. Give it an explicit long timeout and wait. A call that
+timed out tells you nothing about any VM's state -- do not report from it.
 
 ## Rules
 
