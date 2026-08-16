@@ -63,7 +63,6 @@
   },
   "effortLevel": "xhigh",
   "autoCompactWindow": 700000,
-  "precomputeCompactionEnabled": true,
   "dialogExpiry": "never",
   "tui": "fullscreen",
   "voice": {
@@ -74,6 +73,7 @@
   "theme": "auto",
   "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
+  "precomputeCompactionEnabled": true,
   "remoteControlAtStartup": false,
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
