@@ -10,8 +10,9 @@
 # the user is already looking at the pane, so a bell would only annoy.
 # The session id rides in $TMUX (socket-path,server-pid,session-id), so
 # no name lookup is needed. Detached or attached-but-blurred sessions
-# fall through to the bell as before. Same predicate as ntfy-stop.sh's
-# client_flags -- keep the two in sync.
+# fall through to the bell as before. ntfy-stop.sh's watched() derives
+# the target the same way but adds a freshness bound on purpose -- a bell
+# into a locked screen is harmless, a suppressed push is not.
 if [ -n "${TMUX:-}" ]; then
   case $(tmux -S "${TMUX%%,*}" list-clients -t "\$${TMUX##*,}" \
       -F '#{client_flags}' 2>/dev/null) in
