@@ -20,6 +20,18 @@
   },
   "model": "opus[1m]",
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.dotfiles/.config/tmux/focus-out-unattached.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -37,6 +49,11 @@
           {
             "type": "command",
             "command": "~/.dotfiles/.claude/notify-stop.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.dotfiles/.claude/ntfy-stop.sh",
             "timeout": 5
           }
         ]
