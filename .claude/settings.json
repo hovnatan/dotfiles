@@ -1,5 +1,8 @@
 {
   "cleanupPeriodDays": 730,
+  "spellcheck": {
+    "enabled": true
+  },
   "permissions": {
     "allow": [
       "Bash(git log *)",
