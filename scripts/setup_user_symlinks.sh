@@ -157,6 +157,9 @@ if [ "$(uname)" = "Darwin" ]; then
 
   # Preview markup colors (magenta annotations for LLM screenshot review)
   ~/.dotfiles/scripts/macos/setup_preview_markup.sh
+
+  # Hunspell + en_US dictionary (brew ships no dictionaries)
+  ~/.dotfiles/scripts/macos/setup_hunspell.sh
 fi
 
 echo "Done"
