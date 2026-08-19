@@ -1,8 +1,5 @@
 {
   "cleanupPeriodDays": 730,
-  "spellcheck": {
-    "enabled": true
-  },
   "permissions": {
     "allow": [
       "Bash(git log *)",
@@ -21,7 +18,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -80,6 +77,9 @@
         "repo": "astral-sh/claude-code-plugins"
       }
     }
+  },
+  "spellcheck": {
+    "enabled": true
   },
   "effortLevel": "xhigh",
   "autoCompactWindow": 700000,
