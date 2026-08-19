@@ -82,12 +82,7 @@ unless non-ASCII is genuinely required. In prose, fancy typography (em dashes,
 smart quotes) reads as an LLM tell; in code, lookalike Unicode trips ruff
 RUF001-003. Use `-`/`--`, straight quotes, `...`, `->`.
 
-# Slack: I paste raw markup
-
-My Slack client has "Format messages with markup" enabled: draft Slack-bound
-messages as raw mrkdwn I can paste as-is. Slack mrkdwn is not GitHub markdown
-(no headers, `<url|text>` links, single `*` = bold). Tabular data goes in a
-``` fence with space-aligned columns, no leading indentation.
+# Slack: self-DM only
 
 When sending through the Slack MCP tools, never send directly to the real
 recipient: direct sends carry an unsuppressible "Sent using @Claude" footer,
