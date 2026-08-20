@@ -1,8 +1,11 @@
 #!/bin/bash
 # PreToolUse hook (Bash matcher): deterministic enforcement of the CLAUDE.md
-# git rules. git commit / git push (force pushes included), and commands that
-# would move a pinned submodule off the commit its superproject records,
-# always get a permission prompt so the user approves each one explicitly.
+# git rules. git push (force pushes included) and commands that would move a
+# pinned submodule off the commit its superproject records always get a
+# permission prompt so the user approves each one explicitly. git commit runs
+# unprompted -- the rule that Claude commits only when asked is behavioral,
+# and the push prompt remains the deterministic gate before anything leaves
+# the machine.
 # Blind spot: `cd <sub> && git checkout ...` - the hook never sees the cwd.
 set -euo pipefail
 
@@ -55,8 +58,6 @@ while IFS= read -r seg; do
       emit ask "FORCE PUSH - requires explicit user approval (git-guard hook, per CLAUDE.md: never force push unless explicitly requested)."
     fi
     ask_reason='git push requires explicit user approval (git-guard hook, per CLAUDE.md).'
-  elif [[ $seg =~ (^|[[:space:]])commit([[:space:]]|$) ]]; then
-    : "${ask_reason:=git commit requires explicit user approval (git-guard hook, per CLAUDE.md).}"
   fi
 done <<< "$(printf '%s\n' "$cmd" | tr ';&|' '\n')"
 
