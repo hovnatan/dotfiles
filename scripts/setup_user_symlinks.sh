@@ -42,6 +42,11 @@ mkdir -p ~/.vimundo/
 rm -rf ~/.vimrc
 ln -s ~/.dotfiles/.vimrc ~/.vimrc
 
+# Hunspell personal word list (technical terms). The name matches the en_US
+# dictionary so hunspell finds it by default; WORDLIST in .zshrc.shared points
+# here too, covering other locales. Interactive saves write through the link.
+ln -sf ~/.dotfiles/.hunspell_en_US ~/.hunspell_en_US
+
 # # Check if .bashrc_local is already sourced in .bashrc
 # if ! grep -q '\.bashrc_local' ~/.bashrc; then
 #     cat <<EOT >> ~/.bashrc
