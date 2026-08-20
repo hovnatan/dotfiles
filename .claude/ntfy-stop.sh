@@ -6,12 +6,12 @@
 # whether anyone is looking right now and otherwise forks the waiter,
 # detached, and exits. Waiter mode (--wait): poll the tmux session's
 # focus for DEBOUNCE_SECONDS. A client of this session reporting fresh
-# focus at any poll cancels the push -- the user saw the result. Growth
-# of the conversation transcript re-arms the window: every form of
-# engagement lands there -- local typing, Remote Control input from the
-# phone, a superseding turn -- so it is the one signal that dismisses a
-# pending push regardless of channel. Only a full window of quiet sends
-# the push. This channel is a deliberate, independent backup to Claude
+# focus at any poll cancels the push -- the user saw the result. So does
+# a new message from the user, whatever the channel: --cancel, fired by
+# the UserPromptSubmit hook, kills the pending waiter. Transcript growth
+# re-arms the window, so a turn superseding the advertised one gets its
+# own full watch. Only a full window of quiet sends the push. This
+# channel is a deliberate, independent backup to Claude
 # Code's native mobile push: it gates on tmux's own client focus rather
 # than claude's internal presence state, and adds debounce-with-cancel
 # semantics the native push lacks.
@@ -64,6 +64,12 @@ watched() {
   [ -n "$hit" ]
 }
 
+# lock_path <socket path> <session id>: set $lock to that session's lock
+# dir. One waiter per lock; --wait and --cancel must agree on this path,
+# so it is defined once. Sets a variable instead of printing to stay
+# fork-free on the per-prompt --cancel path.
+lock_path() { lock="$RUN_DIR/claude-ntfy/${1##*/}-$2.lock"; }
+
 if [ "${1:-}" = --wait ]; then
   socket="$2" sid="$3" topic="$4" transcript="${5:-}"
   # One waiter per (socket, session): a Stop landing while one is pending
@@ -72,7 +78,7 @@ if [ "${1:-}" = --wait ]; then
   # crashed waiter's lock instead of wedging the session until reboot.
   # The pid file does double duty: its content is the liveness claim, its
   # mtime is the current window's start (the re-arm below refreshes it).
-  lock="$RUN_DIR/claude-ntfy/${socket##*/}-$sid.lock"
+  lock_path "$socket" "$sid"
   mkdir -p "${lock%/*}"
   if ! mkdir "$lock" 2>/dev/null; then
     kill -0 "$(cat "$lock/pid" 2>/dev/null)" 2>/dev/null && exit 0  # waiter pending
@@ -85,10 +91,10 @@ if [ "${1:-}" = --wait ]; then
     # Watched (0) -> the user saw it; gone (2) -> nothing to report on.
     watched "$socket" "$sid"
     case $? in 0|2) exit 0 ;; esac
-    # Transcript grew since this window started: the user engaged (from
-    # any channel) or a new turn superseded the one we are advertising.
-    # Restart the window; the push then fires only after a full
-    # DEBOUNCE_SECONDS of quiet.
+    # Transcript grew since this window started: a new turn superseded
+    # the one we are advertising (a user message alone would have fired
+    # --cancel already). Restart the window; the push then fires only
+    # after a full DEBOUNCE_SECONDS of quiet.
     if [ -n "$transcript" ] && [ "$transcript" -nt "$lock/pid" ]; then
       echo $$ > "$lock/pid"
       end=$((SECONDS + DEBOUNCE_SECONDS))
@@ -108,11 +114,29 @@ if [ "${1:-}" = --wait ]; then
   exit 0
 fi
 
-# --- hook mode: cheap checks, then fork the waiter and get out of the way ---
+# --- cancel and hook modes both run inside the session's pane, with
+# $TMUX (socket-path,server-pid,session-id) identifying the session ---
 [ -n "${TMUX:-}" ] || exit 0            # not a tmux-hosted session
+socket=${TMUX%%,*} sid=${TMUX##*,}
+
+# --- cancel mode (UserPromptSubmit hook): the user answered from some
+# channel, so a pending push advertises a turn they have now seen. Kill
+# the waiter and free the lock; the reply's own Stop arms a fresh one.
+# Runs on every prompt submission, so the common no-waiter case is pure
+# builtins -- no forks. ---
+if [ "${1:-}" = --cancel ]; then
+  lock_path "$socket" "$sid"
+  [ -d "$lock" ] || exit 0              # no waiter pending
+  pid=
+  IFS= read -r pid 2>/dev/null < "$lock/pid"
+  [ -n "$pid" ] && kill "$pid" 2>/dev/null
+  rm -rf "$lock"
+  exit 0
+fi
+
+# --- hook mode: cheap checks, then fork the waiter and get out of the way ---
 IFS= read -r topic < "$TOPIC_FILE" 2>/dev/null
 [ -n "${topic:-}" ] || exit 0
-socket=${TMUX%%,*} sid=${TMUX##*,}      # $TMUX = socket-path,server-pid,session-id
 watched "$socket" "$sid" && exit 0      # user is looking right now -- no waiter
 # The hook JSON on stdin carries the conversation transcript's path; the
 # waiter watches its mtime (see loop). sed, not jq: stock macOS has no jq.

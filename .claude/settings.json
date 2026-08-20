@@ -18,7 +18,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -39,6 +39,17 @@
           {
             "type": "command",
             "command": "~/.dotfiles/.claude/git-guard.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.dotfiles/.claude/ntfy-stop.sh --cancel",
+            "timeout": 5
           }
         ]
       }
