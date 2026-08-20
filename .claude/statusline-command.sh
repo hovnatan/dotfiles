@@ -20,7 +20,7 @@ running_version=$(echo "$input" | jq -r '.version // empty')
 
 # Effort rides along with the model in one color run; omitted entirely when
 # the payload does not report it, rather than showing a placeholder.
-[ -n "$effort" ] && model="$model [$effort]"
+[ -n "$effort" ] && model="$model $effort"
 
 # Abbreviate cwd to match PS1's path_abbrev: $HOME -> ~, then shorten every
 # parent path component to its first character, keeping the last component full.
@@ -58,7 +58,7 @@ else
   path="${path}${1}"
 fi
 
-# Git branch, yellow if dirty / dim if clean. Dirty is the normal working
+# Git branch, yellow if dirty / plain if clean. Dirty is the normal working
 # state, so it gets the mild color and red stays reserved for act-now.
 branch=""
 if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -68,7 +68,7 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
     if [ -n "$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null)" ]; then
       gcolor='\033[33m'
     else
-      gcolor='\033[2m'
+      gcolor=''
     fi
     branch=" ${gcolor}(${ref})\033[0m"
   fi
