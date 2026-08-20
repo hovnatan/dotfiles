@@ -9,7 +9,7 @@ over requirements files or project scaffolding, so they run with `uv run script.
 Never stage (`git add`), commit, or push unless I explicitly ask. Never force
 push unless I explicitly ask for a force push - a regular push request does not
 count. A PreToolUse hook (~/.dotfiles/.claude/git-guard.sh) prompts on every
-commit/push; that is expected, do not work around it.
+push; that is expected, do not work around it.
 
 Never move a pinned git submodule off the commit its superproject records
 unless I explicitly ask. That means no picking a different commit from inside
