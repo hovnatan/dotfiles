@@ -28,9 +28,11 @@ npmrc
 ntfy
 PreToolUse
 pudb
+pypi
 PYTHONUNBUFFERED
 repo/dog
 rsync/walk
+sdist
 sioyek
 statusline/dog
 stdbuf
