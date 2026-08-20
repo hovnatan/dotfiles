@@ -319,6 +319,9 @@ export EDITOR=vim
 # Fallback for environments that don't set a locale (bare SSH, cron); plain C breaks UTF-8
 export LANG="${LANG:-en_US.UTF-8}"
 
+# Personal word list for hunspell (technical terms), tracked in dotfiles
+export WORDLIST=~/.hunspell_en_US
+
 export COLORTERM=truecolor
 
 export MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"
