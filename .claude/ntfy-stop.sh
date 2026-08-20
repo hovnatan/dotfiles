@@ -101,7 +101,7 @@ if [ "${1:-}" = --wait ]; then
   session=$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null)
   [ -n "$session" ] || exit 0
   curl -sf --max-time 10 \
-    -H "Title: Claude Code: $(hostname)-$session" \
+    -H "Title: CC: $(hostname)-$session" \
     -H "Tags: speech_balloon" \
     -d "finished a turn ${DEBOUNCE_SECONDS}s ago and is still unwatched" \
     "$NTFY_URL/$topic" > /dev/null
