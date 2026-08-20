@@ -40,6 +40,24 @@ mode with Remote Control enabled. Append `--dangerous` only when the user
 explicitly asks for a session with permissions bypassed -- never choose it
 yourself.
 
+One name can own SEVERAL conversations, and spawn resumes the newest: the
+name is re-asserted with `-n` on every launch, so a `/clear` inside a
+session keeps the name while starting a fresh conversation beside the old
+one. A resumed id that differs from the one resumed earlier that day is
+therefore normal (`/clear`, or a new conversation started under a used
+name), not a bug -- but say so when it happens, since the user may have
+wanted the older thread. Its id is in the `conversations` listing's
+history (all files carrying the name, newest first):
+
+```
+grep -l '"customTitle":"<hostname>-<name>"' ~/.claude/projects/*/*.jsonl |
+    xargs -r ls -t
+```
+
+Resuming a specific older one is `claude --resume <id> -n <hostname>-<name>`
+from that conversation's own directory -- the same form `launch()` uses,
+and the `-n` matters: a bare `--resume <id>` reverts the peer name.
+
 Before starting a NEW conversation, list what already exists:
 
 ```
