@@ -136,7 +136,7 @@ ln -s ~/.claude/skills ~/.agents/skills
 ln -s ~/.dotfiles/.config/ghostty ~/.config/
 
 mkdir -p ~/.local/{bin,local}
-ln -sf ~/.dotfiles/.npmrc ~/.npmrc
+ln -sf ~/.dotfiles/.npmrc_ ~/.npmrc
 
 ln -sf ~/.dotfiles/.config/uv ~/.config/
 
