@@ -21,7 +21,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -86,8 +86,7 @@
     "document-skills@anthropic-agent-skills": true,
     "example-skills@anthropic-agent-skills": true,
     "discernment-nudge@anthropic-agent-skills": true,
-    "academy-guide@anthropic-agent-skills": true,
-    "slack@claude-plugins-official": true
+    "academy-guide@anthropic-agent-skills": true
   },
   "extraKnownMarketplaces": {
     "astral-sh": {

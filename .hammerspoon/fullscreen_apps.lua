@@ -22,7 +22,7 @@ local MAX_TRIES = 20 -- Catalyst apps can take seconds to show their window
 local function fullscreenWhenReady(app, tries)
   local win = app:mainWindow()
   if win and win:isStandard() then
-    if not win:isFullScreen() then win:setFullScreen(true) end
+    win:setFullScreen(true)
   elseif tries < MAX_TRIES then
     hs.timer.doAfter(RETRY_INTERVAL, function()
       fullscreenWhenReady(app, tries + 1)
