@@ -4,7 +4,7 @@ set -e
 
 cd ~
 
-cp ~/.dotfiles/.npmrc ~/.npmrc
+cp ~/.dotfiles/.npmrc_ ~/.npmrc
 
 mkdir -p ~/.config
 
