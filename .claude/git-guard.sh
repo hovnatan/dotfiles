@@ -1,67 +1,44 @@
 #!/bin/bash
 # PreToolUse hook (Bash matcher): deterministic enforcement of the CLAUDE.md
-# git rules. git push (force pushes included) and commands that would move a
-# pinned submodule off the commit its superproject records always get a
-# permission prompt so the user approves each one explicitly. git commit runs
-# unprompted -- the rule that Claude commits only when asked is behavioral,
-# and the push prompt remains the deterministic gate before anything leaves
-# the machine.
-# Blind spot: `cd <sub> && git checkout ...` - the hook never sees the cwd.
+# git rules. Destructive pushes (force in any spelling, remote-ref deletes,
+# --mirror) always get a permission prompt so the user approves each one
+# explicitly. Everything else -- commit, plain push, submodule pin moves --
+# runs unprompted: those rules are behavioral (Claude acts only when asked),
+# and a pin move is locally reversible via `git submodule update`.
 set -euo pipefail
 
-cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null) || exit 0
+# Runs on every Bash tool call: prescreen the raw payload with builtins so
+# the common non-git case exits without forking jq.
+payload=''
+IFS= read -r -d '' payload || true
+[[ $payload == *git* ]] || exit 0
 
-case "$cmd" in
-  *git*) ;;
-  *) exit 0 ;;
-esac
+cmd=$(jq -r '.tool_input.command // empty' <<< "$payload" 2>/dev/null) || exit 0
 
 emit() {
-  jq -cn --arg d "$1" --arg r "$2" \
-    '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:$d,permissionDecisionReason:$r}}'
+  jq -cn --arg r "$1" \
+    '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"ask",permissionDecisionReason:$r}}'
   exit 0
 }
 
-force_re='(^|[[:space:]])(--force-with-lease(=[^[:space:]]*)?|--force|-f)([[:space:]]|$)'
-submodule_re='(^|[[:space:]])submodule([[:space:]]|$)'
-remote_re='(^|[[:space:]])--remote([[:space:]]|$)'
-foreach_re='(^|[[:space:]])foreach([[:space:]]|$)'
-moving_re='(^|[[:space:]])(checkout|pull|merge|rebase|reset)([[:space:]]|$)'
-dash_c_re='(^|[[:space:]])-C[[:space:]]+([^[:space:]]+)'
-pin_msg='SUBMODULE PIN MOVE - requires explicit user approval (git-guard hook, per CLAUDE.md: never move a pinned submodule off the commit its superproject records).'
-ask_reason=''
+push_msg='DESTRUCTIVE PUSH - requires explicit user approval (git-guard hook, per CLAUDE.md: never force push unless explicitly requested; force/delete/mirror pushes rewrite or remove remote refs).'
 
 # Split compound commands on ; & | and inspect each simple command.
 while IFS= read -r seg; do
   [[ $seg =~ (^|[[:space:]])git[[:space:]] ]] || continue
+  [[ $seg =~ (^|[[:space:]])push([[:space:]]|$) ]] || continue
 
-  # Submodule pin moves. `git submodule update [--init] [--recursive]` is the
-  # sanctioned way to restore pins and stays unprompted; --checkout does not
-  # trip moving_re because the word is preceded by '-', not whitespace.
-  if [[ $seg =~ $submodule_re ]]; then
-    if [[ $seg =~ $remote_re ]]; then
-      emit ask "$pin_msg"
-    fi
-    if [[ $seg =~ $foreach_re ]] && [[ $seg =~ $moving_re ]]; then
-      emit ask "$pin_msg"
-    fi
-  elif [[ $seg =~ $moving_re ]] && [[ $seg =~ $dash_c_re ]]; then
-    # BASH_REMATCH is from dash_c_re, the last match evaluated.
-    target=${BASH_REMATCH[2]}
-    if [[ -n $(git -C "$target" rev-parse --show-superproject-working-tree 2>/dev/null || true) ]]; then
-      emit ask "$pin_msg"
-    fi
-  fi
-
-  if [[ $seg =~ (^|[[:space:]])push([[:space:]]|$) ]]; then
-    if [[ $seg =~ $force_re ]]; then
-      emit ask "FORCE PUSH - requires explicit user approval (git-guard hook, per CLAUDE.md: never force push unless explicitly requested)."
-    fi
-    ask_reason='git push requires explicit user approval (git-guard hook, per CLAUDE.md).'
-  fi
-done <<< "$(printf '%s\n' "$cmd" | tr ';&|' '\n')"
-
-if [[ -n $ask_reason ]]; then
-  emit ask "$ask_reason"
-fi
+  # Classify each token rather than grepping for flag spellings, so
+  # short-option clusters (-fu), +refspec forces, and :refspec deletes are
+  # caught alongside the long flags.
+  read -ra toks <<< "$seg"
+  for tok in "${toks[@]}"; do
+    case "$tok" in
+      --force|--force-with-lease|--force-with-lease=*|--mirror|--delete) emit "$push_msg" ;;
+      --*) ;;
+      -*[fd]*) emit "$push_msg" ;;
+      +*|:*) emit "$push_msg" ;;
+    esac
+  done
+done <<< "${cmd//[;&|]/$'\n'}"
 exit 0
