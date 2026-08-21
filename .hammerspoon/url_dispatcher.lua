@@ -12,6 +12,9 @@
 --     work_url_prefixes = { "https://github.com/someorg" },  -- optional
 --   }
 -- Without it, links open in Chrome with no profile forcing.
+local chrome = require("chrome")
+local M = {}
+
 local ok, cfg = pcall(require, "local_config")
 if not ok then cfg = {} end
 
@@ -55,26 +58,27 @@ local WORK_SOURCE_BUNDLES = {
 -- callback time we are frontmost ourselves (verified - it reports
 -- org.hammerspoon.Hammerspoon, never the clicking app, despite LSUIElement).
 -- Track activations instead and remember the last app that was not us.
--- Global on purpose: a watcher only kept in a module local gets garbage
--- collected and silently stops.
 -- Seeded from the current frontmost app: after a reload the watcher has seen
 -- no activation yet, and Slack is often already frontmost (that is where the
 -- link is about to be clicked), so nil here would misroute the first link.
-local frontApp = hs.application.frontmostApplication()
-local frontBundle = frontApp and frontApp:bundleID()
-urlDispatcherSourceApp = frontBundle ~= "org.hammerspoon.Hammerspoon" and frontBundle or nil
-urlDispatcherSourceWatcher = hs.application.watcher.new(function(_, event, app)
-  if event == hs.application.watcher.activated then
-    local bundle = app and app:bundleID()
-    if bundle and bundle ~= "org.hammerspoon.Hammerspoon" then
-      urlDispatcherSourceApp = bundle
-    end
-  end
+-- M.watcher roots the watcher in package.loaded; one held only by a module
+-- local is garbage collected and silently stops.
+local sourceApp
+
+local function rememberSource(app)
+  local bundle = app and app:bundleID()
+  if bundle and bundle ~= hs.processInfo.bundleID then sourceApp = bundle end
+end
+
+rememberSource(hs.application.frontmostApplication())
+
+M.watcher = hs.application.watcher.new(function(_, event, app)
+  if event == hs.application.watcher.activated then rememberSource(app) end
 end)
-urlDispatcherSourceWatcher:start()
+M.watcher:start()
 
 local function isWorkSourceApp()
-  return WORK_SOURCE_BUNDLES[urlDispatcherSourceApp] == true
+  return WORK_SOURCE_BUNDLES[sourceApp] ~= nil
 end
 
 local function isWorkURL(url)
@@ -87,27 +91,15 @@ end
 
 local function openInChrome(url, profile)
   if profile then
-    -- open -n hands the URL to the running Chrome via a short-lived second
-    -- instance, so macOS never activates Chrome itself; raise it once the
-    -- handoff is done (Chrome has already raised the profile's window
-    -- within its own window stack by then).
-    hs.task.new("/usr/bin/open", function()
-      hs.timer.doAfter(0.2, function()
-        local chrome = hs.application.applicationsForBundleID("com.google.Chrome")[1]
-        if chrome then chrome:activate() end
-      end)
-    end, {
-      "-na", "Google Chrome", "--args",
-      "--profile-directory=" .. profile, url,
-    }):start()
+    chrome.launchWithProfile(profile, url, true)
   else
-    hs.urlevent.openURLWithBundle(url, "com.google.Chrome")
+    hs.urlevent.openURLWithBundle(url, chrome.BUNDLE_ID)
   end
 end
 
 hs.urlevent.httpCallback = function(_, host, _, fullURL)
   host = host and host:lower()
-  if (host and (GCLOUD_HOSTS[host] or isGcloudAuth(host, fullURL)))
+  if GCLOUD_HOSTS[host] or isGcloudAuth(host, fullURL)
       or isWorkHost(host) or isWorkURL(fullURL) or isWorkSourceApp() then
     openInChrome(fullURL, cfg.work_chrome_profile)
   else
@@ -115,3 +107,5 @@ hs.urlevent.httpCallback = function(_, host, _, fullURL)
   end
 end
 hs.urlevent.setDefaultHandler("http")
+
+return M

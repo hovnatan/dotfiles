@@ -140,7 +140,7 @@ ln -sf ~/.dotfiles/.npmrc_ ~/.npmrc
 
 ln -sf ~/.dotfiles/.config/uv ~/.config/
 
-# macOS only: IINA, colima, Hammerspoon
+# macOS only
 if [ "$(uname)" = "Darwin" ]; then
   # IINA reads ~/.config/iina as its mpv config dir, incl. scripts/
   ln -sf ~/.dotfiles/.config/iina ~/.config/
@@ -156,9 +156,10 @@ if [ "$(uname)" = "Darwin" ]; then
 
   # Login key remaps (caps lock -> ctrl, PC menu key -> right option)
   mkdir -p ~/Library/LaunchAgents
-  ln -sf ~/.dotfiles/LaunchAgents/com.hovnatan.keyremap.plist ~/Library/LaunchAgents/
-  launchctl bootout "gui/$(id -u)/com.hovnatan.keyremap" 2>/dev/null
-  launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.hovnatan.keyremap.plist
+  keyremap_label=com.hovnatan.keyremap
+  ln -sf ~/.dotfiles/LaunchAgents/"$keyremap_label".plist ~/Library/LaunchAgents/
+  launchctl bootout "gui/$(id -u)/$keyremap_label" 2>/dev/null
+  launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/"$keyremap_label".plist
 
   # Preview markup colors (magenta annotations for LLM screenshot review)
   ~/.dotfiles/scripts/macos/setup_preview_markup.sh
