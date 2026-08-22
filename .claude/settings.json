@@ -86,7 +86,8 @@
     "document-skills@anthropic-agent-skills": true,
     "example-skills@anthropic-agent-skills": true,
     "discernment-nudge@anthropic-agent-skills": true,
-    "academy-guide@anthropic-agent-skills": true
+    "academy-guide@anthropic-agent-skills": true,
+    "eli5@claude-community": true
   },
   "extraKnownMarketplaces": {
     "astral-sh": {
@@ -102,6 +103,12 @@
         "repo": "anthropics/skills"
       },
       "autoUpdate": true
+    },
+    "claude-community": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-community"
+      }
     }
   },
   "spellcheck": {
