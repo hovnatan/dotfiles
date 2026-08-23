@@ -21,7 +21,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.dotfiles/.config/tmux/focus-out-unattached.sh",
+            "command": "~/.dotfiles/home/.config/tmux/focus-out-unattached.sh",
             "timeout": 5
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.dotfiles/.claude/git-guard.sh"
+            "command": "~/.dotfiles/home/.claude/git-guard.sh"
           }
         ]
       }
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.dotfiles/.claude/ntfy-stop.sh --cancel",
+            "command": "~/.dotfiles/home/.claude/ntfy-stop.sh --cancel",
             "timeout": 5
           }
         ]
@@ -62,12 +62,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.dotfiles/.claude/notify-stop.sh",
+            "command": "~/.dotfiles/home/.claude/notify-stop.sh",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "~/.dotfiles/.claude/ntfy-stop.sh",
+            "command": "~/.dotfiles/home/.claude/ntfy-stop.sh",
             "timeout": 5
           }
         ]
@@ -132,5 +132,10 @@
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "xhigh"
+    }
+  }
 }

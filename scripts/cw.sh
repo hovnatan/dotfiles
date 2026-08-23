@@ -46,11 +46,11 @@ else
 fi
 
 # kitty @ --to $HOME/.tmpkitty set-colors -a -c ~/.config/kitty/base16-gruvbox-dark-medium.conf
-"$script_full_path/color_switcher.sh" ~/.dotfiles/.config/alacritty/alacritty.toml ~/.dotfiles/.config/alacritty/option$SUFFIX ~/.dotfiles/.config/alacritty/colors/$COLOR
+"$script_full_path/color_switcher.sh" ~/.dotfiles/home/.config/alacritty/alacritty.toml ~/.dotfiles/home/.config/alacritty/option$SUFFIX ~/.dotfiles/home/.config/alacritty/colors/$COLOR
 
 if [[ "$WSL_DISTRO_NAME" ]]; then
   WINDOWS_HOME=$(wslpath "$(wslvar USERPROFILE)")
-  cp ~/.dotfiles/.config/alacritty/alacritty.toml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.toml"
+  cp ~/.dotfiles/home/.config/alacritty/alacritty.toml "$WINDOWS_HOME/AppData/Roaming/alacritty/alacritty.toml"
 fi
 
 tmux source ~/.config/tmux/tmux.conf

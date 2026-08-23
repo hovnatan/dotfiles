@@ -6,12 +6,12 @@ set -e
 
 cd ~
 
-curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.zshrc -o ~/.zshrc
+curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.zshrc -o ~/.zshrc
 
-curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.tmux.conf -o ~/.tmux.conf
+curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.tmux.conf -o ~/.tmux.conf
 mkdir -p ~/.tmux/logs
 
-curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.vimrc -o ~/.vimrc
+curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.vimrc -o ~/.vimrc
 mkdir -p ~/.vim/undodir
 
 if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
@@ -23,7 +23,7 @@ if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
   email = 
 EOT
 fi
-curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.gitconfig_common -o ~/.gitconfig_common
+curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.gitconfig_common -o ~/.gitconfig_common
 
 
 if ! grep -q '\.bashrc_local' ~/.bashrc; then
@@ -33,7 +33,7 @@ if [[ -f "$HOME/.bashrc_local" ]]; then
 fi
 EOT
 fi
-curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.bashrc_local -o ~/.bashrc_local
+curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.bashrc_local -o ~/.bashrc_local
 
 mkdir -p ~/.ssh
-curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/.ssh/config -o ~/.ssh/config
+curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.ssh/config -o ~/.ssh/config
