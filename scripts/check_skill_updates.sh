@@ -2,7 +2,7 @@
 #
 # check_skill_updates.sh — report upstream updates for vendored Claude Code skills.
 #
-# Skills under ~/.dotfiles/.claude/skills/ are vendored (copied in), not pulled
+# Skills under ~/.dotfiles/home/.claude/skills/ are vendored (copied in), not pulled
 # live, so a compromised or churning upstream can never silently change what the
 # agent runs. Each vendored skill carries a `.upstream` file pinning it to a
 # reviewed commit:
@@ -25,7 +25,7 @@
 
 set -uo pipefail
 
-SKILLS_DIR="${SKILLS_DIR:-$HOME/.dotfiles/.claude/skills}"
+SKILLS_DIR="${SKILLS_DIR:-$HOME/.dotfiles/home/.claude/skills}"
 
 if [ -t 1 ]; then
   R=$'\033[31m'; G=$'\033[32m'; Y=$'\033[33m'; B=$'\033[1m'; N=$'\033[0m'

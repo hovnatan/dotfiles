@@ -21,7 +21,7 @@ else
 fi
 
 mkdir -p ~/.config/systemd/user
-ln -sfn ~/.dotfiles/.config/systemd/user/claude-tmux.service ~/.config/systemd/user/claude-tmux.service
+ln -sfn ~/.dotfiles/home/.config/systemd/user/claude-tmux.service ~/.config/systemd/user/claude-tmux.service
 # Config files from earlier versions of this service; everything is
 # hardcoded now.
 rm -f ~/.config/claude-tmux.env ~/.config/claude-tmux.conf
