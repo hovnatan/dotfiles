@@ -112,7 +112,8 @@
     }
   },
   "spellcheck": {
-    "enabled": true
+    "enabled": true,
+    "checker": "hunspell"
   },
   "effortLevel": "xhigh",
   "autoCompactWindow": 700000,
