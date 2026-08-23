@@ -1,5 +1,27 @@
 My linux config files
 
+## Layout
+
+`home/` mirrors `$HOME`: each entry is installed at the same relative path
+under `~`, e.g. `home/.tmux.conf` -> `~/.tmux.conf`, `home/.config/git` ->
+`~/.config/git`, `home/Library/LaunchAgents/com.hovnatan.keyremap.plist` ->
+`~/Library/LaunchAgents/com.hovnatan.keyremap.plist`. A few entries are
+installed selectively or handled specially (`home/.config/zathura_light` ->
+`~/.config/zathura`, and `~/.zshrc` / `~/.zprofile` are appended to rather
+than linked).
+
+`home/AGENTS.md` is the one canonical agent policy, installed under whatever
+name each tool reads: `~/.claude/CLAUDE.md` for Claude Code (it ignores the
+`AGENTS.md` name) and `~/.codex/AGENTS.md` for Codex. Add
+`~/.config/opencode/AGENTS.md` if opencode is ever installed. Edit
+`home/AGENTS.md`; every tool sees the change.
+
+Everything outside `home/` is repo tooling that never lands in `$HOME`:
+`scripts/` (all executables, invoked by absolute path), `claude_tmux_session/`,
+`.devcontainer/`, `docker/`. `scripts/setup_user_symlinks.sh` performs the
+install and is the authoritative map of what goes where. Nothing in this repo
+is on `PATH`; `~/.local/bin` is the PATH directory.
+
 
 To setup standalone:
 

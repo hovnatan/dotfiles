@@ -1,33 +1,3 @@
-# Python
-
-When working with Python, invoke the relevant /astral:<skill> for uv, ty, and ruff.
-For standalone scripts, prefer PEP 723 inline script metadata (`# /// script`)
-over requirements files or project scaffolding, so they run with `uv run script.py`.
-
-# Git
-
-Never stage (`git add`), commit, or push unless I explicitly ask. Never force
-push unless I explicitly ask for a force push - a regular push request does not
-count. A PreToolUse hook (~/.dotfiles/.claude/git-guard.sh) prompts on
-destructive pushes (force/delete/mirror); that is expected, do not work
-around it.
-
-Never move a pinned git submodule off the commit its superproject records
-unless I explicitly ask. That means no picking a different commit from inside
-a submodule (`git -C <sub> checkout/pull`) and no advancing pins from the
-superproject (`git submodule update --remote`, `git submodule foreach git
-pull`) - my submodules pin tracked branches, so those commands drift silently.
-
-"Update the sources" for a repo with submodules means updating the
-superproject and then restoring its pins with `git submodule update --init
---recursive`; without `--init`, an uninitialized submodule is skipped with no
-output and left empty. Verify with `git submodule status` (leading `-` =
-uninitialized, `+` = wrong commit), not `git -C <sub> rev-parse HEAD`, which
-returns the superproject's HEAD when the submodule directory is empty. If a
-submodule has local edits, tell me rather than forcing past them (`--force`
-discards them). Pins exist so results stay reproducible against a known
-dependency version.
-
 # Observability: report progress as it happens, not only at the end
 
 Write code and experiments so I can watch them work, at whatever cadence
@@ -104,5 +74,5 @@ inventing one.
 
 From Python, stdlib urllib does the same (POST body = message; Title/Tags
 as headers) -- no dependencies needed. The Stop-hook pipeline
-(`~/.dotfiles/.claude/ntfy-stop.sh`) reads the same topic file, so one
+(`~/.dotfiles/home/.claude/ntfy-stop.sh`) reads the same topic file, so one
 subscription covers both.
