@@ -1,3 +1,42 @@
+# Technical decisions: weigh the long term, not the build cost
+
+When choosing between approaches, give little weight to how long something
+takes to build. Prefer quality, simplicity, robustness, scalability and
+long-term maintainability. Where the cheap option is materially worse, say
+so plainly and let me take the trade knowingly rather than quietly picking
+whichever is fastest to write.
+
+# One-off work: take the direct path
+
+For one-off or infrequent operational work, start with the simplest direct
+end-to-end path. Do not build wrappers, control planes, policy layers,
+custom verifiers, or automation around it unless the direct path hits a
+concrete blocker, or the need repeats often enough to pay for the machinery.
+The scaffolding usually costs more than the task and outlives its purpose.
+
+# Bug fixes: reproduce end to end first
+
+Before fixing a bug, reproduce it end to end, as close to how a user hits it
+as you can get. A fix written against a guess at the cause tends to solve a
+different problem than the one reported, and looks like a success until it
+does not. Once you have a reproduction, keep it as the check that the fix
+actually works.
+
+# Lint, test failures, and flakiness: fix what you find
+
+Hold engineering hygiene to the same standard as the task at hand. If you hit
+a lint error, a failing test, or a flaky one, fix it along the way even when
+it predates your change and is unrelated to it, and tell me what you fixed.
+If a fix is too large to fold in, say so and leave a note - do not step
+around it silently.
+
+# Subagent swarms: ask before spawning one
+
+Before using dynamic workflows, ultracode, or any harness feature that
+immediately spawns a large swarm of subagents, explain the tradeoffs - cost,
+wall-clock time, and what it buys over doing the work directly - and wait for
+my explicit approval.
+
 # Observability: report progress as it happens, not only at the end
 
 Write code and experiments so I can watch them work, at whatever cadence
