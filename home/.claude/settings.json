@@ -116,7 +116,7 @@
     "checker": "hunspell"
   },
   "effortLevel": "xhigh",
-  "autoCompactWindow": 700000,
+  "autoCompactWindow": 900000,
   "dialogExpiry": "never",
   "tui": "fullscreen",
   "voice": {
