@@ -30,6 +30,25 @@ it predates your change and is unrelated to it, and tell me what you fixed.
 If a fix is too large to fold in, say so and leave a note - do not step
 around it silently.
 
+# Code comments: explain the why, and draw the system
+
+In code you write or reshape, comment at the block level: separate logical
+blocks with blank lines, and give a block a short note on what it does and
+why - the intent or constraint the code cannot show, never a restatement
+of the next line. A concrete example (input -> output, an edge case) beats
+an abstract description. When a module has several interacting parts, put
+an ASCII diagram in a comment or docstring - data flow, state machine -
+so the structure is visible without reading every function.
+
+# Layer boundaries: no new punched holes
+
+Where a codebase has layers, route new calls through the layer directly
+below; do not reach past it to a database query, raw socket, or hardware
+detail even when that is fewer lines. When building something durable,
+wrap low-level mechanics in a small API so callers speak domain concepts,
+not implementation details. Where hole-punching is the codebase's idiom,
+follow it and say so.
+
 # Subagent swarms: ask before spawning one
 
 Before using dynamic workflows, ultracode, or any harness feature that
