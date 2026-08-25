@@ -125,6 +125,26 @@ ln -sf ~/.dotfiles/home/.claude/settings.json ~/.claude/settings.json
 ln -sf ~/.dotfiles/home/.claude/statusline-command.sh ~/.claude/statusline-command.sh
 ln -sf ~/.dotfiles/home/.claude/keybindings.json ~/.claude/keybindings.json
 
+# Private companion repo, cloned at ~/.dotfiles-private: anything naming an
+# internal document or host lives there, not in this public repo. It is
+# OPTIONAL - a machine without the clone still installs cleanly, it just has
+# no work log routine.
+if [ -d ~/.dotfiles-private/home/.config ]; then
+  mkdir -p ~/.config
+  for d in ~/.dotfiles-private/home/.config/*/; do
+    [ -d "$d" ] || continue
+    target=~/.config/"$(basename "$d")"
+    # ln -sfn would drop the link INSIDE a real directory of the same name
+    if [ -d "$target" ] && [ ! -L "$target" ]; then
+      echo -e "\033[33m$target is a real directory - leaving it, move its contents into the private repo\033[0m"
+      continue
+    fi
+    ln -sfn "${d%/}" "$target"
+  done
+else
+  echo "~/.dotfiles-private not cloned - skipping private config"
+fi
+
 # Claude Code personal skills — keep ~/.claude/skills as a real directory so
 # skills installed by other means are left alone, and symlink in each skill
 # vendored under .dotfiles/home/.claude/skills/ (pinned per skill via .upstream;
