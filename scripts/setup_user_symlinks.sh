@@ -176,10 +176,10 @@ if [ "$(uname)" = "Darwin" ]; then
   ln -sf ~/.dotfiles/home/.colima/default/colima.yaml ~/.colima/default/colima.yaml
 
   ln -sfn ~/.dotfiles/home/.hammerspoon ~/.hammerspoon
-  if [ ! -f ~/Library/CloudStorage/Dropbox/Scripts/hammerspoon/local_config.lua ] \
-      && [ ! -f ~/Dropbox/Scripts/hammerspoon/local_config.lua ]; then
-    echo -e "\033[33mDropbox Scripts/hammerspoon/local_config.lua not found (Chrome profiles for Hammerspoon) - sync Dropbox or create it\033[0m"
-  fi
+  # Machine-private Hammerspoon settings (Chrome profiles, work URLs) stay out
+  # of this repo and get linked in, the same way ~/.ssh/local_config does. The
+  # link is git-ignored; init.lua simply requires "local_hammerspoon", since
+  # Hammerspoon already searches ~/.hammerspoon/?.lua.
 
   # Login key remaps (caps lock -> ctrl, PC menu key -> right option)
   mkdir -p ~/Library/LaunchAgents

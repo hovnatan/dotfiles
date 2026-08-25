@@ -6,3 +6,5 @@ venv_python_neovim
 .DS_Store
 *.bak
 *.swp
+# machine-local symlink into Dropbox; see scripts/setup_user_symlinks.sh
+home/.hammerspoon/local_hammerspoon.lua
