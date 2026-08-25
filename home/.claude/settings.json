@@ -116,6 +116,11 @@
     "checker": "hunspell"
   },
   "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "xhigh"
+    }
+  },
   "autoCompactWindow": 900000,
   "dialogExpiry": "never",
   "tui": "fullscreen",
@@ -132,10 +137,5 @@
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "modelSettings": {
-    "claude-opus-5": {
-      "effortLevel": "xhigh"
-    }
-  }
+  "voiceEnabled": true
 }
