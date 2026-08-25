@@ -83,6 +83,20 @@ resumed conversation id is unchanged by this (a resume writes into a NEW
 transcript file, so the id from `spawn` can differ from the one you saw
 before -- see above).
 
+Reload only IDLE sessions. A reload buys a fresh binary; it is never worth
+killing work in flight, and "reload all sessions" does not authorise that.
+Capture every target's pane first and leave a session alone when it shows:
+
+- a turn in progress -- a spinner with an elapsed timer at the bottom.
+  Capture twice a few seconds apart: an advancing timer means it is
+  working, not stuck, however long it has been going.
+- a background shell, watcher or Monitor it started -- killing one leaves
+  no completion record, so the resumed session only learns the command
+  "may have been running when the process exited" and has to redo it.
+
+Reload the idle ones, then name the ones you skipped and why, and offer to
+come back for them once they go quiet.
+
 Which build each session actually runs:
 
 ```
