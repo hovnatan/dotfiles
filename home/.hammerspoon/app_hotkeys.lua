@@ -5,7 +5,7 @@
 -- needs the Accessibility permission (requested in init.lua); without it the
 -- hotkey still focuses Chrome, just not a specific profile.
 local chrome = require("chrome")
-local ok, cfg = pcall(require, "local_config")
+local ok, cfg = pcall(require, "local_hammerspoon")
 if not ok then cfg = {} end
 
 -- Chrome's Profiles menu decorates titles ("Hovnatan (a@b.io)" for a Local

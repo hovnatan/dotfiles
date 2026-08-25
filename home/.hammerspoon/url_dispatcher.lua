@@ -4,8 +4,9 @@
 -- links from outside Chrome hit this.
 --
 -- Chrome profile directories map to accounts and work URLs name the
--- employer, so both live outside the repo in local_config.lua (in
--- Dropbox/Scripts/hammerspoon; see init.lua for the search path):
+-- employer, so both live outside the repo, required as "local_hammerspoon"
+-- via a git-ignored symlink at ~/.hammerspoon/local_hammerspoon.lua (see
+-- init.lua):
 --   return {
 --     work_chrome_profile = "...",  -- e.g. "Default", "Profile 1"
 --     default_chrome_profile = "...",
@@ -15,7 +16,7 @@
 local chrome = require("chrome")
 local M = {}
 
-local ok, cfg = pcall(require, "local_config")
+local ok, cfg = pcall(require, "local_hammerspoon")
 if not ok then cfg = {} end
 
 local GCLOUD_HOSTS = {

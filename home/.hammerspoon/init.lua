@@ -1,11 +1,10 @@
--- local_config.lua (machine-private: Chrome profiles, work URLs) lives in
--- Dropbox/Scripts/hammerspoon so it syncs across Macs without git.
-for _, dir in ipairs({
-  os.getenv("HOME") .. "/Library/CloudStorage/Dropbox/Scripts/hammerspoon",
-  os.getenv("HOME") .. "/Dropbox/Scripts/hammerspoon",
-}) do
-  package.path = package.path .. ";" .. dir .. "/?.lua"
-end
+-- Machine-private settings (Chrome profiles, work URLs) are required as
+-- "local_hammerspoon". They are not in this public repo:
+-- ~/.hammerspoon/local_hammerspoon.lua is a symlink to wherever this machine
+-- keeps them, created by scripts/setup_user_symlinks.sh and git-ignored --
+-- the same trick as ~/.ssh/local_config. Hammerspoon already searches
+-- ~/.hammerspoon/?.lua, so no package.path setup is needed here, and every
+-- require of it is pcall'd so a machine without the link still loads.
 
 -- Process-wide, and prompts on first run: hs.window/menu manipulation in
 -- several modules below depends on it, so ask once here rather than from
