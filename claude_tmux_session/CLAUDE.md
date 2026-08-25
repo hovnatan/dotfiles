@@ -129,6 +129,16 @@ script when you need its usage. (Killing the service is survivable: its
 ExecStop only kills the manager session when MAINPID is still set, so a
 signalled service auto-restarts without taking the session down.)
 
+## Daily work log
+
+The user may ask, at the end of a day, to add that day's work -- and a
+`Next` section of the following day's tasks -- to a Google Doc work log.
+The routine and the document links live in
+`~/.config/claude-worklog/routine.md`, symlinked out of the private
+companion repo at `~/.dotfiles-private` (this file is public, so nothing
+identifying belongs here). Read that file when the request comes; if it is
+missing, that repo is not cloned -- ask the user for it.
+
 ## Azure
 
 This file is public, so VM and resource-group names stay out of it; look
