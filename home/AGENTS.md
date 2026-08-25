@@ -97,6 +97,24 @@ own package/environment folder, not the repo root. Fall back to the repo root
 `.logs/` only when no subfolder clearly owns the
 work. Timestamp `YYYYMMDD_HHMMSS` in UTC. Tell me the local path once the first refresh lands.
 
+# Results: leave a handoff document next to the artifacts
+
+When a task produces results someone will later read, compare against, or
+reproduce - an experiment, a sweep, a benchmark, a migration - write or extend
+a README next to the artifacts as part of finishing the task, not only when I
+ask. Put it in the most specific folder that owns the work, and extend the
+existing document when the work continues an earlier experiment rather than
+starting a rival one; splitting one experiment's record across two places is
+worse than a long file.
+
+What earns its place: the headline numbers in a table (per-run and aggregate,
+with the spread, not just the winner); what was held fixed and what varied
+(seeds, splits, thresholds, hardware); the takeaway a reader should quote,
+and the one they should not; where the artifacts live (DVC path, bucket, run
+dirs); the exact commands to reproduce; and the gotchas that cost me time -
+stale config fields, CLI flags whose defaults surprised us, wall-clock per
+stage. Prefer plain numbers over adjectives, and say which result is noise.
+
 # Memory updates: consider promoting to repo-tracked docs
 
 When you write to the memory directory, decide in the same turn (and say)
