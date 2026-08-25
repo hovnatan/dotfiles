@@ -18,9 +18,24 @@ rl_five_used=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // 
 rl_week_used=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 running_version=$(echo "$input" | jq -r '.version // empty')
 
-# Effort rides along with the model in one color run; omitted entirely when
+# Effort rides along with the model but carries its own color, so the current
+# per-turn budget reads at a glance: dim at the low end, warming through green
+# to magenta as it climbs (low/medium/high/xhigh/max; ultracode reports xhigh).
+# The ramp deliberately skips yellow and red -- on this line those mean "a
+# budget is filling up" (Ctx / 5h / 7d) and nothing else. Omitted entirely when
 # the payload does not report it, rather than showing a placeholder.
-[ -n "$effort" ] && model="$model $effort"
+eff=""
+if [ -n "$effort" ]; then
+  case "$effort" in
+    low) ecolor='\033[2m' ;;
+    medium) ecolor='\033[36m' ;;
+    high) ecolor='\033[32m' ;;
+    xhigh) ecolor='\033[35m' ;;
+    max) ecolor='\033[1;35m' ;;
+    *) ecolor='\033[36m' ;;
+  esac
+  eff=" ${ecolor}${effort}\033[0m"
+fi
 
 # Abbreviate cwd to match PS1's path_abbrev: $HOME -> ~, then shorten every
 # parent path component to its first character, keeping the last component full.
@@ -155,4 +170,4 @@ if [ -n "$running_version" ] && [ -n "$installed_version" ] &&
   ver=" \033[2m|\033[0m \033[1;31mv${running_version}\033[0m"
 fi
 
-printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$ctx" "$rl" "$ver"
+printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$rl" "$ver"
