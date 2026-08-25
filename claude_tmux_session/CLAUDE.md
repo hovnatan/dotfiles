@@ -76,6 +76,45 @@ starting from nothing.
 To stop a session: `tmux -L claude kill-session -t '=<name>'` (keep the
 `=name` quoted -- zsh equals-expands a bare `=word`).
 
+## Reloading sessions after a Claude Code update
+
+There is no restart subcommand: kill the session, then spawn it again. The
+resumed conversation id is unchanged by this (a resume writes into a NEW
+transcript file, so the id from `spawn` can differ from the one you saw
+before -- see above).
+
+Which build each session actually runs:
+
+```
+tmux -L claude list-panes -a -F '#{session_name} #{pane_pid}' |
+  while read s p; do
+    for q in $p $(pgrep -P $p) $(pgrep -P $p | xargs -r -I{} pgrep -P {}); do
+      e=$(readlink /proc/$q/exe); case "$e" in */versions/*) echo "$s ${e##*/}"; break;; esac
+    done
+  done
+```
+
+Compare against `claude --version` (the `~/.local/bin/claude` symlink). Do
+not judge from the pane: the version banner is only drawn for a FRESH
+conversation, and a resumed one shows the `Restart to update` notice
+instead.
+
+- The installer can flip that symlink mid-reload, so sessions spawned
+  seconds apart land on different builds. Check versions after reloading a
+  batch and restart the stragglers.
+- A kill discards text the user typed into the prompt but never sent.
+  Capture the pane first and quote any pending line back to them.
+- This manager session cannot reload itself. Tell the user to run
+  `systemctl --user restart claude-tmux`; systemd recreates the session and
+  resumes this conversation.
+
+Never run `claude_tmux_run.sh` with no arguments -- that is the systemd
+entrypoint, which blocks forever in a watch loop -- and never `pkill -f` on
+its name, because the pattern matches the service's own process. Read the
+script when you need its usage. (Killing the service is survivable: its
+ExecStop only kills the manager session when MAINPID is still set, so a
+signalled service auto-restarts without taking the session down.)
+
 ## Azure
 
 This file is public, so VM and resource-group names stay out of it; look
