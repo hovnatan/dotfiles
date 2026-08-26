@@ -6,13 +6,9 @@
   "permissions": {
     "allow": [
       "Bash(git log *)",
-      "Bash(git -C * log *)",
       "Bash(git status *)",
-      "Bash(git -C * status *)",
       "Bash(git diff *)",
-      "Bash(git -C * diff *)",
       "Bash(git show *)",
-      "Bash(git -C * show *)",
       "Bash(tmux list-*)",
       "Bash(tmux show-*)",
       "Bash(tmux display-message *)",
