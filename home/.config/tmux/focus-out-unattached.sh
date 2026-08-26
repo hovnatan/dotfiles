@@ -22,10 +22,24 @@ if [ -z "$socket" ]; then
   [ -n "$socket" ] || exit 0
 fi
 
-tmux -S "$socket" list-panes -a \
-    -F '#{session_attached}	#{pane_current_command}	#{pane_id}' 2>/dev/null |
-while IFS=$'\t' read -r attached cmd pane_id; do
-    [ "$attached" = 0 ] && [ "$cmd" = claude ] || continue
+# Which panes run Claude Code? Not #{pane_current_command}: the installed
+# binary is version-named (~/.local/bin/claude -> .../versions/2.1.246) and
+# macOS tmux reports the resolved symlink target, so that field reads
+# "2.1.246" and changes on every update -- the old `= claude` test silently
+# matched nothing and the whole sweep no-oped. argv[0] is still "claude", and
+# `-o args=` is the one ps field that means argv[0] on both macOS and Linux
+# (`comm` is argv[0] on macOS but the kernel task name on Linux).
+#
+# Only the foreground process group counts: send-keys writes into the tty, so
+# for a suspended claude (no "+" in STAT) the escape would land on the shell
+# prompt instead. argv[0] carries a path when claude is launched by path (the
+# VS Code extension does), hence the basename match rather than a compare.
+tmux -S "$socket" list-panes -a -f '#{==:#{session_attached},0}' \
+    -F '#{pane_tty}	#{pane_id}' 2>/dev/null |
+while IFS=$'\t' read -r tty pane_id; do
+    ps -t "$tty" -o stat=,args= 2>/dev/null |
+        awk '$1 ~ /\+/ && $2 ~ /(^|\/)claude$/ { f = 1; exit }
+             END { exit !f }' || continue
     tmux -S "$socket" send-keys -t "$pane_id" -H 1b 5b 4f 2>/dev/null || true
 done
 exit 0
