@@ -1,8 +1,5 @@
 {
   "cleanupPeriodDays": 730,
-  "env": {
-    "CLAUDE_CODE_ARTIFACT_COMMENTS_AUTOREACT": "0"
-  },
   "permissions": {
     "allow": [
       "Bash(git log *)",
