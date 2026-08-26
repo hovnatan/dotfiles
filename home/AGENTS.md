@@ -85,6 +85,23 @@ trade. The same goes for your own long tasks - surface a finding when you
 have it instead of holding everything for the final report, unless the task's
 output contract is a single structured payload.
 
+# Remote work: sync the machine before you run anything on it
+
+Before doing work on a remote machine, first bring it up to date with the
+code and data the work depends on - `git fetch && git checkout/pull` in every
+repo involved, `rsync` for anything not in git (uncommitted edits, configs,
+input files, model weights), `dvc pull` or the project's own fetch step for
+tracked data. Do it as an explicit first step and tell me what you synced and
+to which revision; do not assume the remote is where you last left it. A
+remote box is usually days or weeks behind, or ahead by someone else's
+changes, so a run started without this silently benchmarks stale code and
+looks like a real result.
+
+If the sync cannot be clean - local uncommitted changes on the remote, a
+diverged branch, a conflict - stop and tell me rather than forcing or
+stashing it away; those changes are often the reason the box is in that
+state.
+
 # Remote runs: keep a live local copy of the logs
 
 When you start a long-running process on a remote machine, do not leave its
