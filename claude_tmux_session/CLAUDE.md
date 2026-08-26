@@ -74,7 +74,9 @@ plausible owner under another name, say so and offer it rather than
 starting from nothing.
 
 To stop a session: `tmux -L claude kill-session -t '=<name>'` (keep the
-`=name` quoted -- zsh equals-expands a bare `=word`).
+`=name` quoted -- zsh equals-expands a bare `=word`). `capture-pane` does
+NOT accept that `=name` form ("can't find pane") -- resolve pane ids first
+with `tmux -L claude list-panes -a -F '#{session_name} #{pane_id}'`.
 
 ## Reloading sessions after a Claude Code update
 
@@ -90,9 +92,15 @@ Capture every target's pane first and leave a session alone when it shows:
 - a turn in progress -- a spinner with an elapsed timer at the bottom.
   Capture twice a few seconds apart: an advancing timer means it is
   working, not stuck, however long it has been going.
-- a background shell, watcher or Monitor it started -- killing one leaves
-  no completion record, so the resumed session only learns the command
-  "may have been running when the process exited" and has to redo it.
+- a background shell, watcher or Monitor the harness still TRACKS -- killing
+  one leaves no completion record, so the resumed session only learns the
+  command "may have been running when the process exited" and has to redo it.
+  Tracked means a live CHILD of the session's `claude` pid. A process merely
+  carrying that session's `CLAUDE_PID`/`TMUX_PANE` env but reparented to
+  systemd was detached on purpose (`setsid nohup ... > log`): it survives the
+  kill untouched and nothing was tracking it, so it is NOT a reason to skip.
+  Grep the session's transcript for how it was launched before believing an
+  env stamp.
 
 Reload the idle ones, then name the ones you skipped and why, and offer to
 come back for them once they go quiet.
@@ -116,8 +124,16 @@ instead.
 - The installer can flip that symlink mid-reload, so sessions spawned
   seconds apart land on different builds. Check versions after reloading a
   batch and restart the stragglers.
-- A kill discards text the user typed into the prompt but never sent.
-  Capture the pane first and quote any pending line back to them.
+- A kill discards text the user typed into the prompt but never sent -- but
+  the input box ALSO renders Claude Code's suggested-action hint, which
+  echoes the recap's next step ("commit this" under a recap ending "next is
+  committing them"). `capture-pane -p` strips the styling that separates the
+  two, so a line in the box is not proof of pending input. Quote it back and
+  ask; never skip a reload over it. (`-e` keeps the SGR codes to compare.)
+- A reload resets per-process runtime state even though the conversation is
+  intact: effort drops to the default (`max` -> `xhigh`) and the session's
+  cwd returns to its launch directory. Report both so the user can restore
+  them.
 - This manager session cannot reload itself. Tell the user to run
   `systemctl --user restart claude-tmux`; systemd recreates the session and
   resumes this conversation.
