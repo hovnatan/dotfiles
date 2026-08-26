@@ -85,22 +85,41 @@ trade. The same goes for your own long tasks - surface a finding when you
 have it instead of holding everything for the final report, unless the task's
 output contract is a single structured payload.
 
-# Remote work: sync the machine before you run anything on it
+# Remote machines: sync one before you run anything on it
 
-Before doing work on a remote machine, first bring it up to date with the
-code and data the work depends on - `git fetch && git checkout/pull` in every
-repo involved, `rsync` for anything not in git (uncommitted edits, configs,
-input files, model weights), `dvc pull` or the project's own fetch step for
-tracked data. Do it as an explicit first step and tell me what you synced and
-to which revision; do not assume the remote is where you last left it. A
-remote box is usually days or weeks behind, or ahead by someone else's
-changes, so a run started without this silently benchmarks stale code and
-looks like a real result.
+Before doing work on a remote machine, bring it up to date first, and sync
+only what the work needs. Code moves over git - `git fetch` plus
+checkout/pull in every repo involved - so only tracked files travel. Then
+rsync the few things git does not carry and the work does need (an
+uncommitted patch, a config, one input file), named explicitly rather than
+by copying a working tree and hoping.
 
-If the sync cannot be clean - local uncommitted changes on the remote, a
-diverged branch, a conflict - stop and tell me rather than forcing or
-stashing it away; those changes are often the reason the box is in that
-state.
+Never bulk-copy what the remote can rebuild or refetch: `.venv`, `.tox`,
+`node_modules`, `__pycache__`, lint and build caches, DVC-managed data and
+environment dirs. Size any directory copy with `rsync -n --info=stats2`
+first and report anything past a few hundred MB to me instead of
+transferring it - data the remote can fetch itself (`dvc pull`, a bucket
+copy, a model download) is pulled ON the remote, never pushed over ssh from
+here.
+
+When git on the remote cannot authenticate to the origin - no deploy key,
+an expired token, no route out - do not give up: rsync the tracked set plus
+`.git`, which keeps the remote's HEAD, index and refs true and its
+`git log`/`status` honest. It should land clean; check there afterwards.
+
+    { git ls-files -z; printf '.git\0'; } |
+      rsync -azr --files-from=- --from0 ./ remote:path/
+
+`--files-from` cancels the recursion `-a` implies, so `-r` is what actually
+carries `.git`.
+
+Do the sync as an explicit first step and tell me what you synced and to
+which revision. A remote box is usually days or weeks behind, or ahead by
+someone else's changes, so a run started without this silently benchmarks
+stale code and looks like a real result. If the sync cannot be clean -
+uncommitted changes on the remote, a diverged branch, a conflict - stop and
+tell me rather than forcing or stashing it away; those changes are often
+why the box is in that state.
 
 # Remote runs: keep a live local copy of the logs
 
@@ -110,9 +129,10 @@ can open in VS Code on this VM: a background rsync loop (every ~30s, bounded
 lifetime) from the remote output directory into a
 `.logs/<timestamp>_remotework_<remote_name>_<work_description>/` directory
 placed in the most specific folder the work belongs to - the experiment's
-own package/environment folder, not the repo root. Fall back to the repo root
-`.logs/` only when no subfolder clearly owns the
-work. Timestamp `YYYYMMDD_HHMMSS` in UTC. Tell me the local path once the first refresh lands.
+own package/environment folder, not the repo root. Fall back to the repo
+root `.logs/` only when no subfolder clearly owns the work. Timestamp
+`YYYYMMDD_HHMMSS` in UTC. Tell me the local path once the first refresh
+lands.
 
 # Results: leave a handoff document next to the artifacts
 
