@@ -87,39 +87,73 @@ output contract is a single structured payload.
 
 # Remote machines: sync one before you run anything on it
 
-Before doing work on a remote machine, bring it up to date first, and sync
-only what the work needs. Code moves over git - `git fetch` plus
-checkout/pull in every repo involved - so only tracked files travel. Then
-rsync the few things git does not carry and the work does need (an
-uncommitted patch, a config, one input file), named explicitly rather than
-by copying a working tree and hoping.
-
-Never bulk-copy what the remote can rebuild or refetch: `.venv`, `.tox`,
-`node_modules`, `__pycache__`, lint and build caches, DVC-managed data and
-environment dirs. Size any directory copy with `rsync -n --info=stats2`
-first and report anything past a few hundred MB to me instead of
-transferring it - data the remote can fetch itself (`dvc pull`, a bucket
-copy, a model download) is pulled ON the remote, never pushed over ssh from
-here.
-
-When git on the remote cannot authenticate to the origin - no deploy key,
-an expired token, no route out - do not give up: rsync the tracked set plus
-`.git`, which keeps the remote's HEAD, index and refs true and its
-`git log`/`status` honest. It should land clean; check there afterwards.
+Before doing work on a remote machine, bring it up to date - a box is
+usually days behind, or ahead by someone else's changes, and a run on it
+silently benchmarks stale code that looks like a real result. Code moves
+over git - `git fetch` plus checkout/pull in every repo involved - so only
+tracked files travel. When the remote cannot reach the origin itself (no
+deploy key, an expired token, no route out) or is not a checkout at all,
+rsync the tracked set plus `.git`:
 
     { git ls-files -z; printf '.git\0'; } |
       rsync -azr --files-from=- --from0 ./ remote:path/
 
 `--files-from` cancels the recursion `-a` implies, so `-r` is what actually
-carries `.git`.
+carries `.git`. `.git` is part of that set, never a size-gated extra:
+without it the box cannot say which revision it holds and anything that
+reads HEAD there breaks.
 
-Do the sync as an explicit first step and tell me what you synced and to
-which revision. A remote box is usually days or weeks behind, or ahead by
-someone else's changes, so a run started without this silently benchmarks
-stale code and looks like a real result. If the sync cannot be clean -
-uncommitted changes on the remote, a diverged branch, a conflict - stop and
-tell me rather than forcing or stashing it away; those changes are often
-why the box is in that state.
+Then rsync what git does not carry and the work reads - an uncommitted
+patch, a config, the input - at the granularity the job consumes: a
+mounted directory, an imported package, a build context, a dataset root
+travel whole, not the files you believe it touches, since a hand-picked
+subset changes what the run can see and its numbers stop matching a run
+here.
+
+Never push what the remote can rebuild or refetch: `.venv`, `.tox`,
+`node_modules`, `__pycache__`, lint and build caches, DVC-managed data and
+environment dirs, and anything it can pull itself (`dvc pull`, a bucket
+copy, a model download). For everything else gate on time, not bytes: size
+it with `rsync -n --info=stats2`, divide by the link's rate (a datacenter
+peer moved 3.5 GB of `.git` in 36 s), and past a few minutes ask me before
+the run starts. The gate decides whether I hear about it first, never what
+travels.
+
+The toolchain is part of the sync: match `--version` for the tools the run
+invokes - interpreter, package manager, container runtime, accelerator
+stack - and give the box the user config `~/.dotfiles` links under
+`~/.config`; without it every tool runs on different defaults (uv without
+`exclude-newer` rewrote a committed lockfile on every `uv run`). A file the
+remote regenerates is drift: fix the cause there, never sync the rewrite
+back.
+
+Then prove the sync with git on both sides (rsync's own exit already
+covers what it sent; do not re-run it with `-n`): `git rev-parse HEAD; git
+status --porcelain | wc -l` here and there, reported as
+`<repo> @ <rev> (<n> dirty) == remote @ <rev> (<n> dirty)` and stamped into
+the run's output directory at launch unless the harness records it. If the
+sync cannot be clean - uncommitted or regenerated files on the remote, a
+diverged branch, a conflict - stop and tell me rather than forcing or
+stashing it away; those changes are often why the box is in that state.
+
+# Remote launches: own step, login shell, then read the first page
+
+Start the job as its own step, never chained onto the transfer with `&&`:
+when the pair times out you cannot tell which half ran. A non-interactive
+ssh gets no login PATH, so run it through a login shell, detach it with
+every fd redirected, and prove it alive in the same call:
+
+    timeout 30 ssh remote bash -l <<'EOF'
+    cd <dir> && setsid nohup <cmd> > <log> 2>&1 < /dev/null &
+    sleep 1; kill -0 $! && echo "launched $!"
+    EOF
+
+`launched <pid>` is the confirmation. ssh should return at once; `timeout`
+is a guard, and exit 124 alone says nothing about the job (ssh has lingered
+even with every fd redirected) - look again. Then read the first page of
+the run's log before walking away: a line saying it ignored, regenerated or
+fell back to something is the sync failing late - kill it at minute one,
+not hour three.
 
 # Remote runs: keep a live local copy of the logs
 
@@ -148,9 +182,10 @@ What earns its place: the headline numbers in a table (per-run and aggregate,
 with the spread, not just the winner); what was held fixed and what varied
 (seeds, splits, thresholds, hardware); the takeaway a reader should quote,
 and the one they should not; where the artifacts live (DVC path, bucket, run
-dirs); the exact commands to reproduce; and the gotchas that cost me time -
-stale config fields, CLI flags whose defaults surprised us, wall-clock per
-stage. Prefer plain numbers over adjectives, and say which result is noise.
+dirs) and the revision that produced them; the exact commands to reproduce;
+and the gotchas that cost me time - stale config fields, CLI flags whose
+defaults surprised us, wall-clock per stage. Prefer plain numbers over
+adjectives, and say which result is noise.
 
 # Memory updates: consider promoting to repo-tracked docs
 
