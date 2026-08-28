@@ -117,6 +117,8 @@
   "autoCompactWindow": 900000,
   "dialogExpiry": "never",
   "tui": "fullscreen",
+  "showMessageTimestamps": true,
+  "showTurnDuration": true,
   "voice": {
     "enabled": true,
     "mode": "hold"
