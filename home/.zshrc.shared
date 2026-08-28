@@ -51,15 +51,23 @@ path_abbrev() {
   echo $result
 }
 
-# Git prompt: " (branch)", red when the tree is dirty. One `git status` answers
+# Git prompt: " (branch)", always green, with a trailing "*" when the tree is
+# dirty -- the same shape as the Claude Code statusline in
+# ~/.claude/statusline-command.sh, so one repo does not read two ways on one
+# screen. Dirty was red, which this prompt already spends on the "[exit code]"
+# marker below, so red meant both "that command failed" and "you have edits".
+# Yellow did not fix it either: GitLab Light darkens yellow to #af551d to keep
+# it legible, only dE 23.6 from its red, so a dirty tree still read as a failed
+# command. The "*" is exact in any theme and costs one column.
+# One `git status` answers
 # both questions. The oh-my-zsh-derived pair this replaces cost 41ms per prompt
 # against ~11ms now: it also ran two `git config --get oh-my-zsh.*` lookups for
 # knobs that were never set (8ms each), a separate symbolic-ref, and a `tail`
 # that only tested whether the output was empty.
-# Submodules stay in scope, so a dirty pin still turns the prompt red.
+# Submodules stay in scope, so a dirty pin still shows the "*".
 # --no-optional-locks keeps a prompt redraw from writing .git/index.
 git_prompt() {
-  local out branch color
+  local out branch mark
   out=$(command git --no-optional-locks status --porcelain=v2 --branch 2>/dev/null) || return 0
   # "# branch.head <name>" header; unborn repos report the branch name too.
   branch=${${out#*branch.head }%%$'\n'*}
@@ -67,9 +75,9 @@ git_prompt() {
   [[ $branch == "(detached)" ]] && \
     branch=$(command git rev-parse --short HEAD 2>/dev/null)
   # v2 header lines start with "#"; any other line is a change.
-  color=green
-  [[ $out == *$'\n'[^#]* ]] && color=red
-  echo "%{$fg[$color]%} (${branch})"
+  mark=
+  [[ $out == *$'\n'[^#]* ]] && mark='*'
+  echo "%{$fg[green]%} (${branch}${mark})"
 }
 
 # Function to load environment variables from a file, defaults to .env

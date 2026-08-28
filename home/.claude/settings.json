@@ -14,7 +14,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5[1m]",
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -117,8 +117,6 @@
   "autoCompactWindow": 900000,
   "dialogExpiry": "never",
   "tui": "fullscreen",
-  "showMessageTimestamps": true,
-  "showTurnDuration": true,
   "voice": {
     "enabled": true,
     "mode": "hold"
@@ -128,6 +126,8 @@
   "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
   "precomputeCompactionEnabled": true,
+  "showTurnDuration": true,
+  "showMessageTimestamps": true,
   "remoteControlAtStartup": false,
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
