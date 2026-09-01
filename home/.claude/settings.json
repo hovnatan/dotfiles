@@ -69,7 +69,8 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "sh ~/.claude/statusline-command.sh"
+    "command": "sh ~/.claude/statusline-command.sh",
+    "refreshInterval": 60
   },
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true,
