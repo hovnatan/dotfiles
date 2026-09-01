@@ -149,11 +149,11 @@ signalled service auto-restarts without taking the session down.)
 
 The user may ask, at the end of a day, to add that day's work -- and a
 `Next` section of the following day's tasks -- to a Google Doc work log.
-The routine and the document links live in
-`~/.config/claude-worklog/routine.md`, symlinked out of the private
-companion repo at `~/.dotfiles-private` (this file is public, so nothing
-identifying belongs here). Read that file when the request comes; if it is
-missing, that repo is not cloned -- ask the user for it.
+Invoke the `work-log` skill, which carries the whole routine; the document
+ids and the other identifying details it needs are in
+`~/.config/claude-worklog/`, symlinked out of the private companion repo at
+`~/.dotfiles-private`. If that directory is missing, the repo is not cloned
+-- ask the user for it.
 
 ## Azure
 
