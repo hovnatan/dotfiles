@@ -12,11 +12,18 @@ OUTSIDE this file, in `~/.config/claude-worklog/routine.md`, because this
 repo is public. Read that first; if it is missing the user's private dotfiles
 repo is not cloned on this machine, so ask for it rather than guessing.
 
+## Prerequisites
+
+`gws` (the Google Workspace CLI) must be installed and authenticated. Check
+with `gws auth status`; if it is missing or exits 2, run
+`~/.dotfiles/scripts/install_gws.sh`, which installs the CLI and prints the
+one-time browser auth steps. Its credentials are machine-local and in no
+repo, so a new machine always needs the auth flow run on it.
+
 ## Writing the entry
 
-Write with `gws` (the Google Workspace CLI, /usr/bin/gws), already
-OAuth-authenticated AS THE USER -- edits carry their name in version
-history and nothing needs sharing. The Google Drive MCP connector can read
+Write with `gws`, already OAuth-authenticated AS THE USER -- edits carry
+their name in version history and nothing needs sharing. The Google Drive MCP connector can read
 a document but CANNOT write one: its `update_file` changes metadata only.
 
 The log is ONE TAB PER MONTH, titled `MM/YYYY`, newest tab at index 0;
