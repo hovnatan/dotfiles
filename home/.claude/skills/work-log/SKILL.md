@@ -93,7 +93,8 @@ Order groups, and bullets within a group, by their first source event.
 
 Every bullet opens with the span it ran over, bolded: `HH:MM` or
 `HH:MM-HH:MM`, first to last source event for that bullet -- the request in
-the transcript that started it through the last commit that closed it. Never
+the transcript that started it through the last commit that closed it -- and
+` +1` inside the bold when the span runs past midnight (next section). Never
 guess a time to fill the slot; drop the stamp and say so when the source has
 none. The `Next` section takes no stamps, because nothing in it has happened
 yet.
@@ -140,12 +141,55 @@ those is the mistake, not leaving them.
 Name the city in the date heading -- `08/31/2026 (Lisbon)` -- so entries
 written on either side of a move can still be read.
 
+## The day ends at 05:00, not at midnight
+
+The user works past midnight, so a calendar day would split one evening's
+work in two and file its tail under a date nobody associates with it. An
+entry dated D covers D 05:00 up to D+1 05:00 IN THE ZONE RESOLVED ABOVE;
+anything before 05:00 belongs to the previous date's entry. The cutoff sits
+in the middle of the user's overnight gap; move it on fresh evidence, not
+on one late night. Four things follow.
+
+"Today" in the ask follows the same clock: asked at 01:00 on D+1 to write
+up today, write D. And a date whose only work fell before 05:00 is not a
+missing day -- that work is the previous date's, and no entry is added for
+it.
+
+Gather by the WINDOW, never by a calendar date in any zone. Compute both
+ends once, in local time for git and GitHub and in UTC for the transcripts.
+Spell the end date out: GNU date reads `05:00 + 1 day` as 05:00 in zone
++01, silently.
+
+    D=2026-08-31; E=$(date -d "$D + 1 day" +%F); Z=Asia/Yerevan
+    TZ=$Z date -d "$D 05:00" --iso-8601=seconds     # 2026-08-31T05:00:00+04:00
+    TZ=$Z date -d "$E 05:00" --iso-8601=seconds     # 2026-09-01T05:00:00+04:00
+    date -u -d "TZ=\"$Z\" $D 05:00" +%FT%TZ         # 2026-08-31T01:00:00Z
+    date -u -d "TZ=\"$Z\" $E 05:00" +%FT%TZ         # 2026-09-01T01:00:00Z
+
+`git log --since=<local start> --until=<local end>` takes those as they
+are -- ISO with an offset, time and offset both honoured. GitHub search
+takes the same form, but its range is inclusive at both ends, so
+`merged:<local start>..<E 04:59:59 with offset>`. A transcript record's
+`timestamp` is a UTC ISO string (`2026-08-31T21:55:57.247Z`), so compare it
+to the UTC pair as strings: `.timestamp >= $A and .timestamp < $B`. On a
+DST night the window is 23 or 25 hours long; `date` with the IANA zone
+gets that right, a hand-written offset does not.
+
+Stamps keep the real clock time and mark the crossing with ` +1` at the end
+of the span, inside the bold: `**23:40-01:30 +1**`, `**01:45-02:30 +1**`.
+Never run the clock past 24 (`25:30`).
+
+Order by absolute time, not by the stamp text: post-midnight bullets are
+the day's LAST events, and a sort on `HH:MM` would put them first. The
+every-day-it-moved rule (below) uses this window too: a PR merged at 01:00
+on D+1 moved on D.
+
 ## Gathering the material
 
 Use BOTH the repos' git history (commits authored by the user that day,
 which supply the links) and the sessions' transcripts under
-`~/.claude/projects/*/*.jsonl` (filter records to the date and keep
-`type == "user"` messages) -- work that produced no commit, such as a
+`~/.claude/projects/*/*.jsonl` (filter records to the day's window, above,
+and keep `type == "user"` messages) -- work that produced no commit, such as a
 benchmark run or a policy change on a VM, only shows up there. Exclude other
 people's commits.
 
@@ -156,7 +200,8 @@ consequences (who approved it, what CI was skipped) even though the diff has
 not changed. Say in the later bullet what the earlier one was, so the two
 read as one thread rather than a repeat. `git log` alone will not show you
 the second -- a commit is dated when it was authored, not when it landed --
-so check `gh pr list --search 'merged:<date>'` too.
+so check `gh pr list --search 'merged:<window>'` too, in the range form
+above.
 
 ## Next day's tasks
 
