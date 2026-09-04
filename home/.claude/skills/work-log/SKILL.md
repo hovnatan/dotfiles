@@ -20,6 +20,9 @@ with `gws auth status`; if it is missing or exits 2, run
 one-time browser auth steps. Its credentials are machine-local and in no
 repo, so a new machine always needs the auth flow run on it.
 
+`gh` must be authenticated as the user with the `repo` scope (`gh auth
+status`): the day's commits are read from GitHub, not from local clones.
+
 ## Writing the entry
 
 Write with `gws`, already OAuth-authenticated AS THE USER -- edits carry
@@ -112,8 +115,12 @@ self-updating:
   day. Commits made on this box carry the box's offset, but GitHub merge and
   squash commits carry the merging browser's, and so do laptop commits:
 
-      git -C <repo> log --all --author="<user>" --since=<date> \
+      git -C <repo> log --all -i --author="<user>" --since=<date> \
         --pretty='%ai' | grep -v '+0000'
+
+  `<user>` is the pattern in `~/.config/claude-worklog/git-author-pattern`,
+  and the `-i` is part of the rule. This needs a local clone: GitHub's API
+  normalises every date to UTC, so the script below cannot supply offsets.
 
   Only present on days something was merged, so treat it as the check on
   Slack, not the primary. Where the two disagree, git wins for that day and
@@ -186,12 +193,36 @@ on D+1 moved on D.
 
 ## Gathering the material
 
-Use BOTH the repos' git history (commits authored by the user that day,
-which supply the links) and the sessions' transcripts under
-`~/.claude/projects/*/*.jsonl` (filter records to the day's window, above,
-and keep `type == "user"` messages) -- work that produced no commit, such as a
-benchmark run or a policy change on a VM, only shows up there. Exclude other
-people's commits.
+Use BOTH the day's commits and the sessions' transcripts. The commits,
+which supply the links, come from
+
+    ~/.dotfiles/scripts/worklog_commits.sh '<local start>' '<local end>'
+
+which walks every branch of every repo under the GitHub owners named in
+`~/.config/claude-worklog/github-owners`, plus the local clones listed in
+`extra-repos` for repos GitHub does not host (fetched first), and keeps
+the commits whose author name or email matches `git-author-pattern` --
+about a minute, progress on stderr, two TSV sections on stdout:
+
+- `#work`: commits AUTHORED inside the window, one line each (committed
+  and authored dates, repo, sha, branches, subject, url). These are the
+  day's entries.
+- `#relanded`: commits authored BEFORE the window that a release or
+  rebase re-committed inside it, collapsed to one line per batch (repo,
+  branches, committer, count, authored range, subjects). A batch is one
+  event -- "released N commits from D1..D2 to main" -- never N entries,
+  and only the user's event when the committer is the user; a colleague's
+  release of the user's commits is theirs to log.
+
+Do not substitute `gh search commits` (it indexes only the default branch)
+or the API's `author=` filter (it misses commits GitHub cannot link to the
+account); the script's header says why. Local clones add only what was
+never pushed, and that work shows in the transcripts anyway.
+
+The transcripts are under `~/.claude/projects/*/*.jsonl` (filter records to
+the day's window, above, and keep `type == "user"` messages) -- work that
+produced no commit, such as a benchmark run or a policy change on a VM,
+only shows up there. Exclude other people's commits.
 
 One piece of work earns an entry on EVERY day it moved, not once on the day
 it was written: the day it was opened, and again on the day it merged, each
@@ -200,8 +231,8 @@ consequences (who approved it, what CI was skipped) even though the diff has
 not changed. Say in the later bullet what the earlier one was, so the two
 read as one thread rather than a repeat. `git log` alone will not show you
 the second -- a commit is dated when it was authored, not when it landed --
-so check `gh pr list --search 'merged:<window>'` too, in the range form
-above.
+so check `gh search prs --author=@me --owner=<owner> --merged-at=<range>`
+too, for each owner in `github-owners`, in the range form above.
 
 ## Next day's tasks
 
