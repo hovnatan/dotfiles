@@ -224,3 +224,24 @@ From Python, stdlib urllib does the same (POST body = message; Title/Tags
 as headers) -- no dependencies needed. The Stop-hook pipeline
 (`~/.dotfiles/home/.claude/ntfy-stop.sh`) reads the same topic file, so one
 subscription covers both.
+
+# Failures: loud, not silent
+
+In everything code-related, an unexpected state should fail where it
+happens, with a message that names what went wrong and how to fix it. This
+covers the environment as much as the logic: a missing dependency,
+credential, service, config key or schema column is a finding, not
+something to route around. Do not paper over it: no skip on a missing
+import, no broad `except` that logs and continues, no fallback to a
+degraded path, no default that stands in for data that should have been
+there, no `.get()` where the key is required, no clamping or coercing a
+value that is out of range. Each of these turns a bug into a wrong result
+that surfaces far from its cause. Raise, assert the invariant, or let the
+exception propagate. Examples: a test importing a package should fail
+collection when the package is absent, not `pytest.importorskip` it,
+because the missing package is the finding; a parser meeting an unknown
+field should raise, not drop it. Skips, fallbacks and defaults are for
+conditions that are optional by design (no GPU on this machine, a feature
+flag off, an optional config key with a documented default), not for states
+that should have been correct. When you think swallowing an error is right
+anyway, say why and let me decide.
