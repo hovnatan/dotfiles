@@ -26,6 +26,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.dotfiles/home/.config/tmux/session-color.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PreToolUse": [

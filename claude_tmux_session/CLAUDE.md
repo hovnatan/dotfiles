@@ -23,6 +23,11 @@ sessions on this machine.
   (a resume by id alone reverts the peer name to an auto-generated
   directory-based one). If a running session still shows an auto-generated
   peer name, `/rename <hostname>-<session name>` inside it fixes it live.
+- A session's prompt-bar color (`/color` inside Claude Code) survives
+  `/clear`, which otherwise wipes it: the SessionStart hook
+  `~/.dotfiles/home/.config/tmux/session-color.sh` re-types the color the
+  cleared conversation had. Resumes restore it on their own. Pick a color
+  once per session with `/color`; nothing is configured anywhere.
 
 ## Bringing up a session
 
