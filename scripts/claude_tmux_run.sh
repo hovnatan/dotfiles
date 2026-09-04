@@ -58,6 +58,8 @@ ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}"   # startup window spawn waits o
 # {"type":"custom-title","customTitle":...,"sessionId":...} records carry
 # the name; the last such record wins (renames append). The ^ anchor keeps
 # transcript lines that merely quote such a record from matching.
+# ~/.dotfiles/home/.config/tmux/session-color.sh reads the same records
+# (from each file's tail, for macOS and cold-cache reasons) -- change both.
 resolve_conversation() {
   local conv="$1" f rec; shift
   # Cheap single-pass candidate filter, then verify only the candidates,
