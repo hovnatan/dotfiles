@@ -44,6 +44,9 @@ set -u
 
 [ -n "${TMUX:-}" ] && [ -n "${TMUX_PANE:-}" ] || exit 0   # not a tmux-hosted session
 socket=${TMUX%%,*}
+# Only the claude socket (or the one a test names): its sessions are the
+# ones claude_tmux_run.sh names, and a "/" elsewhere is not a label.
+[ "${socket##*/}" = "${CLAUDE_TMUX_SOCKET:-claude}" ] || exit 0
 input=$(cat)
 field() { sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" <<<"$input"; }
 source=$(field source) transcript=$(field transcript_path) title=$(field session_title)
@@ -61,11 +64,9 @@ fi
 read -r pgid tpgid < <(ps -o pgid=,tpgid= -p "$CLAUDE_PID" 2>/dev/null)
 [ -n "${pgid:-}" ] && [ "$pgid" = "${tpgid:-}" ] || exit 0
 
-# The label to drop, if any. Only this machine's own
-# "<hostname>-<name>/<task>" form: a slash someone put in a name elsewhere
-# is theirs to keep.
+# The label to drop, if any ("<host>-<name>/<task>" -> "<host>-<name>").
 bare=""
-case "$title" in "$HOSTNAME-"*/*) bare=${title%%/*} ;; esac
+case "$title" in */*) bare=${title%%/*} ;; esac
 
 # The conversation just cleared: the newest transcript in the same project
 # directory, other than the one being started, whose LAST custom-title
