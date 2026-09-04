@@ -7,6 +7,11 @@
 # matches; never re-use a hue for an unrelated idea.
 #
 #   bold blue      path                    matches the PS1 in ~/.zshrc.shared
+#   blue           cache "cold"            the entry is gone; the next request
+#                                          pays a full write. The one shared
+#                                          hue: blue is what "cold" looks like,
+#                                          and weight keeps it apart from the
+#                                          path, which is never drawn plain
 #   green          branch                  matches that PS1; "*" marks dirty,
 #                                          "?" a dirty check that timed out
 #   yellow         gauge 50-80%            warm, but not now
@@ -271,7 +276,8 @@ fi
 # first response; the measured source then takes over.
 #
 # Whole minutes down to 1m, then seconds; colour bands follow the LABEL (red
-# through "2m", yellow through "10m") so one number never wears two colours.
+# through "2m", yellow through "10m", blue for "cold") so one number never
+# wears two colours.
 # The label is dropped because a duration is the only thing on the line
 # measured in time (Ctx is the sole other gauge and it is a %), and "cold" --
 # the state that needs a word -- says what the number was counting. The number
@@ -313,7 +319,7 @@ else
   cache_left=$(( cache_expires - now ))
   if [ "$cache_left" -le 0 ]; then
     cache_txt="cold"
-    pcolor='\033[2m'
+    pcolor='\033[34m'
   else
     if [ "$cache_left" -ge 60 ]; then
       cache_txt="$((cache_left / 60))m"
