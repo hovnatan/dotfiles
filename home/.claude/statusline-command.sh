@@ -182,7 +182,7 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
 fi
 
 # Session name (set via -n or /rename; absent on unnamed sessions) minus
-# the "<hostname>-" prefix these sessions are named with (see
+# the "<hostname>-" prefix these sessions carry for claude.ai's sake (see
 # ~/.dotfiles/scripts/claude_tmux_run.sh): the machine is this one, and the
 # 20 characters (17 + "...") that keep the line short are better spent on
 # the name and its task label. Parameter expansion only: this runs on

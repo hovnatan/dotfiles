@@ -3,9 +3,11 @@
 # The tmux + Claude Code machinery behind claude-tmux.service, and the spawn
 # helper its manager session uses. All sessions live on the dedicated
 # "claude" tmux socket; the Claude Code conversation behind tmux session
-# <name> is named "<hostname>-<name>", which is also its Remote Control name
-# on claude.ai and its local peer name (what /list-agents shows). The name
-# is passed with -n on every launch, resumes included.
+# <name> is named "<hostname>-<name>": a session has ONE name -- the
+# prompt bar, /list-agents, the /resume picker and claude.ai all show it,
+# and /rename from any of them changes it everywhere -- and claude.ai
+# lists every machine's sessions, hence the hostname. The name is passed
+# with -n on every launch, resumes included.
 #
 #   claude_tmux_run.sh                 ExecStart: ensure the managed "claude"
 #                                      session (the manager) exists, then watch
@@ -39,21 +41,23 @@
 # "<hostname>-<name>"; once its task is clear it is labeled
 # "<hostname>-<name>/<task>" (/rename inside the session, or Ctrl+R in the
 # /resume picker for a finished one), which is what the picker, the prompt
-# bar and claude.ai show. The tmux session follows the conversation: it is
-# created under the bare <name>, and the pane-title-changed hook declared
-# in ~/.tmux.conf (~/.dotfiles/home/.config/tmux/sync-session-name.sh)
-# renames it <name>/<task> the moment claude announces its title, on every
-# /rename after, and back to <name> after a /clear -- so `tmux ls` and the
-# status bar show the label too, and this script finds a session by its
-# bare name (find_session; tmux targets without "=" prefix-match as well).
-# The label rides on the same record as the name, so spawn treats the bare
+# bar and claude.ai show. The tmux session follows the conversation minus
+# the hostname: it is created under the bare <name>, and the
+# pane-title-changed hook declared in ~/.tmux.conf
+# (~/.dotfiles/home/.config/tmux/sync-session-name.sh) renames it
+# <name>/<task> the moment claude announces its title, on every /rename
+# after, and back to <name> after a /clear -- so `tmux ls` and the status
+# bar show the label too, and this script finds a session by its bare
+# name (find_session; tmux targets without "=" prefix-match as well). The
+# label rides on the same record as the name, so spawn treats the bare
 # name as a prefix: "backend" resumes whichever of hov-8cpu-backend and
 # hov-8cpu-backend/<anything> was talked in last, and re-asserts THAT full
 # title with -n, since a resume by id alone would reset it. A /clear
 # carries the label into the fresh conversation, where it is wrong;
 # ~/.dotfiles/home/.config/tmux/session-clear.sh strips it. The names and
 # labels spawn accepts share one alphabet, NAME_RE: what tmux keeps
-# verbatim (it rewrites "." and ":" to "_").
+# verbatim (it rewrites "." and ":" to "_"). Both hooks act only on
+# sessions of this socket, where every conversation is named this way.
 #
 # The manager runs in ~/.dotfiles/claude_tmux_session with permissions
 # bypassed; the CLAUDE.md there tells it when to call spawn. Spawned
@@ -95,6 +99,8 @@ NAME_RE='^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)?$'       # <name>[/<task>] spawn accep
 # spawn resumes. A conversation with no message yet (just cleared) falls
 # back to its mtime. Modes:
 #   tsv      one line per match: <last talked, ISO UTC>\t<session id>\t<title>\t<cwd>\t<path>
+#            (no field is ever empty -- bash's tab-separated read would
+#            swallow it -- so an unknown cwd reads "-")
 #   history  the listing behind the history subcommand, one row per
 #            conversation -- files sharing their first user message (a
 #            resume into a second transcript) fold onto the newest
@@ -126,6 +132,25 @@ def quoted(line, key):
         return None
     i += len(tag)
     return line[i:line.index('"', i)]
+
+def head_cwd(path):
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            cwd = quoted(line, "cwd")
+            if cwd is not None:
+                return cwd
+    return None
+
+dir_cwd = {}
+def sibling_cwd(path):
+    """A conversation with no message yet (just cleared, then the session
+    died) records no cwd, but every transcript in a project directory
+    shares one: take a sibling's."""
+    d = os.path.dirname(path)
+    if d not in dir_cwd:
+        dir_cwd[d] = next((c for f in os.listdir(d) if f.endswith(".jsonl")
+                           for c in [head_cwd(os.path.join(d, f))] if c), None)
+    return dir_cwd[d]
 
 rows = []
 for path in paths:
@@ -162,7 +187,7 @@ for path in paths:
                 continue
             first, uuid = prompt, rec.get("uuid")
             break
-    rows.append({"ts": ts, "id": sid, "title": title, "cwd": cwd or "", "path": path,
+    rows.append({"ts": ts, "id": sid, "title": title, "cwd": cwd or sibling_cwd(path) or "-", "path": path,
                  "first": first or "", "uuid": uuid, "size": os.path.getsize(path)})
 
 rows.sort(key=lambda r: r["ts"], reverse=True)
@@ -191,8 +216,7 @@ for r in folded.values():
     print(f"   {r['first'][:150] or '(no prompt yet)'}")
     if r.get("also"):
         print(f"   continued from {', '.join(r['also'])}")
-    if r["cwd"]:
-        print(f"   in {r['cwd']}")
+    print(f"   in {r['cwd']}")
 PYEOF
 }
 
@@ -233,8 +257,8 @@ find_session() {
 
 # launch <session name> <dir> <claude args...>: detached pane running an
 # interactive zsh (so .zshrc opens the pane's pipe-pane log) that execs
-# claude with the given arguments, Remote Control named after the bare
-# session name (claude.ai lists one entry per session, label or not).
+# claude with the given arguments and Remote Control on (claude.ai shows
+# the session's one name, the -n among the arguments).
 # Prints the new session's id: the handle that survives the rename the
 # pane-title hook applies once claude announces its title (see Naming).
 # tmux hands a multi-word command to the pane as argv, untouched, so the
@@ -250,7 +274,7 @@ launch() {
   # background session behind on every press.
   tmux -L "$SOCKET" new-session -d -P -F '#{session_id}' -s "$name" -c "$dir" \
     /usr/bin/zsh -ic 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' zsh \
-    "$@" --remote-control "$HOST-$name"
+    "$@" --remote-control
 }
 
 # wait_alive <session id>: true once the session has stayed up for the
@@ -313,6 +337,10 @@ spawn)
   fi
   { read -r id; read -r cwd; read -r title; } < <(resolve_conversation "$conv" "$HOME"/.claude/projects/*/*.jsonl)
   if [ -n "$id" ]; then
+    if [ "$cwd" = - ]; then
+      echo "conversation $conv ($id) records no working directory and neither does any transcript beside it; resume it by hand from the right directory" >&2
+      exit 1
+    fi
     # Refuse to resume a conversation that is already open in some other
     # claude process (a manual resume over SSH, a background agent, ...):
     # transcripts are not locked, so two processes resuming the same
@@ -390,9 +418,10 @@ conversations)
   # owns a piece of work is to look at this list. Spawning a name nobody
   # used before always succeeds, silently starting an empty second
   # conversation beside the one that has the history.
-  # Conversations with no custom title are auto-named and cannot be
-  # resumed by name, so they are left out; same for other hosts' names,
-  # which this machine cannot spawn. One row per full title: a labeled
+  # Conversations with no custom title are auto-named; one without this
+  # host's prefix, or whose rest is outside the session-name alphabet (a
+  # hand-typed sentence), cannot be a session here: all left out. One row
+  # per full title: a labeled
   # conversation is its own row (name/task), the unlabeled ones under a
   # name collapse into one -- `history <name>` tells those apart. LIVE
   # means open in a claude process right now -- the conversation, not its
@@ -402,7 +431,8 @@ conversations)
   printf '%-40s %-5s %-17s %s\n' NAME LIVE 'LAST ACTIVE' DIRECTORY
   transcripts tsv "" "$HOME"/.claude/projects/*/*.jsonl |
     while IFS=$'\t' read -r ts _ title cwd _; do
-      case "$title" in "$HOST-"?*) name=${title#"$HOST-"} ;; *) continue ;; esac
+      name=${title#"$HOST-"}
+      [ "$name" != "$title" ] && [[ "$name" =~ $NAME_RE ]] || continue
       [ -z "$filter" ] || [[ "$name" == *"$filter"* ]] || continue
       printf '%s\t%s\t%s\t%s\n' "$name" "$ts" "$cwd" "$title"
     done | sort -t$'\t' -k1,1 -k2,2r | awk -F'\t' '!seen[$1]++' |
