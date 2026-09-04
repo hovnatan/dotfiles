@@ -19,49 +19,73 @@ sessions on this machine.
   behind a session is named `<hostname>-<session name>`, which is also its
   Remote Control name on claude.ai and its local peer name -- what
   `/list-agents` shows and what SendMessage addresses. `claude_tmux_run.sh`
-  passes `-n <hostname>-<session name>` on every launch, resumes included
-  (a resume by id alone reverts the peer name to an auto-generated
-  directory-based one). If a running session still shows an auto-generated
-  peer name, `/rename <hostname>-<session name>` inside it fixes it live.
+  passes the name with `-n` on every launch, resumes included (a resume by
+  id alone reverts the peer name to an auto-generated directory-based one).
+  If a running session still shows an auto-generated peer name,
+  `/rename <hostname>-<session name>` inside it fixes it live.
+- A conversation is LABELED with its task once the task is clear:
+  `/rename <hostname>-<session name>/<task>` inside the session (task: the
+  session-name alphabet, letters, digits, `-` and `_`, e.g.
+  `hov-8cpu-backend/asyncssh-advisory`), or `Ctrl+R` on its row in the
+  `/resume` picker for a finished one. The label is what the picker, the
+  prompt bar, the status line and claude.ai show; without it every
+  conversation a name accumulates (one per `/clear`) reads the same. The
+  peer name carries the label too, so address a labeled session by its
+  full name (`ListAgents` shows it). Resumes keep the label; `/clear` would
+  carry it into the fresh conversation, so the SessionStart hook below
+  strips it there.
+- The tmux session follows its conversation's name, label included:
+  `backend/asyncssh-advisory` while that conversation runs, `backend`
+  again after `/clear` (mechanism: Naming in `claude_tmux_run.sh`). tmux
+  targets without `=` prefix-match, so `-t backend` reaches the session
+  whatever its label; `=backend` matches only the unlabeled name.
 - A session's prompt-bar color (`/color` inside Claude Code) survives
-  `/clear`, which otherwise wipes it: the SessionStart hook
-  `~/.dotfiles/home/.config/tmux/session-color.sh` re-types the color the
-  cleared conversation had. Resumes restore it on their own. Pick a color
-  once per session with `/color`; nothing is configured anywhere.
+  `/clear`, which otherwise wipes it, and a task label does not leak past
+  it: the SessionStart hook
+  `~/.dotfiles/home/.config/tmux/session-clear.sh` types `/rename` back to
+  the bare name and re-types the color the cleared conversation had.
+  Resumes restore both on their own. Pick a color once per session with
+  `/color`; nothing is configured anywhere.
 
 ## Bringing up a session
 
 When asked to bring up / resume a session `<name>` (e.g. "backend"), run:
 
 ```
-~/.dotfiles/scripts/claude_tmux_run.sh spawn <name> [dir]
+~/.dotfiles/scripts/claude_tmux_run.sh spawn <name>[/<task>] [dir]
 ```
 
-It is idempotent. It resumes the conversation named `<hostname>-<name>` in
-the directory that conversation belongs to; when no such conversation
-exists it starts a new one in `<dir>` -- required only in that case, so ask
-which directory if it was not said. Spawned sessions run in auto permission
-mode with Remote Control enabled. Append `--dangerous` only when the user
+It is idempotent. `spawn <name>` resumes the conversation most recently
+talked in under `<hostname>-<name>`, labeled or not, in the directory that
+conversation belongs to; `spawn <name>/<task>` pins the conversation
+carrying that label (found with `history`, below) and refuses when the
+`<name>` session is live with a different one -- switching means killing
+work in flight, which is the user's call. When no such conversation exists
+it starts a new one in `<dir>` -- required only in that case, so ask which
+directory if it was not said. Spawned sessions run in auto permission mode
+with Remote Control enabled. Append `--dangerous` only when the user
 explicitly asks for a session with permissions bypassed -- never choose it
 yourself.
 
-One name can own SEVERAL conversations, and spawn resumes the newest: the
-name is re-asserted with `-n` on every launch, so a `/clear` inside a
-session keeps the name while starting a fresh conversation beside the old
-one. A resumed id that differs from the one resumed earlier that day is
-therefore normal (`/clear`, or a new conversation started under a used
-name), not a bug -- but say so when it happens, since the user may have
-wanted the older thread. Its id is in the `conversations` listing's
-history (all files carrying the name, newest first):
+One name can own SEVERAL conversations: a `/clear` inside a session keeps
+the name while starting a fresh conversation beside the old one, and spawn
+resumes whichever was talked in last (by last message, not file time: a
+picker rename touches a file without anyone talking in it). A resumed id
+that differs from the one resumed earlier that day is therefore normal
+(`/clear`, or a new conversation started under a used name), not a bug --
+but say so when it happens, since the user may have wanted the older
+thread. To see them all, newest first, each with its label and opening
+prompt:
 
 ```
-grep -l '"customTitle":"<hostname>-<name>"' ~/.claude/projects/*/*.jsonl |
-    xargs -r ls -t
+~/.dotfiles/scripts/claude_tmux_run.sh history <name>
 ```
 
-Resuming a specific older one is `claude --resume <id> -n <hostname>-<name>`
-from that conversation's own directory -- the same form `launch()` uses,
-and the `-n` matters: a bare `--resume <id>` reverts the peer name.
+Resuming a specific older one is `spawn <name>/<task>` when it is labeled,
+else `claude --resume <id> -n <its full title>` from that conversation's
+own directory -- the same form `launch()` uses, and the `-n` matters: a
+bare `--resume <id>` reverts the peer name, and a bare name drops the
+label.
 
 Before starting a NEW conversation, list what already exists:
 
@@ -78,10 +102,11 @@ conversation next to the one holding the work. If the listing shows a
 plausible owner under another name, say so and offer it rather than
 starting from nothing.
 
-To stop a session: `tmux -L claude kill-session -t '=<name>'` (keep the
-`=name` quoted -- zsh equals-expands a bare `=word`). `capture-pane` does
-NOT accept that `=name` form ("can't find pane") -- resolve pane ids first
-with `tmux -L claude list-panes -a -F '#{session_name} #{pane_id}'`.
+To stop a session: `tmux -L claude kill-session -t <name>` -- a bare name
+prefix-matches its labeled form (`backend` finds `backend/asyncssh-advisory`);
+`status` prints the exact names. `capture-pane` does NOT accept the
+`=name` exact form ("can't find pane") -- resolve pane ids first with
+`tmux -L claude list-panes -a -F '#{session_name} #{pane_id}'`.
 
 ## Reloading sessions after a Claude Code update
 

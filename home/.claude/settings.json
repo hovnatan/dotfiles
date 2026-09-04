@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.dotfiles/home/.config/tmux/session-color.sh",
+            "command": "~/.dotfiles/home/.config/tmux/session-clear.sh",
             "timeout": 5
           }
         ]
