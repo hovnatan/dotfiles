@@ -172,6 +172,25 @@ if [ "$(uname)" = "Darwin" ]; then
   # IINA reads ~/.config/iina as its mpv config dir, incl. scripts/
   ln -sf ~/.dotfiles/home/.config/iina ~/.config/
 
+  # IINA lists its key-binding confs (Preferences > Key Bindings) from this
+  # directory with the URL-based FileManager API, which refuses a symlinked
+  # directory (fatal "Cannot get user config file!" at launch), and saves them
+  # with an atomic write that replaces a symlinked file by a plain one. So the
+  # repo file is the source and IINA gets a plain copy: installed when absent,
+  # left alone when identical, and a stop when the two differ, since either
+  # side may hold the newer edit and only you know which.
+  iina_conf=~/.dotfiles/home/.config/iina/input_conf/my.conf
+  iina_installed="$HOME/Library/Application Support/com.colliderli.iina/input_conf/my.conf"
+  mkdir -p "$(dirname "$iina_installed")"
+  if [ ! -e "$iina_installed" ]; then
+    cp "$iina_conf" "$iina_installed"
+  elif ! cmp -s "$iina_conf" "$iina_installed"; then
+    echo "error: IINA key bindings differ between the repo and the installed copy:" >&2
+    echo "       repo -> IINA: cp '$iina_conf' '$iina_installed'" >&2
+    echo "       IINA -> repo: cp '$iina_installed' '$iina_conf'" >&2
+    exit 1
+  fi
+
   mkdir -p ~/.colima/default
   ln -sf ~/.dotfiles/home/.colima/default/colima.yaml ~/.colima/default/colima.yaml
 
