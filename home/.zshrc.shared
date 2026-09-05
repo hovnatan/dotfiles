@@ -1,7 +1,5 @@
 typeset -aU path
 
-export SHELL="$(command -v zsh)"
-
 autoload -U colors && colors
 
 setopt promptsubst
