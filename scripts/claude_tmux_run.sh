@@ -64,8 +64,9 @@
 # sessions are unmanaged: nothing recreates one that exits, and a service
 # stop leaves them alone.
 #
-# The unit launches ExecStart through a login zsh, so the tmux server forked
-# from here inherits the full login environment (.zprofile -> ~/.profile:
+# The unit launches ExecStart through the account's login shell (whatever
+# passwd says), so the tmux server forked from here inherits the full login
+# environment (~/.profile, reached via .zprofile when that shell is zsh:
 # ~/.local/bin on PATH, exports) once, for every future pane and window. Each
 # pane runs a plain interactive non-login zsh: .zshrc runs -- opening the
 # pane's pipe-pane log -- before starting claude. With "exit-empty on" the

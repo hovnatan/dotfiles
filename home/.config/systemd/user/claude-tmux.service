@@ -15,13 +15,6 @@ Type=simple
 # session spawns and resumes the other, unmanaged Claude Code sessions
 # (conversations named "<hostname>-<tmux name>") on this server.
 
-# Pin SHELL to zsh for the server (under systemd the passwd shell, bash,
-# would otherwise win): tmux derives default-shell from it and stamps that
-# into every pane's SHELL variable, which $SHELL-reading programs see
-# whenever no interactive zsh (whose .zshrc exports SHELL) ran in between.
-# New windows are zsh regardless -- tmux.conf hardcodes `default-command zsh`.
-Environment=SHELL=/usr/bin/zsh
-
 # The sessions run on a dedicated socket (tmux -L claude), not the default
 # one, so this service never shares a server with interactive tmux sessions.
 # Attach with: tmux -L claude attach -t <name>
@@ -32,10 +25,15 @@ Environment=SHELL=/usr/bin/zsh
 # disappears, which is what triggers Restart=always. ExecStop kills just
 # that session, so the unmanaged sessions survive a service stop.
 #
-# The login zsh matters: the tmux server forks from it and inherits the
+# The login shell matters: the tmux server forks from it and inherits the
 # full login environment for every future pane -- claude_tmux_run.sh's
-# header has the details.
-ExecStart=/usr/bin/zsh -lc '%h/.dotfiles/scripts/claude_tmux_run.sh'
+# header has the details. It is the account's own shell, whatever passwd
+# says (the user manager exports it as SHELL; ExecStart's program cannot be
+# a variable, hence the sh hop). tmux derives default-shell from that same
+# SHELL and stamps it into every pane, so $SHELL-reading programs there see
+# the passwd shell; new windows are zsh regardless -- tmux.conf hardcodes
+# `default-command zsh`.
+ExecStart=/bin/sh -c 'exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh"'
 # ExecStop runs on EVERY deactivation, including the self-exit restart
 # cycles the watcher relies on (systemd.service: "the stop operation is
 # always performed ... even if the processes in the service terminated on
