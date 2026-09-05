@@ -71,8 +71,8 @@ them needs no reordering.
 
     HEADING_1    MM/DD/YYYY (City)
     HEADING_2      <area>
-    HEADING_3        <area>: <task>
-    bullet             HH:MM-HH:MM  what happened, with links
+    HEADING_3        <area>: <task> (N commits, +A -R)
+    bullet             HH:MM-HH:MM  what happened, sha links each with +a -r
     HEADING_2      Next
     bullet           what tomorrow starts from, no stamp
 
@@ -80,6 +80,26 @@ Bullets are NORMAL_TEXT via `createParagraphBullets`
 (`BULLET_DISC_CIRCLE_SQUARE`); commit and PR links are `updateTextStyle`
 link ranges over words inside the bullet text. The areas in use are listed
 in the private routine file -- reuse one rather than inventing a synonym.
+
+Every task states its git footprint, at both levels:
+
+- In the bullets, each commit is its short sha (the first 8-9 characters,
+  which is what the script prints) as a link label, followed by that
+  commit's line counts as `+a -r`: `Retry Memorystore commands on
+  ConnectionError, not only timeouts, 208d2019 (+192 -1).` A bullet that
+  folds several commits lists each with its own counts, in commit order.
+- In the HEADING_3, after `<area>: <task>`, the roll-up in parentheses:
+  the number of commits under that task and the sum of their counts,
+  `backend: Memorystore retries (2 commits, +414 -3)`. A task with no
+  commits (a benchmark run, a policy change on a VM, a review) takes no
+  parenthesis at all -- never `(0 commits)`.
+
+The counts come from the `added`/`removed` columns of the commits script
+(below); do not compute them from a local clone, which may be stale, and
+never estimate them. A merge commit, a squash landing on the day it merged
+(the every-day-it-moved rule, below), and a relanded batch are quoted with
+the counts the script gives for that landing, so the same diff can appear
+on two days with the same numbers -- that is correct, both days moved it.
 
 Group by TASK, never a flat list of the day's actions: a HEADING_3 per task
 labelled `<area>: <task>` (`backend: idempotency addition`), with that
@@ -205,8 +225,10 @@ the commits whose author name or email matches `git-author-pattern` --
 about a minute, progress on stderr, two TSV sections on stdout:
 
 - `#work`: commits AUTHORED inside the window, one line each (committed
-  and authored dates, repo, sha, branches, subject, url). These are the
-  day's entries.
+  and authored dates, repo, sha, branches, subject, url, and the lines
+  `added` and `removed` -- one extra API call per commit, or `git show
+  --shortstat` for a local clone). These are the day's entries, and the
+  two count columns are what the task headings and sha links quote.
 - `#relanded`: commits authored BEFORE the window that a release or
   rebase re-committed inside it, collapsed to one line per batch (repo,
   branches, committer, count, authored range, subjects). A batch is one
