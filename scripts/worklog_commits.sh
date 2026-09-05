@@ -40,12 +40,16 @@
 #          e.g. 2026-08-31T05:00:00+04:00 2026-09-01T05:00:00+04:00
 # Output:  two TSV sections on stdout, each under a `#` header line:
 #            #work      committed authored repo sha branches subject url
+#                       added removed
 #            #relanded  committed repo branches committer commits
 #                       authored_from authored_to subjects
 #          sha and url of a work row are its earliest landing; branches is
-#          the union over every copy. Dates are UTC: the API normalises them,
-#          so the author's own offset is NOT available here and the skill's
-#          timezone check keeps using local git.
+#          the union over every copy; added/removed are the commit's line
+#          counts (the log quotes them per task), fetched with one extra
+#          call per work commit -- the commits list API carries no stats.
+#          Dates are UTC: the API normalises them, so the author's own
+#          offset is NOT available here and the skill's timezone check
+#          keeps using local git.
 # Config:  ~/.config/claude-worklog/github-owners       one owner per line
 #          ~/.config/claude-worklog/git-author-pattern  a regex, e.g. hovnatan
 #          ~/.config/claude-worklog/extra-repos         optional: "<path> [<link>]"
@@ -53,7 +57,8 @@
 #            Overleaf paper); the link, if given, fills the url column.
 #          All live in the private dotfiles; `#` lines and blanks are ignored.
 # Progress goes to stderr, one line per repo, so a slow run is watchable.
-# A typical day is ~9 active repos, ~135 API calls, about a minute.
+# A typical day is ~9 active repos, ~135 API calls plus one per work commit,
+# about a minute.
 
 set -euo pipefail
 shopt -s extglob   # for the *([[:space:]]) trim in the extra-repos parser
@@ -145,6 +150,7 @@ done <<< "$OWNERS"
 # old state that looks like today's. Remote URLs are never printed -- the
 # Overleaf one embeds a write token.
 US=$(printf '\x1f')   # field separator for git's output: a subject may hold tabs, never this
+LOCAL_PATHS=""        # "<name>\t<path>" per line, so the post-processor knows where to run git
 while IFS= read -r line; do
   [ -n "$line" ] || continue
   path=${line%%[[:space:]]*}; link=${line#"$path"}; link=${link##*([[:space:]])}
@@ -154,6 +160,8 @@ while IFS= read -r line; do
   git -C "$path" fetch --all --quiet --prune \
     || die "extra-repos: fetch failed in $path -- network, or an expired token in its remote URL?"
   name=$(basename "$path")
+  LOCAL_PATHS+="$name	$path
+"
 
   # Same shape as the GitHub rows: one `git log` per branch, bounded by the
   # window on committer date and filtered by the name test (`-i --author`
@@ -172,12 +180,32 @@ while IFS= read -r line; do
   log "$name (local): $n branches walked, $(wc -l < "$RAW") matches so far (with branch duplicates)"
 done <<< "$EXTRA"
 
-# Post-process: fold duplicates, split work from relandings, print both.
-python3 - "$RAW" "$START" > "$OUT" <<'PY'
-import sys
+# Post-process: fold duplicates, split work from relandings, fetch line
+# counts for the work commits, print both sections.
+LOCAL_PATHS="$LOCAL_PATHS" python3 - "$RAW" "$START" > "$OUT" <<'PY'
+import os, subprocess, sys
 from datetime import datetime, timedelta
 
 raw, start = sys.argv[1], sys.argv[2]
+local_paths = dict(l.split("\t", 1) for l in os.environ["LOCAL_PATHS"].splitlines() if l)
+
+def line_counts(w):
+    """(added, removed) for one work commit. GitHub: the single-commit endpoint
+    carries stats, the list endpoint does not. Local clone: git show. A commit
+    that cannot be counted is a finding, so fail loudly rather than print 0."""
+    if w["repo"] in local_paths:
+        out = subprocess.run(["git", "-C", local_paths[w["repo"]], "show", "--shortstat",
+                              "--format=", w["sha"]], capture_output=True, text=True, check=True).stdout
+        added = removed = 0
+        for part in out.replace("\n", ",").split(","):
+            if "insertion" in part: added = int(part.split()[0])
+            if "deletion" in part: removed = int(part.split()[0])
+        return added, removed
+    out = subprocess.run(["gh", "api", f"repos/{w['repo']}/commits/{w['sha']}",
+                          "--jq", "[.stats.additions, .stats.deletions] | @tsv"],
+                         capture_output=True, text=True, check=True).stdout
+    added, removed = out.split()
+    return int(added), int(removed)
 ts = lambda z: datetime.strptime(z, "%Y-%m-%dT%H:%M:%SZ")
 
 # One landing per (repo, sha): a commit reachable from several branches came
@@ -205,10 +233,12 @@ for l in landings.values():
         relanded.append(l)
 
 print("#work: authored inside the window (rebased copies folded; sha and url are the earliest landing)")
-print("#committed\tauthored\trepo\tsha\tbranches\tsubject\turl")
+print("#committed\tauthored\trepo\tsha\tbranches\tsubject\turl\tadded\tremoved")
 for w in sorted(work.values(), key=lambda w: (w["committed"], w["repo"], w["sha"])):
+    added, removed = line_counts(w)
     print("\t".join([w["committed"], w["authored"], w["repo"], w["sha"],
-                     ",".join(sorted(w["branches"])), w["subject"], w["url"]]))
+                     ",".join(sorted(w["branches"])), w["subject"], w["url"],
+                     str(added), str(removed)]))
 
 # Older commits landing inside the window arrive in batches: a rebase gives
 # every rewritten commit the same committer second, hand cherry-picks spread
