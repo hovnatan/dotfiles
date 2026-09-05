@@ -88,6 +88,10 @@ Every task states its git footprint, at both levels:
   commit's line counts as `+a -r`: `Retry Memorystore commands on
   ConnectionError, not only timeouts, 208d2019 (+192 -1).` A bullet that
   folds several commits lists each with its own counts, in commit order.
+  A run of commits written as a range, `568127a0 .. 73ea6e7a`, carries
+  the whole run's figure after the closing sha instead, in the roll-up
+  form: `568127a0 .. 73ea6e7a (5 commits, +120 -30)`, every commit of
+  the run counted, not only the two endpoints.
 - In the HEADING_3, after `<area>: <task>`, the roll-up in parentheses:
   the number of commits under that task and the sum of their counts,
   `backend: Memorystore retries (2 commits, +414 -3)`. A task with no
