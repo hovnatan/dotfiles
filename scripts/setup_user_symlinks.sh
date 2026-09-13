@@ -122,7 +122,6 @@ ln -sf ~/.dotfiles/home/AGENTS.md ~/.codex/AGENTS.md
 mkdir -p ~/.claude
 ln -sf ~/.dotfiles/home/AGENTS.md ~/.claude/CLAUDE.md
 ln -sf ~/.dotfiles/home/.claude/settings.json ~/.claude/settings.json
-ln -sf ~/.dotfiles/home/.claude/statusline-command.sh ~/.claude/statusline-command.sh
 ln -sf ~/.dotfiles/home/.claude/keybindings.json ~/.claude/keybindings.json
 
 # Private companion repo, cloned at ~/.dotfiles-private: anything naming an

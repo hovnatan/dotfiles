@@ -80,7 +80,7 @@
   "timeFormat": "24-hour",
   "statusLine": {
     "type": "command",
-    "command": "sh ~/.claude/statusline-command.sh; sh ~/.dotfiles/home/.config/tmux/retitle.sh",
+    "command": "sh ~/.dotfiles/home/.claude/statusline-command.sh; sh ~/.dotfiles/home/.config/tmux/retitle.sh",
     "refreshInterval": 60
   },
   "enabledPlugins": {
