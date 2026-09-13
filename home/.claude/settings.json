@@ -79,7 +79,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "sh ~/.claude/statusline-command.sh",
+    "command": "sh ~/.claude/statusline-command.sh; sh ~/.dotfiles/home/.config/tmux/retitle.sh",
     "refreshInterval": 60
   },
   "enabledPlugins": {
