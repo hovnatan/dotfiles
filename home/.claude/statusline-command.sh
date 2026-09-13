@@ -361,21 +361,43 @@ if [ -n "$running_version" ] && [ -n "$installed_version" ] &&
   ver=" \033[2m|\033[0m \033[33mU\033[0m"
 fi
 
-# Claude.ai rate-limit budgets, the rolling 5-hour and 7-day windows, as
-# "5h 12% . 7d 40%": each independently optional (the payload carries them
-# only on a subscription, and only after the first response), one dim dot
-# between them since they are one idea, and the gauge colours above so a
-# window about to close reads the same way as a filling context.
+# Claude.ai rate-limit budgets: the rolling 5-hour and 7-day windows, then
+# one gauge per model-scoped weekly window, as "5h 12% . 7d 40% . Fa 6%".
+# Each is independently optional, one dim dot between them since they are
+# one idea, and the gauge colours above so a window about to close reads
+# the same way as a filling context.
+#
+# Two sources. The payload carries five_hour and seven_day, exact to the
+# last response, but nothing before the first response and no per-model
+# window at all (2.1.270). usage-limits.sh, beside this file, reads the usage
+# endpoint Claude Code itself uses, through a cache refreshed every five
+# minutes, and fills both gaps: the two windows until the payload has them,
+# and every model-scoped window ("Fable" -> "Fa", the same two-letter
+# contraction as the model field, so Fa5.1 and Fa 6% read as one family).
+# A "~" marks a cache that failed to refresh, as it marks an unconfirmed
+# cache countdown: the number is real but old.
+u_five="" u_week="" u_scoped="" u_stale=""
+eval "$(sh "$(dirname "$0")/usage-limits.sh" 2>/dev/null)"
+mark=""; [ -n "$u_stale" ] && mark="~"
 rl_parts=""
+add_gauge() {   # label pct [mark]
+  [ -n "$rl_parts" ] && rl_parts="${rl_parts} \033[2m.\033[0m "
+  rl_parts="${rl_parts}$(gauge_color "$2")$1 ${3:-}$2%\033[0m"
+}
 if [ -n "$rl_five" ]; then
-  five_pct=$(printf '%.0f' "$rl_five")
-  rl_parts="$(gauge_color "$five_pct")5h ${five_pct}%\033[0m"
+  add_gauge 5h "$(printf '%.0f' "$rl_five")"
+elif [ -n "$u_five" ]; then
+  add_gauge 5h "$u_five" "$mark"
 fi
 if [ -n "$rl_week" ]; then
-  week_pct=$(printf '%.0f' "$rl_week")
-  [ -n "$rl_parts" ] && rl_parts="${rl_parts} \033[2m.\033[0m "
-  rl_parts="${rl_parts}$(gauge_color "$week_pct")7d ${week_pct}%\033[0m"
+  add_gauge 7d "$(printf '%.0f' "$rl_week")"
+elif [ -n "$u_week" ]; then
+  add_gauge 7d "$u_week" "$mark"
 fi
+for entry in $u_scoped; do
+  name=${entry%%:*}
+  add_gauge "$(printf '%.2s' "$name")" "${entry#*:}" "$mark"
+done
 rl=""
 [ -n "$rl_parts" ] && rl=" \033[2m|\033[0m ${rl_parts}"
 
