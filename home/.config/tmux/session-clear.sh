@@ -78,8 +78,12 @@ case "$title" in */*) bare=${title%%/*} ;; esac
 # cold blew the hook's 5s budget. Same records as transcripts() in
 # claude_tmux_run.sh -- change both together. (mtime order is right here:
 # the conversation just left was written moments ago.)
+# ls -t is the only portable mtime sort (stat's flags differ between macOS
+# and GNU); reading it line by line is safe because transcript names are
+# UUIDs and can carry neither spaces nor newlines.
 color=""
-for f in $(ls -t "$(dirname "$transcript")"/*.jsonl 2>/dev/null); do
+# shellcheck disable=SC2012
+while IFS= read -r f; do
   [ "$f" != "$transcript" ] || continue
   IFS=$'\t' read -r ok c < <(tail -c 1048576 "$f" |
     awk -v want="\"customTitle\":\"$title\"" '
@@ -89,7 +93,7 @@ for f in $(ls -t "$(dirname "$transcript")"/*.jsonl 2>/dev/null); do
   [ "${ok:-}" = 1 ] || continue
   color=$c
   break
-done
+done < <(ls -t "$(dirname "$transcript")"/*.jsonl 2>/dev/null)
 case "$color" in default) color="" ;; esac
 
 # Rename first: the color is per session and survives the rename either way.

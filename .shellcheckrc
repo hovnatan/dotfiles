@@ -1,0 +1,4 @@
+# shellcheck settings for this repo.  Lint everything with:
+#   git ls-files '*.sh' | xargs shellcheck
+# scripts/countdown.sh is zsh, which shellcheck does not support; skip it.
+external-sources=true
