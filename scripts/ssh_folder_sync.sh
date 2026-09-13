@@ -36,6 +36,15 @@
 # so ControlMaster/ControlPath must be set for the host (typically in a
 # Host * block).  Without them the loop logs a line and exits.
 #
+# Process picture, one per host:
+#
+#     ssh (your session)                 ssh_folder_sync.sh run <host>
+#       LocalCommand --> start --fork--> [ lock $RUN_DIR/lock-<host>/pid ]
+#                                          |
+#     $SESSION_SOCK (stat only) <-- poll --+--> rsync -e "ssh -o ControlPath=$SOCK"
+#       gone => loop exits                 |      (private master, own timeouts)
+#                                          +--> log $STATE_DIR/<host>.log
+#
 # Usage:
 #   ssh_folder_sync.sh start  <host> <local-root> <remote-root>   detach and run
 #   ssh_folder_sync.sh run    <host> <local-root> <remote-root>   run in foreground
@@ -44,7 +53,7 @@
 #
 # <remote-root> is interpreted by the remote shell, so a relative path is
 # relative to the remote home directory.  Set RSYNC=/path/to/rsync to override
-# binary discovery.
+# binary discovery.  Runs under /bin/sh on macOS (bash) and Linux (dash).
 
 set -u
 
@@ -52,11 +61,20 @@ INTERVAL=3              # seconds between passes
 CONNECT_WAIT=15         # seconds to wait for the ssh connection before giving up
 LOG_KEEP_BYTES=262144   # log is trimmed back to this
 TRIM_EVERY=200          # passes between trims (~10 min at INTERVAL=3)
+# Bounds on one pass.  Without them a dead link is a TCP connect that hangs
+# for the kernel's ~15 minutes, and a mux master that stopped answering is
+# never replaced: the log once showed four passes of exactly that, an hour of
+# no sync while the session socket said "connected".
+SSH_CONNECT_TIMEOUT=10  # seconds to establish a new connection
+SSH_ALIVE_INTERVAL=5    # keepalive probe period on the private master ...
+SSH_ALIVE_COUNT=3       # ... and how many unanswered probes kill it (15s)
+RSYNC_TIMEOUT=60        # seconds of no data before rsync gives up
 
 STATE_DIR="$HOME/.local/state/ssh-folder-sync"
 # The control socket is volatile, and must stay SHORT: macOS caps unix socket
 # paths at 104 bytes, which $STATE_DIR (106 for a 37-char host alias) and a
-# macOS $TMPDIR (110) both blow.  A runtime dir is shorter and reboot-clean.
+# macOS $TMPDIR (110) both blow.  A runtime dir is shorter and reboot-clean
+# (tmpfs XDG_RUNTIME_DIR on Linux, /tmp is wiped at boot on macOS).
 RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}/ssh-folder-sync"
 
 usage() {
@@ -74,6 +92,12 @@ esac
 
 LOG="$STATE_DIR/$HOST.log"
 SOCK="$RUN_DIR/cm-$HOST.sock"
+# One loop per host, enforced by a lock DIRECTORY: mkdir(2) is atomic on every
+# POSIX filesystem, and flock(1) does not exist on macOS.  The pid inside is
+# what stop/status act on, and what lets a later run tell "held" from "left
+# behind by a loop that was SIGKILLed or lost to a reboot".
+LOCK="$RUN_DIR/lock-$HOST"
+PIDFILE="$LOCK/pid"
 
 log() { printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >>"$LOG"; }
 # Liveness: does your session's master still exist?  This is a stat, NOT a
@@ -88,20 +112,26 @@ log() { printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >>"$LOG"; }
 connected() { [ -S "$SESSION_SOCK" ]; }
 # The loop's own private master (see SSH_T), which is a different socket.
 ctl() { ssh -O "$1" -o ControlPath="$SOCK" "$HOST" >/dev/null 2>&1; }
-# Finds this host's loop by its argv, so several hosts can each have one.  The
-# literal "run" is the subcommand below: rename that and this stops matching.
-# $HOST lands in a regex unescaped, which is fine for ordinary aliases.
-loop_pids() { pgrep -f "ssh_folder_sync.sh run $HOST " 2>/dev/null; }
+# Prints the pid of this host's live loop, or fails.  The pid file alone is
+# not proof: after a crash the number may belong to whatever process got it
+# next, so the argv is checked too.  The literal "run" is the subcommand
+# below: rename that and this stops matching.  -ww stops both macOS and
+# procps ps from truncating the line to the terminal width.
+loop_pid() {
+    _pid=$(cat "$PIDFILE" 2>/dev/null) && [ -n "$_pid" ] || return 1
+    kill -0 "$_pid" 2>/dev/null || return 1
+    ps -ww -o command= -p "$_pid" 2>/dev/null | grep -q "ssh_folder_sync.sh run $HOST " || return 1
+    echo "$_pid"
+}
 
 case "$ACTION" in
     stop)
-        pids=$(loop_pids)
-        if [ -n "$pids" ]; then kill $pids 2>/dev/null; echo "$HOST: sync loop stopped"
+        if pid=$(loop_pid); then kill "$pid" 2>/dev/null; echo "$HOST: sync loop stopped (pid $pid)"
         else echo "$HOST: sync loop not running"; fi
         ctl exit
         exit 0 ;;
     status)
-        if [ -n "$(loop_pids)" ]; then echo "$HOST: sync loop running (every ${INTERVAL}s), log: $LOG"
+        if pid=$(loop_pid); then echo "$HOST: sync loop running (pid $pid, every ${INTERVAL}s), log: $LOG"
         else echo "$HOST: sync loop not running"; fi
         exit 0 ;;
 esac
@@ -149,15 +179,47 @@ if [ "$ACTION" = start ]; then
     exit 0
 fi
 
-# One loop per host, however many times LocalCommand fires.
-loop_pids | grep -qvx "$$" && exit 0
+mkdir -p "$STATE_DIR" "$RUN_DIR" "$LOCAL_ROOT/out" "$LOCAL_ROOT/in" || exit 1
+
+# One loop per host, however many times LocalCommand fires -- including two
+# firing in the same instant, which two clients racing for a ControlMaster
+# can do (the loser connects unmultiplexed and runs LocalCommand as well).
+# A pgrep-based check used to handle that by having BOTH sides see the other
+# and exit, leaving no loop at all; mkdir hands the lock to exactly one.
+#
+# A held lock whose owner is dead is reclaimed by renaming it away first:
+# two reclaimers cannot both win the mv, and the loser then falls through to
+# a plain mkdir it may or may not win.  rm -rf on a shared path would let the
+# second reclaimer delete the first one's freshly created lock.
+if ! mkdir "$LOCK" 2>/dev/null; then
+    loop_pid >/dev/null && exit 0
+    if mv "$LOCK" "$LOCK.stale.$$" 2>/dev/null; then
+        log "reclaimed lock left by a dead loop (pid $(cat "$LOCK.stale.$$/pid" 2>/dev/null || echo '?'))"
+        rm -rf "$LOCK.stale.$$"
+    fi
+    mkdir "$LOCK" 2>/dev/null || exit 0
+fi
+echo "$$" >"$PIDFILE"
+
+# From here on this process owns the lock, so every exit must release it --
+# including the ones stop(1), logout and shutdown cause with SIGTERM, which
+# previously killed the loop without a line in the log.  The lock is removed
+# whole, not just the pid file, so a half-cleaned state cannot exist.
+release() { rm -rf "$LOCK"; ctl exit; }
+on_signal() {
+    log "got SIG$1; loop exiting"
+    [ -n "${sleeper:-}" ] && kill "$sleeper" 2>/dev/null
+    release
+    exit 0
+}
+trap 'on_signal TERM' TERM
+trap 'on_signal INT'  INT
+trap 'on_signal HUP'  HUP
 
 # ssh -G expands the %r/%h/%p tokens, so this is the real socket path.  No
 # ControlPath means no way to tell when you have logged out, and the loop has
 # no business running.
 SESSION_SOCK=$(ssh -G "$HOST" 2>/dev/null | awk '$1 == "controlpath" { print $2; exit }')
-
-mkdir -p "$STATE_DIR" "$RUN_DIR" "$LOCAL_ROOT/out" "$LOCAL_ROOT/in" || exit 1
 
 # Trimmed periodically, not just at startup: a wrong remote path makes both
 # rsyncs write to stderr every pass, which is ~0.5 MB/hour of log for exactly
@@ -172,15 +234,24 @@ trim_log
 # A private multiplexed connection, so a pass costs no handshake.  It must not
 # share your session's connection: rsync traffic over that one would keep
 # resetting its ControlPersist timer and pin it open.  See connected() for the
-# other half of the same hazard.
-SSH_T="ssh -o ControlPath=$SOCK -o ControlMaster=auto -o ControlPersist=30 -o PermitLocalCommand=no -o ClearAllForwardings=yes -o BatchMode=yes"
-FILTER="--exclude=.DS_Store --exclude=.rsync-partial --partial-dir=.rsync-partial"
+# other half of the same hazard.  The keepalive options belong to the master,
+# which owns the TCP connection: once the link dies it exits within
+# SSH_ALIVE_INTERVAL*SSH_ALIVE_COUNT seconds and unlinks $SOCK, so the next
+# pass builds a fresh master instead of talking to a hung one.
+SSH_T="ssh -o ControlPath=$SOCK -o ControlMaster=auto -o ControlPersist=30"
+SSH_T="$SSH_T -o ConnectTimeout=$SSH_CONNECT_TIMEOUT"
+SSH_T="$SSH_T -o ServerAliveInterval=$SSH_ALIVE_INTERVAL -o ServerAliveCountMax=$SSH_ALIVE_COUNT"
+SSH_T="$SSH_T -o PermitLocalCommand=no -o ClearAllForwardings=yes -o BatchMode=yes"
 
 # mirror <label> <src> <dst> -- --delete is what makes deletions propagate.  A
 # missing source makes rsync fail rather than empty the far side, which is the
-# safe way round for a mirror.
+# safe way round for a mirror.  --partial-dir keeps an interrupted transfer
+# out of sight of the far side's mirror pass, and is excluded so it is never
+# mirrored itself.
 mirror() {
-    _out=$($RSYNC -a --delete -i $FILTER -e "$SSH_T" "$2" "$3" 2>&1)
+    _out=$($RSYNC -a --delete -i --timeout="$RSYNC_TIMEOUT" \
+        --exclude=.DS_Store --exclude=.rsync-partial --partial-dir=.rsync-partial \
+        -e "$SSH_T" "$2" "$3" 2>&1)
     [ -n "$_out" ] && log "$1: $(printf '%s' "$_out" | tr '\n' ' ')"
     return 0
 }
@@ -193,7 +264,7 @@ mirror() {
 # passes on the first try; the wait only covers an unusually slow setup.
 if [ -z "$SESSION_SOCK" ] || [ "$SESSION_SOCK" = none ]; then
     log "$HOST has no ControlPath; cannot track the session, not starting"
-    exit 0
+    release; exit 0
 fi
 
 n=0
@@ -201,21 +272,28 @@ while ! connected; do
     n=$((n + 1))
     if [ "$n" -ge "$CONNECT_WAIT" ]; then
         log "no ssh master socket for $HOST after ${CONNECT_WAIT}s; not starting (is ControlMaster/ControlPath set for this host?)"
-        exit 0
+        release; exit 0
     fi
     sleep 1
 done
 
 $SSH_T "$HOST" "mkdir -p '$REMOTE_ROOT/in' '$REMOTE_ROOT/out'" >/dev/null 2>&1
-log "loop started (every ${INTERVAL}s): $LOCAL_ROOT/out -> $HOST:$REMOTE_ROOT/in, back into $LOCAL_ROOT/in"
+log "loop started (pid $$, every ${INTERVAL}s): $LOCAL_ROOT/out -> $HOST:$REMOTE_ROOT/in, back into $LOCAL_ROOT/in"
 
+# The pause runs as a background child under wait, because sh delivers a
+# trapped signal only once the foreground command returns: a plain sleep
+# would make stop(1) wait out the interval, and a foreground rsync waits out
+# its timeouts.  rsync is left in the foreground on purpose -- interrupting a
+# transfer mid-file is what --partial-dir is for, but not worth it for a
+# pause of a few seconds.
 passes=0
 while connected; do
     mirror "out -> $HOST" "$LOCAL_ROOT/out/"        "$HOST:$REMOTE_ROOT/in/"
     mirror "$HOST -> in"  "$HOST:$REMOTE_ROOT/out/" "$LOCAL_ROOT/in/"
     passes=$((passes + 1))
     [ $((passes % TRIM_EVERY)) -eq 0 ] && trim_log
-    sleep "$INTERVAL"
+    sleep "$INTERVAL" & sleeper=$!
+    wait "$sleeper"; sleeper=
 done
 log "connection to $HOST closed; loop exiting"
-ctl exit
+release
