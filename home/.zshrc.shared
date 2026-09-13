@@ -51,7 +51,7 @@ path_abbrev() {
 
 # Git prompt: " (branch)", always green, with a trailing "*" when the tree is
 # dirty -- the same shape as the Claude Code statusline in
-# ~/.claude/statusline-command.sh, so one repo does not read two ways on one
+# ~/.dotfiles/home/.claude/statusline-command.sh, so one repo does not read two ways on one
 # screen. Dirty was red, which this prompt already spends on the "[exit code]"
 # marker below, so red meant both "that command failed" and "you have edits".
 # Yellow did not fix it either: GitLab Light darkens yellow to #af551d to keep
