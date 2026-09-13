@@ -10,9 +10,13 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
 # Add the repository to Apt sources:
-echo \
-  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+# Expanded into variables first: the one-liner from Docker's docs nests its
+# quotes inside out, so the substitutions ran unquoted and the indentation of
+# the continuation line leaked into the apt source line.
+arch=$(dpkg --print-architecture)
+# shellcheck disable=SC1091  # sourced for VERSION_CODENAME; not part of the repo
+codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+echo "deb [arch=$arch signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $codename stable" |
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 

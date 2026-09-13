@@ -37,7 +37,6 @@ convert_tiffs_to_pdf() {
         (( i++ == 0 )) && wait || true
 
         filename=$(basename -- "$f")
-        extension="${filename##*.}"
         filename="${filename%.*}"
         # Cross-platform file size detection
         if [[ "$OSTYPE" == "darwin"* ]]; then

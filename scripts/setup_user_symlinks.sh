@@ -15,7 +15,7 @@ $SUDO apt-get update
 $SUDO apt-get install -y --no-install-recommends curl wget sudo htop tmux zsh vim git openssh-client make locales procps
 $SUDO locale-gen --no-purge en_US.UTF-8
 
-cd ~
+cd ~ || exit 1
 
 rm -rf ~/.tmux.conf
 ln -s ~/.dotfiles/home/.tmux.conf ~/.tmux.conf
@@ -141,7 +141,7 @@ if [ -d ~/.dotfiles-private/home/.config ]; then
     ln -sfn "${d%/}" "$target"
   done
 else
-  echo "~/.dotfiles-private not cloned - skipping private config"
+  echo "$HOME/.dotfiles-private not cloned - skipping private config"
 fi
 
 # Claude Code personal skills — keep ~/.claude/skills as a real directory so
