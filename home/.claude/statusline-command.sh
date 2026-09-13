@@ -14,15 +14,15 @@
 #                                          path, which is never drawn plain
 #   green          branch                  matches that PS1; "*" marks dirty,
 #                                          "?" a dirty check that timed out
-#   yellow         gauge 50-80%            warm, but not now
+#   yellow         gauge 50-80%            warm, but not now (Ctx, 5h, 7d)
 #                  cache <=10m
 #                  "U" update pending
 #   red            gauge >=80%             act now -- nothing else, ever
-#                  cache <=2m
+#                  cache <=2m              (Ctx, 5h, 7d)
 #   cyan           model
 #   bold magenta   @agent                  rare, so it gets the loud hue
 #   weight only    effort ramp             2m / plain / 1m / 1;4m / 1;7m
-#   dim            separators
+#   dim            separators, clock
 #
 # Clean/dirty is a binary, so it is a glyph rather than a hue. Yellow was the
 # obvious candidate and it does not work: GitLab Light has to darken yellow to
@@ -56,6 +56,9 @@ eval "$(jq -r '
   @sh "transcript=\(s(.transcript_path))",
   @sh "running_version=\(s(.version))",
   @sh "now=\(now | floor)",
+  @sh "clock=\(now | strflocaltime("%H:%M"))",
+  @sh "rl_five=\(s(.rate_limits.five_hour.used_percentage))",
+  @sh "rl_week=\(s(.rate_limits.seven_day.used_percentage))",
   @sh "cache_expires=\(if .prompt_cache == null then ""
                        else ((.prompt_cache.expires_at | numbers | floor | tostring) // "na") end)",
   @sh "cache_mark=\(if ((.prompt_cache // {}) | has("recache_tokens_if_cold") and .recache_tokens_if_cold == null)
@@ -205,20 +208,24 @@ if [ -n "$agent_name" ]; then
   agent=" \033[1;35m@${agent_name}\033[0m"
 fi
 
-# Context window usage, dim until 50% then yellow/red by fullness, so a
-# healthy line stays quiet and only a filling window draws the eye (absent
-# until first API response)
+# One colouring for every gauge: dim until 50%, then yellow, then red at 80%,
+# so a healthy line stays quiet and only a filling budget draws the eye.
+# Takes a whole-number percentage, prints the SGR sequence.
+gauge_color() {
+  if [ "$1" -ge 80 ]; then
+    printf '\033[31m'
+  elif [ "$1" -ge 50 ]; then
+    printf '\033[33m'
+  else
+    printf '\033[2m'
+  fi
+}
+
+# Context window usage (absent until first API response)
 ctx=""
 if [ -n "$ctx_used" ]; then
   ctx_pct=$(printf '%.0f' "$ctx_used")
-  if [ "$ctx_pct" -ge 80 ]; then
-    ccolor='\033[31m'
-  elif [ "$ctx_pct" -ge 50 ]; then
-    ccolor='\033[33m'
-  else
-    ccolor='\033[2m'
-  fi
-  ctx=" \033[2m|\033[0m ${ccolor}Ctx${ctx_pct}%\033[0m"
+  ctx=" \033[2m|\033[0m $(gauge_color "$ctx_pct")Ctx${ctx_pct}%\033[0m"
 fi
 
 # Prompt-cache countdown: how long the conversation's cached prefix stays
@@ -354,4 +361,27 @@ if [ -n "$running_version" ] && [ -n "$installed_version" ] &&
   ver=" \033[2m|\033[0m \033[33mU\033[0m"
 fi
 
-printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$ver"
+# Claude.ai rate-limit budgets, the rolling 5-hour and 7-day windows, as
+# "5h 12% . 7d 40%": each independently optional (the payload carries them
+# only on a subscription, and only after the first response), one dim dot
+# between them since they are one idea, and the gauge colours above so a
+# window about to close reads the same way as a filling context.
+rl_parts=""
+if [ -n "$rl_five" ]; then
+  five_pct=$(printf '%.0f' "$rl_five")
+  rl_parts="$(gauge_color "$five_pct")5h ${five_pct}%\033[0m"
+fi
+if [ -n "$rl_week" ]; then
+  week_pct=$(printf '%.0f' "$rl_week")
+  [ -n "$rl_parts" ] && rl_parts="${rl_parts} \033[2m.\033[0m "
+  rl_parts="${rl_parts}$(gauge_color "$week_pct")7d ${week_pct}%\033[0m"
+fi
+rl=""
+[ -n "$rl_parts" ] && rl=" \033[2m|\033[0m ${rl_parts}"
+
+# Wall clock, last and dim: the line is redrawn every 60s, so it is also the
+# proof the refresh is alive. Local time of the machine running this script
+# (jq's strflocaltime honours TZ), which on a UTC box is UTC.
+clk=" \033[2m|\033[0m \033[2m${clock}\033[0m"
+
+printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$rl" "$ver" "$clk"
