@@ -44,6 +44,7 @@
 # would blank the whole line. The clock comes from the same pass (`now`), so
 # nothing below calls `date` -- which also keeps the transcript fallback off
 # GNU-only `date -d`, the one thing that made it silently dead on macOS.
+# shellcheck disable=SC2154  # the variables below are assigned by this eval
 eval "$(jq -r '
   def s(f): (f // "" | tostring);
   @sh "model_id=\(s(.model.id))",
@@ -132,6 +133,7 @@ else
   first="$1"
   shift
   if [ "$first" = "~" ]; then
+    # shellcheck disable=SC2088  # display text, not a path to expand
     path="~/"
   else
     path="/"

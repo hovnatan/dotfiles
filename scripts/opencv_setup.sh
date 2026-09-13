@@ -1,3 +1,8 @@
+#!/usr/bin/env bash
+# Every step below builds on the previous one's install, so the first failure
+# must stop the script rather than run the next configure in the wrong tree.
+set -euo pipefail
+
 #set -x CFLAGS "-O3 -march=native -fexpensive-optimizations -finline-functions -fomit-frame-pointer"
 #set -x CXXFLAGS $CFLAGS
 #set -x LDFLAGS "-flto"
