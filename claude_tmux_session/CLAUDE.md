@@ -26,8 +26,8 @@ sessions on this machine.
   still shows an auto-generated peer name,
   `/rename <hostname>-<session name>` inside it fixes it live.
 - A conversation is LABELED with its task once the task is clear:
-  `/label <task>` inside the session, which types the full
-  `/rename <hostname>-<session name>/<task>` for you (task: the
+  `/label <task>` inside the session, or `prefix L` from tmux, either of
+  which types the full `/rename <hostname>-<session name>/<task>` (task: the
   session-name alphabet, letters, digits, `-` and `_`, e.g.
   `hov-8cpu-backend/asyncssh-advisory`), or `Ctrl+R` on its row in the
   `/resume` picker for a finished one. The label is what the picker, the
