@@ -77,6 +77,7 @@
       }
     ]
   },
+  "timeFormat": "24-hour",
   "statusLine": {
     "type": "command",
     "command": "sh ~/.claude/statusline-command.sh; sh ~/.dotfiles/home/.config/tmux/retitle.sh",
