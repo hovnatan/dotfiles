@@ -77,7 +77,6 @@
       }
     ]
   },
-  "timeFormat": "24-hour",
   "statusLine": {
     "type": "command",
     "command": "sh ~/.dotfiles/home/.claude/statusline-command.sh; sh ~/.dotfiles/home/.config/tmux/retitle.sh",
@@ -126,7 +125,7 @@
       "effortLevel": "xhigh"
     },
     "claude-fable-5-1": {
-      "effortLevel": "high"
+      "effortLevel": "xhigh"
     }
   },
   "autoCompactWindow": 900000,
@@ -136,6 +135,7 @@
     "enabled": true,
     "mode": "hold"
   },
+  "timeFormat": "24-hour",
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "editorMode": "normal",

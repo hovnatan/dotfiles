@@ -22,7 +22,8 @@
 #   cyan           model
 #   bold magenta   @agent                  rare, so it gets the loud hue
 #   weight only    effort ramp             2m / plain / 1m / 1;4m / 1;7m
-#   dim            separators, clock
+#   dim            separators
+#   plain          clock                   dim was too faint to read at a glance
 #
 # Clean/dirty is a binary, so it is a glyph rather than a hue. Yellow was the
 # obvious candidate and it does not work: GitLab Light has to darken yellow to
@@ -403,9 +404,9 @@ done
 rl=""
 [ -n "$rl_parts" ] && rl=" \033[2m|\033[0m ${rl_parts}"
 
-# Wall clock, last and dim: the line is redrawn every 60s, so it is also the
+# Wall clock, last and plain: the line is redrawn every 60s, so it is also the
 # proof the refresh is alive. Local time of the machine running this script
 # (jq's strflocaltime honours TZ), which on a UTC box is UTC.
-clk=" \033[2m|\033[0m \033[2m${clock}\033[0m"
+clk=" \033[2m|\033[0m ${clock}"
 
 printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$rl" "$ver" "$clk"
