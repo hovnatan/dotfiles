@@ -14,7 +14,7 @@
 #   pane title "* hov-8cpu-backend/asyncssh-advisory"  -->  session "backend/asyncssh-advisory"
 #   pane title "* hov-8cpu-backend"    (after /clear)   -->  session "backend"
 #
-#   args: socket_path session_id session_name pane_title
+#   args: socket_path session_id session_name [pane_title]
 #
 # Only that socket (or the one a test names): its sessions are the ones
 # the script names, while a claude started by hand elsewhere would rename
@@ -27,7 +27,13 @@
 # (tmux prints the error into the pane): two sessions hosting
 # conversations of one name is a conflict worth seeing, not hiding.
 set -u
-socket=$1 sid=$2 sname=$3 title=$4
+# The title arrives as a fourth argument only when it is non-empty:
+# #{q:pane_title} of an empty title expands to nothing, so the hook
+# passes three arguments when Claude Code clears the title on exit
+# (hook line "... claude " with a trailing space, and this once died on
+# "$4: unbound variable"). An empty title has no glyph and is skipped
+# below like any other non-claude title.
+socket=$1 sid=$2 sname=$3 title=${4-}
 
 [ "${socket##*/}" = "${CLAUDE_TMUX_SOCKET:-claude}" ] || exit 0
 glyph=${title%% *} want=${title#* }
