@@ -11,4 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: shellcheck --version
-      - run: git ls-files '*.sh' | grep -v '^scripts/countdown.sh$' | xargs shellcheck -S warning
+      - run: git ls-files '*.sh' | xargs shellcheck -S warning
