@@ -144,14 +144,31 @@ else
   echo "$HOME/.dotfiles-private not cloned - skipping private config"
 fi
 
-# Claude Code personal skills — keep ~/.claude/skills as a real directory so
+# Claude Code personal skills. Keep ~/.claude/skills as a real directory so
 # skills installed by other means are left alone, and symlink in each skill
-# vendored under .dotfiles/home/.claude/skills/ (pinned per skill via .upstream;
-# see scripts/check_skill_updates.sh).
+# vendored under .dotfiles/home/.claude/skills/.
+#
+# Where each skill comes from (keep this the only place that says so):
+#   vendored  home/.claude/skills/<name>/, pinned by .upstream, drift reported
+#             by scripts/check_skill_updates.sh. Bump = re-copy + update commit=.
+#   plugin    mattpocock-skills@claude-plugins-official, enabled in
+#             home/.claude/settings.json; its skills resolve by bare name
+#             (/grill-me, /tdd, ...). Never copy them into ~/.claude/skills:
+#             a loose copy shadows the plugin and stops updating.
+# Gotcha: `npx skills add <repo> --skill=<name>` with a non-interactive flag
+# copies EVERY skill in the repo, not just <name>. Vendor by hand instead.
 mkdir -p ~/.claude/skills
 for skill in ~/.dotfiles/home/.claude/skills/*/; do
   [ -d "$skill" ] || continue
-  ln -sfn "${skill%/}" ~/.claude/skills/"$(basename "$skill")"
+  link=~/.claude/skills/"$(basename "$skill")"
+  # A real directory here (e.g. a skill installed by `npx skills add` before
+  # it was vendored) would make ln -sfn drop the link *inside* it rather than
+  # replace it. Stop and let the user decide which copy wins.
+  if [ -d "$link" ] && [ ! -L "$link" ]; then
+    echo "error: $link is a real directory, not a symlink; remove or move it first" >&2
+    exit 1
+  fi
+  ln -sfn "${skill%/}" "$link"
 done
 
 # Expose the same skills under ~/.agents/skills for tools that look there.

@@ -1,4 +1,5 @@
-# shellcheck settings for this repo.  Lint everything with:
-#   git ls-files '*.sh' | xargs shellcheck
+# shellcheck settings for this repo.  CI (.github/workflows/shellcheck.yml)
+# runs exactly this, at warning level; info/style notes are advisory:
+#   git ls-files '*.sh' | grep -v '^scripts/countdown.sh$' | xargs shellcheck -S warning
 # scripts/countdown.sh is zsh, which shellcheck does not support; skip it.
 external-sources=true
