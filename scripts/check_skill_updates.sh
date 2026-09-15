@@ -13,19 +13,82 @@
 #   commit=<full 40-char sha>
 #
 # This script compares each pinned commit against the newest upstream commit
-# that touches the skill's files and prints a compare URL. It NEVER modifies
-# anything — bumping a skill stays a manual, reviewed re-vendor:
+# that touches the skill's files and prints a compare URL. By default it NEVER
+# modifies anything — bumping a skill is a reviewed re-vendor:
 #
 #   1. review the compare URL
 #   2. re-copy the skill at the new commit
 #   3. update commit= in that skill's .upstream
 #
-# Needs `gh` (preferred) or `curl`+`jq`. Set GITHUB_TOKEN to lift the
-# unauthenticated GitHub API rate limit on the curl path.
+# `--apply [name...]` does steps 2 and 3 for every skill with an update (or only
+# the named ones): fetches the exact upstream commit, replaces the vendored
+# directory with that snapshot (stale files removed, .upstream rewritten), and
+# leaves the result UNCOMMITTED. The review gate moves from the compare URL to
+# `git diff` in this repo: read it before committing, nothing is pushed for you.
+#
+#   check -> "UPDATE AVAILABLE" -> --apply -> git diff (review) -> git commit
+#
+# Needs `gh` (preferred) or `curl`+`jq`, plus `git` for --apply. Set
+# GITHUB_TOKEN to lift the unauthenticated GitHub API rate limit on the curl path.
 
 set -uo pipefail
 
 SKILLS_DIR="${SKILLS_DIR:-$HOME/.dotfiles/home/.claude/skills}"
+
+# --apply [name...]: bump instead of only report. Named skills restrict the bump;
+# anything else on the command line is a usage error, not silently ignored.
+apply=0
+only=()
+for arg in "$@"; do
+  case "$arg" in
+    --apply) apply=1 ;;
+    -h|--help)
+      echo "usage: $0 [--apply [skill...]]" >&2
+      exit 0 ;;
+    -*) echo "ERROR: unknown option '$arg'" >&2; exit 2 ;;
+    *) only+=("$arg") ;;
+  esac
+done
+if [ "$apply" -eq 0 ] && [ "${#only[@]}" -gt 0 ]; then
+  echo "ERROR: skill names only make sense with --apply" >&2
+  exit 2
+fi
+for name in "${only[@]}"; do
+  [ -f "$SKILLS_DIR/$name/.upstream" ] \
+    || { echo "ERROR: no vendored skill '$name' under $SKILLS_DIR" >&2; exit 2; }
+done
+
+# apply_update <name> <slug> <subdir> <branch> <sha>
+# Replaces $SKILLS_DIR/<name> with the upstream snapshot at <sha> and rewrites
+# .upstream. A shallow fetch of the one commit keeps this cheap on big repos;
+# copying into a temp dir and swapping guarantees files deleted upstream do not
+# linger in the vendored copy.
+apply_update() {
+  local name="$1" slug="$2" subdir="$3" branch="$4" sha="$5"
+  local dest="$SKILLS_DIR/$name" work src staged
+
+  work=$(mktemp -d) || return 1
+  git -C "$work" init -q \
+    && git -C "$work" remote add origin "https://github.com/${slug}.git" \
+    && git -C "$work" fetch -q --depth 1 origin "$sha" \
+    && git -C "$work" checkout -q FETCH_HEAD \
+    || { echo "  ERROR: could not fetch ${slug}@${sha}" >&2; rm -rf "$work"; return 1; }
+
+  src="$work/${subdir}"
+  [ -d "$src" ] || { echo "  ERROR: ${subdir:-<repo root>} missing at ${sha}" >&2; rm -rf "$work"; return 1; }
+
+  # Stage the new snapshot without the upstream .git (only meaningful when the
+  # repo itself is the skill), then swap it into place with the pin rewritten.
+  staged=$(mktemp -d) || { rm -rf "$work"; return 1; }
+  cp -R "$src"/. "$staged"/ && rm -rf "$staged/.git" \
+    || { rm -rf "$work" "$staged"; return 1; }
+  printf 'repo=https://github.com/%s\nsubdir=%s\nbranch=%s\ncommit=%s\n' \
+    "$slug" "$subdir" "$branch" "$sha" > "$staged/.upstream"
+  rm -rf "$dest" && mv "$staged" "$dest" \
+    || { echo "  ERROR: could not replace $dest" >&2; rm -rf "$work" "$staged"; return 1; }
+  rm -rf "$work"
+  printf '  %sapplied: re-vendored at %s%s\n' "$G" "${sha:0:12}" "$N"
+}
 
 if [ -t 1 ]; then
   R=$'\033[31m'; G=$'\033[32m'; Y=$'\033[33m'; B=$'\033[1m'; N=$'\033[0m'
@@ -66,11 +129,15 @@ latest_commit() {
 
 found=0
 updates=0
+failed=0
 
 for up in "$SKILLS_DIR"/*/.upstream; do
   [ -e "$up" ] || continue
-  found=$((found + 1))
   name=$(basename "$(dirname "$up")")
+  if [ "${#only[@]}" -gt 0 ]; then
+    case " ${only[*]} " in *" $name "*) ;; *) continue ;; esac
+  fi
+  found=$((found + 1))
 
   repo='' subdir='' branch='' commit=''
   while IFS='=' read -r key val; do
@@ -102,7 +169,12 @@ for up in "$SKILLS_DIR"/*/.upstream; do
     printf '           %s\n' "$lmsg"
     printf '  %sstatus : UPDATE AVAILABLE%s\n' "$R" "$N"
     printf '  compare: https://github.com/%s/compare/%s...%s\n' "$slug" "$commit" "$lsha"
-    printf '  to bump: re-vendor at %s, then set commit= in %s\n\n' "$lsha" "${up/#$HOME/\~}"
+    if [ "$apply" -eq 1 ]; then
+      apply_update "$name" "$slug" "$subdir" "$branch" "$lsha" || failed=$((failed + 1))
+      echo
+    else
+      printf '  to bump: re-vendor at %s, then set commit= in %s\n\n' "$lsha" "${up/#$HOME/\~}"
+    fi
   fi
 done
 
@@ -111,5 +183,11 @@ if [ "$found" -eq 0 ]; then
   exit 0
 fi
 
-printf '%d skill(s) checked, %d with updates.\n' "$found" "$updates"
-[ "$updates" -eq 0 ]
+if [ "$apply" -eq 1 ]; then
+  printf '%d skill(s) checked, %d bumped, %d failed.\n' "$found" "$((updates - failed))" "$failed"
+  [ "$updates" -gt 0 ] && echo "Review with: git -C ~/.dotfiles diff --stat home/.claude/skills"
+  [ "$failed" -eq 0 ]
+else
+  printf '%d skill(s) checked, %d with updates.\n' "$found" "$updates"
+  [ "$updates" -eq 0 ]
+fi
