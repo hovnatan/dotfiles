@@ -1,5 +1,6 @@
 # shellcheck settings for this repo.  CI (.github/workflows/shellcheck.yml)
 # runs exactly this, at warning level; info/style notes are advisory:
-#   git ls-files '*.sh' | grep -v '^scripts/countdown.sh$' | xargs shellcheck -S warning
-# scripts/countdown.sh is zsh, which shellcheck does not support; skip it.
+#   git ls-files '*.sh' | xargs shellcheck -S warning
+# Every tracked .sh is bash or sh; shellcheck cannot lint zsh, so a zsh script
+# would need a different extension or a documented exclusion here.
 external-sources=true
