@@ -37,6 +37,25 @@ git clone https://github.com/hovnatan/dotfiles.git ~/.dotfiles
 bash -x ~/.dotfiles/scripts/setup_user_symlinks.sh
 ```
 
+## Updating a machine after another one pushed
+
+On the machine that is behind:
+
+```
+dotup            # alias for ~/.dotfiles/scripts/update.sh
+```
+
+It fast-forwards `~/.dotfiles` (and `~/.dotfiles-private` when cloned) from
+origin, prints the pulled commit range, re-runs `setup_user_symlinks.sh` so
+new files get linked, and lists what to reload (tmux, Hammerspoon, open
+shells). Dirty tracked files are stashed around the pull and popped after;
+a pop conflict stops the run with the paths listed and the stash kept.
+Local commits not on origin make it refuse: push or rebase them first.
+The installer is safe to re-run; anything that needs a decision (IINA key
+bindings differing from the repo, a real directory where a skill link
+belongs) is reported as a warning and makes the run exit non-zero once the
+rest is done.
+
 ## Claude Code in tmux from boot (VMs)
 
 Runs an always-on manager tmux session `claude` at boot: Claude Code with

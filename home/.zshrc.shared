@@ -290,6 +290,9 @@ alias gb='git branch'
 alias gco='git checkout'
 alias glg='git log --oneline --graph --decorate --all'  # Pretty git log with all branches
 
+# Pull this repo and re-run the installer; see scripts/update.sh
+alias dotup='~/.dotfiles/scripts/update.sh'
+
 # File and directory management
 alias rh='fc -RI'  # reload history from other shells
 alias df='df -h'
