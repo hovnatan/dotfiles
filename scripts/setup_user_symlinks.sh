@@ -1,19 +1,47 @@
 #!/usr/bin/env bash
 
+# Installs this repo into $HOME: symlinks for everything under home/, plus
+# the few files that are appended to or copied instead. Safe to re-run: it
+# is what scripts/update.sh (alias `dotup`) runs after every pull, so a step
+# that would prompt, restart something, or stop the script on a re-run must
+# be gated on the work actually being needed. A problem that needs a human
+# decision is reported with warn() and the script carries on, exiting
+# non-zero at the end, rather than leaving the rest of the machine
+# half-installed over one unrelated file.
+
 # set -e
 
 # rm -rf ~/.tmux.conf ~/.zshrc ~/.bashrc_local ~/.vimrc ~/.bashrc_local ~/.config/htop ~/.ssh/config
+
+failed=0
+warn() {
+  echo -e "\033[33mwarning: $*\033[0m" >&2
+  failed=1
+}
 
 if ! command -v sudo &> /dev/null; then
   SUDO=""
 else
   SUDO=sudo
 fi
-export DEBIAN_FRONTEND=noninteractive
-$SUDO apt-get update
+
+# Debian/Ubuntu base packages. Only touch apt when one is missing, so a
+# re-run on an installed box neither prompts for sudo nor waits on apt.
 # procps: `ps` is needed by .claude/notify-stop.sh and absent from slim images
-$SUDO apt-get install -y --no-install-recommends curl wget sudo htop tmux zsh vim git openssh-client make locales procps
-$SUDO locale-gen --no-purge en_US.UTF-8
+if command -v apt-get &> /dev/null; then
+  missing=()
+  for pkg in curl wget sudo htop tmux zsh vim git openssh-client make locales procps; do
+    dpkg -s "$pkg" &> /dev/null || missing+=("$pkg")
+  done
+  if [ "${#missing[@]}" -gt 0 ]; then
+    export DEBIAN_FRONTEND=noninteractive
+    $SUDO apt-get update
+    $SUDO apt-get install -y --no-install-recommends "${missing[@]}"
+  fi
+  if ! locale -a 2>/dev/null | grep -qi '^en_US.utf-\?8$'; then
+    $SUDO locale-gen --no-purge en_US.UTF-8
+  fi
+fi
 
 cd ~ || exit 1
 
@@ -92,7 +120,7 @@ ln -s ~/.dotfiles/home/.config/htop ~/.config/
 # touch ~/.ssh/authorized_keys
 # chmod 600 ~/.ssh/authorized_keys
 mkdir -p ~/.ssh
-ln -s ../.dotfiles/home/.ssh/config ~/.ssh/config
+ln -sfn ../.dotfiles/home/.ssh/config ~/.ssh/config
 
 # To enable passwordless github, go to settings and click 'add SSH key'. Copy the contents of your ~/.ssh/id_ed25519.pub into the field labeled 'Key'. with xclip -i -selection clipboard ~/.ssh/id_ed25519.pub
 
@@ -165,8 +193,8 @@ for skill in ~/.dotfiles/home/.claude/skills/*/; do
   # it was vendored) would make ln -sfn drop the link *inside* it rather than
   # replace it. Stop and let the user decide which copy wins.
   if [ -d "$link" ] && [ ! -L "$link" ]; then
-    echo "error: $link is a real directory, not a symlink; remove or move it first" >&2
-    exit 1
+    warn "$link is a real directory, not a symlink; remove or move it first"
+    continue
   fi
   ln -sfn "${skill%/}" "$link"
 done
@@ -176,35 +204,37 @@ mkdir -p ~/.agents
 rm -rf ~/.agents/skills
 ln -s ~/.claude/skills ~/.agents/skills
 
-ln -s ~/.dotfiles/home/.config/ghostty ~/.config/
+# Directory links get an explicit target with -n: `ln -sf <dir> ~/.config/`
+# would follow an existing ~/.config/<name> link on a re-run and drop a
+# second link inside the repo directory instead of replacing it.
+ln -sfn ~/.dotfiles/home/.config/ghostty ~/.config/ghostty
 
 mkdir -p ~/.local/{bin,local}
 ln -sf ~/.dotfiles/home/.npmrc ~/.npmrc
 
-ln -sf ~/.dotfiles/home/.config/uv ~/.config/
+ln -sfn ~/.dotfiles/home/.config/uv ~/.config/uv
 
 # macOS only
 if [ "$(uname)" = "Darwin" ]; then
   # IINA reads ~/.config/iina as its mpv config dir, incl. scripts/
-  ln -sf ~/.dotfiles/home/.config/iina ~/.config/
+  ln -sfn ~/.dotfiles/home/.config/iina ~/.config/iina
 
   # IINA lists its key-binding confs (Preferences > Key Bindings) from this
   # directory with the URL-based FileManager API, which refuses a symlinked
   # directory (fatal "Cannot get user config file!" at launch), and saves them
   # with an atomic write that replaces a symlinked file by a plain one. So the
   # repo file is the source and IINA gets a plain copy: installed when absent,
-  # left alone when identical, and a stop when the two differ, since either
-  # side may hold the newer edit and only you know which.
+  # left alone when identical, and a warning when the two differ, since
+  # either side may hold the newer edit and only you know which.
   iina_conf=~/.dotfiles/home/.config/iina/input_conf/my.conf
   iina_installed="$HOME/Library/Application Support/com.colliderli.iina/input_conf/my.conf"
   mkdir -p "$(dirname "$iina_installed")"
   if [ ! -e "$iina_installed" ]; then
     cp "$iina_conf" "$iina_installed"
   elif ! cmp -s "$iina_conf" "$iina_installed"; then
-    echo "error: IINA key bindings differ between the repo and the installed copy:" >&2
-    echo "       repo -> IINA: cp '$iina_conf' '$iina_installed'" >&2
-    echo "       IINA -> repo: cp '$iina_installed' '$iina_conf'" >&2
-    exit 1
+    warn "IINA key bindings differ between the repo and the installed copy:
+       repo -> IINA: cp '$iina_conf' '$iina_installed'
+       IINA -> repo: cp '$iina_installed' '$iina_conf'"
   fi
 
   mkdir -p ~/.colima/default
@@ -223,11 +253,25 @@ if [ "$(uname)" = "Darwin" ]; then
   launchctl bootout "gui/$(id -u)/$keyremap_label" 2>/dev/null
   launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/"$keyremap_label".plist
 
-  # Preview markup colors (magenta annotations for LLM screenshot review)
-  ~/.dotfiles/scripts/macos/setup_preview_markup.sh
+  # Preview markup colors (magenta annotations for LLM screenshot review).
+  # The setup script quits Preview, which declines with open documents, so
+  # only run it when the defaults are absent and Preview is closed; run it
+  # by hand to reset after picking another color in the markup toolbar.
+  preview_markup=~/.dotfiles/scripts/macos/setup_preview_markup.sh
+  if ! defaults read com.apple.Preview com.apple.AnnotationKit.strokeColor &> /dev/null; then
+    if pgrep -xq Preview; then
+      warn "Preview markup defaults not set and Preview is open; close it and run $preview_markup"
+    else
+      "$preview_markup" || warn "$preview_markup failed"
+    fi
+  fi
 
   # Hunspell + en_US dictionary (brew ships no dictionaries)
-  ~/.dotfiles/scripts/macos/setup_hunspell.sh
+  ~/.dotfiles/scripts/macos/setup_hunspell.sh || warn "setup_hunspell.sh failed"
 fi
 
+if [ "$failed" -ne 0 ]; then
+  echo "Done, with warnings above" >&2
+  exit 1
+fi
 echo "Done"
