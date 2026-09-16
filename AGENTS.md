@@ -11,6 +11,8 @@ It is kept short on purpose - every line here is paid on every session.
   lands in `$HOME`; all executables live in `scripts/` and are invoked by
   absolute path, nothing here is on `PATH`. `scripts/setup_user_symlinks.sh` is the authoritative
   install map - add a line there when adding a file under `home/`.
+  It is safe to re-run; `scripts/update.sh` (alias `dotup`) pulls and re-runs it
+  to update a machine. `CONTEXT.md` holds the vocabulary (install, update, ...).
 - backpass adds further evidence-backed entries here from real sessions.
 
 ## Maintaining this file
