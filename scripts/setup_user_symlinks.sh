@@ -266,6 +266,12 @@ if [ "$(uname)" = "Darwin" ]; then
     fi
   fi
 
+  # IINA starts every file paused by default ("Pause when opening a file").
+  # Play on open instead. IINA reads this from UserDefaults at each file open,
+  # so it takes effect without a restart; repo is the source, so re-running
+  # resets a change made in Preferences > General.
+  defaults write com.colliderli.iina pauseWhenOpen -bool false
+
   # Hunspell + en_US dictionary (brew ships no dictionaries)
   ~/.dotfiles/scripts/macos/setup_hunspell.sh || warn "setup_hunspell.sh failed"
 fi
