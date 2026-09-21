@@ -5,9 +5,17 @@ font-size = 15
 font-family = SF Mono
 font-thicken = true
 
-# Auto-install xterm-ghostty terminfo on remote hosts over ssh,
-# falling back to TERM=xterm-256color where that fails.
-shell-integration-features = ssh-env,ssh-terminfo
+shell-integration-features = no-ssh-env,no-ssh-terminfo
+
+# Manual terminfo install (once per Linux/BSD host, needs `tic` there):
+#
+#   infocmp -x xterm-ghostty | ssh <host> -- tic -x -
+#
+# That writes ~/.terminfo/x/xterm-ghostty on the remote for that user
+# (no root needed). tic must be ncurses >= 6.1 for the extended caps.
+# Windows hosts have no tic and ignore terminfo: nothing to install.
+# A host without the entry will complain about unknown terminal type;
+# use TERM=xterm-256color ssh <host> there until it is installed.
 
 keybind = super+j=previous_tab
 keybind = super+k=next_tab
