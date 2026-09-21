@@ -43,7 +43,7 @@
 #                                          |
 #     $SESSION_SOCK (stat only) <-- poll --+--> rsync -e "ssh -o ControlPath=$SOCK"
 #       gone => loop exits                 |      (private master, own timeouts)
-#                                          +--> log $STATE_DIR/<host>.log
+#                                          +--> log <local-root>/<host>.log
 #
 # Usage:
 #   ssh_folder_sync.sh start  <host> <local-root> <remote-root>   detach and run
@@ -70,11 +70,11 @@ SSH_ALIVE_INTERVAL=5    # keepalive probe period on the private master ...
 SSH_ALIVE_COUNT=3       # ... and how many unanswered probes kill it (15s)
 RSYNC_TIMEOUT=60        # seconds of no data before rsync gives up
 
-STATE_DIR="$HOME/.local/state/ssh-folder-sync"
 # The control socket is volatile, and must stay SHORT: macOS caps unix socket
-# paths at 104 bytes, which $STATE_DIR (106 for a 37-char host alias) and a
-# macOS $TMPDIR (110) both blow.  A runtime dir is shorter and reboot-clean
-# (tmpfs XDG_RUNTIME_DIR on Linux, /tmp is wiped at boot on macOS).
+# paths at 104 bytes, which anything under $HOME/.local/state (106 for a
+# 37-char host alias) and a macOS $TMPDIR (110) both blow.  A runtime dir is
+# shorter and reboot-clean (tmpfs XDG_RUNTIME_DIR on Linux, /tmp is wiped at
+# boot on macOS).
 RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}/ssh-folder-sync"
 
 usage() {
@@ -90,7 +90,6 @@ case "$ACTION" in
     *)           usage ;;
 esac
 
-LOG="$STATE_DIR/$HOST.log"
 SOCK="$RUN_DIR/cm-$HOST.sock"
 # One loop per host, enforced by a lock DIRECTORY: mkdir(2) is atomic on every
 # POSIX filesystem, and flock(1) does not exist on macOS.  The pid inside is
@@ -98,6 +97,16 @@ SOCK="$RUN_DIR/cm-$HOST.sock"
 # behind by a loop that was SIGKILLed or lost to a reboot".
 LOCK="$RUN_DIR/lock-$HOST"
 PIDFILE="$LOCK/pid"
+# The log lives in the exchange root beside out/ and in/, so it sits with the
+# folders it describes and is easy to find.  It must NOT go inside out/: that
+# is a mirror source, and a log that grows on every pass would be re-sent on
+# every pass, forever.  stop/status are given only <host>, so a running loop
+# records its root in the lock (see ROOTFILE) and they read it back from there.
+ROOTFILE="$LOCK/root"
+case "$ACTION" in
+    start|run) LOG="$LOCAL_ROOT/$HOST.log" ;;
+    *)         LOG="$(cat "$ROOTFILE" 2>/dev/null || echo '?')/$HOST.log" ;;
+esac
 
 log() { printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >>"$LOG"; }
 # Liveness: does your session's master still exist?  This is a stat, NOT a
@@ -179,7 +188,7 @@ if [ "$ACTION" = start ]; then
     exit 0
 fi
 
-mkdir -p "$STATE_DIR" "$RUN_DIR" "$LOCAL_ROOT/out" "$LOCAL_ROOT/in" || exit 1
+mkdir -p "$RUN_DIR" "$LOCAL_ROOT/out" "$LOCAL_ROOT/in" || exit 1
 
 # One loop per host, however many times LocalCommand fires -- including two
 # firing in the same instant, which two clients racing for a ControlMaster
@@ -200,6 +209,7 @@ if ! mkdir "$LOCK" 2>/dev/null; then
     mkdir "$LOCK" 2>/dev/null || exit 0
 fi
 echo "$$" >"$PIDFILE"
+echo "$LOCAL_ROOT" >"$ROOTFILE"
 
 # From here on this process owns the lock, so every exit must release it --
 # including the ones stop(1), logout and shutdown cause with SIGTERM, which
