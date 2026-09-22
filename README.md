@@ -11,8 +11,9 @@ installed selectively or handled specially (`home/.config/zathura_light` ->
 than linked).
 
 `home/AGENTS.md` is the one canonical agent policy, installed under whatever
-name each tool reads: `~/.claude/CLAUDE.md` for Claude Code (it ignores the
-`AGENTS.md` name) and `~/.codex/AGENTS.md` for Codex. Add
+name each tool reads: `~/.claude/CLAUDE.md` for Claude Code (its only
+user-level path; since v2.1.277 it reads `AGENTS.md` in projects, never at user
+level) and `~/.codex/AGENTS.md` for Codex. Add
 `~/.config/opencode/AGENTS.md` if opencode is ever installed. Edit
 `home/AGENTS.md`; every tool sees the change.
 
