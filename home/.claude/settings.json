@@ -1,4 +1,5 @@
 {
+  "autoMemoryEnabled": false,
   "cleanupPeriodDays": 730,
   "permissions": {
     "allow": [
@@ -119,18 +120,6 @@
   "spellcheck": {
     "enabled": true,
     "checker": "hunspell"
-  },
-  "effortLevel": "xhigh",
-  "modelSettings": {
-    "claude-opus-5": {
-      "effortLevel": "xhigh"
-    },
-    "claude-fable-5-1": {
-      "effortLevel": "xhigh"
-    },
-    "claude-opus-5-5": {
-      "effortLevel": "xhigh"
-    }
   },
   "autoCompactWindow": 900000,
   "dialogExpiry": "never",

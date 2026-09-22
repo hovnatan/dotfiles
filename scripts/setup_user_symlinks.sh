@@ -141,8 +141,9 @@ mkdir -p ~/.codex
 ln -sf ~/.dotfiles/home/.codex/config.toml ~/.codex/config.toml
 
 # Global agent instructions: one canonical file, home/AGENTS.md, installed
-# under whatever name each tool reads. Claude Code reads only
-# ~/.claude/CLAUDE.md (it ignores the AGENTS.md name); Codex reads
+# under whatever name each tool reads. At user level Claude Code reads only
+# ~/.claude/CLAUDE.md (since v2.1.277 it reads AGENTS.md in projects, never at
+# user level); Codex reads
 # ~/.codex/AGENTS.md. Add ~/.config/opencode/AGENTS.md if opencode is ever
 # installed.
 ln -sf ~/.dotfiles/home/AGENTS.md ~/.codex/AGENTS.md
