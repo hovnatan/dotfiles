@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # PreToolUse hook (Bash matcher): deterministic enforcement of the CLAUDE.md
 # git rules. Destructive pushes (force in any spelling, remote-ref deletes,
 # --mirror) always get a permission prompt so the user approves each one

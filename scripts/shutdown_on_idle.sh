@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # modified from http://rohitrawat.com/automatically-shutting-down-google-cloud-platform-instance
 

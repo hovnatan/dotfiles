@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ "$TMUX_ONE_WINDOW" == "1" ]; then
   COLOR=$(cat ~/.my_colors)
