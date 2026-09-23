@@ -315,12 +315,14 @@ spawn)
     exit 1
   fi
   name=${spec%%/*}
-  mode="--permission-mode auto"
+  # An array, so `--permission-mode auto` stays two arguments without an
+  # unquoted expansion.
+  mode=(--permission-mode auto)
   dir=""
   shift 2
   for a in "$@"; do
     case "$a" in
-    --dangerous) mode="--dangerously-skip-permissions" ;;
+    --dangerous) mode=(--dangerously-skip-permissions) ;;
     *) dir="$a" ;;
     esac
   done
@@ -358,15 +360,15 @@ spawn)
     # title, label included: a resume by id alone reverts the session's
     # display/peer name (what /list-agents shows) to an auto-generated
     # directory-based one.
-    sid=$(launch "$name" "$cwd" --resume "$id" -n "$title" $mode)
-    started="resumed conversation $id ($title) in $cwd ($mode)"
+    sid=$(launch "$name" "$cwd" --resume "$id" -n "$title" "${mode[@]}")
+    started="resumed conversation $id ($title) in $cwd (${mode[*]})"
   else
     if [ ! -d "$dir" ]; then
       echo "no conversation named $conv; pass an existing directory to start a new one in" >&2
       exit 1
     fi
-    sid=$(launch "$name" "$dir" -n "$conv" $mode)
-    started="new conversation $conv in $dir ($mode)"
+    sid=$(launch "$name" "$dir" -n "$conv" "${mode[@]}")
+    started="new conversation $conv in $dir (${mode[*]})"
   fi
   # Only now is the launch worth reporting: see wait_alive.
   if ! wait_alive "$sid"; then
