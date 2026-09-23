@@ -21,6 +21,11 @@ It is kept short on purpose - every line here is paid on every session.
   (pinned by `nix/flake.lock`; setup in README.md); `Brewfile` (repo root)
   holds only the Mac apps. Read the relevant header before any `nix profile`
   change or brew install, uninstall or cask adopt.
+- Changing `scripts/claude_tmux_run.sh`, the claude-tmux unit or
+  `home/.claude/ntfy-stop.sh`: run `scripts/tests/claude_tmux_run_test.sh`
+  and `scripts/tests/ntfy_stop_test.sh` (throwaway socket and HOME, stub
+  claude, fake ntfy; safe beside live sessions), and extend them with any new
+  behaviour.
 - backpass adds further evidence-backed entries here from real sessions.
 
 ## Maintaining this file
