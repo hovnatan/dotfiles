@@ -59,8 +59,14 @@
             # runs a Python without pip, so `az extension add` fails, and
             # extensions pip-installed under another Python break on its
             # native modules (the Mac's brew-era ssh one, 2026-09-23).
-            #   ssh -- `az ssh vm` with AAD OpenSSH certificates
-            (pkgs.azure-cli.withExtensions [ pkgs.azure-cli-extensions.ssh ])
+            #   ssh             -- `az ssh vm` with AAD OpenSSH certificates
+            #   costmanagement, quota -- in use on vm since 2026-07 (pip-
+            #                      installed under apt's az, broken by Nix's)
+            (pkgs.azure-cli.withExtensions (with pkgs.azure-cli-extensions; [
+              ssh
+              costmanagement
+              quota
+            ]))
             # bash 5 for `#!/usr/bin/env bash` scripts; macOS /bin/bash is 3.2
             pkgs.bashInteractive
             # fd -- the fish fzf plugin's file search (FZF_FIND_FILE_COMMAND
