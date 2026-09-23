@@ -86,6 +86,17 @@ MANAGER_DIR="$HOME/.dotfiles/claude_tmux_session"
 ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}"   # startup window spawn waits out
 NAME_RE='^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)?$'       # <name>[/<task>] spawn accepts
 
+# Every subcommand reads `claude agents --json` (live_agents) or launches
+# claude. Checked here because live_agents runs inside $(...), where a
+# failure cannot stop the script: without claude, spawn's already-open
+# guard sees no live conversations and would double-open one. The usual
+# cause is a non-login shell (a bare `ssh host cmd`): ~/.local/bin is only
+# on the login PATH.
+if ! command -v claude >/dev/null; then
+  echo "claude_tmux_run.sh: claude is not on PATH; run it from a login shell (bash -l) or add ~/.local/bin to PATH" >&2
+  exit 1
+fi
+
 # transcripts <mode> <conversation name> <files...>: the one reader of
 # Claude Code's transcript format. A conversation lives under
 # ~/.claude/projects/<its cwd with every character outside [A-Za-z0-9]
