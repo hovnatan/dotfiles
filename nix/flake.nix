@@ -49,7 +49,15 @@
       # set installs, upgrades and rolls back as a unit.
       packages = forAllSystems (system:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          # Free software only, apart from the names listed here: each needs a
+          # reason, and none is built by cache.nixos.org (Hydra skips unfree),
+          # so every machine compiles it after each lock bump.
+          #   terraform -- BUSL since 1.6; the infra in deqart_backend/deploy_scripts
+          #                is Terraform (~4.5 min to build on an 8-CPU VM)
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "terraform" ];
+          };
 
           # Every machine: Linux boxes and Macs get the same tools at the
           # same versions (2026-09-23). The macOS entries came from the
@@ -79,6 +87,17 @@
             pkgs.fzf
             # GitHub command-line tool
             pkgs.gh
+            # git and git-lfs, the same version everywhere; the rest of the
+            # former apt_base list of deqart_backend's setup_workspace.sh
+            # follows under its own name (2026-09-23)
+            pkgs.git
+            pkgs.git-lfs
+            # GNU make 4.x; macOS ships 3.81
+            pkgs.gnumake
+            # Google Cloud SDK (gcloud, gsutil, bq); no extra components in use.
+            # Was apt's google-cloud-cli via deqart_backend's setup_workspace.sh
+            # (2026-09-23)
+            pkgs.google-cloud-sdk
             # Google Workspace CLI (gws), driven by the work-log skill
             pkgs.gws
             # Improved top (interactive process viewer)
@@ -89,6 +108,9 @@
             (pkgs.hunspell.withDicts (dicts: [ dicts.en_US ]))
             # Tools and libraries to manipulate images in select formats
             pkgs.imagemagick
+            # jq -- JSON on the command line; setup_workspace.sh reads
+            # devcontainer.json with it
+            pkgs.jq
             # Sophisticated file transfer program
             pkgs.lftp
             # Unified display of technical and tag data for audio/video
@@ -101,6 +123,10 @@
             pkgs.nodejs_24
             # Swiss-army knife of markup format conversion
             pkgs.pandoc
+            # playwright CLI; its wrapper defaults PLAYWRIGHT_BROWSERS_PATH to
+            # Nix's browsers built for this exact version, so nothing is
+            # downloaded and no host libraries are needed (2026-09-23)
+            pkgs.playwright-test
             # PDF utilities (pdftotext, pdfinfo, ...) from poppler
             pkgs.poppler-utils
             # python3 -- stdlib-only scripts and tests (claude_tmux_run.sh,
@@ -117,12 +143,20 @@
             pkgs.rsync
             # Static analysis and lint tool, for (ba)sh scripts
             pkgs.shellcheck
+            # Terraform, for deqart_backend/deploy_scripts; unfree, see pkgs above
+            pkgs.terraform
             # tmux -- latest release; Ubuntu 24.04 ships 3.4
             pkgs.tmux
             # Markup-based typesetting system
             pkgs.typst
+            # unzip, xz, zstd -- archive tools; macOS has no xz or zstd
+            pkgs.unzip
+            pkgs.xz
+            pkgs.zstd
             # Extremely fast Python package installer and resolver
             pkgs.uv
+            # vim -- EDITOR in home/.profile.shared
+            pkgs.vim
             # Internet file retriever
             pkgs.wget
           ];
