@@ -21,7 +21,9 @@
 #   /usr/local/bin symlinks: docker-desktop, little-snitch, tunnelblick, zoom,
 #   ...) fails there - and a failed `--adopt` rolls back by deleting the
 #   adopted app (Docker.app was lost this way on 2026-09-22). Adopt one cask
-#   first; hand sudo casks to the user to run as `! brew install --cask ...`.
+#   first; hand anything needing sudo (casks, `mas uninstall`) to the user to
+#   run in their own terminal window - Claude Code's `!` prefix has no tty
+#   either, so sudo fails there the same way.
 # - `brew uninstall` autoremoves orphaned dependencies (removing one CLI took
 #   50 formulae with it). Preview with `brew autoremove --dry-run`.
 # - Casks marked auto_updates update themselves; `brew upgrade` skips them
@@ -43,8 +45,6 @@ brew "htop"
 brew "imagemagick"
 # Sophisticated file transfer program
 brew "lftp"
-# Postgres C API library
-brew "libpq"
 # Unified display of technical and tag data for audio/video
 brew "media-info"
 # Mac App Store command-line interface
@@ -53,8 +53,6 @@ brew "mas"
 brew "mosh"
 # Open-source, cross-platform JavaScript runtime environment
 brew "node"
-# Adds an OCR text layer to scanned PDF files
-brew "ocrmypdf"
 # Swiss-army knife of markup format conversion
 brew "pandoc"
 # PDF rendering library (based on the xpdf-3.0 code base)
@@ -73,7 +71,8 @@ brew "typst"
 brew "uv"
 # Internet file retriever
 brew "wget"
-# Apps. Contexts is left out: its download CDN serves an expired TLS cert,# so the cask cannot install (2026-09-22).
+# Apps. Contexts is left out: its download CDN serves an expired TLS cert,
+# so the cask cannot install (2026-09-22).
 cask "alt-tab"
 cask "ankerwork"
 cask "chatgpt"
@@ -107,10 +106,7 @@ cask "zoom"
 cask "zotero"
 # Mac App Store apps (need `mas` and an App Store sign-in)
 mas "Developer", id: 640199958
-mas "Keynote", id: 409183694
 mas "Kindle", id: 302584613
-mas "Numbers", id: 361304891
-mas "Pages", id: 361309726
 mas "Prime Video", id: 545519333
 mas "Slack", id: 803453959
 mas "Telegram", id: 747648890

@@ -11,11 +11,10 @@ installed selectively or handled specially (`home/.config/zathura_light` ->
 than linked).
 
 `home/AGENTS.md` is the one canonical agent policy, installed under whatever
-name each tool reads: `~/.claude/CLAUDE.md` for Claude Code (its only
-user-level path; since v2.1.277 it reads `AGENTS.md` in projects, never at user
-level) and `~/.codex/AGENTS.md` for Codex. Add
-`~/.config/opencode/AGENTS.md` if opencode is ever installed. Edit
-`home/AGENTS.md`; every tool sees the change.
+name each tool reads; `scripts/setup_user_symlinks.sh` lists the links and
+why each name. Edit `home/AGENTS.md`; every tool sees the change.
+Situational policy (remote runs, ntfy) lives in skills under
+`home/.claude/skills/`, which Codex also sees via `~/.agents/skills`.
 
 Everything outside `home/` is repo tooling that never lands in `$HOME`:
 `scripts/` (all executables, invoked by absolute path), `claude_tmux_session/`,

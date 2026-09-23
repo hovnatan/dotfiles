@@ -21,6 +21,19 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+# Check every tool up front: without "set -e" a missing one would only
+# surface after the whole TIFF conversion, e.g. ocrmypdf at the last step.
+# ocrmypdf is deliberately not in the Brewfile (this pipeline is rarely run);
+# install it, with the rest, from the header lines above.
+missing=()
+for cmd in mediainfo magick pdfunite ocrmypdf uvx; do
+    command -v "$cmd" >/dev/null || missing+=("$cmd")
+done
+if [ ${#missing[@]} -gt 0 ]; then
+    echo "error: missing tools: ${missing[*]} (install lines at the top of $0)" >&2
+    exit 1
+fi
+
 ulimit -n 10000
 
 # Function to convert TIFF files to PDF in parallel
