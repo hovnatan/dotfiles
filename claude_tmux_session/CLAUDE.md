@@ -2,7 +2,7 @@
 
 This directory is the working directory of the always-on "claude" tmux
 session started at boot by claude-tmux.service (see
-`../.config/systemd/user/claude-tmux.service` and
+`../home/.config/systemd/user/claude-tmux.service` and
 `../scripts/claude_tmux_run.sh`). That session runs Claude Code with
 permissions bypassed and acts as the manager for the other Claude Code tmux
 sessions on this machine.
@@ -164,8 +164,9 @@ instead.
   two, so a line in the box is not proof of pending input. Quote it back and
   ask; never skip a reload over it. (`-e` keeps the SGR codes to compare.)
 - A reload resets per-process runtime state even though the conversation is
-  intact: effort drops to the default (`max` -> `xhigh`) and the session's
-  cwd returns to its launch directory. Report both so the user can restore
+  intact: effort drops to the configured default (`modelSettings` in
+  `home/.claude/settings.json`) and the session's cwd returns to its
+  launch directory. Report both so the user can restore
   them.
 - This manager session cannot reload itself. Tell the user to run
   `systemctl --user restart claude-tmux`; systemd recreates the session and
@@ -217,7 +218,7 @@ anything that makes systemd re-apply device policy -- a
 `systemctl daemon-reload` (apt upgrades trigger these), a guest-agent
 self-update, unit edits -- silently kills CUDA inside RUNNING containers
 (`cudaErrorNoDevice` / NVML "Unknown Error") while host nvidia-smi stays
-healthy. This voided real benchmark samples three times in Aug 2026.
+healthy.
 CPU boxes are not exposed to that bug, but carry the policy anyway for
 uniformity, and because mid-run unattended upgrades contend with
 benchmarks. Boot-time upgrades keep boxes patched when no workload exists
@@ -234,11 +235,11 @@ How:
   docker.service drop-in (Wants= + After= that oneshot) so no container
   can exist while the boot upgrade's daemon-reload fires. apt-daily.timer
   (the download half) stays enabled.
-- WALinuxAgent stays at its DEFAULT self-update behavior (goal-state
-  driven, Azure's schedule): disabling it was tried 2026-08-24 and
-  reverted -- the agent package ships from -updates, which
-  unattended-upgrades' security-only origins never install, so "boot-time
-  agent updates" would really mean "no agent updates". Its occasional
+- WALinuxAgent stays at its default self-update behavior (goal-state
+  driven, Azure's schedule); do not disable it: the agent package ships
+  from -updates, which unattended-upgrades' security-only origins never
+  install, so "boot-time agent updates" would really mean "no agent
+  updates". Its occasional
   self-respawn is harmless once docker is on cgroupfs.
 - Until a box is switched: never `systemctl daemon-reload`, install
   packages, or edit/enable units while a GPU container is mid-run there --
@@ -252,8 +253,7 @@ mode ENABLED -- the mode lives in the GPU hardware, not the VM image. The
 symptom is nasty: nvidia-smi works everywhere (host and containers,
 driver loaded, devices injected) but EVERY CUDA init -- host cupy, agent
 and grade containers -- fails with cudaErrorNoDevice, because MIG-on with
-zero instances exposes no CUDA devices. This silently invalidated two
-full benchmark arms before it was caught.
+zero instances exposes no CUDA devices.
 
 After every VM start on a GPU box:
 - `nvidia-smi --query-gpu=mig.mode.current --format=csv,noheader`; if
