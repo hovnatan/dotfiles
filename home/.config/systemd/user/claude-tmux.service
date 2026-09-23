@@ -40,7 +40,10 @@ ExecStart=/bin/sh -c 'exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh
 # their own"). Killing the session is only wanted on a real stop request,
 # so guard on ${MAINPID}: it is unset when the watcher already exited by
 # itself (restart cycle), set when a live service is being stopped.
-ExecStop=/bin/sh -c 'test -z "${MAINPID}" || exec %h/.dotfiles/scripts/claude_tmux_run.sh stop'
+# Through the login shell like ExecStart: the manager's own PATH has neither
+# ~/.local/bin (the script refuses to run without claude) nor the Nix
+# profile (apt's older tmux cannot talk to a newer server).
+ExecStop=/bin/sh -c 'test -z "${MAINPID}" || exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh stop"'
 
 # Kill only the watcher when the unit deactivates: the tmux server
 # daemonizes into this cgroup, and the default control-group kill would
