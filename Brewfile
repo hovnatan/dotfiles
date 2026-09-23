@@ -33,8 +33,12 @@
 #   libomp, libpq all left one). Use `--force` to take every version, then
 #   run `brew missing`: older kegs of autoremoved deps can be left with broken
 #   links - remove them with `brew uninstall --force --ignore-dependencies`.
-# - Casks marked auto_updates update themselves; `brew upgrade` skips them
-#   unless given --greedy, so their recorded version lagging is not drift.
+# - Casks marked auto_updates update themselves, so their recorded version
+#   lagging is not drift. brew reads the app bundle's own version instead,
+#   and does flag the cask when the app itself is older than the tap (its
+#   updater never ran: ChatGPT.app sat at 26.901 while an adopt recorded
+#   26.917, 2026-09-23). Open the app to let it update, or
+#   `brew upgrade --cask <name>`.
 
 # duti -- make VS Code the default for .qasm files (2026-08-05)
 brew "duti"
