@@ -302,8 +302,6 @@ if [ "$(uname)" = "Darwin" ]; then
   # resets a change made in Preferences > General.
   defaults write com.colliderli.iina pauseWhenOpen -bool false
 
-  # Hunspell + en_US dictionary (brew ships no dictionaries)
-  ~/.dotfiles/scripts/macos/setup_hunspell.sh || warn "setup_hunspell.sh failed"
 fi
 
 if [ "$failed" -ne 0 ]; then

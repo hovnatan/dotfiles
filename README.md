@@ -91,8 +91,8 @@ on PATH wins):
 ```
 dscl . -read ~ UserShell    # must not be /opt/homebrew/bin/bash before bash goes
 brew autoremove --dry-run   # see the Brewfile header: uninstall autoremoves deps
-brew uninstall azure-cli bash gh googleworkspace-cli htop imagemagick lftp \
-  media-info mosh node pandoc poppler rclone rsync shellcheck tmux typst uv wget
+brew uninstall azure-cli bash gh googleworkspace-cli htop hunspell imagemagick \
+  lftp media-info mosh node pandoc poppler rclone rsync shellcheck tmux typst uv wget
 ```
 
 npm globals keep working: `home/.npmrc` puts them under `~/.local`, not in
