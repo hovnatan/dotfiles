@@ -210,6 +210,25 @@ ln -s ~/.claude/skills ~/.agents/skills
 # second link inside the repo directory instead of replacing it.
 ln -sfn ~/.dotfiles/home/.config/ghostty ~/.config/ghostty
 
+# fish, with its plugins vendored in the repo (see conf.d/plugins.fish). Any
+# fish run before this install leaves a real ~/.config/fish (fish_variables
+# at least), where ln -sfn would drop the link inside; let the user decide.
+if [ -d ~/.config/fish ] && [ ! -L ~/.config/fish ]; then
+  warn "$HOME/.config/fish is a real directory, not a symlink; move it aside (keep fish_variables if you want its universal variables) and re-run"
+else
+  ln -sfn ~/.dotfiles/home/.config/fish ~/.config/fish
+fi
+# Neovim, plugin-free (see its init.lua). Same real-directory guard as fish:
+# nvim writes nothing into its config dir, but an older hand-made one may exist.
+if [ -d ~/.config/nvim ] && [ ! -L ~/.config/nvim ]; then
+  warn "$HOME/.config/nvim is a real directory, not a symlink; move it aside and re-run"
+else
+  ln -sfn ~/.dotfiles/home/.config/nvim ~/.config/nvim
+fi
+
+# fd's global ignore file; fish's FZF_FIND_FILE_COMMAND also passes it explicitly
+ln -sfn ~/.dotfiles/home/.config/fd ~/.config/fd
+
 mkdir -p ~/.local/{bin,local}
 ln -sf ~/.dotfiles/home/.npmrc ~/.npmrc
 

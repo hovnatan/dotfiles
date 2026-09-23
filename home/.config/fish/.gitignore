@@ -1,0 +1,3 @@
+# fish writes universal variables here (set -U, and the fzf plugin sets
+# several); machine state, not config.
+fish_variables
