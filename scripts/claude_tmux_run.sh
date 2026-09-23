@@ -286,7 +286,32 @@ launch() {
   # only (see ../claude_tmux_session/AGENTS.md). It also disables the left
   # arrow that opens the agent strip, which spawns a daemon and leaves a
   # background session behind on every press.
-  tmux -L "$SOCKET" new-session -d -P -F '#{session_id}' -s "$name" -c "$dir" \
+
+  # The systemd unit the tmux server lives in, and why it is not the service.
+  # tmux >= 3.7 marks every pane's scope PartOf= the unit its server was
+  # started from. Forked from ExecStart that unit is claude-tmux.service, so
+  # `systemctl --user stop|restart claude-tmux` would take down every session
+  # -- the unmanaged ones included -- where it should kill only the manager.
+  # The new-session that starts the server therefore runs in a scope of its
+  # own, which then owns the panes:
+  #
+  #   claude-tmux.service        watch loop; ExecStop kills only "claude"
+  #   tmux-server-claude.scope   tmux server  <--PartOf--  tmux-spawn-*.scope
+  #                                                        (one per pane)
+  #
+  # Stopping that scope does end every session, as it is the server. Only
+  # the first new-session needs it: with "exit-empty on" the server exists
+  # exactly while some session does, and later calls just talk to it. A
+  # failure (no user systemd manager) stops the launch with systemd-run's
+  # own error rather than quietly starting the server inside the service.
+  local scope=()
+  if ! tmux -L "$SOCKET" list-sessions >/dev/null 2>&1; then
+    scope=(systemd-run --user --scope --quiet --collect
+      --unit="tmux-server-$SOCKET"
+      --description="tmux server for the $SOCKET socket (claude_tmux_run.sh)")
+  fi
+  "${scope[@]}" tmux -L "$SOCKET" new-session -d -P -F '#{session_id}' \
+    -s "$name" -c "$dir" \
     /usr/bin/zsh -ic 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' zsh \
     "$@" --remote-control
 }
