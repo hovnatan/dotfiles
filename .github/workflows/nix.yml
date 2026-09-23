@@ -1,0 +1,23 @@
+# Check nix/ -- the package set `dotup` applies on every Linux box and Mac --
+# before a broken list or lock reaches them. scripts/check_nix_flake.sh (run
+# it locally too) evaluates every system's set with no evaluation warnings,
+# requires each set to come from cache.nixos.org apart from known trivial
+# local builds, and builds the Linux set, which is where buildEnv catches two
+# packages installing the same file.
+name: nix
+on:
+  push:
+    branches: [main]
+    paths: ['nix/**', 'scripts/check_nix_flake.sh', '.github/workflows/nix.yml']
+  pull_request:
+    paths: ['nix/**', 'scripts/check_nix_flake.sh', '.github/workflows/nix.yml']
+jobs:
+  flake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - run: scripts/check_nix_flake.sh --build

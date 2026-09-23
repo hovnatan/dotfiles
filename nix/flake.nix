@@ -9,6 +9,9 @@
 #                                                               `dotup` does this)
 # Bump:     nix flake update --flake path:$HOME/.dotfiles/nix  then commit flake.lock and apply
 # Inspect:  nix profile list; nix flake metadata path:$HOME/.dotfiles/nix
+# Check:    scripts/check_nix_flake.sh [--build]           before pushing; CI runs it
+#           (.github/workflows/nix.yml): evaluation without warnings on every
+#           system, every set from the binary cache, the Linux set builds
 #
 # Curated, not dumped: add packages here by hand, each with a comment saying
 # why it is here and when, like the Brewfile. A package installed ad hoc with
