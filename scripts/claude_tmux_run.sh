@@ -62,7 +62,7 @@
 # sessions of this socket, where every conversation is named this way.
 #
 # The manager runs in ~/.dotfiles/claude_tmux_session with permissions
-# bypassed; the CLAUDE.md there tells it when to call spawn. Spawned
+# bypassed; the AGENTS.md there tells it when to call spawn. Spawned
 # sessions are unmanaged: nothing recreates one that exits, and a service
 # stop leaves them alone.
 #
@@ -272,7 +272,7 @@ launch() {
   # TERM/COLORTERM/FORCE_COLOR are ignored). Accepted as cosmetic --
   # hiding TMUX from claude works but is a hack; upstream should fix.
   # CLAUDE_CODE_DISABLE_AGENT_VIEW: this flow is interactive tmux sessions
-  # only (see ../claude_tmux_session/CLAUDE.md). It also disables the left
+  # only (see ../claude_tmux_session/AGENTS.md). It also disables the left
   # arrow that opens the agent strip, which spawns a daemon and leaves a
   # background session behind on every press.
   tmux -L "$SOCKET" new-session -d -P -F '#{session_id}' -s "$name" -c "$dir" \
