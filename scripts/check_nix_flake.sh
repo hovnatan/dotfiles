@@ -21,11 +21,15 @@ set -uo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 FLAKE="path:$REPO/nix"
 SYSTEMS=(x86_64-linux aarch64-linux aarch64-darwin)
-# Local builds that are wrappers or symlink farms, never compiles: the
-# buildEnv itself and its builder script, hunspell.withDicts, and nodejs (a
-# wrapper around the substituted nodejs-slim). Extend only with a derivation
-# you have checked is trivial.
-LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+)$'
+# Local builds that are allowed at dotup time. Wrappers and symlink farms,
+# never compiles: the buildEnv itself and its builder script,
+# hunspell.withDicts, nodejs (a wrapper around the substituted nodejs-slim)
+# and azure-cli-extensions (the extension dir). One real build, accepted on
+# purpose: azure-cli.withExtensions re-runs the azure-cli Python package build
+# and its `az self-test`, ~80s on an M-series Mac, no C compiles
+# (2026-09-23, nix/flake.nix). Extend only with a derivation you have checked
+# is trivial, or say here what it costs.
+LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|python3\.[0-9]+-azure-cli-[0-9.]+)$'
 
 build=0
 case "${1:-}" in

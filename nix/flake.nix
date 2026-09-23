@@ -55,8 +55,12 @@
           # same versions (2026-09-23). The macOS entries came from the
           # Brewfile's formulae, their comments carried over.
           common = [
-            # Microsoft Azure CLI
-            pkgs.azure-cli
+            # Microsoft Azure CLI, with its extensions declared here: Nix's az
+            # runs a Python without pip, so `az extension add` fails, and
+            # extensions pip-installed under another Python break on its
+            # native modules (the Mac's brew-era ssh one, 2026-09-23).
+            #   ssh -- `az ssh vm` with AAD OpenSSH certificates
+            (pkgs.azure-cli.withExtensions [ pkgs.azure-cli-extensions.ssh ])
             # bash 5 for `#!/usr/bin/env bash` scripts; macOS /bin/bash is 3.2
             pkgs.bashInteractive
             # fd -- the fish fzf plugin's file search (FZF_FIND_FILE_COMMAND
@@ -93,6 +97,12 @@
             pkgs.pandoc
             # PDF utilities (pdftotext, pdfinfo, ...) from poppler
             pkgs.poppler-utils
+            # python3 -- stdlib-only scripts and tests (claude_tmux_run.sh,
+            # ntfy_stop_test.sh); the Mac's replaces the python.org 3.12 in
+            # /usr/local/bin, and on Linux it wins over /usr/bin/python3.
+            # Packages go in uv projects or `uv run` scripts, not a global pip
+            # (2026-09-23)
+            pkgs.python3
             # Rsync for cloud storage
             pkgs.rclone
             # ripgrep -- rg, also behind fish's g/rgh abbreviations
