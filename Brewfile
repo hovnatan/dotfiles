@@ -1,20 +1,37 @@
-# Homebrew bundle for macOS machines - snapshot of what is installed via brew
-# (plus Mac App Store apps and VS Code extensions, which `brew bundle` also tracks).
+# Homebrew bundle for macOS machines: the curated list of formulae, casks,
+# Mac App Store apps and VS Code extensions this machine should have.
 #
 # Restore:  brew bundle --file=~/.dotfiles/Brewfile
-# Check:    brew bundle check --file=~/.dotfiles/Brewfile
-# Refresh:  brew bundle dump --file=~/.dotfiles/Brewfile --force
-#           (a refresh drops these comments and re-adds every installed
-#           App Store app, including ones deliberately left out; diff first)
+# Drift:    brew bundle check --file=~/.dotfiles/Brewfile --verbose   (in file, not installed)
+#           brew bundle cleanup --file=~/.dotfiles/Brewfile           (installed, not in file)
+#           `dotup` (scripts/update.sh) prints both on macOS.
 #
-# Apps from the App Store are listed as `mas` lines; the few apps with no cask
-# (Safari, Meta Muse, MacPorts Zathura) are not listed here.
+# Curated, not dumped: edit this file by hand. `brew bundle dump --force`
+# drops every comment and re-adds App Store apps left out on purpose (games,
+# Pixea, Time Out, GarageBand, iMovie). The few apps with no cask (Safari,
+# Meta Muse, MacPorts Zathura) are not listed.
+#
+# Adding a package: give it a comment saying why it is here, e.g.
+#   # duti -- make VS Code the default for .qasm files (2026-08-05)
+# A future "do I still need X?" is then a read, not an archaeology dig
+# through shell history and old agent sessions.
+#
+# Maintenance gotchas:
+# - Agent shells have no tty, so a cask that needs sudo (pkg installers,
+#   /usr/local/bin symlinks: docker-desktop, little-snitch, tunnelblick, zoom,
+#   ...) fails there - and a failed `--adopt` rolls back by deleting the
+#   adopted app (Docker.app was lost this way on 2026-09-22). Adopt one cask
+#   first; hand sudo casks to the user to run as `! brew install --cask ...`.
+# - `brew uninstall` autoremoves orphaned dependencies (removing one CLI took
+#   50 formulae with it). Preview with `brew autoremove --dry-run`.
+# - Casks marked auto_updates update themselves; `brew upgrade` skips them
+#   unless given --greedy, so their recorded version lagging is not drift.
 
 # Microsoft Azure CLI 2.0
 brew "azure-cli"
 # Bourne-Again SHell, a UNIX command interpreter
 brew "bash"
-# Select default apps for documents and URL schemes on macOS
+# duti -- make VS Code the default for .qasm files (2026-08-05)
 brew "duti"
 # GitHub command-line tool
 brew "gh"

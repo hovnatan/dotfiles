@@ -14,9 +14,11 @@ It is kept short on purpose - every line here is paid on every session.
   It is safe to re-run; `scripts/update.sh` (alias `dotup`) pulls and re-runs it
   to update a machine. `CONTEXT.md` holds the vocabulary (install, update, ...).
 - Shell scripts must run on both macOS and Linux: macOS has BSD userland, so
-  avoid GNU-only flags (`sed -i` without a suffix arg, `readlink -f`, `date -d`,
-  `stat -c`, `grep -P`) or branch on `uname`. Target bash 5 (Homebrew on macOS)
+  avoid GNU-only flags and commands (`sed -i` without a suffix arg, `readlink -f`,
+  `date -d`, `stat -c`, `grep -P`, `timeout`) or branch on `uname`. Target bash 5 (Homebrew on macOS)
   via `#!/usr/bin/env bash`; never `#!/bin/bash`, which is 3.2 on macOS.
+- `Brewfile` (repo root) is the curated macOS package list; read its header
+  before any brew install, uninstall or cask adopt.
 - backpass adds further evidence-backed entries here from real sessions.
 
 ## Maintaining this file

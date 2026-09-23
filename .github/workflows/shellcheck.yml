@@ -12,3 +12,17 @@ jobs:
       - uses: actions/checkout@v4
       - run: shellcheck --version
       - run: git ls-files '*.sh' | xargs shellcheck -S warning
+
+      # GNU-only commands shellcheck cannot see (AGENTS.md: scripts run on
+      # macOS too). `timeout` is coreutils; macOS has none, so a bare call
+      # exits 127 there. Flags an invocation with a duration (`timeout 30 ssh`)
+      # outside comments; a guarded use that stores it in a variable after
+      # `command -v timeout` (home/.claude/statusline-command.sh) passes.
+      - name: no bare GNU timeout
+        run: |
+          pat='(^|[;&|(`]|[[:space:]])timeout[[:space:]]+[0-9]'
+          if git ls-files -z '*.sh' | xargs -0 grep -nE "$pat" \
+               | grep -vE '^[^:]+:[0-9]+:[[:space:]]*#'; then
+            echo "::error::bare 'timeout' is GNU-only; macOS lacks it. Guard with 'command -v timeout' or drop it."
+            exit 1
+          fi

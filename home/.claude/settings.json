@@ -1,5 +1,4 @@
 {
-  "autoMemoryEnabled": false,
   "cleanupPeriodDays": 730,
   "permissions": {
     "allow": [
@@ -129,6 +128,7 @@
     "mode": "hold"
   },
   "timeFormat": "24-hour",
+  "autoMemoryEnabled": false,
   "skipDangerousModePermissionPrompt": true,
   "theme": "auto",
   "editorMode": "normal",
