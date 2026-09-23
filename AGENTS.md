@@ -22,10 +22,9 @@ It is kept short on purpose - every line here is paid on every session.
   holds only the Mac apps. Read the relevant header before any `nix profile`
   change or brew install, uninstall or cask adopt.
 - Changing `scripts/claude_tmux_run.sh`, the claude-tmux unit or
-  `home/.claude/ntfy-stop.sh`: run `scripts/tests/claude_tmux_run_test.sh`
-  and `scripts/tests/ntfy_stop_test.sh` (throwaway socket and HOME, stub
-  claude, fake ntfy; safe beside live sessions), and extend them with any new
-  behaviour.
+  `home/.claude/ntfy-stop.sh`: extend `scripts/tests/` with the new behaviour.
+  CI runs them on Linux and macOS (`.github/workflows/tests.yml`); locally
+  they are safe beside live sessions.
 - backpass adds further evidence-backed entries here from real sessions.
 
 ## Maintaining this file

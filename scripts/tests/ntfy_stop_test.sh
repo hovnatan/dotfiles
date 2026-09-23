@@ -65,7 +65,14 @@ open(sys.argv[1], "w").write(str(srv.server_port))
 srv.serve_forever()
 PYEOF
 listener=$!
-for _ in $(seq 20); do [ -s "$WORK/port" ] && break; sleep 0.1; done
+# A cold python3 (first run on a Mac, a fresh CI runner) took over 2 s to
+# listen; without a port every push goes to "http://127.0.0.1:" and fails
+# as curl exit 7, which reads like a hook bug.
+for _ in $(seq 100); do [ -s "$WORK/port" ] && break; sleep 0.1; done
+if ! [ -s "$WORK/port" ]; then
+  fail "fake ntfy listener wrote no port in 10 s: $(cat "$WORK/listener.out")"
+  exit 1
+fi
 OK_URL="http://127.0.0.1:$(cat "$WORK/port")"
 BAD_URL="http://127.0.0.1:9"        # discard port: nothing listens -> curl exit 7
 
