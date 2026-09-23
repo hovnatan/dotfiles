@@ -10,7 +10,10 @@
 #                  from the known trivial local builds (LOCAL_OK): anything
 #                  else in `nix build --dry-run`'s "will be built" list means
 #                  a Mac or VM would compile it at dotup time (a lock bump
-#                  outrunning the cache, or an override that changes a hash)
+#                  outrunning the cache, or an override that changes a hash).
+#                  The dry-run targets an empty throwaway store, so a machine
+#                  that already built something answers like a fresh one
+#                  (~25 s and ~600 MB of temp disk, removed on exit)
 #   3. build       (--build) this machine's set: buildEnv only notices two
 #                  packages installing the same file when it actually builds
 #
@@ -29,9 +32,13 @@ SYSTEMS=(x86_64-linux aarch64-linux aarch64-darwin)
 # and its `az self-test`, ~80s on an M-series Mac, no C compiles
 # (2026-09-23, nix/flake.nix). And terraform, unfree so never in the cache: a
 # Go build of ~4.5 min on an 8-CPU VM, after each lock bump (2026-09-23).
+# Hydra skips everything only an unfree package needs, so terraform's two
+# fixed-output fetches come along: its `source` (the GitHub tarball; that
+# generic name is what fetchFromGitHub gives any source) and its vendored
+# `-go-modules`, both hash-pinned downloads, not compiles.
 # Extend only with a derivation you have checked is trivial, or say here what
 # it costs.
-LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+)$'
+LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+(-go-modules)?|source)$'
 
 build=0
 case "${1:-}" in
@@ -46,7 +53,11 @@ failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 fail() { log "FAIL $*"; failures=$((failures + 1)); }
 err=$(mktemp)
-trap 'rm -f "$err"' EXIT
+# The throwaway store for step 2. Its path must have no symlinked parent
+# (macOS $TMPDIR is under the /var -> /private/var link), and store paths are
+# read-only, so removal needs write permission back first.
+store=$(cd "$(mktemp -d)" && pwd -P)/store
+trap 'rm -f "$err"; chmod -R u+w "${store%/store}" 2>/dev/null; rm -rf "${store%/store}"' EXIT
 
 # --- 1. evaluate --------------------------------------------------------------
 
@@ -63,7 +74,7 @@ fi
 # --- 2. substitute ------------------------------------------------------------
 
 for system in "${SYSTEMS[@]}"; do
-  if ! nix build --dry-run --no-link "$FLAKE#packages.$system.default" 2>"$err"; then
+  if ! nix build --dry-run --no-link --store "$store" "$FLAKE#packages.$system.default" 2>"$err"; then
     cat "$err" >&2
     fail "$system: dry-run build"
     continue
