@@ -4,6 +4,10 @@
 # requires each set to come from cache.nixos.org apart from known trivial
 # local builds, and builds the Linux set, which is where buildEnv catches two
 # packages installing the same file.
+#
+# It runs on macOS too, because Macs run it before pushing: the script's own
+# shell (BSD sed and friends) once broke there while Linux CI stayed green,
+# and its cache check passed without checking anything (2026-09-23).
 name: nix
 on:
   push:
@@ -13,11 +17,19 @@ on:
     paths: ['nix/**', 'scripts/check_nix_flake.sh', '.github/workflows/nix.yml']
 jobs:
   flake:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            args: --build
+          - os: macos-latest
+            args: ""
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - run: scripts/check_nix_flake.sh --build
+      - run: scripts/check_nix_flake.sh ${{ matrix.args }}

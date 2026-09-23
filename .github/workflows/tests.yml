@@ -1,0 +1,53 @@
+# Run the end-to-end tests in scripts/tests/ on both platforms the scripts
+# ship to (AGENTS.md: they must run on macOS and Linux). Each runner gets the
+# tools the tests drive from the pinned nixpkgs (nix/flake.lock), the same
+# builds `dotup` installs on the real machines:
+#
+#   ubuntu-latest   ntfy_stop_test.sh, claude_tmux_run_test.sh
+#                   (the latter needs a user systemd manager: lingering on)
+#   macos-latest    ntfy_stop_test.sh  (claude_tmux_run_test.sh is Linux only)
+#
+# The tmux test links ~/.nix-profile into its throwaway HOME, so tmux has to
+# be in the default profile, not a `nix shell`: without it the server runs
+# the distro's tmux 3.4, which sets no PartOf, and the scope checks pass
+# without testing anything.
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: pinned tools into the default profile
+        run: |
+          nix profile add --inputs-from "path:$PWD/nix" \
+            nixpkgs#tmux nixpkgs#bashInteractive nixpkgs#python3
+          echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
+
+      # systemd-run --user and systemctl --user need the runner's user
+      # manager, which only starts for a logged-in or lingering user.
+      - name: user systemd manager
+        if: runner.os == 'Linux'
+        run: |
+          sudo loginctl enable-linger "$USER"
+          rt=/run/user/$(id -u)
+          for _ in $(seq 50); do [ -S "$rt/bus" ] && break; sleep 0.2; done
+          [ -S "$rt/bus" ] || { echo "::error::user manager bus $rt/bus never appeared"; exit 1; }
+          echo "XDG_RUNTIME_DIR=$rt" >> "$GITHUB_ENV"
+
+      - run: tmux -V; bash --version | head -1; python3 --version
+      - run: scripts/tests/ntfy_stop_test.sh
+      - run: scripts/tests/claude_tmux_run_test.sh
+        if: runner.os == 'Linux'
