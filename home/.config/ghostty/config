@@ -20,6 +20,13 @@ shell-integration-features = no-ssh-env,no-ssh-terminfo
 keybind = super+j=previous_tab
 keybind = super+k=next_tab
 
+# Ghostty follows the fixterms spec and sends ctrl+m as CSI u (ESC[109;5u)
+# even in legacy mode (src/input/key_encode.zig, ctrlSeq), so programs that
+# only read legacy keys -- fzf outside tmux -- type "109;5u" instead of
+# accepting. Send a plain carriage return, as other terminals do; inside
+# tmux this changes nothing, since tmux already decodes it to ^M.
+keybind = ctrl+m=text:\r
+
 # Don't ask for confirmation when closing a surface/window
 confirm-close-surface = false
 
