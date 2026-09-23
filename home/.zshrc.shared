@@ -145,18 +145,6 @@ preexec_terminal_title() {
 precmd_functions+=(precmd_terminal_title)
 preexec_functions+=(preexec_terminal_title)
 
-# Only pipe when this shell is inside tmux: run from outside, an untargeted
-# pipe-pane lands on (and, being -o, toggles!) the most recently used
-# session's active pane
-[[ -n $TMUX ]] && tmux pipe-pane -o "cat >> $HOME/.tmux/logs/tmux_session_#{b:socket_path}_#S_#I_#P_$(date +%Y%m%d%H%M%S).log" 2> /dev/null
-# Prune pane logs untouched for 14+ days (an active pane's log has a fresh
-# mtime), but always keep the newest 100 logs regardless of age
-() {
-  local -a old_logs
-  old_logs=( "$HOME"/.tmux/logs/tmux_session_*.log(N.m+14om[101,-1]) )
-  (( $#old_logs )) && rm -f -- "${old_logs[@]}"
-}
-
 bindkey -v
 
 bindkey "^P" up-line-or-search
@@ -313,32 +301,16 @@ alias psg='ps aux | grep -v grep | grep -i -e VSZ -e'
 
 # umask 0077
 
-export EDITOR=vim
-
-# Fallback for environments that don't set a locale (bare SSH, cron); plain C breaks UTF-8
-export LANG="${LANG:-en_US.UTF-8}"
-
-# Personal word list for hunspell (technical terms), tracked in dotfiles
-export WORDLIST=~/.hunspell_en_US
-
-export COLORTERM=truecolor
-
-export MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"
+# EDITOR, LANG, WORDLIST, COLORTERM, MAKEFLAGS and ~/.local/bin on PATH:
+# shared with bash and every login shell, so they live in one POSIX file.
+# Login shells already have them; this covers a zsh started without one.
+emulate sh -c '. "$HOME/.dotfiles/home/.profile.shared"'
 
 # Opt-in aggressive optimization flags; run before building performance-sensitive code
 native_flags() {
   export CFLAGS="-march=native -O3" # -march=apple-m3 sometimes needed for Macs
   export CXXFLAGS="-march=native -O3"
 }
-
-case ":${PATH}:" in
-    *:"$HOME/.local/bin":*)
-        ;;
-    *)
-        # Prepending path in case a system-installed binary needs to be overridden
-        export PATH="$HOME/.local/bin:$PATH"
-        ;;
-esac
 
 
 # When a command taking > 1s finishes: ring the terminal bell (tmux window

@@ -9,7 +9,6 @@ cd ~
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.zshrc -o ~/.zshrc
 
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.tmux.conf -o ~/.tmux.conf
-mkdir -p ~/.tmux/logs
 
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.vimrc -o ~/.vimrc
 mkdir -p ~/.vim/undodir

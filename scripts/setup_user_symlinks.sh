@@ -47,7 +47,6 @@ cd ~ || exit 1
 
 rm -rf ~/.tmux.conf
 ln -s ~/.dotfiles/home/.tmux.conf ~/.tmux.conf
-mkdir -p ~/.tmux/logs
 
 [ -L ~/.zshrc ] && rm -f ~/.zshrc
 if ! grep -qs '\.dotfiles/home/\.zshrc\.shared' ~/.zshrc; then
@@ -66,12 +65,23 @@ fi
 EOT
 fi
 
+# The shell-neutral environment (EDITOR, MAKEFLAGS, ~/.local/bin, ...) for
+# every login shell: bash reads ~/.profile directly, zsh through .zprofile.
+# POSIX sh, since dash and sh read ~/.profile too.
+if ! grep -qs '\.dotfiles/home/\.profile\.shared' ~/.profile; then
+cat <<EOT >> ~/.profile
+if [ -f "\$HOME/.dotfiles/home/.profile.shared" ]; then
+  . "\$HOME/.dotfiles/home/.profile.shared"
+fi
+EOT
+fi
+
 mkdir -p ~/.vimundo/
 rm -rf ~/.vimrc
 ln -s ~/.dotfiles/home/.vimrc ~/.vimrc
 
 # Hunspell personal word list (technical terms). The name matches the en_US
-# dictionary so hunspell finds it by default; WORDLIST in .zshrc.shared points
+# dictionary so hunspell finds it by default; WORDLIST in .profile.shared points
 # here too, covering other locales. Interactive saves write through the link.
 ln -sf ~/.dotfiles/home/.hunspell_en_US ~/.hunspell_en_US
 
