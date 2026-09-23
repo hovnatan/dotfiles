@@ -128,6 +128,12 @@ and slack_send_message_draft drops markdown links (only the label text
 survives). Instead post the message to my self-DM (my own user id as
 channel_id) and give me the message link; I copy-paste from there.
 
+# Password prompts: my own terminal, not `!`
+
+`!` runs without a tty, so sudo and other password prompts fail there.
+Hand those commands to me to run in my own terminal window; keep `!` for
+interactive logins that open a browser or read no password.
+
 # Failures: loud, not silent
 
 In everything code-related, an unexpected state should fail where it

@@ -7,9 +7,9 @@
 #           `dotup` (scripts/update.sh) prints both on macOS.
 #
 # Curated, not dumped: edit this file by hand. `brew bundle dump --force`
-# drops every comment and re-adds App Store apps left out on purpose (games,
-# Pixea, Time Out, GarageBand, iMovie). The few apps with no cask (Safari,
-# Meta Muse, MacPorts Zathura) are not listed.
+# drops every comment and re-adds App Store apps left out on purpose (the
+# drift report lists them). The few apps with no cask (Safari, Meta Muse,
+# MacPorts Zathura) are not listed.
 #
 # Adding a package: give it a comment saying why it is here, e.g.
 #   # duti -- make VS Code the default for .qasm files (2026-08-05)
@@ -21,11 +21,14 @@
 #   /usr/local/bin symlinks: docker-desktop, little-snitch, tunnelblick, zoom,
 #   ...) fails there - and a failed `--adopt` rolls back by deleting the
 #   adopted app (Docker.app was lost this way on 2026-09-22). Adopt one cask
-#   first; hand anything needing sudo (casks, `mas uninstall`) to the user to
-#   run in their own terminal window - Claude Code's `!` prefix has no tty
-#   either, so sudo fails there the same way.
+#   first; hand anything needing sudo (casks, `mas uninstall`) to the user
+#   (see "Password prompts" in the global CLAUDE.md).
 # - `brew uninstall` autoremoves orphaned dependencies (removing one CLI took
 #   50 formulae with it). Preview with `brew autoremove --dry-run`.
+# - `brew uninstall X` removes one installed version; older kegs stay (gcc,
+#   libomp, libpq all left one). Use `--force` to take every version, then
+#   run `brew missing`: older kegs of autoremoved deps can be left with broken
+#   links - remove them with `brew uninstall --force --ignore-dependencies`.
 # - Casks marked auto_updates update themselves; `brew upgrade` skips them
 #   unless given --greedy, so their recorded version lagging is not drift.
 
