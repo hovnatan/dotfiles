@@ -21,13 +21,26 @@
 # guard). Unlike the bell's pure focus check, the cancel here also
 # requires the focus to be FRESH (see watched()) -- a bell into a locked
 # screen is harmless, a suppressed push is not.  The human-readable name
-# is resolved only at push time, for the title, whose <hostname>-<name>
-# form matches the conversation/peer naming claude_tmux_run.sh owns.
+# is resolved in hook mode for the log lines, and again at push time for
+# the title (a /label may have renamed the session meanwhile), whose
+# <hostname>-<name> form matches the conversation/peer naming
+# claude_tmux_run.sh owns.
 #
 # The topic is read from ~/.config/claude-ntfy/topic, which stays OUTSIDE
 # the dotfiles repo on purpose: an ntfy.sh topic name is a capability --
 # anyone who knows it can subscribe. No topic file = do nothing, so this
 # hook is a no-op on machines where it is not set up.
+#
+# Every decision is logged, one line each, so a push that did or did not
+# arrive can be explained afterwards:
+#   tail -f ~/.local/state/claude-ntfy/log
+#   2026-09-23 13:40:02+0000 backend ($3) stop: unwatched, waiter armed (debounce 600s)
+#   2026-09-23 13:41:10+0000 backend ($3) wait: seen after 65s, no push
+# Events: stop (watched now | waiter armed), wait (coalesced | seen |
+# session gone | transcript grew), prompt (pending push cancelled), push
+# (sent | FAILED with curl's exit code). The topic is never logged -- it is
+# the capability. Only machines with a topic log; the log rotates to
+# log.1 past LOG_MAX_BYTES.
 #
 # Portability: runs on stock macOS too, which lacks flock(1) and
 # setsid(1) (both util-linux), has no /run, and ships bash 3.2 and no jq
@@ -43,6 +56,22 @@ STALE_SECONDS="${CLAUDE_NTFY_STALE_SECONDS:-1800}"
 TOPIC_FILE="$HOME/.config/claude-ntfy/topic"
 NTFY_URL="${CLAUDE_NTFY_URL:-https://ntfy.sh}"
 RUN_DIR="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}"   # Linux tmpfs, else macOS per-user tmp
+LOG_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/claude-ntfy/log"   # survives reboots
+LOG_MAX_BYTES=262144
+
+# log <who> <event...>: append "<local time> <who> <event>" to LOG_FILE.
+# printf's %(...)T is a builtin from bash 4.2 on (no fork on the per-prompt
+# cancel path); stock macOS bash 3.2 forks date instead.
+log() {
+  local ts who="$1"; shift
+  if [ "${BASH_VERSINFO[0]}" -gt 4 ] ||
+     { [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -ge 2 ]; }; then
+    printf -v ts '%(%Y-%m-%d %H:%M:%S%z)T' -1
+  else
+    ts=$(date '+%Y-%m-%d %H:%M:%S%z')
+  fi
+  printf '%s %s %s\n' "$ts" "$who" "$*" >> "$LOG_FILE"
+}
 
 # watched <socket> <session-id>: status 0 if a client of the session is
 # focused AND produced input within STALE_SECONDS, 1 if not, 2 if the
@@ -71,7 +100,7 @@ watched() {
 lock_path() { lock="$RUN_DIR/claude-ntfy/${1##*/}-$2.lock"; }
 
 if [ "${1:-}" = --wait ]; then
-  socket="$2" sid="$3" topic="$4" transcript="${5:-}"
+  socket="$2" sid="$3" topic="$4" transcript="${5:-}" who="${6:-\$$3}"
   # One waiter per (socket, session): a Stop landing while one is pending
   # is the same "come look" request, so it is coalesced. mkdir is the
   # portable atomic lock; the recorded pid lets the next waiter claim a
@@ -81,23 +110,43 @@ if [ "${1:-}" = --wait ]; then
   lock_path "$socket" "$sid"
   mkdir -p "${lock%/*}"
   if ! mkdir "$lock" 2>/dev/null; then
-    kill -0 "$(cat "$lock/pid" 2>/dev/null)" 2>/dev/null && exit 0  # waiter pending
+    other=$(cat "$lock/pid" 2>/dev/null)
+    if kill -0 "$other" 2>/dev/null; then
+      log "$who" "wait: coalesced into pending waiter $other"
+      exit 0
+    fi
   fi
   echo $$ > "$lock/pid"
+  printf '%s\n' "$who" > "$lock/who"   # for --cancel's log line
   trap 'rm -rf "$lock"' EXIT
 
+  # Rotate here, off the hook's clock: wc forks, and this runs once per turn.
+  if [ -f "$LOG_FILE" ] && [ "$(wc -c < "$LOG_FILE")" -gt "$LOG_MAX_BYTES" ]; then
+    mv -f "$LOG_FILE" "$LOG_FILE.1"
+  fi
+
+  start=$SECONDS
   end=$((SECONDS + DEBOUNCE_SECONDS))
+  growing=0
   while [ "$SECONDS" -lt "$end" ]; do
     # Watched (0) -> the user saw it; gone (2) -> nothing to report on.
     watched "$socket" "$sid"
-    case $? in 0|2) exit 0 ;; esac
+    case $? in
+      0) log "$who" "wait: seen after $((SECONDS - start))s, no push"; exit 0 ;;
+      2) log "$who" "wait: session gone, no push"; exit 0 ;;
+    esac
     # Transcript grew since this window started: a new turn superseded
     # the one we are advertising (a user message alone would have fired
     # --cancel already). Restart the window; the push then fires only
-    # after a full DEBOUNCE_SECONDS of quiet.
+    # after a full DEBOUNCE_SECONDS of quiet. A long turn grows it at
+    # every poll, so only the first poll of a growth streak is logged.
     if [ -n "$transcript" ] && [ "$transcript" -nt "$lock/pid" ]; then
       echo $$ > "$lock/pid"
       end=$((SECONDS + DEBOUNCE_SECONDS))
+      [ "$growing" = 1 ] || log "$who" "wait: transcript grew, window restarted"
+      growing=1
+    else
+      growing=0
     fi
     sleep "$POLL_SECONDS"
   done
@@ -105,12 +154,21 @@ if [ "${1:-}" = --wait ]; then
   # Resolve the name only now, once per push; gone since the last poll
   # means there is nothing left to come look at.
   session=$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null)
-  [ -n "$session" ] || exit 0
+  if [ -z "$session" ]; then
+    log "$who" "wait: session gone, no push"
+    exit 0
+  fi
   curl -sf --max-time 10 \
     -H "Title: CC: $(hostname)-$session" \
     -H "Tags: speech_balloon" \
     -d "finished a turn ${DEBOUNCE_SECONDS}s ago and is still unwatched" \
     "$NTFY_URL/$topic" > /dev/null
+  rc=$?
+  if [ "$rc" -eq 0 ]; then
+    log "$who" "push: sent via $NTFY_URL after $((SECONDS - start))s unwatched"
+  else
+    log "$who" "push: FAILED, curl exit $rc ($NTFY_URL)"
+  fi
   exit 0
 fi
 
@@ -127,17 +185,24 @@ socket=${TMUX%%,*} sid=${TMUX##*,}
 if [ "${1:-}" = --cancel ]; then
   lock_path "$socket" "$sid"
   [ -d "$lock" ] || exit 0              # no waiter pending
-  pid=
+  pid="" who=""
   IFS= read -r pid 2>/dev/null < "$lock/pid"
+  IFS= read -r who 2>/dev/null < "$lock/who"   # before the kill: its trap removes the lock
   [ -n "$pid" ] && kill "$pid" 2>/dev/null
   rm -rf "$lock"
+  log "${who:-\$$sid}" "prompt: user replied, pending push cancelled (waiter ${pid:-?})"
   exit 0
 fi
 
 # --- hook mode: cheap checks, then fork the waiter and get out of the way ---
 IFS= read -r topic < "$TOPIC_FILE" 2>/dev/null
 [ -n "${topic:-}" ] || exit 0
-watched "$socket" "$sid" && exit 0      # user is looking right now -- no waiter
+mkdir -p "${LOG_FILE%/*}"
+who="$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null) (\$$sid)"
+if watched "$socket" "$sid"; then       # user is looking right now -- no waiter
+  log "$who" "stop: watched now, no push"
+  exit 0
+fi
 # The hook JSON on stdin carries the conversation transcript's path; the
 # waiter watches its mtime (see loop). sed, not jq: stock macOS has no jq.
 transcript=$(sed -n 's/.*"transcript_path":"\([^"]*\)".*/\1/p' 2>/dev/null)
@@ -145,6 +210,7 @@ transcript=$(sed -n 's/.*"transcript_path":"\([^"]*\)".*/\1/p' 2>/dev/null)
 # setsid fully detaches (survives signals to claude's process group);
 # stock macOS has no setsid, so fall back to nohup there.
 runner=$(command -v setsid || echo nohup)
-"$runner" "$0" --wait "$socket" "$sid" "$topic" "$transcript" \
+log "$who" "stop: unwatched, waiter armed (debounce ${DEBOUNCE_SECONDS}s)"
+"$runner" "$0" --wait "$socket" "$sid" "$topic" "$transcript" "$who" \
   < /dev/null > /dev/null 2>&1 &
 exit 0
