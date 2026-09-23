@@ -1,0 +1,15 @@
+.git
+__pycache__
+.clangd
+CMakeFiles
+build
+venv_*
+.venv*
+node_modules
+.eggs
+*.egg-info
+yarn.lock
+package-lock.json
+htmlcov
+.pytest_cache
+.ruff_cache
