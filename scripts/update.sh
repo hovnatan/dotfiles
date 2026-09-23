@@ -10,6 +10,8 @@
 #                                                              v
 #                                   scripts/setup_user_symlinks.sh
 #                                                              v
+#                              macOS only: Brewfile drift report (advisory)
+#                                                              v
 #                              reminders: tmux, Hammerspoon, open shells
 #
 # Local state on this machine, and what happens to it:
@@ -73,6 +75,25 @@ update_repo() {
   fi
 }
 
+# Report where this Mac and the curated Brewfile disagree, both directions:
+#   check    listed in the Brewfile, not installed (or brew thinks outdated)
+#   cleanup  installed, not listed (dry run: without --force it removes nothing)
+# Advisory only: drift is a prompt to edit the Brewfile or the machine, not a
+# failed update, so neither command's "found drift" exit fails the run.
+# cleanup's dry run also lists what `brew cleanup` would prune (old kegs,
+# caches) - hundreds of lines of noise here, so that tail is cut off.
+brew_drift() {
+  command -v brew >/dev/null || {
+    echo "error: brew not on PATH; install Homebrew (https://brew.sh) or fix PATH" >&2
+    return 1
+  }
+  local file=~/.dotfiles/Brewfile
+  echo "--- Brewfile drift (advisory)"
+  HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$file" --verbose 2>&1 | sed 's/^/  /' || true
+  HOMEBREW_NO_AUTO_UPDATE=1 brew bundle cleanup --file="$file" 2>&1 \
+    | sed '/^Would `brew cleanup`/,$d' | sed 's/^/  /' || true
+}
+
 main() {
   update_repo ~/.dotfiles
 
@@ -86,6 +107,10 @@ main() {
   echo "--- setup_user_symlinks.sh"
   local status=0
   bash ~/.dotfiles/scripts/setup_user_symlinks.sh || status=$?
+
+  if [ "$(uname)" = "Darwin" ]; then
+    brew_drift || status=1
+  fi
 
   # Nothing running re-reads its config on its own; say what to poke.
   echo "--- reload as needed"
