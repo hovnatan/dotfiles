@@ -19,12 +19,6 @@ warn() {
   failed=1
 }
 
-if ! command -v sudo &> /dev/null; then
-  SUDO=""
-else
-  SUDO=sudo
-fi
-
 cd ~ || exit 1
 
 rm -rf ~/.tmux.conf
