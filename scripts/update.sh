@@ -82,6 +82,8 @@ update_repo() {
 # failed update, so neither command's "found drift" exit fails the run.
 # cleanup's dry run also lists what `brew cleanup` would prune (old kegs,
 # caches) - hundreds of lines of noise here, so that tail is cut off.
+# `brew missing` catches broken dependency links: an autoremove can take a
+# dep's current version and leave an older keg behind that still needs it.
 brew_drift() {
   command -v brew >/dev/null || {
     echo "error: brew not on PATH; install Homebrew (https://brew.sh) or fix PATH" >&2
@@ -92,6 +94,7 @@ brew_drift() {
   HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$file" --verbose 2>&1 | sed 's/^/  /' || true
   HOMEBREW_NO_AUTO_UPDATE=1 brew bundle cleanup --file="$file" 2>&1 \
     | sed '/^Would `brew cleanup`/,$d' | sed 's/^/  /' || true
+  HOMEBREW_NO_AUTO_UPDATE=1 brew missing 2>&1 | sed 's/^/  missing dep: /' || true
 }
 
 main() {
