@@ -19,7 +19,7 @@ Situational policy (remote runs, ntfy) lives in skills under
 
 Everything outside `home/` is repo tooling that never lands in `$HOME`:
 `scripts/` (all executables, invoked by absolute path), `claude_tmux_session/`,
-`nix/`, `.devcontainer/`, `docker/`. `scripts/setup_user_symlinks.sh` performs the
+`nix/`, `docs/` (handoffs for one-off migrations), `.devcontainer/`, `docker/`. `scripts/setup_user_symlinks.sh` performs the
 install and is the authoritative map of what goes where. Nothing in this repo
 is on `PATH`; `~/.local/bin` is the PATH directory.
 
