@@ -61,7 +61,7 @@ rest is done.
 Runs an always-on manager tmux session `claude` at boot: Claude Code with
 permissions bypassed, started in `~/.dotfiles/claude_tmux_session`, restarted
 whenever it exits. Ask it (e.g. over Remote Control) to bring up other
-sessions: per `claude_tmux_session/CLAUDE.md` it resumes the conversation
+sessions: per `claude_tmux_session/AGENTS.md` it resumes the conversation
 named `<hostname>-<name>` -- also its Remote Control name on claude.ai -- in
 a tmux session `<name>` running in auto permission mode (permissions
 bypassed only on explicit request). Spawned sessions are

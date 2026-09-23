@@ -11,7 +11,7 @@ StartLimitBurst=10
 Type=simple
 
 # The one managed session is "claude", started in
-# ~/.dotfiles/claude_tmux_session; the CLAUDE.md there documents how that
+# ~/.dotfiles/claude_tmux_session; the AGENTS.md there documents how that
 # session spawns and resumes the other, unmanaged Claude Code sessions
 # (conversations named "<hostname>-<tmux name>") on this server.
 
