@@ -7,7 +7,7 @@ It is kept short on purpose - every line here is paid on every session.
 
 - `home/` mirrors `$HOME`: entries install at the same relative path under `~`
   (`home/.tmux.conf` -> `~/.tmux.conf`). Everything outside `home/` (`scripts/`,
-  `claude_tmux_session/`, `nix/`, `.devcontainer/`, `docker/`) is repo tooling that never
+  `claude_tmux_session/`, `nix/`, `docs/`, `.devcontainer/`, `docker/`) is repo tooling that never
   lands in `$HOME`; all executables live in `scripts/` and are invoked by
   absolute path, nothing here is on `PATH`. `scripts/setup_user_symlinks.sh` is the authoritative
   install map - add a line there when adding a file under `home/`.
