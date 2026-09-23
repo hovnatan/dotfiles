@@ -8,8 +8,8 @@
 #
 # Curated, not dumped: edit this file by hand. `brew bundle dump --force`
 # drops every comment and re-adds App Store apps left out on purpose (the
-# drift report lists them). The few apps with no cask (Safari, Meta Muse,
-# MacPorts Zathura) are not listed.
+# drift report lists them). Apps with no cask (Safari, Meta Muse) are
+# not listed.
 #
 # Adding a package: give it a comment saying why it is here, e.g.
 #   # duti -- make VS Code the default for .qasm files (2026-08-05)
