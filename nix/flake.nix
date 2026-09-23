@@ -60,7 +60,7 @@
             # in home/.config/fish/config.fish)
             pkgs.fd
             # fish -- interactive shell, config in home/.config/fish with its
-            # plugins vendored there; zsh stays the login shell
+            # plugins vendored there; the login shell stays the account's own
             pkgs.fish
             # fzf -- the fish fzf plugin's ctrl-t/alt-c pickers
             pkgs.fzf
@@ -70,6 +70,10 @@
             pkgs.gws
             # Improved top (interactive process viewer)
             pkgs.htop
+            # hunspell with the en_US dictionary on its search path: Claude
+            # Code's spell checker (home/.claude/settings.json), plus the
+            # personal word list WORDLIST points at (2026-09-23)
+            (pkgs.hunspell.withDicts (dicts: [ dicts.en_US ]))
             # Tools and libraries to manipulate images in select formats
             pkgs.imagemagick
             # Sophisticated file transfer program
@@ -106,8 +110,8 @@
 
           # Linux only. macOS ships its own zsh as the default shell.
           linux = [
-            # zsh -- the same zsh on every Linux box; the login shell stays
-            # the distro's (/usr/bin/zsh), this one wins on PATH (2026-09-23)
+            # zsh -- the same zsh on every Linux box; it wins on PATH over the
+            # distro's, and the login shell stays the account's (2026-09-23)
             pkgs.zsh
           ];
 
