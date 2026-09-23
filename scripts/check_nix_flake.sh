@@ -27,9 +27,11 @@ SYSTEMS=(x86_64-linux aarch64-linux aarch64-darwin)
 # and azure-cli-extensions (the extension dir). One real build, accepted on
 # purpose: azure-cli.withExtensions re-runs the azure-cli Python package build
 # and its `az self-test`, ~80s on an M-series Mac, no C compiles
-# (2026-09-23, nix/flake.nix). Extend only with a derivation you have checked
-# is trivial, or say here what it costs.
-LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|python3\.[0-9]+-azure-cli-[0-9.]+)$'
+# (2026-09-23, nix/flake.nix). And terraform, unfree so never in the cache: a
+# Go build of ~4.5 min on an 8-CPU VM, after each lock bump (2026-09-23).
+# Extend only with a derivation you have checked is trivial, or say here what
+# it costs.
+LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+)$'
 
 build=0
 case "${1:-}" in

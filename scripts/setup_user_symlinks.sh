@@ -25,24 +25,6 @@ else
   SUDO=sudo
 fi
 
-# Debian/Ubuntu base packages. Only touch apt when one is missing, so a
-# re-run on an installed box neither prompts for sudo nor waits on apt.
-# procps: `ps` is needed by .claude/notify-stop.sh and absent from slim images
-if command -v apt-get &> /dev/null; then
-  missing=()
-  for pkg in curl wget sudo htop tmux zsh vim git openssh-client make locales procps; do
-    dpkg -s "$pkg" &> /dev/null || missing+=("$pkg")
-  done
-  if [ "${#missing[@]}" -gt 0 ]; then
-    export DEBIAN_FRONTEND=noninteractive
-    $SUDO apt-get update
-    $SUDO apt-get install -y --no-install-recommends "${missing[@]}"
-  fi
-  if ! locale -a 2>/dev/null | grep -qi '^en_US.utf-\?8$'; then
-    $SUDO locale-gen --no-purge en_US.UTF-8
-  fi
-fi
-
 cd ~ || exit 1
 
 rm -rf ~/.tmux.conf
