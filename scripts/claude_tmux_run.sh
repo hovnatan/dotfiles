@@ -68,12 +68,13 @@
 #
 # The unit launches ExecStart through the account's login shell (whatever
 # passwd says), so the tmux server forked from here inherits the full login
-# environment (~/.profile, reached via .zprofile when that shell is zsh:
-# ~/.local/bin on PATH, exports) once, for every future pane and window. Each
-# pane runs a plain interactive non-login zsh: .zshrc runs -- opening the
-# pane's pipe-pane log -- before starting claude. With "exit-empty on" the
-# dedicated server dies with the last session, so a full cold start always
-# reapplies this login environment.
+# environment (~/.profile -> home/.profile.shared, reached via .zprofile when
+# that shell is zsh: ~/.local/bin on PATH, EDITOR, MAKEFLAGS, ...) once, for
+# every future pane and window. Each Claude pane runs that same passwd shell
+# again, as a login shell, so it re-reads that environment fresh and then
+# execs claude; no rc file is involved, so bash and zsh accounts behave the
+# same. With "exit-empty on" the dedicated server dies with the last session,
+# so a full cold start always reapplies this login environment.
 #
 # The watcher exits as soon as the managed session is missing; the unit's
 # Restart=always then reruns this script.
@@ -126,6 +127,9 @@ import json, os, sys
 from datetime import datetime, timezone
 
 mode, conv, paths = sys.argv[1], sys.argv[2], sys.argv[3:]
+# A directory with no transcripts yet (a fresh machine) leaves the caller's
+# *.jsonl glob unexpanded; that literal pattern means "no conversations".
+paths = [p for p in paths if not p.endswith("/*.jsonl")]
 TAIL = 1 << 20   # the last title and timestamp sit within kilobytes of the end
 
 def tail(path):
@@ -269,16 +273,30 @@ find_session() {
     grep -x -E -m 1 "$1(/.*)?"
 }
 
-# launch <session name> <dir> <claude args...>: detached pane running an
-# interactive zsh (so .zshrc opens the pane's pipe-pane log) that execs
-# claude with the given arguments and Remote Control on (claude.ai shows
-# the session's one name, the -n among the arguments).
+# launch <session name> <dir> <claude args...>: detached pane running the
+# account's login shell (passwd) as a login shell, which execs claude with
+# the given arguments and Remote Control on (claude.ai shows the session's
+# one name, the -n among the arguments).
 # Prints the new session's id: the handle that survives the rename the
 # pane-title hook applies once claude announces its title (see Naming).
 # tmux hands a multi-word command to the pane as argv, untouched, so the
-# arguments need no quoting; zsh -c's first operand is its $0, the rest $@.
+# arguments need no quoting; -c's first operand is the shell's $0, the rest $@.
 launch() {
   local name="$1" dir="$2"; shift 2
+
+  # The passwd shell, not $SHELL: a spawn issued from another shell (fish,
+  # a tool's bash) must still launch what the account logs in with. It has
+  # to take `-lc <script> <$0> <args...>` like sh does; fish does not.
+  local shell
+  shell=$(getent passwd "$(id -un)" | cut -d: -f7)
+  case "${shell##*/}" in
+    bash|zsh|sh|dash|ksh) ;;
+    *)
+      echo "claude_tmux_run.sh: login shell '${shell:-<none>}' cannot run 'sh -lc'-style commands; use bash or zsh as the login shell" >&2
+      return 1
+      ;;
+  esac
+
   # Note: claude clamps its TUI to 256 colors under tmux ($TMUX set;
   # TERM/COLORTERM/FORCE_COLOR are ignored). Accepted as cosmetic --
   # hiding TMUX from claude works but is a hack; upstream should fix.
@@ -312,7 +330,7 @@ launch() {
   fi
   "${scope[@]}" tmux -L "$SOCKET" new-session -d -P -F '#{session_id}' \
     -s "$name" -c "$dir" \
-    /usr/bin/zsh -ic 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' zsh \
+    "$shell" -lc 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' "${shell##*/}" \
     "$@" --remote-control
 }
 
@@ -321,9 +339,10 @@ launch() {
 # soon as it forks, so without this a caller reports success for a claude
 # that exits immediately -- a rejected flag, a refused resume -- leaving no
 # session behind at all, and the printed "resumed ..." is a lie. The pane
-# runs `zsh -ic`, which execs claude as its last command, so once claude is
-# up the pane's own process is claude; before that it is still zsh running
-# .zshrc, which is why the process check only has to hold at the end. By
+# runs the login shell with -lc, which execs claude as its last command, so
+# once claude is up the pane's own process is claude; before that it is
+# still the shell reading its profile, which is why the process check only
+# has to hold at the end. By
 # id, because the session's name changes under it (see Naming).
 wait_alive() {
   local sid="$1" i pid
@@ -396,14 +415,14 @@ spawn)
     # title, label included: a resume by id alone reverts the session's
     # display/peer name (what /list-agents shows) to an auto-generated
     # directory-based one.
-    sid=$(launch "$name" "$cwd" --resume "$id" -n "$title" "${mode[@]}")
+    sid=$(launch "$name" "$cwd" --resume "$id" -n "$title" "${mode[@]}") || exit 1
     started="resumed conversation $id ($title) in $cwd (${mode[*]})"
   else
     if [ ! -d "$dir" ]; then
       echo "no conversation named $conv; pass an existing directory to start a new one in" >&2
       exit 1
     fi
-    sid=$(launch "$name" "$dir" -n "$conv" "${mode[@]}")
+    sid=$(launch "$name" "$dir" -n "$conv" "${mode[@]}") || exit 1
     started="new conversation $conv in $dir (${mode[*]})"
   fi
   # Only now is the launch worth reporting: see wait_alive.
@@ -502,10 +521,10 @@ if [ -z "$(find_session claude)" ]; then
   { read -r id; read -r _; read -r title; } < <(resolve_conversation "$HOST-claude" \
       "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl)
   if [ -n "$id" ]; then
-    launch claude "$MANAGER_DIR" --resume "$id" -n "$title" --dangerously-skip-permissions >/dev/null
+    launch claude "$MANAGER_DIR" --resume "$id" -n "$title" --dangerously-skip-permissions >/dev/null || exit 1
     echo "resuming manager conversation $id ($title)"
   else
-    launch claude "$MANAGER_DIR" -n "$HOST-claude" --dangerously-skip-permissions >/dev/null
+    launch claude "$MANAGER_DIR" -n "$HOST-claude" --dangerously-skip-permissions >/dev/null || exit 1
     echo "no manager conversation yet, starting a new one"
   fi
 fi

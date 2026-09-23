@@ -1,0 +1,31 @@
+# Environment every shell on every machine should have, in POSIX sh so bash,
+# zsh (via `emulate sh`) and sh all read the same file. Sourced from:
+#
+#   ~/.profile      (appended by scripts/setup_user_symlinks.sh) -- login
+#                   shells: bash -l, zsh -l through home/.zprofile, and so the
+#                   claude-tmux service's $SHELL -lc and every Claude pane
+#   .zshrc.shared   -- interactive zsh that did not start from a login shell
+#
+# Exports only, and idempotent: it may run twice in one process tree.
+
+export EDITOR=vim
+
+# Fallback for environments that don't set a locale (bare SSH, cron); plain C breaks UTF-8
+export LANG="${LANG:-en_US.UTF-8}"
+
+# Personal word list for hunspell (technical terms), tracked in dotfiles
+export WORDLIST="$HOME/.hunspell_en_US"
+
+export COLORTERM=truecolor
+
+MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"
+export MAKEFLAGS
+
+case ":${PATH}:" in
+    *:"$HOME/.local/bin":*)
+        ;;
+    *)
+        # Prepending path in case a system-installed binary needs to be overridden
+        export PATH="$HOME/.local/bin:$PATH"
+        ;;
+esac
