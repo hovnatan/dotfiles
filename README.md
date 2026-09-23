@@ -47,23 +47,28 @@ dotup            # alias for ~/.dotfiles/scripts/update.sh
 
 It fast-forwards `~/.dotfiles` (and `~/.dotfiles-private` when cloned) from
 origin, prints the pulled commit range, re-runs `setup_user_symlinks.sh` so
-new files get linked, reports Brewfile drift (macOS) or applies the pinned
-Nix package set (Linux, where Nix is installed; see "Nix packages (Linux)"),
-and lists what to reload (tmux, Hammerspoon, open shells). Dirty tracked files are stashed around the pull and popped after;
-a pop conflict stops the run with the paths listed and the stash kept.
+new files get linked, reports Brewfile drift (macOS), applies the pinned
+Nix package set (where Nix is installed; see "Nix packages"), and lists
+what to reload (tmux, Hammerspoon, open shells). Dirty tracked files are
+stashed around the pull and popped after; a pop conflict stops the run with the paths listed and the stash kept.
 Local commits not on origin make it refuse: push or rebase them first.
 The installer is safe to re-run; anything that needs a decision (IINA key
 bindings differing from the repo, a real directory where a skill link
 belongs) is reported as a warning and makes the run exit non-zero once the
 rest is done.
 
-## Nix packages (Linux)
+## Nix packages
 
-The Linux counterpart of the `Brewfile`: CLI tools newer than the distro
-ships (tmux 3.7c where Ubuntu 24.04 has 3.4) come from Nix. The curated list
-is `nix/flake.nix`, and `nix/flake.lock` pins the nixpkgs revision, so every
-machine that applies the same commit gets the same builds. Opt-in per
-machine; set up on vm (Ubuntu 24.04, x86_64) on 2026-09-23.
+Command-line tools come from Nix, the same set at the same versions on
+Linux boxes and Macs (since 2026-09-23; the `Brewfile` keeps only the casks,
+App Store apps and VS Code extensions). The curated list is `nix/flake.nix`:
+almost everything is in its `common` list, and the per-OS lists hold the
+exceptions (only zsh, Linux-only, as macOS ships its own). `nix/flake.lock`
+pins the nixpkgs revision, so every machine that applies the same commit
+gets the same builds. Nix's copy wins over the distro's (`~/.nix-profile/bin`
+precedes `/usr/bin`), but not over `~/.local/bin`: a self-installed `uv`
+there shadows Nix's. Opt-in per machine; set up on vm
+(Ubuntu 24.04, x86_64) on 2026-09-23.
 
 Install Nix, multi-user with a daemon (needs sudo). The versioned URL pins
 the installer and the Nix it installs; drop the version from the path
@@ -72,22 +77,39 @@ the installer and the Nix it installs; drop the version from the path
 ```
 sh <(curl -fsSL https://releases.nixos.org/nix/nix-2.35.2/install) --daemon --yes
 echo 'experimental-features = nix-command flakes' | sudo tee -a /etc/nix/nix.conf
-sudo systemctl restart nix-daemon
+sudo systemctl restart nix-daemon                              # Linux
+sudo launchctl kickstart -k system/org.nixos.nix-daemon        # macOS
 exec zsh -l                                  # a shell that has Nix on PATH
 nix profile add path:$HOME/.dotfiles/nix     # the pinned package set
 ```
 
+On a Mac that had the formulae from Homebrew, retire those copies once the
+Nix set is in (`which -a tmux` lists both until then; whichever comes first
+on PATH wins):
+
+```
+dscl . -read ~ UserShell    # must not be /opt/homebrew/bin/bash before bash goes
+brew autoremove --dry-run   # see the Brewfile header: uninstall autoremoves deps
+brew uninstall azure-cli bash gh googleworkspace-cli htop imagemagick lftp \
+  media-info mosh node pandoc poppler rclone rsync shellcheck tmux typst uv wget
+```
+
+npm globals keep working: `home/.npmrc` puts them under `~/.local`, not in
+Node's (now read-only) prefix. `az extension list` is worth a look after the
+switch, since extensions were installed against brew's azure-cli.
+
 Adding a package, applying a new lock and bumping nixpkgs are in the header
 of `nix/flake.nix`. `dotup` applies the committed list and lock on every
-Linux machine that has the set installed (`nix profile upgrade`), and fails
-if Nix is installed but missing from PATH. Uninstalling Nix:
+machine that has the set installed (`nix profile upgrade`), and fails if Nix
+is installed but missing from PATH. Uninstalling Nix:
 https://nix.dev/manual/nix/stable/installation/uninstall.html
 
 What the installer changes: `/nix`, the `nixbld` group and its build users,
 `/etc/nix/nix.conf`, the `nix-daemon.service`/`.socket` units, and a hook
 in `/etc/bash.bashrc`, `/etc/bashrc`, `/etc/zshrc`, `/etc/zsh/zshrc` and
 `/etc/profile.d/nix.sh`. It saves the originals of edited files as
-`*.backup-before-nix`.
+`*.backup-before-nix`. On macOS it also creates a separate APFS volume for
+`/nix` and runs the daemon from launchd (`org.nixos.nix-daemon`).
 
 Which shells get `~/.nix-profile/bin` on PATH, and how:
 
@@ -95,7 +117,8 @@ Which shells get `~/.nix-profile/bin` on PATH, and how:
 |-----------------------------------------|---------------------------------------------------|
 | interactive bash / zsh                  | installer hook in `/etc/bash.bashrc`, `/etc/zsh/zshrc` |
 | login bash                              | `/etc/profile` -> `/etc/profile.d/nix.sh`         |
-| login zsh, incl. `$SHELL -lc` (the claude-tmux service) | `home/.zprofile` (Ubuntu's zsh never reads `/etc/profile`) |
+| login zsh, incl. the claude-tmux service's `$SHELL -lc` when the account's shell is zsh | `home/.zprofile` (Ubuntu's zsh never reads `/etc/profile`) |
+| macOS zsh, login or not                 | installer hook in `/etc/zshrc`, plus `home/.zprofile` |
 | systemd units that run no shell         | none: use absolute paths                          |
 
 Gotchas:

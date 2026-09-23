@@ -150,7 +150,7 @@ esac
 # binary that fails on every single pass.  Probed here, before the fork, so
 # the complaint reaches your terminal instead of the child's /dev/null.
 if [ -z "${RSYNC:-}" ]; then
-    for candidate in /opt/homebrew/bin/rsync /usr/local/bin/rsync /opt/local/bin/rsync rsync; do
+    for candidate in "$HOME/.nix-profile/bin/rsync" /opt/homebrew/bin/rsync /usr/local/bin/rsync /opt/local/bin/rsync rsync; do
         RSYNC=$(command -v "$candidate" 2>/dev/null) && break
     done
 fi

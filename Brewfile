@@ -1,5 +1,9 @@
-# Homebrew bundle for macOS machines: the curated list of formulae, casks,
-# Mac App Store apps and VS Code extensions this machine should have.
+# Homebrew bundle for macOS machines: the curated list of casks, Mac App
+# Store apps and VS Code extensions this machine should have. Command-line
+# tools come from Nix instead (nix/flake.nix, the `common` list shared with
+# the Linux boxes, since 2026-09-23); only formulae that belong with the Mac
+# apps stay here (mas drives this file's App Store entries, duti sets
+# default apps).
 #
 # Restore:  brew bundle --file=~/.dotfiles/Brewfile
 # Drift:    brew bundle check --file=~/.dotfiles/Brewfile --verbose   (in file, not installed)
@@ -32,48 +36,10 @@
 # - Casks marked auto_updates update themselves; `brew upgrade` skips them
 #   unless given --greedy, so their recorded version lagging is not drift.
 
-# Microsoft Azure CLI 2.0
-brew "azure-cli"
-# Bourne-Again SHell, a UNIX command interpreter
-brew "bash"
 # duti -- make VS Code the default for .qasm files (2026-08-05)
 brew "duti"
-# GitHub command-line tool
-brew "gh"
-# CLI for Drive, Gmail, Calendar, Sheets, Docs, Chat, Admin, and more
-brew "googleworkspace-cli"
-# Improved top (interactive process viewer)
-brew "htop"
-# Tools and libraries to manipulate images in select formats
-brew "imagemagick"
-# Sophisticated file transfer program
-brew "lftp"
-# Unified display of technical and tag data for audio/video
-brew "media-info"
 # Mac App Store command-line interface
 brew "mas"
-# Remote terminal application
-brew "mosh"
-# Open-source, cross-platform JavaScript runtime environment
-brew "node"
-# Swiss-army knife of markup format conversion
-brew "pandoc"
-# PDF rendering library (based on the xpdf-3.0 code base)
-brew "poppler"
-# Rsync for cloud storage
-brew "rclone"
-# Utility that provides fast incremental file transfer
-brew "rsync"
-# Static analysis and lint tool, for (ba)sh scripts
-brew "shellcheck"
-# Terminal multiplexer
-brew "tmux"
-# Markup-based typesetting system
-brew "typst"
-# Extremely fast Python package installer and resolver, written in Rust
-brew "uv"
-# Internet file retriever
-brew "wget"
 # Apps. Contexts is left out: its download CDN serves an expired TLS cert,
 # so the cask cannot install (2026-09-22).
 cask "alt-tab"
