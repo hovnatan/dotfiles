@@ -7,7 +7,7 @@ It is kept short on purpose - every line here is paid on every session.
 
 - `home/` mirrors `$HOME`: entries install at the same relative path under `~`
   (`home/.tmux.conf` -> `~/.tmux.conf`). Everything outside `home/` (`scripts/`,
-  `claude_tmux_session/`, `.devcontainer/`, `docker/`) is repo tooling that never
+  `claude_tmux_session/`, `nix/`, `.devcontainer/`, `docker/`) is repo tooling that never
   lands in `$HOME`; all executables live in `scripts/` and are invoked by
   absolute path, nothing here is on `PATH`. `scripts/setup_user_symlinks.sh` is the authoritative
   install map - add a line there when adding a file under `home/`.
@@ -19,6 +19,8 @@ It is kept short on purpose - every line here is paid on every session.
   via `#!/usr/bin/env bash`; never `#!/bin/bash`, which is 3.2 on macOS.
 - `Brewfile` (repo root) is the curated macOS package list; read its header
   before any brew install, uninstall or cask adopt.
+- `nix/flake.nix` is its Linux counterpart (Nix, pinned by `nix/flake.lock`;
+  setup in README.md); read its header before any `nix profile` change.
 - backpass adds further evidence-backed entries here from real sessions.
 
 ## Maintaining this file

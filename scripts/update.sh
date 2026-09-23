@@ -11,6 +11,7 @@
 #                                   scripts/setup_user_symlinks.sh
 #                                                              v
 #                              macOS only: Brewfile drift report (advisory)
+#                              Linux only: apply the pinned Nix package set
 #                                                              v
 #                              reminders: tmux, Hammerspoon, open shells
 #
@@ -97,6 +98,50 @@ brew_drift() {
   HOMEBREW_NO_AUTO_UPDATE=1 brew missing 2>&1 | sed 's/^/  missing dep: /' || true
 }
 
+# Apply nix/flake.nix + flake.lock to this machine's Nix profile, so a pulled
+# change to the package list or the nixpkgs pin lands on every Linux machine
+# that runs dotup, not only the one where it was made (README.md, "Nix
+# packages (Linux)"):
+#   Nix not installed           skip: Nix is opt-in per machine
+#   installed but not on PATH   error: the shell hooks are broken
+#   set not in the profile      note how to opt in; not an error
+#   set in the profile          nix profile upgrade <its entry>
+# The entry is found by its original URL, not assumed to be named `nix`:
+# `nix profile upgrade` with a name that matches nothing only warns and
+# exits 0, which would make this step a silent no-op.
+nix_apply() {
+  local flake="path:$HOME/.dotfiles/nix"
+  if ! command -v nix >/dev/null; then
+    if [ -e /nix/var/nix/profiles/default/bin/nix ]; then
+      echo "error: Nix is installed but not on PATH; open a login shell (exec zsh -l) or see README.md \"Nix packages (Linux)\"" >&2
+      return 1
+    fi
+    return 0
+  fi
+  command -v jq >/dev/null || {
+    echo "error: jq not on PATH; needed to read 'nix profile list --json' (sudo apt install jq)" >&2
+    return 1
+  }
+
+  echo "--- Nix package set ($flake)"
+  local entries
+  entries=$(nix profile list --json |
+    jq -r --arg url "$flake" '.elements | to_entries[] | select(.value.originalUrl == $url) | .key') || return 1
+
+  case $(printf '%s' "$entries" | grep -c .) in
+    0)
+      echo "  not installed on this machine; opt in with: nix profile add $flake"
+      ;;
+    1)
+      nix profile upgrade "$entries" 2>&1 | sed 's/^/  /'
+      ;;
+    *)
+      echo "error: several profile entries come from $flake: $entries; 'nix profile remove' all but one" >&2
+      return 1
+      ;;
+  esac
+}
+
 main() {
   update_repo ~/.dotfiles
 
@@ -113,6 +158,9 @@ main() {
 
   if [ "$(uname)" = "Darwin" ]; then
     brew_drift || status=1
+  fi
+  if [ "$(uname)" = "Linux" ]; then
+    nix_apply || status=1
   fi
 
   # Nothing running re-reads its config on its own; say what to poke.
