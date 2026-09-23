@@ -283,18 +283,11 @@ if [ "$(uname)" = "Darwin" ]; then
   launchctl bootout "gui/$(id -u)/$keyremap_label" 2>/dev/null
   launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/"$keyremap_label".plist
 
-  # Preview markup colors (magenta annotations for LLM screenshot review).
-  # The setup script quits Preview, which declines with open documents, so
-  # only run it when the defaults are absent and Preview is closed; run it
-  # by hand to reset after picking another color in the markup toolbar.
-  preview_markup=~/.dotfiles/scripts/macos/setup_preview_markup.sh
-  if ! defaults read com.apple.Preview com.apple.AnnotationKit.strokeColor &> /dev/null; then
-    if pgrep -xq Preview; then
-      warn "Preview markup defaults not set and Preview is open; close it and run $preview_markup"
-    else
-      "$preview_markup" || warn "$preview_markup failed"
-    fi
-  fi
+  # Preview markup colors (magenta annotations for LLM screenshot review) are
+  # not applied here: the script has to quit Preview, which declines with
+  # open documents, and a warning on every run whenever Preview was open cost
+  # more than the colors are worth. Run it by hand when wanted:
+  #   ~/.dotfiles/scripts/macos/setup_preview_markup.sh
 
   # IINA starts every file paused by default ("Pause when opening a file").
   # Play on open instead. IINA reads this from UserDefaults at each file open,
