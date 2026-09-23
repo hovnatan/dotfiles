@@ -1,4 +1,4 @@
-# Claude tmux manager session
+# Claude Code tmux manager session
 
 This directory is the working directory of the always-on "claude" tmux
 session started at boot by claude-tmux.service (see
