@@ -11,7 +11,7 @@
 #                                   scripts/setup_user_symlinks.sh
 #                                                              v
 #                              macOS only: Brewfile drift report (advisory)
-#                              Linux only: apply the pinned Nix package set
+#                              apply the pinned Nix package set (if installed)
 #                                                              v
 #                              reminders: tmux, Hammerspoon, open shells
 #
@@ -99,34 +99,34 @@ brew_drift() {
 }
 
 # Apply nix/flake.nix + flake.lock to this machine's Nix profile, so a pulled
-# change to the package list or the nixpkgs pin lands on every Linux machine
-# that runs dotup, not only the one where it was made (README.md, "Nix
-# packages (Linux)"):
+# change to the package list or the nixpkgs pin lands on every machine that
+# runs dotup, not only the one where it was made (README.md, "Nix packages"):
 #   Nix not installed           skip: Nix is opt-in per machine
 #   installed but not on PATH   error: the shell hooks are broken
 #   set not in the profile      note how to opt in; not an error
 #   set in the profile          nix profile upgrade <its entry>
 # The entry is found by its original URL, not assumed to be named `nix`:
 # `nix profile upgrade` with a name that matches nothing only warns and
-# exits 0, which would make this step a silent no-op.
+# exits 0, which would make this step a silent no-op. The profile JSON is
+# read by nix itself, so the step needs nothing beyond Nix (a fresh Mac has
+# no jq until this very set is installed).
 nix_apply() {
   local flake="path:$HOME/.dotfiles/nix"
   if ! command -v nix >/dev/null; then
     if [ -e /nix/var/nix/profiles/default/bin/nix ]; then
-      echo "error: Nix is installed but not on PATH; open a login shell (exec zsh -l) or see README.md \"Nix packages (Linux)\"" >&2
+      echo "error: Nix is installed but not on PATH; open a login shell (exec zsh -l) or see README.md \"Nix packages\"" >&2
       return 1
     fi
     return 0
   fi
-  command -v jq >/dev/null || {
-    echo "error: jq not on PATH; needed to read 'nix profile list --json' (sudo apt install jq)" >&2
-    return 1
-  }
-
   echo "--- Nix package set ($flake)"
   local entries
-  entries=$(nix profile list --json |
-    jq -r --arg url "$flake" '.elements | to_entries[] | select(.value.originalUrl == $url) | .key') || return 1
+  # shellcheck disable=SC2016  # ${n} is Nix interpolation, not the shell's
+  entries=$(PROFILE_JSON=$(nix profile list --json) FLAKE_URL=$flake nix eval --impure --raw --expr '
+    let elements = (builtins.fromJSON (builtins.getEnv "PROFILE_JSON")).elements;
+    in builtins.concatStringsSep "\n" (builtins.filter
+      (n: elements.${n}.originalUrl == builtins.getEnv "FLAKE_URL")
+      (builtins.attrNames elements))') || return 1
 
   case $(printf '%s' "$entries" | grep -c .) in
     0)
@@ -159,9 +159,7 @@ main() {
   if [ "$(uname)" = "Darwin" ]; then
     brew_drift || status=1
   fi
-  if [ "$(uname)" = "Linux" ]; then
-    nix_apply || status=1
-  fi
+  nix_apply || status=1
 
   # Nothing running re-reads its config on its own; say what to poke.
   echo "--- reload as needed"
