@@ -64,7 +64,12 @@ for system in "${SYSTEMS[@]}"; do
   fi
   # "these N derivations will be built:" then one indented .drv per line;
   # reduced to derivation names (the part after the hash, without .drv).
-  local_builds=$(sed -n '/will be built:$/,/^[^ ]/{s|^  /nix/store/[a-z0-9]*-\(.*\)\.drv$|\1|p}' "$err")
+  # The `;` before `}` is for BSD sed, which rejects the block without it; a
+  # sed error must fail the check, or an empty list reads as "all cached".
+  if ! local_builds=$(sed -n '/will be built:$/,/^[^ ]/{s|^  /nix/store/[a-z0-9]*-\(.*\)\.drv$|\1|p;}' "$err"); then
+    fail "$system: could not parse the dry-run's 'will be built' list"
+    continue
+  fi
   unexpected=$(grep -vE "$LOCAL_OK" <<<"$local_builds" | grep -v '^$')
   fetched=$(grep -o 'these [0-9]* paths will be fetched[^)]*)' "$err")
   if [ -n "$unexpected" ]; then
