@@ -104,7 +104,8 @@ brew_drift() {
 #   Nix not installed           skip: Nix is opt-in per machine
 #   installed but not on PATH   error: the shell hooks are broken
 #   set not in the profile      note how to opt in; not an error
-#   set in the profile          nix profile upgrade <its entry>
+#   set in the profile, current one line; nothing is evaluated or built
+#   set in the profile, stale   nix profile upgrade <its entry>
 # The entry is found by its original URL, not assumed to be named `nix`:
 # `nix profile upgrade` with a name that matches nothing only warns and
 # exits 0, which would make this step a silent no-op. The profile JSON is
@@ -133,7 +134,21 @@ nix_apply() {
       echo "  not installed on this machine; opt in with: nix profile add $flake"
       ;;
     1)
-      nix profile upgrade "$entries" 2>&1 | sed 's/^/  /'
+      # `nix profile upgrade` prints "upgrading ... from <url> to <url>" even
+      # when both locked URLs are identical (Nix 2.35, path: flakes) and then
+      # changes nothing, so compare them here: the locked URL carries nix/'s
+      # narHash, so an equal one means the same flake.nix and flake.lock.
+      local installed locked
+      # shellcheck disable=SC2016
+      installed=$(PROFILE_JSON=$(nix profile list --json) ENTRY=$entries nix eval --impure --raw --expr '
+        (builtins.fromJSON (builtins.getEnv "PROFILE_JSON")).elements.${builtins.getEnv "ENTRY"}.url') || return 1
+      locked=$(META_JSON=$(nix flake metadata --json "$flake") nix eval --impure --raw --expr '
+        (builtins.fromJSON (builtins.getEnv "META_JSON")).url') || return 1
+      if [ "$installed" = "$locked" ]; then
+        echo "  already applied: nix/ unchanged since profile entry '$entries' was built"
+      else
+        nix profile upgrade "$entries" 2>&1 | sed 's/^/  /'
+      fi
       ;;
     *)
       echo "error: several profile entries come from $flake: $entries; 'nix profile remove' all but one" >&2
