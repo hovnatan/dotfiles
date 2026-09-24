@@ -172,7 +172,13 @@
             pkgs.zsh
           ];
 
-          darwin = [ ];
+          darwin = [
+            # zathura -- PDF, EPUB, DjVu, PostScript and comic-book viewer, recoloured
+            # to gruvbox (home/.config/zathura/zathurarc); DjVu is why not
+            # sioyek (MuPDF has no DjVu). A CLI binary, no .app: start it from
+            # a terminal. Mac only: the Linux boxes are headless (2026-09-24)
+            pkgs.zathura
+          ];
         in
         {
           default = pkgs.buildEnv {

@@ -1,0 +1,45 @@
+# zathura: PDF / EPUB / DjVu / PostScript / comic-book viewer, installed from
+# nix/flake.nix on macOS. Was home/.config/zathura_light with the gruvbox
+# lines commented out; recolouring is now on at startup (2026-09-24).
+
+set font 'monospace normal 14'
+set adjust-open best-fit
+set statusbar-home-tilde true
+# No statusbar or inputbar until needed (ctrl-n toggles the statusbar)
+set guioptions ''
+set selection-clipboard clipboard
+
+map d scroll half-down
+map u scroll half-up
+map <PageDown> scroll half-down
+map <PageUp> scroll half-up
+map <S-PageDown> navigate next
+map <S-PageUp> navigate previous
+map <C-D> toggle_page_mode
+map <C-n> toggle_statusbar
+# Open moves from o to O. There is no `open` shortcut function (zathura warns
+# "Not a valid shortcut function: open"); the default o is this binding.
+unmap o
+map <S-o> focus_inputbar ":open "
+
+# Gruvbox recolouring: page white -> gruvbox light background, page black ->
+# gruvbox foreground, the shades in between blended. Same palette as Ghostty
+# (Gruvbox Light), nvim (gruvbox.nvim) and the Claude Code theme. `r` toggles
+# it off for pages where colour matters (photos, plots).
+set recolor true
+set recolor-lightcolor "#fbf1c7"
+set recolor-darkcolor "#3c3836"
+set default-bg "#fbf1c7"
+set statusbar-bg "#fbf1c7"
+set statusbar-fg "#3c3836"
+map r recolor
+
+# Gruvbox dark instead:
+#set recolor-lightcolor "#282828"
+#set recolor-darkcolor "#ebdbb2"
+#set default-bg "#282828"
+#set statusbar-bg "#282828"
+#set statusbar-fg "#ebdbb2"
+
+# Keep the hue of coloured content while recolouring (off: all-gruvbox pages)
+#set recolor-keephue true
