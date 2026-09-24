@@ -1,0 +1,22 @@
+# Every tracked .lua file must match .stylua.toml. stylua comes from the
+# pinned nixpkgs (nix/flake.lock), the build `dotup` installs and nvim's
+# format-on-save runs, since stylua's output can shift between releases.
+# Fix a failure with:  git ls-files -z '*.lua' | xargs -0 stylua
+name: lua
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  stylua:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: stylua --check
+        run: |
+          nix shell --inputs-from "path:$PWD/nix" nixpkgs#stylua --command bash -c \
+            "stylua --version && git ls-files -z '*.lua' | xargs -0 stylua --check"

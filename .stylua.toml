@@ -1,0 +1,10 @@
+# Lua style for every tracked .lua file (nvim, Hammerspoon, IINA scripts).
+# Restored from before 3456c4f4 (2024-07-09). nvim formats on save
+# (home/.config/nvim/lua/core/format.lua); CI checks (.github/workflows/lua.yml).
+# Format by hand:  git ls-files -z '*.lua' | xargs -0 stylua
+column_width = 120
+indent_type = "Spaces"
+indent_width = 2
+line_endings = "Unix"
+quote_style = "AutoPreferDouble"
+call_parentheses = "Always"

@@ -19,7 +19,7 @@
 --     SPACE script-binding pause-with-time-left
 
 local key = "o"
-local osd_duration = 3   -- seconds the message stays up
+local osd_duration = 3 -- seconds the message stays up
 
 -- Drawn as an ASS overlay pinned top-right ({\an9}) rather than through
 -- mp.osd_message: that one lands at mpv's OSD position, top-left, which is
@@ -29,56 +29,56 @@ local overlay = mp.create_osd_overlay("ass-events")
 local hide_timer = nil
 
 local function flash(text)
-    overlay.data = "{\\an9}" .. text
-    overlay:update()
+  overlay.data = "{\\an9}" .. text
+  overlay:update()
 
-    -- A second press restarts the countdown instead of leaving the first
-    -- timer to hide a message that was just refreshed.
-    if hide_timer then
-        hide_timer:kill()
-    end
-    hide_timer = mp.add_timeout(osd_duration, function()
-        overlay:remove()
-        hide_timer = nil
-    end)
+  -- A second press restarts the countdown instead of leaving the first
+  -- timer to hide a message that was just refreshed.
+  if hide_timer then
+    hide_timer:kill()
+  end
+  hide_timer = mp.add_timeout(osd_duration, function()
+    overlay:remove()
+    hide_timer = nil
+  end)
 end
 
 -- 5025s -> "1:23:45"; 2477s -> "41:17". Hours are dropped when zero so the
 -- common under-an-hour case reads at a glance.
 local function fmt_hms(secs)
-    secs = math.floor(secs + 0.5)
-    local h = math.floor(secs / 3600)
-    local m = math.floor(secs % 3600 / 60)
-    local s = secs % 60
-    if h > 0 then
-        return string.format("%d:%02d:%02d", h, m, s)
-    end
-    return string.format("%d:%02d", m, s)
+  secs = math.floor(secs + 0.5)
+  local h = math.floor(secs / 3600)
+  local m = math.floor(secs % 3600 / 60)
+  local s = secs % 60
+  if h > 0 then
+    return string.format("%d:%02d:%02d", h, m, s)
+  end
+  return string.format("%d:%02d", m, s)
 end
 
 local function show_time_left()
-    -- playtime-remaining, not time-remaining: it divides by the playback
-    -- speed, so at 1.5x it is the wall-clock answer.
-    local remaining = mp.get_property_number("playtime-remaining")
+  -- playtime-remaining, not time-remaining: it divides by the playback
+  -- speed, so at 1.5x it is the wall-clock answer.
+  local remaining = mp.get_property_number("playtime-remaining")
 
-    -- Live streams and not-yet-loaded files have no duration; say so rather
-    -- than flashing nothing.
-    if remaining == nil then
-        flash("Time left unknown: no duration")
-        return
-    end
+  -- Live streams and not-yet-loaded files have no duration; say so rather
+  -- than flashing nothing.
+  if remaining == nil then
+    flash("Time left unknown: no duration")
+    return
+  end
 
-    local ends_at = os.date("%H:%M", os.time() + math.floor(remaining + 0.5))
-    flash(string.format("%s left, ends at %s", fmt_hms(remaining), ends_at))
+  local ends_at = os.date("%H:%M", os.time() + math.floor(remaining + 0.5))
+  flash(string.format("%s left, ends at %s", fmt_hms(remaining), ends_at))
 end
 
 mp.add_key_binding(key, "show-time-left", show_time_left)
 
 mp.add_key_binding("SPACE", "pause-with-time-left", function()
-    mp.commandv("cycle", "pause")
-    -- Only on the way into pause: resuming is a decision already made, and
-    -- a message over the first seconds of playback is just noise.
-    if mp.get_property_bool("pause") then
-        show_time_left()
-    end
+  mp.commandv("cycle", "pause")
+  -- Only on the way into pause: resuming is a decision already made, and
+  -- a message over the first seconds of playback is just noise.
+  if mp.get_property_bool("pause") then
+    show_time_left()
+  end
 end)

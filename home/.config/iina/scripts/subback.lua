@@ -12,28 +12,28 @@
 --   timer ~= nil            -> seek, re-arm timer      (extend our own flash)
 --   timer == nil, subs on   -> seek only               (user's subtitles)
 
-local seek_amount = -5      -- seconds to seek back
-local flash_duration = 6    -- seconds to keep subs visible
+local seek_amount = -5 -- seconds to seek back
+local flash_duration = 6 -- seconds to keep subs visible
 
 local timer = nil
 
 mp.add_key_binding("LEFT", "flash-subs-on-back", function()
-    mp.commandv("seek", seek_amount)
+  mp.commandv("seek", seek_amount)
 
-    -- Subtitles the user enabled are theirs: seek and leave them alone.
-    if timer == nil and mp.get_property("sub-visibility") == "yes" then
-        return
-    end
+  -- Subtitles the user enabled are theirs: seek and leave them alone.
+  if timer == nil and mp.get_property("sub-visibility") == "yes" then
+    return
+  end
 
-    mp.set_property("sub-visibility", "yes")
+  mp.set_property("sub-visibility", "yes")
 
-    -- Restart the countdown, so holding LEFT keeps the subs up rather than
-    -- letting the first press hide them mid-scrub.
-    if timer then
-        timer:kill()
-    end
-    timer = mp.add_timeout(flash_duration, function()
-        mp.set_property("sub-visibility", "no")
-        timer = nil
-    end)
+  -- Restart the countdown, so holding LEFT keeps the subs up rather than
+  -- letting the first press hide them mid-scrub.
+  if timer then
+    timer:kill()
+  end
+  timer = mp.add_timeout(flash_duration, function()
+    mp.set_property("sub-visibility", "no")
+    timer = nil
+  end)
 end)

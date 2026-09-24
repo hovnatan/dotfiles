@@ -7,8 +7,18 @@ vim.keymap.set("n", "gj", "j", opts)
 vim.keymap.set("n", "k", "(v:count == 0 ? 'gk' : 'k')", { noremap = true, silent = true, expr = true })
 vim.keymap.set("n", "gk", "k", opts)
 
-vim.keymap.set("c", "<C-p>", "<Up>", opts)
-vim.keymap.set("c", "<C-n>", "<Down>", opts)
+-- Command line: <C-p>/<C-n> and <Up>/<Down> walk the completion popup while it
+-- is open (the <space>f / <space>b pickers in core/picker.lua), and otherwise
+-- recall history filtered by what is already typed. Built-in <C-n>/<C-p> would
+-- skip that filter, and built-in <Up>/<Down> in the popup climb directories.
+for _, k in ipairs({ { "<C-p>", "<Up>" }, { "<C-n>", "<Down>" } }) do
+  local key, arrow = k[1], k[2]
+  local rhs = function()
+    return vim.fn.wildmenumode() == 1 and vim.keycode(key) or vim.keycode(arrow)
+  end
+  vim.keymap.set("c", key, rhs, { expr = true, replace_keycodes = false })
+  vim.keymap.set("c", arrow, rhs, { expr = true, replace_keycodes = false })
+end
 
 vim.keymap.set("i", "jk", "<Esc>", opts)
 vim.keymap.set("n", ",cl", "<cmd> :let @+=join([@%,  line('.')], ':')<CR>", opts)

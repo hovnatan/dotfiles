@@ -10,4 +10,4 @@ fi
 
 # export ANTHROPIC_MODEL='claude-opus-5[1m]'
 # export CLAUDE_CODE_EFFORT_LEVEL=max
-# export CLAUDE_CODE_SHELL=$HOME/.nix-profile/bin/bash
+export CLAUDE_CODE_SHELL=$HOME/.nix-profile/bin/bash

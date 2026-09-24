@@ -11,8 +11,7 @@ local FORCE_US_APPS = {
 }
 
 local function forceUSLayout(app)
-  if app and FORCE_US_APPS[app:bundleID()]
-      and hs.keycodes.currentSourceID() ~= US_SOURCE_ID then
+  if app and FORCE_US_APPS[app:bundleID()] and hs.keycodes.currentSourceID() ~= US_SOURCE_ID then
     hs.keycodes.currentSourceID(US_SOURCE_ID)
   end
 end

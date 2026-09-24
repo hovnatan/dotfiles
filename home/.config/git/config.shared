@@ -16,6 +16,23 @@
   colorMoved = plain
   mnemonicPrefix = true
   renames = true
+  # Review in nvim 0.12's bundled difftool: side-by-side diff plus a quickfix
+  # list of changed files (A/M/D), :cnext/:cprev to step, :copen if closed.
+  # `git dt` (alias below) is the one to reach for: all files in one nvim.
+  #   git dt              working tree (edits on the right save to the checkout)
+  #   git dt --cached     staged changes
+  #   git dt main...      branch against its merge-base with main
+  # Plain `git difftool` opens one nvim per file, no list; :cq stops the rest.
+  tool = nvim_difftool
+[alias]
+  dt = difftool -d
+[difftool]
+  prompt = false
+  # Honour the tool's exit code: in per-file mode, :cq in nvim stops git from
+  # opening the remaining files (it keeps going through all of them otherwise).
+  trustExitCode = true
+[difftool "nvim_difftool"]
+  cmd = nvim -c \"packadd nvim.difftool\" -d \"$LOCAL\" \"$REMOTE\"
 [push]
   default = simple
   autoSetupRemote = true

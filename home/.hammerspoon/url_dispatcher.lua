@@ -17,7 +17,9 @@ local chrome = require("chrome")
 local M = {}
 
 local ok, cfg = pcall(require, "local_hammerspoon")
-if not ok then cfg = {} end
+if not ok then
+  cfg = {}
+end
 
 local GCLOUD_HOSTS = {
   ["console.cloud.google.com"] = true,
@@ -39,7 +41,9 @@ end
 local WORK_HOST_SUFFIXES = { "slack.com" }
 
 local function isWorkHost(host)
-  if not host then return false end
+  if not host then
+    return false
+  end
   for _, suffix in ipairs(WORK_HOST_SUFFIXES) do
     if host == suffix or host:sub(-(#suffix + 1)) == "." .. suffix then
       return true
@@ -68,13 +72,17 @@ local sourceApp
 
 local function rememberSource(app)
   local bundle = app and app:bundleID()
-  if bundle and bundle ~= hs.processInfo.bundleID then sourceApp = bundle end
+  if bundle and bundle ~= hs.processInfo.bundleID then
+    sourceApp = bundle
+  end
 end
 
 rememberSource(hs.application.frontmostApplication())
 
 M.watcher = hs.application.watcher.new(function(_, event, app)
-  if event == hs.application.watcher.activated then rememberSource(app) end
+  if event == hs.application.watcher.activated then
+    rememberSource(app)
+  end
 end)
 M.watcher:start()
 
@@ -85,7 +93,9 @@ end
 local function isWorkURL(url)
   local lower = url:lower()
   for _, prefix in ipairs(cfg.work_url_prefixes or {}) do
-    if lower:sub(1, #prefix) == prefix:lower() then return true end
+    if lower:sub(1, #prefix) == prefix:lower() then
+      return true
+    end
   end
   return false
 end
@@ -100,8 +110,13 @@ end
 
 hs.urlevent.httpCallback = function(_, host, _, fullURL)
   host = host and host:lower()
-  if GCLOUD_HOSTS[host] or isGcloudAuth(host, fullURL)
-      or isWorkHost(host) or isWorkURL(fullURL) or isWorkSourceApp() then
+  if
+    GCLOUD_HOSTS[host]
+    or isGcloudAuth(host, fullURL)
+    or isWorkHost(host)
+    or isWorkURL(fullURL)
+    or isWorkSourceApp()
+  then
     openInChrome(fullURL, cfg.work_chrome_profile)
   else
     openInChrome(fullURL, cfg.default_chrome_profile)

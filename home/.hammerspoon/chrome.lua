@@ -19,15 +19,18 @@ end
 -- re-activates Chrome once the handoff is done (by then Chrome has already
 -- brought the profile's window to the front of its own window stack).
 function M.launchWithProfile(profileDir, url, raise)
-  local args = { "-nb", M.BUNDLE_ID, "--args",
-    "--profile-directory=" .. (profileDir or "Default") }
-  if url then args[#args + 1] = url end
+  local args = { "-nb", M.BUNDLE_ID, "--args", "--profile-directory=" .. (profileDir or "Default") }
+  if url then
+    args[#args + 1] = url
+  end
   local onDone
   if raise then
     onDone = function()
       hs.timer.doAfter(0.2, function()
         local app = M.get()
-        if app then app:activate() end
+        if app then
+          app:activate()
+        end
       end)
     end
   end

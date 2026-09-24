@@ -25,10 +25,36 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
   end,
 })
 
+-- Autosave every modified file buffer when leaving a buffer or the window.
+-- Not `:wa`: that stops at the first buffer it cannot write, and BufLeave
+-- also fires inside plugins' window changes, so its error breaks them.
+-- Skipped by design:
+--   - unnamed and special (nofile, terminal, ...) buffers: nothing to save to
+--   - E13, a buffer named after a file it was not loaded from, which only an
+--     explicit :w! should overwrite. Seen with neogit's commit editor: it
+--     names a fresh buffer .git/COMMIT_EDITMSG without reading the file, so
+--     `c c` then the >2s console window made :wa fail (2026-09-24).
+-- Any other write failure (permissions, full disk) still raises.
 vim.api.nvim_create_autocmd({ "FocusLost", "BufLeave" }, {
   pattern = "*",
   callback = function()
-    vim.cmd("wa")
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      local bo = vim.bo[buf]
+      if
+        vim.api.nvim_buf_is_loaded(buf)
+        and bo.buftype == ""
+        and bo.modified
+        and not bo.readonly
+        and vim.api.nvim_buf_get_name(buf) ~= ""
+      then
+        local ok, err = pcall(vim.api.nvim_buf_call, buf, function()
+          vim.cmd("update")
+        end)
+        if not ok and not tostring(err):find("E13:", 1, true) then
+          error(err, 0)
+        end
+      end
+    end
   end,
 })
 
@@ -39,12 +65,22 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
   end,
 })
 
+-- pip requirements files that nvim 0.12 leaves as `text` (and so would get the
+-- prose settings below: spell checking every package name, wrapping at 80).
+-- Built in, it knows requirements.txt, requirements-*.txt and *-requirements.txt,
+-- but not requirements_test.txt, and its requirements/*.txt rule is anchored
+-- to the path's start, so requirements/base.txt only matches when opened by
+-- that relative path.
+vim.filetype.add({
+  pattern = {
+    ["requirements.*%.txt"] = "requirements",
+    [".*/requirements/[^/]*%.txt"] = "requirements",
+  },
+})
+
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "NeogitCommitMessage,gitcommit,markdown,text,rst,tex,latex",
-  callback = function(input)
-    if string.match(input.file, 'requirements.*txt') ~= nil then
-      return
-    end
+  callback = function()
     vim.bo.textwidth = 80
     vim.opt_local.spell = true
   end,
