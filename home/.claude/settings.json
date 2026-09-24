@@ -136,6 +136,9 @@
   "autoMemoryEnabled": false,
   "skipDangerousModePermissionPrompt": true,
   "theme": "custom:gruvbox-light",
+  "env": {
+    "CLAUDE_CODE_TMUX_TRUECOLOR": "1"
+  },
   "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
   "precomputeCompactionEnabled": true,
