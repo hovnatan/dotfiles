@@ -77,6 +77,14 @@
             ]))
             # bash 5 for `#!/usr/bin/env bash` scripts; macOS /bin/bash is 3.2
             pkgs.bashInteractive
+            # chafa -- images in the terminal over ssh: Ghostty draws its Kitty
+            # graphics, inside tmux too (the fish wrapper
+            # home/.config/fish/functions/chafa.fish adds the flags); symbols
+            # anywhere else. Known cost: it sends raw pixels, ~25 MB for a
+            # full-pane screenshot, seconds to arrive over a remote link.
+            # timg sends PNG (~0.7 MB for the same image) but pulls ~490 MiB
+            # of ffmpeg/poppler vs chafa's ~57 MiB (2026-09-24)
+            pkgs.chafa
             # fd -- the fish fzf plugin's file search (FZF_FIND_FILE_COMMAND
             # in home/.config/fish/config.fish)
             pkgs.fd
