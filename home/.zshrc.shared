@@ -124,9 +124,9 @@ set_terminal_title() {
     fi
     title=$(printf '%.20s' "${title}")
     # Over ssh the tab leads with the machine (hostname up to its first dot),
-    # outside the 20-column budget: "<host>:~/.dotfiles". fish and tmux titles
+    # outside the 20-column budget: "(<host>) ~/.dotfiles". fish and tmux titles
     # do the same.
-    [[ -n $SSH_CONNECTION ]] && title="${HOST%%.*}:$title"
+    [[ -n $SSH_CONNECTION ]] && title="(${HOST%%.*}) $title"
     print -Pn "\e]0;$title\a"
 }
 
