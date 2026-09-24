@@ -62,6 +62,15 @@ lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchSe
 exts=(pdf epub djvu djv ps eps cbr cbz cbt cba cb7)
 
 [ -f "$svg" ] || { echo "build_zathura_app.sh: $svg missing; install zathura with dotup (nix/flake.nix)" >&2; exit 1; }
+
+# osacompile and codesign --force note every re-sign on stderr
+# ("<bundle>: replacing existing signature"), which happens on each run as the
+# app is rebuilt from scratch. Drop only that line; other stderr and the exit
+# status (pipefail) pass through.
+quiet_resign() {
+  { "$@" 2>&1 >&3 3>&- | sed '/: replacing existing signature$/d' >&2; } 3>&1
+}
+
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
@@ -120,7 +129,7 @@ end open
 EOF
 mkdir -p "$(dirname "$app")"
 rm -rf "$app"
-osacompile -o "$app" "$work/applet.applescript"
+quiet_resign osacompile -o "$app" "$work/applet.applescript"
 install -m 755 "$work/open-viewer.sh" "$app/Contents/Resources/open-viewer.sh"
 
 # --- 3. identity, icon and document types -------------------------------------
@@ -211,8 +220,8 @@ clang -O2 -Wall -Werror -o "$helper/Contents/MacOS/zathura" "$work/launcher.c"
 # Editing the bundle breaks osacompile's ad-hoc signature, and Apple Silicon
 # refuses to launch an app whose signature does not match ("damaged"). The
 # nested helper is signed first, as the outer signature covers it.
-codesign --force --sign - "$helper"
-codesign --force --sign - "$app"
+quiet_resign codesign --force --sign - "$helper"
+quiet_resign codesign --force --sign - "$app"
 "$lsregister" -f "$app"
 "$lsregister" -f "$helper"
 
