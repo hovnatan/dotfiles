@@ -326,13 +326,16 @@ _bell_preexec() {
   _bell_cmd=${1//$'\n'/ }
 }
 _bell_precmd() {
-  local elapsed osc
+  # esc holds the byte: inside "..." the replacement half of ${x//a/b} is
+  # not ANSI-C decoded, so $'\e\e' there went out as the 6 literal chars
+  # and tmux dropped the malformed passthrough (no notification in tmux).
+  local elapsed osc esc=$'\e'
   if [[ -n "$_bell_start" ]] && (( (elapsed = EPOCHREALTIME - _bell_start) > 1 )); then
     printf -v elapsed '%.1f' $elapsed
     print -rn -- $'\a'
     osc=$'\e]777;notify;'"Command finished (${elapsed}s);${_bell_cmd[1,80]}"$'\a'
     if [[ -n "$TMUX" ]]; then
-      print -rn -- $'\ePtmux;'"${osc//$'\e'/$'\e\e'}"$'\e\\'
+      print -rn -- $'\ePtmux;'"${osc//$esc/$esc$esc}"$'\e\\'
     else
       print -rn -- "$osc"
     fi
