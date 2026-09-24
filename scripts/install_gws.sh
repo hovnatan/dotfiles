@@ -25,7 +25,7 @@ if command -v gws >/dev/null 2>&1; then
   echo "to upgrade: npm install -g $PKG@latest"
 else
   command -v npm >/dev/null 2>&1 || {
-    echo "npm not found - install node first (scripts/setup.sh, or your distro's nodejs)" >&2
+    echo "npm not found - install node first (nodejs_24 in nix/flake.nix: run dotup)" >&2
     exit 1
   }
   # User prefix, so no sudo and nothing lands in /usr. Whatever `npm prefix
