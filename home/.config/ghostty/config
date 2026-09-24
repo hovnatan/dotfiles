@@ -30,14 +30,24 @@ font-thicken = true
 # explicitly; its XDG_DATA_DIRS hook survives the login shell into fish.
 command = shell:"$SHELL" -l -c "exec fish"
 shell-integration = fish
+# Off: with these on, fish's `ssh` runs through `ghostty +ssh`, and on the
+# first connection to a host (tip 1.3.2-main, 2026-09-24) it appends its
+# terminfo install script to the arguments of `ssh <host> <command>`, so the
+# command runs mangled. ssh-env also does nothing on vm: its sshd does
+# not AcceptEnv TERM_PROGRAM/COLORTERM.
 shell-integration-features = no-ssh-env,no-ssh-terminfo
 
-# Manual terminfo install (once per Linux/BSD host, needs `tic` there):
+# Terminfo install, once per new Linux/BSD host, logging in interactively
+# (no remote command, which avoids the bug above):
+#
+#   ghostty +ssh <host>
+#
+# It runs `tic -x -` on the remote, writing ~/.terminfo/x/xterm-ghostty for
+# that user (no root; tic must be ncurses >= 6.1 for the extended caps), and
+# records the host in `ghostty +ssh-cache`. Builds up to 1.3.1 have no +ssh:
 #
 #   infocmp -x xterm-ghostty | ssh <host> -- tic -x -
 #
-# That writes ~/.terminfo/x/xterm-ghostty on the remote for that user
-# (no root needed). tic must be ncurses >= 6.1 for the extended caps.
 # Windows hosts have no tic and ignore terminfo: nothing to install.
 # A host without the entry will complain about unknown terminal type;
 # use TERM=xterm-256color ssh <host> there until it is installed.
