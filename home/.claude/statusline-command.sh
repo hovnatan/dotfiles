@@ -6,7 +6,9 @@
 # Adding an element? Take a free treatment, or share one whose meaning already
 # matches; never re-use a hue for an unrelated idea.
 #
-#   bold blue      path                    matches the PS1 in ~/.zshrc.shared
+#   bold blue      host:path               path matches the PS1 in
+#                                          ~/.zshrc.shared; the host prefix
+#                                          makes it a location, as in scp
 #   blue           cache "cold"            the entry is gone; the next request
 #                                          pays a full write. The one shared
 #                                          hue: blue is what "cold" looks like,
@@ -58,7 +60,11 @@ eval "$(jq -r '
   @sh "transcript=\(s(.transcript_path))",
   @sh "running_version=\(s(.version))",
   @sh "now=\(now | floor)",
-  @sh "clock=\(now | strflocaltime("%H:%M"))",
+  # Clock with its zone, US daylight/standard pairs shortened to the generic
+  # name: 12:55 ET on a Mac in New York (EDT or EST), 16:55 UTC on a VM.
+  @sh "clock=\(now | strflocaltime("%H:%M") + " " + (now | strflocaltime("%Z")
+    | {EDT: "ET", EST: "ET", CDT: "CT", CST: "CT", MDT: "MT", MST: "MT",
+       PDT: "PT", PST: "PT"}[.] // .))",
   @sh "rl_five=\(s(.rate_limits.five_hour.used_percentage))",
   @sh "rl_week=\(s(.rate_limits.seven_day.used_percentage))",
   @sh "cache_expires=\(if .prompt_cache == null then ""
@@ -150,6 +156,21 @@ else
   done
   path="${path}${1}"
 fi
+
+# Short machine name in front of the path ("mbp:~/.dotfiles"), the same name
+# the fish prompt shows: fish's universal fish_prompt_host, read from the
+# gitignored fish_variables so no host name sits in this public repo, else the
+# hostname up to its first dot. fish stores it escaped (my\x2dbox for my-box),
+# and dash's printf cannot decode \xNN, so awk does, portably across awks.
+host=$(sed -n 's/^SETUVAR fish_prompt_host://p' "$HOME/.config/fish/fish_variables" 2>/dev/null | awk '
+  { out = ""; s = $0; hex = "0123456789abcdef"
+    while (match(s, /\\x[0-9a-fA-F][0-9a-fA-F]/)) {
+      h = tolower(substr(s, RSTART + 2, 2))
+      out = out substr(s, 1, RSTART - 1) sprintf("%c", (index(hex, substr(h, 1, 1)) - 1) * 16 + index(hex, substr(h, 2, 1)) - 1)
+      s = substr(s, RSTART + 4)
+    }
+    print out s }')
+[ -n "$host" ] || host=$(hostname -s)
 
 # Git branch, always green, with a trailing "*" when the tree is dirty -- the
 # same shape as git_prompt in ~/.zshrc.shared, so one repo never reads two ways
@@ -406,7 +427,8 @@ rl=""
 
 # Wall clock, last and plain: the line is redrawn every 60s, so it is also the
 # proof the refresh is alive. Local time of the machine running this script
-# (jq's strflocaltime honours TZ), which on a UTC box is UTC.
+# (jq's strflocaltime honours TZ) with its zone, so a remote session's clock
+# reads as its own: "12:55 ET" on the Mac, "16:55 UTC" on a UTC box.
 clk=" \033[2m|\033[0m ${clock}"
 
-printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$rl" "$ver" "$clk"
+printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b%b' "$sname" "$host:$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$rl" "$ver" "$clk"
