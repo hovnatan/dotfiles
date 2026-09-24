@@ -18,7 +18,9 @@ local micSince = nil
 
 local function micInUse()
   for _, dev in ipairs(hs.audiodevice.allInputDevices()) do
-    if not IGNORED_INPUTS[dev:name()] and dev:inUse() then return true end
+    if not IGNORED_INPUTS[dev:name()] and dev:inUse() then
+      return true
+    end
   end
   return false
 end

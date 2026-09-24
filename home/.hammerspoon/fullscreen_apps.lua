@@ -31,8 +31,7 @@ local function fullscreenWhenReady(app, tries)
 end
 
 M.watcher = hs.application.watcher.new(function(_, event, app)
-  if event == hs.application.watcher.launched
-      and app and FULLSCREEN_APPS[app:bundleID()] then
+  if event == hs.application.watcher.launched and app and FULLSCREEN_APPS[app:bundleID()] then
     fullscreenWhenReady(app, 0)
   end
 end)

@@ -143,6 +143,10 @@
             pkgs.rsync
             # Static analysis and lint tool, for (ba)sh scripts
             pkgs.shellcheck
+            # stylua -- Lua formatter, style in .stylua.toml; nvim formats on
+            # save (home/.config/nvim/lua/core/format.lua), CI checks
+            # (.github/workflows/lua.yml) (2026-09-24)
+            pkgs.stylua
             # Terraform, for deqart_backend/deploy_scripts; unfree, see pkgs above
             pkgs.terraform
             # tmux -- latest release; Ubuntu 24.04 ships 3.4
