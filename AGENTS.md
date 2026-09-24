@@ -25,6 +25,11 @@ It is kept short on purpose - every line here is paid on every session.
   `home/.claude/ntfy-stop.sh`: extend `scripts/tests/` with the new behaviour.
   CI runs them on Linux and macOS (`.github/workflows/tests.yml`); locally
   they are safe beside live sessions.
+- `home/.codex/config.toml` is linked as `~/.codex/config.toml`, and Codex and
+  the ChatGPT app write machine-local state into it (model, app paths, MCP
+  servers, `notify`), so it often shows as modified. Never stage or commit it
+  as part of other work (no `git add -A`/`.`/`-u`, no `commit -a`); change it
+  only when the user asks for that file, staging just the lines they want.
 - backpass adds further evidence-backed entries here from real sessions.
 
 ## Maintaining this file
