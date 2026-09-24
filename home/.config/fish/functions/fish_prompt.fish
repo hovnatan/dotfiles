@@ -61,7 +61,7 @@ function fish_prompt --description 'Write out the prompt'
 	end
 
     # The block's background says where the shell runs (red outside tmux, grey
-    # inside, config.fish); its text names the machine, e.g. " vm ".
+    # inside, config.fish); its text names the machine, e.g. " mbp ".
     # prompt_hostname is the name up to its first dot; long ones get a short
     # alias here.
     set -l host (prompt_hostname)
