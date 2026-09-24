@@ -26,8 +26,9 @@ FLAKE="path:$REPO/nix"
 SYSTEMS=(x86_64-linux aarch64-linux aarch64-darwin)
 # Local builds that are allowed at dotup time. Wrappers and symlink farms,
 # never compiles: the buildEnv itself and its builder script,
-# hunspell.withDicts, nodejs (a wrapper around the substituted nodejs-slim)
-# and azure-cli-extensions (the extension dir). One real build, accepted on
+# hunspell.withDicts, nodejs (a wrapper around the substituted nodejs-slim),
+# azure-cli-extensions (the extension dir) and zathura-with-plugins (lndir of
+# zathura and its plugins plus a makeWrapper script). One real build, accepted on
 # purpose: azure-cli.withExtensions re-runs the azure-cli Python package build
 # and its `az self-test`, ~80s on an M-series Mac, no C compiles
 # (2026-09-23, nix/flake.nix). And terraform, unfree so never in the cache: a
@@ -38,7 +39,7 @@ SYSTEMS=(x86_64-linux aarch64-linux aarch64-darwin)
 # `-go-modules`, both hash-pinned downloads, not compiles.
 # Extend only with a derivation you have checked is trivial, or say here what
 # it costs.
-LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+(-go-modules)?|source)$'
+LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|zathura-with-plugins-[0-9.]+|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+(-go-modules)?|source)$'
 
 build=0
 case "${1:-}" in

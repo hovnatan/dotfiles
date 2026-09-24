@@ -6,10 +6,9 @@ My linux config files
 under `~`, e.g. `home/.tmux.conf` -> `~/.tmux.conf`, `home/.config/git` ->
 `~/.config/git`, `home/Library/LaunchAgents/com.hovnatan.keyremap.plist` ->
 `~/Library/LaunchAgents/com.hovnatan.keyremap.plist`. A few entries are
-installed selectively or handled specially (`home/.config/zathura_light` ->
-`~/.config/zathura`, and `~/.zshrc` / `~/.zprofile` / `~/.profile` are
-appended to rather than linked; `home/.profile.shared` is the environment
-every login shell reads, bash or zsh).
+installed selectively or handled specially (`~/.zshrc` / `~/.zprofile` /
+`~/.profile` are appended to rather than linked; `home/.profile.shared` is the
+environment every login shell reads, bash or zsh).
 
 `home/AGENTS.md` is the one canonical agent policy, installed under whatever
 name each tool reads; `scripts/setup_user_symlinks.sh` lists the links and

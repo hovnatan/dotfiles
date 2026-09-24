@@ -217,6 +217,14 @@ else
   ln -sfn ~/.dotfiles/home/.config/nvim ~/.config/nvim
 fi
 
+# zathura (macOS, from nix/flake.nix). Same guard: an older install left a real
+# ~/.config/zathura holding a link to the since-renamed zathura_light/zathurarc.
+if [ -d ~/.config/zathura ] && [ ! -L ~/.config/zathura ]; then
+  warn "$HOME/.config/zathura is a real directory, not a symlink; move it aside and re-run"
+else
+  ln -sfn ~/.dotfiles/home/.config/zathura ~/.config/zathura
+fi
+
 # fd's global ignore file; fish's FZF_FIND_FILE_COMMAND also passes it explicitly
 ln -sfn ~/.dotfiles/home/.config/fd ~/.config/fd
 
@@ -275,6 +283,12 @@ if [ "$(uname)" = "Darwin" ]; then
   # so it takes effect without a restart; repo is the source, so re-running
   # resets a change made in Preferences > General.
   defaults write com.colliderli.iina pauseWhenOpen -bool false
+
+  # ~/Applications/Zathura.app: Finder/"Open With" front end for the Nix
+  # zathura (the script says why not homebrew-zathura's). Rebuilt each run,
+  # about a second, so the app follows the script.
+  ~/.dotfiles/scripts/macos/build_zathura_app.sh >/dev/null \
+    || warn "Zathura.app build failed (scripts/macos/build_zathura_app.sh)"
 
 fi
 
