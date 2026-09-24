@@ -25,6 +25,11 @@ It is kept short on purpose - every line here is paid on every session.
   `home/.claude/ntfy-stop.sh`: extend `scripts/tests/` with the new behaviour.
   CI runs them on Linux and macOS (`.github/workflows/tests.yml`); locally
   they are safe beside live sessions.
+- This repo is public, commit messages included. Host names, IPs, tailnet
+  names and internal documents go in `~/.dotfiles-private` or in
+  machine-local state (fish universal variables, `~/.ssh/local_config`);
+  tracked files and commits use placeholders (`<host>`, `vm`). Removing one
+  after a push means rewriting history and force-pushing.
 - Changed fish, JSON or nvim config: `scripts/check_configs.sh` before pushing
   (CI runs it, `.github/workflows/configs.yml`).
 - `home/.codex/config.toml` is linked as `~/.codex/config.toml`, and Codex and
