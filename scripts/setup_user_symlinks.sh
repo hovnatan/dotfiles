@@ -138,6 +138,10 @@ mkdir -p ~/.claude
 ln -sf ~/.dotfiles/home/AGENTS.md ~/.claude/CLAUDE.md
 ln -sf ~/.dotfiles/home/.claude/settings.json ~/.claude/settings.json
 ln -sf ~/.dotfiles/home/.claude/keybindings.json ~/.claude/keybindings.json
+# Custom /theme presets (gruvbox-light, gruvbox-dark). Claude Code watches this
+# directory, and "New custom theme..." in /theme writes here, so themes made
+# there land in the repo too.
+ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
 
 # Private companion repo, cloned at ~/.dotfiles-private: anything naming an
 # internal document or host lives there, not in this public repo. It is
@@ -204,8 +208,9 @@ if [ -d ~/.config/fish ] && [ ! -L ~/.config/fish ]; then
 else
   ln -sfn ~/.dotfiles/home/.config/fish ~/.config/fish
 fi
-# Neovim, plugin-free (see its init.lua). Same real-directory guard as fish:
-# nvim writes nothing into its config dir, but an older hand-made one may exist.
+# Neovim (see its init.lua). Same real-directory guard as fish: an older
+# hand-made config dir may exist. vim.pack writes nvim-pack-lock.json into the
+# config dir, which through this link lands in the repo, as intended.
 if [ -d ~/.config/nvim ] && [ ! -L ~/.config/nvim ]; then
   warn "$HOME/.config/nvim is a real directory, not a symlink; move it aside and re-run"
 else

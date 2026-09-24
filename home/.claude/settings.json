@@ -135,7 +135,7 @@
   "timeFormat": "24-hour",
   "autoMemoryEnabled": false,
   "skipDangerousModePermissionPrompt": true,
-  "theme": "auto",
+  "theme": "custom:gruvbox-light",
   "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
   "precomputeCompactionEnabled": true,

@@ -1,4 +1,7 @@
-theme = light:GitLab Light,dark:GitLab Dark
+# Classic gruvbox, following the macOS appearance. nvim uses the matching
+# gruvbox.nvim colorscheme (home/.config/nvim/lua/core/plugins.lua) and
+# picks light/dark from this background at startup.
+theme = light:Gruvbox Light,dark:Gruvbox Dark
 # Start new windows in (native macOS) fullscreen; non-native would break tabs
 fullscreen = true
 font-size = 15

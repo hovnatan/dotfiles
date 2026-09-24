@@ -20,19 +20,27 @@ vim.pack.add({
   -- Tags lag far behind (master was 221 commits past v3.0.0 on 2026-09-24),
   -- so follow the development branch, as upstream expects.
   { src = "https://github.com/NeogitOrg/neogit", version = "master" },
+  -- Last tag 2.0.0 trails main by 122 commits (2026-09-24), so follow main.
+  { src = "https://github.com/ellisonleao/gruvbox.nvim", version = "main" },
 }, {
   -- The lockfile already pins what gets installed, so a fresh machine
   -- installs without asking (a prompt would also hang a headless nvim).
   confirm = false,
 })
 
--- gitsigns: hunks against the index. Line numbers are coloured instead of a
--- sign column (as before 3456c4f4). Keys are the pre-2024 ones on the v2 API:
--- stage_hunk on a staged hunk unstages it (replaces undo_stage_hunk), and
--- preview_hunk_inline replaces toggle_deleted.
+-- Colorscheme: classic gruvbox, matched to Ghostty's Gruvbox Light/Dark themes
+-- (home/.config/ghostty/config). Its default contrast is the palette those
+-- themes use: dark bg #282828 / fg #ebdbb2, light bg #fbf1c7 / fg #3c3836.
+-- Light or dark follows 'background', which nvim detects from the terminal at
+-- startup (or ~/.my_colors, core/options.lua). Gruvbox Material was tried
+-- first on 2026-09-24 and looked off.
+vim.cmd.colorscheme("gruvbox")
+
+-- gitsigns: hunks against the index, shown with the defaults - bars in the
+-- sign column (dimmer for staged hunks), line numbers left plain. Keys are the
+-- pre-2024 ones on the v2 API: stage_hunk on a staged hunk unstages it
+-- (replaces undo_stage_hunk), and preview_hunk_inline replaces toggle_deleted.
 require("gitsigns").setup({
-  signcolumn = false,
-  numhl = true,
   on_attach = function(bufnr)
     local gs = require("gitsigns")
     local function map(mode, lhs, rhs)
