@@ -6,14 +6,16 @@
 # Adding an element? Take a free treatment, or share one whose meaning already
 # matches; never re-use a hue for an unrelated idea.
 #
-#   bold blue      host:path               path matches the PS1 in
-#                                          ~/.zshrc.shared; the host prefix
-#                                          makes it a location, as in scp
+#   bold bright    host:                   a lighter shade of the path's blue:
+#     blue                                 the same "location" idea, told apart
+#                                          at a glance from the path
+#   bold blue      path                    matches the PS1 in ~/.zshrc.shared;
+#                                          host:path reads as a location, as in scp
 #   blue           cache "cold"            the entry is gone; the next request
 #                                          pays a full write. The one shared
 #                                          hue: blue is what "cold" looks like,
 #                                          and weight keeps it apart from the
-#                                          path, which is never drawn plain
+#                                          host and path, which are never drawn plain
 #   green          branch                  matches that PS1; "*" marks dirty,
 #                                          "?" a dirty check that timed out
 #   yellow         gauge 50-80%            warm, but not now (Ctx, 5h, 7d)
@@ -431,4 +433,4 @@ rl=""
 # reads as its own: "12:55 ET" on the Mac, "16:55 UTC" on a UTC box.
 clk=" \033[2m|\033[0m ${clock}"
 
-printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b%b' "$sname" "$host:$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$rl" "$ver" "$clk"
+printf '%b\033[1;94m%s\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b%b' "$sname" "$host:" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$rl" "$ver" "$clk"
