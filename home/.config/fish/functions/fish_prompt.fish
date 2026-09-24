@@ -62,13 +62,11 @@ function fish_prompt --description 'Write out the prompt'
 
     # The block's background says where the shell runs (red outside tmux, grey
     # inside, config.fish); its text names the machine, e.g. " mbp ".
-    # prompt_hostname is the name up to its first dot; long ones get a short
-    # alias here.
+    # prompt_hostname is the name up to its first dot. A machine with a long
+    # one sets a short name once: `set -U fish_prompt_host mbp`. It lives in
+    # fish_variables (gitignored), keeping host names out of this public repo.
     set -l host (prompt_hostname)
-    switch $host
-        case my-mac
-            set host mbp
-    end
+    set -q fish_prompt_host; and set host $fish_prompt_host
     set -l prpwd (prompt_pwd)
     set -l gitpr (__fish_git_prompt)
     echo -n -s (set_color -b $fish_color_prompt_bg) " $host " $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
