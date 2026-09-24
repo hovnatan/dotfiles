@@ -1,5 +1,5 @@
 # Lint every tracked shell script at warning level, the bar set in commit
-# d67fc4a2 and documented in .shellcheckrc. Info/style notes stay advisory.
+# a53d141b and documented in .shellcheckrc. Info/style notes stay advisory.
 name: shellcheck
 on:
   push:
