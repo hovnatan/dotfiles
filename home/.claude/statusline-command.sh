@@ -18,16 +18,22 @@
 #                                          host and path, which are never drawn plain
 #   green          branch                  matches that PS1; "*" marks dirty,
 #                                          "?" a dirty check that timed out
-#   yellow         gauge 50-80%            warm, but not now (Ctx, 5h, 7d)
+#   yellow         gauge 50-80%            warm, but not now (Ctx)
 #                  cache <=10m
 #                  "U" update pending
 #   red            gauge >=80%             act now -- nothing else, ever
-#                  cache <=2m              (Ctx, 5h, 7d)
+#                  cache <=2m              (Ctx)
 #   cyan           model
 #   bold magenta   @agent                  rare, so it gets the loud hue
-#   weight only    effort ramp             2m / plain / 1m / 1;4m / 1;7m
-#   dim            separators
-#   plain          clock                   dim was too faint to read at a glance
+#   weight only    effort ramp             plain / plain / 1m / 1;4m / 1;7m
+#                                          (lo and md share a weight, told
+#                                          apart by the label)
+#   dim            | separators            the only dim element: values stay
+#                                          readable
+#   plain          clock                   dim was too faint to read at a
+#                  gauges under 50%        glance for either of these: gauges
+#                  cache >10m, "na"        below their threshold, or an unset
+#                                          cache countdown
 #
 # Clean/dirty is a binary, so it is a glyph rather than a hue. Yellow was the
 # obvious candidate and it does not work: GitLab Light has to darken yellow to
@@ -67,8 +73,6 @@ eval "$(jq -r '
   @sh "clock=\(now | strflocaltime("%H:%M") + " " + (now | strflocaltime("%Z")
     | {EDT: "ET", EST: "ET", CDT: "CT", CST: "CT", MDT: "MT", MST: "MT",
        PDT: "PT", PST: "PT"}[.] // .))",
-  @sh "rl_five=\(s(.rate_limits.five_hour.used_percentage))",
-  @sh "rl_week=\(s(.rate_limits.seven_day.used_percentage))",
   @sh "cache_expires=\(if .prompt_cache == null then ""
                        else ((.prompt_cache.expires_at | numbers | floor | tostring) // "na") end)",
   @sh "cache_mark=\(if ((.prompt_cache // {}) | has("recache_tokens_if_cold") and .recache_tokens_if_cold == null)
@@ -95,15 +99,17 @@ case "$model_id" in
   *"[1m]"*) model="${model}[1m]" ;;
 esac
 
-# Effort is a magnitude, so it climbs in weight rather than hue: faint ->
+# Effort is a magnitude, so it climbs in weight rather than hue: normal ->
 # normal -> bold -> bold underlined -> inverted chip (low/medium/high/xhigh/max;
-# ultracode reports xhigh). Every hue on this line is already spoken for, and
-# the previous ramp proved why that matters -- it drew `medium` in the model's
-# own cyan, so "Opus 5 [1m] medium" rendered as one unbroken run, and `xhigh`
-# in the agent's magenta. Weight also stays ordinal under any palette, where a
-# hue ramp only reads as a climb if the theme's luminances happen to line up:
-# under GitLab Light the old `xhigh` and `max` were the same #583cac, since
-# ghostty leaves `bold-color` unset and bold changes weight, not color.
+# ultracode reports xhigh). low and medium share the plain weight and are told
+# apart only by the label ("lo" vs "md"). Every hue on this line is already
+# spoken for, and the previous ramp proved why that matters -- it drew `medium`
+# in the model's own cyan, so "Opus 5 [1m] medium" rendered as one unbroken
+# run, and `xhigh` in the agent's magenta. Weight also stays ordinal under any
+# palette, where a hue ramp only reads as a climb if the theme's luminances
+# happen to line up: under GitLab Light the old `xhigh` and `max` were the
+# same #583cac, since ghostty leaves `bold-color` unset and bold changes
+# weight, not color.
 # Omitted entirely when the payload does not report it.
 # Two-letter labels: the weight ramp already carries the magnitude, so the word
 # only has to be recognisable, not readable. An unknown level keeps its full
@@ -112,7 +118,7 @@ esac
 eff=""
 if [ -n "$effort" ]; then
   case "$effort" in
-    low) ecolor='\033[2m'; elabel='lo' ;;
+    low) ecolor=''; elabel='lo' ;;
     medium) ecolor=''; elabel='md' ;;
     high) ecolor='\033[1m'; elabel='hi' ;;
     xhigh) ecolor='\033[1;4m'; elabel='xh' ;;
@@ -125,13 +131,14 @@ fi
 # Abbreviate cwd to match PS1's path_abbrev: $HOME -> ~, then shorten every
 # parent path component to its first character, keeping the last component full.
 case "$cwd" in
-  "$HOME"*) full_path="~${cwd#$HOME}" ;;
+  "$HOME"*) full_path="~${cwd#"$HOME"}" ;;
   *) full_path="$cwd" ;;
 esac
 
 old_ifs=$IFS
 IFS='/'
 set -f
+# shellcheck disable=SC2086  # split on IFS=/ on purpose; set -f above stops globbing
 set -- $full_path
 set +f
 IFS=$old_ifs
@@ -234,8 +241,9 @@ if [ -n "$agent_name" ]; then
   agent=" \033[1;35m@${agent_name}\033[0m"
 fi
 
-# One colouring for every gauge: dim until 50%, then yellow, then red at 80%,
-# so a healthy line stays quiet and only a filling budget draws the eye.
+# Ctx colouring, the only caller left: plain until 50%, then yellow, then red
+# at 80%, so a healthy line stays quiet (quiet meaning no hue at all, not a
+# dim one) and only a filling context draws the eye.
 # Takes a whole-number percentage, prints the SGR sequence.
 gauge_color() {
   if [ "$1" -ge 80 ]; then
@@ -243,7 +251,7 @@ gauge_color() {
   elif [ "$1" -ge 50 ]; then
     printf '\033[33m'
   else
-    printf '\033[2m'
+    printf ''
   fi
 }
 
@@ -312,8 +320,8 @@ fi
 # first response; the measured source then takes over.
 #
 # Whole minutes down to 1m, then seconds; colour bands follow the LABEL (red
-# through "2m", yellow through "10m", blue for "cold") so one number never
-# wears two colours.
+# through "2m", yellow through "10m", blue for "cold", plain otherwise -- past
+# 10m and for "na") so one number never wears two colours.
 # The label is dropped because a duration is the only thing on the line
 # measured in time (Ctx is the sole other gauge and it is a %), and "cold" --
 # the state that needs a word -- says what the number was counting. The number
@@ -323,6 +331,7 @@ fi
 # status line refresh at expiry.
 if [ -z "$cache_expires" ]; then
   if [ -r "$transcript" ]; then
+    # shellcheck disable=SC2016  # a jq program: $m is jq's variable, not the shell's
     infer='
       reduce (inputs | fromjson? // empty | select(.isSidechain == false)) as $m
         ({prev: null, anchor: null, ttl: 3600};
@@ -350,7 +359,7 @@ fi
 if [ "$cache_expires" = na ]; then
   cache_txt="na"
   cache_mark=""
-  pcolor='\033[2m'
+  pcolor=''
 else
   cache_left=$(( cache_expires - now ))
   if [ "$cache_left" -le 0 ]; then
@@ -367,7 +376,7 @@ else
     elif [ "$cache_left" -lt 660 ]; then
       pcolor='\033[33m'
     else
-      pcolor='\033[2m'
+      pcolor=''
     fi
   fi
 fi
@@ -387,50 +396,10 @@ if [ -n "$running_version" ] && [ -n "$installed_version" ] &&
   ver=" \033[2m|\033[0m \033[33mU\033[0m"
 fi
 
-# Claude.ai rate-limit budgets: the rolling 5-hour and 7-day windows, then
-# one gauge per model-scoped weekly window, as "5h 12% . 7d 40% . Fa 6%".
-# Each is independently optional, one dim dot between them since they are
-# one idea, and the gauge colours above so a window about to close reads
-# the same way as a filling context.
-#
-# Two sources. The payload carries five_hour and seven_day, exact to the
-# last response, but nothing before the first response and no per-model
-# window at all (2.1.270). usage-limits.sh, beside this file, reads the usage
-# endpoint Claude Code itself uses, through a cache refreshed every five
-# minutes, and fills both gaps: the two windows until the payload has them,
-# and every model-scoped window ("Fable" -> "Fa", the same two-letter
-# contraction as the model field, so Fa5.1 and Fa 6% read as one family).
-# A "~" marks a cache that failed to refresh, as it marks an unconfirmed
-# cache countdown: the number is real but old.
-u_five="" u_week="" u_scoped="" u_stale=""
-eval "$(sh "$(dirname "$0")/usage-limits.sh" 2>/dev/null)"
-mark=""; [ -n "$u_stale" ] && mark="~"
-rl_parts=""
-add_gauge() {   # label pct [mark]
-  [ -n "$rl_parts" ] && rl_parts="${rl_parts} \033[2m.\033[0m "
-  rl_parts="${rl_parts}$(gauge_color "$2")$1 ${3:-}$2%\033[0m"
-}
-if [ -n "$rl_five" ]; then
-  add_gauge 5h "$(printf '%.0f' "$rl_five")"
-elif [ -n "$u_five" ]; then
-  add_gauge 5h "$u_five" "$mark"
-fi
-if [ -n "$rl_week" ]; then
-  add_gauge 7d "$(printf '%.0f' "$rl_week")"
-elif [ -n "$u_week" ]; then
-  add_gauge 7d "$u_week" "$mark"
-fi
-for entry in $u_scoped; do
-  name=${entry%%:*}
-  add_gauge "$(printf '%.2s' "$name")" "${entry#*:}" "$mark"
-done
-rl=""
-[ -n "$rl_parts" ] && rl=" \033[2m|\033[0m ${rl_parts}"
-
 # Wall clock, last and plain: the line is redrawn every 60s, so it is also the
 # proof the refresh is alive. Local time of the machine running this script
 # (jq's strflocaltime honours TZ) with its zone, so a remote session's clock
 # reads as its own: "12:55 ET" on the Mac, "16:55 UTC" on a UTC box.
 clk=" \033[2m|\033[0m ${clock}"
 
-printf '%b\033[1;94m%s\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b%b' "$sname" "$host:" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$rl" "$ver" "$clk"
+printf '%b\033[1;94m%s\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b' "$sname" "$host:" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$ver" "$clk"
