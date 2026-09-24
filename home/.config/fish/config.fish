@@ -35,18 +35,38 @@ end
 set -u fish_color_command normal
 set -u fish_color_error normal
 set -u fish_color_param normal
+# The default theme's brblack is palette 8, which Ghostty's GitLab Light sets
+# to the foreground (#303030), so suggestions looked like typed text. The normal
+# colour dimmed (SGR 2, as the Claude Code statusline does) reads as a hint on
+# both the light and the dark background.
+set -u fish_color_autosuggestion normal --dim
 
-function bell_on_prompt --on-event fish_prompt
-    echo -e -n "\a"
+# When a command taking > 1s finishes: ring the terminal bell (tmux window
+# flag, Ghostty dock bounce + title mark) and post a macOS notification via
+# OSC 777 (Ghostty desktop-notifications; suppressed by Ghostty while the
+# surface is focused). Inside tmux the OSC must be wrapped in the passthrough
+# envelope (needs allow-passthrough, .tmux.conf); the bell needs no wrapping
+# (monitor-bell/bell-action forward it). Same behaviour as the zsh hook in
+# .zshrc.shared; fish hands postexec the command line and $CMD_DURATION (ms).
+#   `sleep 2` -> bell + "Command finished (2.0s);sleep 2"; `true` -> nothing
+function __bell_on_long_command --on-event fish_postexec
+    test "$CMD_DURATION" -gt 1000; or return
+    set -l elapsed (printf '%.1f' (math $CMD_DURATION / 1000))
+    set -l cmd (string replace -a \n ' ' -- $argv[1] | string sub -l 80)
+    printf '\a'
+    set -l osc \e"]777;notify;Command finished ("$elapsed"s);$cmd"\a
+    if set -q TMUX
+        printf '%s' \ePtmux\;(string replace -a \e \e\e -- $osc)\e\\
+    else
+        printf '%s' $osc
+    end
 end
 
 function reload-color-config --on-variable _reload_color_config
   if test "$_reload_color_config" = "light"
     set -u fish_color_prompt_bg bdae93
-    set -u fish_color_autosuggestion bdae93
   else
     set -u fish_color_prompt_bg 665c54
-    set -u fish_color_autosuggestion 665c54
   end
 end
 

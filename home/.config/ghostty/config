@@ -5,6 +5,16 @@ font-size = 15
 font-family = SF Mono
 font-thicken = true
 
+# fish reads no POSIX startup files, so run the account's login shell first
+# for its environment (Nix, Homebrew, ~/.profile PATH and exports), then hand
+# over to fish. On macOS Ghostty pastes this string into
+# `login -flp $USER /bin/bash --noprofile --norc -c "exec -l <command>"`
+# (not the `/bin/sh -c` its docs describe), so it must not start with its
+# own `exec`; login(1) sets $SHELL from the passwd entry and that bash
+# expands it. Detection sees "$SHELL", not fish, so name the integration
+# explicitly; its XDG_DATA_DIRS hook survives the login shell into fish.
+command = shell:"$SHELL" -l -c "exec fish"
+shell-integration = fish
 shell-integration-features = no-ssh-env,no-ssh-terminfo
 
 # Manual terminfo install (once per Linux/BSD host, needs `tic` there):

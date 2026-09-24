@@ -31,8 +31,8 @@ Type=simple
 # says (the user manager exports it as SHELL; ExecStart's program cannot be
 # a variable, hence the sh hop). tmux derives default-shell from that same
 # SHELL and stamps it into every pane, so $SHELL-reading programs there see
-# the passwd shell; new windows are zsh regardless -- tmux.conf hardcodes
-# `default-command zsh`.
+# the passwd shell; new windows are fish regardless -- tmux.conf hardcodes
+# `default-command fish`.
 ExecStart=/bin/sh -c 'exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh"'
 # ExecStop runs on EVERY deactivation, including the self-exit restart
 # cycles the watcher relies on (systemd.service: "the stop operation is
