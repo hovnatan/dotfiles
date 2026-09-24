@@ -60,15 +60,17 @@ function fish_prompt --description 'Write out the prompt'
 		set prompt_status ' ' (set_color $fish_color_status) "[$last_status]" "$normal"
 	end
 
-    # set -l usr $USER
-    # set -l hstnm  $__fish_prompt_hostname
+    # The block's background says where the shell runs (red outside tmux, grey
+    # inside, config.fish); its text names the machine, e.g. " vm ".
+    # prompt_hostname is the name up to its first dot; long ones get a short
+    # alias here.
+    set -l host (prompt_hostname)
+    switch $host
+        case my-mac
+            set host mbp
+    end
     set -l prpwd (prompt_pwd)
     set -l gitpr (__fish_git_prompt)
-	  # set -l part1 (echo -e "$usr@$hstnm $prpwd   %")
-    echo -n -s (set_color -b $fish_color_prompt_bg) "--::" $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
-    # set -l lpart1 (string length $part1)
-    # if [ (expr $COLUMNS - $lpart1) -lt 50 ]
-    #     echo 
-    # end
+    echo -n -s (set_color -b $fish_color_prompt_bg) " $host " $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
     echo -n "% "
 end
