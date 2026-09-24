@@ -82,6 +82,7 @@
     "command": "sh ~/.dotfiles/home/.claude/statusline-command.sh; sh ~/.dotfiles/home/.config/tmux/retitle.sh",
     "refreshInterval": 60
   },
+  "maxProseWidth": 100,
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
