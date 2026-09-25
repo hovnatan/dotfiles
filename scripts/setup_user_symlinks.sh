@@ -290,13 +290,16 @@ if [ "$(uname)" = "Darwin" ]; then
   # restart. The globals below take effect on the next iTerm2 launch.
   #   theme light:/dark:Gruvbox    -> separate Light/Dark colours, values
   #                                   copied from Ghostty's bundled theme files
-  #   font SF Mono 15, thicken     -> Menlo 14, thin strokes never. iTerm2
-  #                                   cannot reproduce Ghostty's thickening
-  #                                   (it rasterizes every glyph as white on
-  #                                   black with font smoothing, so dark text
-  #                                   gets the heavy dilation too); SF Mono
-  #                                   Regular/Medium and Monaco 12-15 were
-  #                                   tried, Menlo's heavier strokes won
+  #   font SF Mono 15, thicken     -> CommitMono500 14, thin strokes never.
+  #                                   iTerm2 cannot reproduce Ghostty's
+  #                                   thickening (it rasterizes every glyph
+  #                                   as white on black with font smoothing,
+  #                                   so dark text gets the heavy dilation
+  #                                   too), so a heavier weight stands in:
+  #                                   Commit Mono at 500. Tried and dropped:
+  #                                   SF Mono Regular/Medium, Monaco 12-15,
+  #                                   Menlo, JetBrains Mono, Monaspace Neon,
+  #                                   Intel One Mono, Cascadia Code
   #   fullscreen = true            -> Window Type 4 (native fullscreen;
   #                                   5 docks to the bottom edge)
   #   command $SHELL -l -> fish    -> same chain via /bin/sh, since iTerm2
@@ -310,6 +313,14 @@ if [ "$(uname)" = "Darwin" ]; then
   #   super+j / super+k            -> cmd+j / cmd+k previous / next tab
   #   titlebar transparent         -> Minimal theme (titlebar in bg colour)
   # mouse-hide-while-typing has no iTerm2 equivalent.
+  # The profile's font, CommitMono500 (built by
+  # scripts/macos/build_commit_mono500.py, which says why). Copied rather
+  # than linked: the files never change here, so a plain copy in
+  # ~/Library/Fonts avoids depending on font registration following links.
+  for font in ~/.dotfiles/home/Library/Fonts/*.otf; do
+    dest=~/Library/Fonts/"$(basename "$font")"
+    cmp -s "$font" "$dest" || cp "$font" "$dest"
+  done
   iterm_profiles="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
   mkdir -p "$iterm_profiles"
   ln -sf ~/.dotfiles/"home/Library/Application Support/iTerm2/DynamicProfiles/dotfiles.json" "$iterm_profiles/"
