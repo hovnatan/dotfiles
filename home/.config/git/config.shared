@@ -56,6 +56,12 @@
   autocorrect = prompt
 [commit]
   verbose = true
+[status]
+  # List every untracked file. The default ("normal") shows a directory with
+  # no tracked files as one entry (results/), so git status and Neogit's
+  # Untracked section hid the new files inside it. Cost: an un-ignored
+  # directory of thousands of files is listed file by file, and slower.
+  showUntrackedFiles = all
 [rerere]
   enabled = true
   autoupdate = true
