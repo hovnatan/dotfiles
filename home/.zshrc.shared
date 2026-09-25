@@ -267,6 +267,11 @@ alias update='sudo apt update && \
               echo "\e[33mWarning: Some commands may have failed\e[0m"'
 fi
 
+# vim runs nvim where it is installed; machines without it keep plain vim
+if command -v nvim >/dev/null; then
+  alias vim='nvim'
+fi
+
 # Improved ls alias
 alias ls='ls --color=auto'
 alias ll='ls -alh'    # List all files in long format, human-readable sizes
@@ -318,11 +323,13 @@ native_flags() {
 
 
 # When a command taking > 1s finishes: ring the terminal bell (tmux window
-# flag, Ghostty dock bounce + title mark) and post a macOS notification via
-# OSC 777 (Ghostty desktop-notifications; suppressed by Ghostty while the
-# surface is focused). Inside tmux the OSC must be wrapped in the passthrough
-# envelope (needs allow-passthrough, .tmux.conf); the bell needs no wrapping
-# (monitor-bell/bell-action forward it).
+# flag, Ghostty/iTerm2 dock bounce + tab mark) and post a macOS notification.
+# The notification goes out twice, once per terminal dialect, and each
+# terminal ignores the other's: OSC 777 for Ghostty, OSC 1337 Notification
+# (base64 fields) for iTerm2, which does not parse 777. Both suppress it
+# while the session is focused. Inside tmux the OSCs must be wrapped in the
+# passthrough envelope (needs allow-passthrough, .tmux.conf); the bell needs
+# no wrapping (monitor-bell/bell-action forward it).
 autoload -Uz add-zsh-hook
 zmodload zsh/datetime
 _bell_preexec() {
@@ -333,11 +340,14 @@ _bell_precmd() {
   # esc holds the byte: inside "..." the replacement half of ${x//a/b} is
   # not ANSI-C decoded, so $'\e\e' there went out as the 6 literal chars
   # and tmux dropped the malformed passthrough (no notification in tmux).
-  local elapsed osc esc=$'\e'
+  local elapsed osc title cmd esc=$'\e'
   if [[ -n "$_bell_start" ]] && (( (elapsed = EPOCHREALTIME - _bell_start) > 1 )); then
     printf -v elapsed '%.1f' $elapsed
+    title="Command finished (${elapsed}s)"
+    cmd=${_bell_cmd[1,80]}
     print -rn -- $'\a'
-    osc=$'\e]777;notify;'"Command finished (${elapsed}s);${_bell_cmd[1,80]}"$'\a'
+    osc=$'\e]777;notify;'"$title;$cmd"$'\a'
+    osc+=$'\e]1337;Notification=title='"$(print -rn -- $title | base64 | tr -d '\n');message=$(print -rn -- $cmd | base64 | tr -d '\n')"$'\a'
     if [[ -n "$TMUX" ]]; then
       print -rn -- $'\ePtmux;'"${osc//$esc/$esc$esc}"$'\e\\'
     else

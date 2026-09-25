@@ -2,18 +2,14 @@
 # gruvbox.nvim colorscheme (home/.config/nvim/lua/core/plugins.lua) and
 # picks light/dark from this background at startup.
 theme = light:Gruvbox Light,dark:Gruvbox Dark
-# Tabs drawn in the titlebar in the theme's background colour (the default,
-# "transparent", leaves macOS's grey tab bar). On 1.3.1 / macOS 27 this
-# squeezed the tabs into a small box beside the + button; the fixes (#13069,
-# #12949, June 2026) are only in tip builds so far, hence the channel below.
-# Back to stable once a release after 1.3.1 carries them: drop
-# auto-update-channel, and if Ghostty then reports a lower version than tip,
-# reinstall the Brewfile cask. Applies to new windows only.
-macos-titlebar-style = tabs
-# Pre-release builds from main (2026-09-24). Full Ghostty restart to apply.
-# brew still records the cask at its stable version; the cask auto-updates,
-# so `brew upgrade` leaves the app alone.
-auto-update-channel = tip
+# "tabs" would draw the tabs in the theme's background colour instead of
+# macOS's grey tab bar, but on 1.3.1 / macOS 27 it squeezes them into a small
+# box beside the + button. The fixes (#13069, #12949, June 2026) were only in
+# tip builds; switch to "tabs" once a stable release after 1.3.1 carries
+# them. Applies to new windows only.
+macos-titlebar-style = transparent
+# Stable release channel (the default). Sparkle never downgrades, so leaving
+# tip took `brew reinstall --cask ghostty` to get back to the release build.
 # Start new windows in (native macOS) fullscreen; non-native would break tabs
 fullscreen = true
 font-size = 15

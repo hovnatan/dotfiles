@@ -1,6 +1,6 @@
 #!/bin/sh
-# Claude Code Stop hook: ring the bell and post a Ghostty desktop
-# notification (OSC 777) when Claude finishes responding. Hook processes
+# Claude Code Stop hook: ring the bell and post a desktop notification
+# (Ghostty and iTerm2) when Claude finishes responding. Hook processes
 # may lack a controlling tty (/dev/tty fails), so walk up the process tree
 # to the claude process and write to its terminal device directly. Inside
 # tmux the OSC needs the passthrough envelope (allow-passthrough in
@@ -45,12 +45,22 @@ if [ -z "$T" ]; then
   esac
   T="/dev/$t"
 fi
+
+# The notification goes out in two dialects and each terminal ignores the
+# other's: OSC 777 for Ghostty, OSC 1337 Notification (base64 fields) for
+# iTerm2, which does not parse 777. Inside tmux every ESC is doubled and the
+# lot wrapped in the passthrough envelope.
+title="Claude Code"
+body="Finished responding"
+b64() { printf '%s' "$1" | base64 | tr -d '\n'; }
+if [ -n "${TMUX:-}" ]; then
+  e='\033\033' pre='\033Ptmux;' post='\033\\'
+else
+  e='\033' pre='' post=''
+fi
 {
   printf '\a' > "$T"
-  if [ -n "$TMUX" ]; then
-    printf '\033Ptmux;\033\033]777;notify;Claude Code;Finished responding\007\033\\' > "$T"
-  else
-    printf '\033]777;notify;Claude Code;Finished responding\007' > "$T"
-  fi
+  printf "$pre$e]777;notify;%s;%s\007$e]1337;Notification=title=%s;message=%s\007$post" \
+    "$title" "$body" "$(b64 "$title")" "$(b64 "$body")" > "$T"
 } 2>/dev/null
 exit 0

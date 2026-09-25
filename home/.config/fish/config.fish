@@ -9,7 +9,12 @@ set -U FZF_FIND_FILE_COMMAND "fd -IHp --ignore-file ~/.config/fd/ignore . \$dir"
 set -U FZF_DEFAULT_COMMAND $FZF_FIND_FILE_COMMAND
 set -U FZF_TMUX 1
 set -U FZF_ENABLE_OPEN_PREVIEW 1
-set -x EDITOR nvim
+# nvim where installed, else vim; same rule as home/.profile.shared
+if type -q nvim
+    set -x EDITOR nvim
+else
+    set -x EDITOR vim
+end
 
 set -u fish_term24bit 1
 
@@ -42,19 +47,25 @@ set -u fish_color_param normal
 set -u fish_color_autosuggestion normal --dim
 
 # When a command taking > 1s finishes: ring the terminal bell (tmux window
-# flag, Ghostty dock bounce + title mark) and post a macOS notification via
-# OSC 777 (Ghostty desktop-notifications; suppressed by Ghostty while the
-# surface is focused). Inside tmux the OSC must be wrapped in the passthrough
-# envelope (needs allow-passthrough, .tmux.conf); the bell needs no wrapping
-# (monitor-bell/bell-action forward it). Same behaviour as the zsh hook in
-# .zshrc.shared; fish hands postexec the command line and $CMD_DURATION (ms).
+# flag, Ghostty/iTerm2 dock bounce + tab mark) and post a macOS notification.
+# The notification goes out twice, once per terminal dialect, and each
+# terminal ignores the other's: OSC 777 for Ghostty, OSC 1337 Notification
+# (base64 fields) for iTerm2, which does not parse 777. Both suppress it
+# while the session is focused. Inside tmux the OSCs must be wrapped in the
+# passthrough envelope (needs allow-passthrough, .tmux.conf); the bell needs
+# no wrapping (monitor-bell/bell-action forward it). Same behaviour as the
+# zsh hook in .zshrc.shared and ~/.claude/notify-stop.sh; fish hands
+# postexec the command line and $CMD_DURATION (ms).
 #   `sleep 2` -> bell + "Command finished (2.0s);sleep 2"; `true` -> nothing
 function __bell_on_long_command --on-event fish_postexec
     test "$CMD_DURATION" -gt 1000; or return
     set -l elapsed (printf '%.1f' (math $CMD_DURATION / 1000))
     set -l cmd (string replace -a \n ' ' -- $argv[1] | string sub -l 80)
+    set -l title "Command finished ("$elapsed"s)"
     printf '\a'
-    set -l osc \e"]777;notify;Command finished ("$elapsed"s);$cmd"\a
+    set -l osc \e"]777;notify;$title;$cmd"\a
+    set -a osc \e"]1337;Notification=title="(printf '%s' $title | base64 | string join '')";message="(printf '%s' $cmd | base64 | string join '')\a
+    set osc (string join '' $osc)
     if set -q TMUX
         printf '%s' \ePtmux\;(string replace -a \e \e\e -- $osc)\e\\
     else
@@ -76,6 +87,12 @@ bind -M insert \cg forget
 abbr rsync  "rsync -a --info=progress2"
 abbr ll  "ls -aslh"
 abbr n   "nvim"
+# vim runs nvim where it is installed; machines without it keep plain vim
+if type -q nvim
+    function vim --wraps nvim
+        nvim $argv
+    end
+end
 abbr g   "grep"
 abbr da  "docker exec -it (docker ps | head -n 2 | tail -n 1 | awk '{print \$1}') /bin/bash"
 abbr ta  "~/.dotfiles/scripts/tmux_attach.sh"
