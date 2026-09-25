@@ -28,8 +28,13 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
         fish_default_key_bindings -M $mode
     end
     fish_vi_key_bindings --no-erase
+    # History up/down in insert mode too: fish's vi preset binds insert-mode
+    # ctrl-n to accept-autosuggestion, so after ctrl-p walked back, ctrl-n
+    # accepted the grey suggestion (or did nothing) instead of coming forward.
     bind \cp up-or-search
     bind \cn down-or-search
+    bind -M insert \cp up-or-search
+    bind -M insert \cn down-or-search
     bind \cd forward-word-or-exit
     bind -M insert \cd forward-word-or-exit
 #    bind -M insert -m default jk backward-char force-repaint
