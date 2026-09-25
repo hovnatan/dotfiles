@@ -355,16 +355,25 @@ if [ "$(uname)" = "Darwin" ]; then
   # long-command hooks and ~/.claude/notify-stop.sh); the profile turns on
   # notifications but not the per-bell one, which would post it twice.
   defaults write com.googlecode.iterm2 BounceOnInactiveBell -bool true
-  # Key "<char>-<modifiers>-<keycode>": 0x100000 is cmd, keycodes 38 = j,
-  # 40 = k. Action 2 is previous tab, 0 next tab. -dict-add keeps the other
-  # entries (shift+enter -> \n, set in the iTerm2 UI).
-  iterm_key() { # $1 char, $2 keycode, $3 action
+  # Key "<char>-<modifiers>-<keycode>": the char is what the key types with
+  # shift applied and option ignored (cmd+option+j -> "j"), modifiers
+  # 0x100000 cmd, 0x80000 option; keycodes 38 = j, 40 = k. Actions: 0 next
+  # tab, 2 previous tab, 33 move tab left, 34 move tab right. The bindings
+  # replace the menu items on the same keys (cmd+j Jump to Selection, cmd+k
+  # Clear Buffer, cmd+option+j Script Console, cmd+option+k Clear Instant
+  # Replay). Not cmd+shift+j/k: Homerow (Brewfile) holds cmd+shift+k (and
+  # its scroll mode cmd+shift+j) as system-wide hotkeys, so iTerm2 never
+  # saw them, even with iTerm2 on Homerow's ignore list. -dict-add keeps
+  # the other entries (shift+enter -> \n, set in the iTerm2 UI).
+  iterm_key() { # $1 char, $2 keycode, $3 modifiers, $4 action
     defaults write com.googlecode.iterm2 GlobalKeyMap -dict-add \
-      "$(printf '0x%x-0x100000-0x%x' "'$1" "$2")" \
-      "<dict><key>Action</key><integer>$3</integer><key>Text</key><string></string><key>Version</key><integer>1</integer><key>Keycode</key><integer>$2</integer><key>Modifiers</key><integer>1048576</integer></dict>"
+      "$(printf '0x%x-0x%x-0x%x' "'$1" "$3" "$2")" \
+      "<dict><key>Action</key><integer>$4</integer><key>Text</key><string></string><key>Version</key><integer>1</integer><key>Keycode</key><integer>$2</integer><key>Modifiers</key><integer>$(($3))</integer></dict>"
   }
-  iterm_key j 38 2
-  iterm_key k 40 0
+  iterm_key j 38 0x100000 2  # cmd+j: previous tab
+  iterm_key k 40 0x100000 0  # cmd+k: next tab
+  iterm_key j 38 0x180000 33 # cmd+option+j: move tab left
+  iterm_key k 40 0x180000 34 # cmd+option+k: move tab right
 
   # ~/Applications/Zathura.app: Finder/"Open With" front end for the Nix
   # zathura (the script says why not homebrew-zathura's). Rebuilt each run,
