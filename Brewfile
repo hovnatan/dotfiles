@@ -60,7 +60,7 @@ cask "google-drive"
 cask "hammerspoon"
 cask "homerow"
 cask "iina"
-# iterm2 -- requested by user (2026-09-25)
+# iterm2 -- Ghostty alternative; profile in home/Library/Application Support/iTerm2 (2026-09-25)
 cask "iterm2"
 cask "keepassxc"
 cask "libreoffice"

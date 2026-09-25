@@ -290,10 +290,13 @@ if [ "$(uname)" = "Darwin" ]; then
   # restart. The globals below take effect on the next iTerm2 launch.
   #   theme light:/dark:Gruvbox    -> separate Light/Dark colours, values
   #                                   copied from Ghostty's bundled theme files
-  #   font SF Mono 15, thicken     -> SFMono-Regular 15, thin strokes never.
-  #                                   iTerm2 has no equivalent of Ghostty's
-  #                                   thickening; Medium and Monaco 12-15
-  #                                   were tried and Regular was kept
+  #   font SF Mono 15, thicken     -> Menlo 14, thin strokes never. iTerm2
+  #                                   cannot reproduce Ghostty's thickening
+  #                                   (it rasterizes every glyph as white on
+  #                                   black with font smoothing, so dark text
+  #                                   gets the heavy dilation too); SF Mono
+  #                                   Regular/Medium and Monaco 12-15 were
+  #                                   tried, Menlo's heavier strokes won
   #   fullscreen = true            -> Window Type 4 (native fullscreen;
   #                                   5 docks to the bottom edge)
   #   command $SHELL -l -> fish    -> same chain via /bin/sh, since iTerm2
@@ -316,6 +319,11 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 PromptOnQuit -bool false
   defaults write com.googlecode.iterm2 OnlyWhenMoreTabs -bool false
   defaults write com.googlecode.iterm2 CopySelection -bool true
+  # OSC 52 clipboard writes (remote tmux/nvim/Claude Code copying to the Mac
+  # clipboard), allowed as Ghostty's clipboard-write = allow does; iTerm2
+  # denies them by default. Reads stay at iTerm2's ask-each-time, matching
+  # Ghostty's clipboard-read = ask.
+  defaults write com.googlecode.iterm2 AllowClipboardAccess -bool true
   # Minimal theme's tab bar height in points (default 38, 22 = compact
   # theme); 28 sits nearer Ghostty's native macOS tab bar. Read at launch.
   defaults write com.googlecode.iterm2 CompactMinimalTabBarHeight -float 28
