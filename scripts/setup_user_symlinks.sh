@@ -312,6 +312,9 @@ if [ "$(uname)" = "Darwin" ]; then
   #                                   as Ghostty draws none
   #   confirm-close-surface=false  -> never prompt on close or quit
   #   copy-on-select = clipboard   -> CopySelection
+  #   macos-option-as-alt (unset)  -> both Option keys Esc+ (2): unset means
+  #                                   Alt on U.S. layouts, so option-p is
+  #                                   alt-p, not "pi" (Normal, 0, types that)
   #   super+j / super+k            -> cmd+j / cmd+k previous / next tab
   #   titlebar transparent         -> Minimal theme (titlebar in bg colour)
   # mouse-hide-while-typing has no iTerm2 equivalent.
@@ -324,6 +327,9 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 PromptOnQuit -bool false
   defaults write com.googlecode.iterm2 OnlyWhenMoreTabs -bool false
   defaults write com.googlecode.iterm2 CopySelection -bool true
+  # New tabs open right after the current one, as Ghostty's default
+  # window-new-tab-position = current does; iTerm2 appends them at the end.
+  defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
   # OSC 52 clipboard writes (remote tmux/nvim/Claude Code copying to the Mac
   # clipboard), allowed as Ghostty's clipboard-write = allow does; iTerm2
   # denies them by default. Reads stay at iTerm2's ask-each-time, matching
