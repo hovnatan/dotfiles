@@ -1,5 +1,8 @@
 {
   "cleanupPeriodDays": 730,
+  "env": {
+    "CLAUDE_CODE_TMUX_TRUECOLOR": "1"
+  },
   "permissions": {
     "allow": [
       "Bash(git log *)",
@@ -82,7 +85,6 @@
     "command": "sh ~/.dotfiles/home/.claude/statusline-command.sh; sh ~/.dotfiles/home/.config/tmux/retitle.sh",
     "refreshInterval": 60
   },
-  "maxProseWidth": 100,
   "enabledPlugins": {
     "chrome-devtools-mcp@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
@@ -117,6 +119,7 @@
       }
     }
   },
+  "maxProseWidth": 100,
   "spellcheck": {
     "enabled": true,
     "checker": "hunspell"
@@ -137,9 +140,6 @@
   "autoMemoryEnabled": false,
   "skipDangerousModePermissionPrompt": true,
   "theme": "custom:gruvbox-light",
-  "env": {
-    "CLAUDE_CODE_TMUX_TRUECOLOR": "1"
-  },
   "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
   "precomputeCompactionEnabled": true,

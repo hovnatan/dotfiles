@@ -60,6 +60,8 @@ cask "google-drive"
 cask "hammerspoon"
 cask "homerow"
 cask "iina"
+# iterm2 -- requested by user (2026-09-25)
+cask "iterm2"
 cask "keepassxc"
 cask "libreoffice"
 cask "little-snitch"

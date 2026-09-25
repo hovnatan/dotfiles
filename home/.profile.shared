@@ -8,8 +8,6 @@
 #
 # Exports only, and idempotent: it may run twice in one process tree.
 
-export EDITOR=vim
-
 # Fallback for environments that don't set a locale (bare SSH, cron); plain C breaks UTF-8
 export LANG="${LANG:-en_US.UTF-8}"
 
@@ -29,3 +27,11 @@ case ":${PATH}:" in
         export PATH="$HOME/.local/bin:$PATH"
         ;;
 esac
+
+# nvim where installed, else vim; after the PATH block so an nvim in
+# ~/.local/bin counts. Matches the vim -> nvim alias in fish and zsh.
+if command -v nvim >/dev/null 2>&1; then
+    export EDITOR=nvim
+else
+    export EDITOR=vim
+fi

@@ -284,6 +284,57 @@ if [ "$(uname)" = "Darwin" ]; then
   # resets a change made in Preferences > General.
   defaults write com.colliderli.iina pauseWhenOpen -bool false
 
+  # iTerm2 set up to match home/.config/ghostty/config. The profile is a
+  # Dynamic Profile (JSON, no comments possible, so the mapping lives here);
+  # iTerm2 watches the folder, so edits apply to new sessions without a
+  # restart. The globals below take effect on the next iTerm2 launch.
+  #   theme light:/dark:Gruvbox    -> separate Light/Dark colours, values
+  #                                   copied from Ghostty's bundled theme files
+  #   font SF Mono 15, thicken     -> SFMono-Regular 15, thin strokes never.
+  #                                   iTerm2 has no equivalent of Ghostty's
+  #                                   thickening; Medium and Monaco 12-15
+  #                                   were tried and Regular was kept
+  #   fullscreen = true            -> Window Type 4 (native fullscreen;
+  #                                   5 docks to the bottom edge)
+  #   command $SHELL -l -> fish    -> same chain via /bin/sh, since iTerm2
+  #                                   does not expand $SHELL itself
+  #   shell-integration = fish     -> none needed: fish 4 emits OSC 7 and
+  #                                   OSC 133 itself, and iTerm2 reads both;
+  #                                   its blue prompt-mark triangles are off,
+  #                                   as Ghostty draws none
+  #   confirm-close-surface=false  -> never prompt on close or quit
+  #   copy-on-select = clipboard   -> CopySelection
+  #   super+j / super+k            -> cmd+j / cmd+k previous / next tab
+  #   titlebar transparent         -> Minimal theme (titlebar in bg colour)
+  # mouse-hide-while-typing has no iTerm2 equivalent.
+  iterm_profiles="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
+  mkdir -p "$iterm_profiles"
+  ln -sf ~/.dotfiles/"home/Library/Application Support/iTerm2/DynamicProfiles/dotfiles.json" "$iterm_profiles/"
+  defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string 45FCCF80-D41B-400A-A797-004E6F3CAD2A
+  defaults write com.googlecode.iterm2 TabStyleWithAutomaticOption -int 5
+  defaults write com.googlecode.iterm2 UseLionStyleFullscreen -bool true
+  defaults write com.googlecode.iterm2 PromptOnQuit -bool false
+  defaults write com.googlecode.iterm2 OnlyWhenMoreTabs -bool false
+  defaults write com.googlecode.iterm2 CopySelection -bool true
+  # Minimal theme's tab bar height in points (default 38, 22 = compact
+  # theme); 28 sits nearer Ghostty's native macOS tab bar. Read at launch.
+  defaults write com.googlecode.iterm2 CompactMinimalTabBarHeight -float 28
+  # Bell -> dock bounce while iTerm2 is in the background, as Ghostty does.
+  # The desktop notification itself comes from OSC 1337 (see the fish/zsh
+  # long-command hooks and ~/.claude/notify-stop.sh); the profile turns on
+  # notifications but not the per-bell one, which would post it twice.
+  defaults write com.googlecode.iterm2 BounceOnInactiveBell -bool true
+  # Key "<char>-<modifiers>-<keycode>": 0x100000 is cmd, keycodes 38 = j,
+  # 40 = k. Action 2 is previous tab, 0 next tab. -dict-add keeps the other
+  # entries (shift+enter -> \n, set in the iTerm2 UI).
+  iterm_key() { # $1 char, $2 keycode, $3 action
+    defaults write com.googlecode.iterm2 GlobalKeyMap -dict-add \
+      "$(printf '0x%x-0x100000-0x%x' "'$1" "$2")" \
+      "<dict><key>Action</key><integer>$3</integer><key>Text</key><string></string><key>Version</key><integer>1</integer><key>Keycode</key><integer>$2</integer><key>Modifiers</key><integer>1048576</integer></dict>"
+  }
+  iterm_key j 38 2
+  iterm_key k 40 0
+
   # ~/Applications/Zathura.app: Finder/"Open With" front end for the Nix
   # zathura (the script says why not homebrew-zathura's). Rebuilt each run,
   # about a second, so the app follows the script.
