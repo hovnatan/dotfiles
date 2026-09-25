@@ -33,7 +33,7 @@ vim.opt.title = true
 -- pane, since tmux's set-titles-string (with its own host prefix) wins.
 if vim.env.SSH_CONNECTION then
   local host = vim.fn.hostname():gsub("%..*", "")
-  vim.opt.titlestring = "(" .. host .. ") %t%( %M%)%( (%{expand(\"%:~:h\")})%)%a - NVIM"
+  vim.opt.titlestring = "(" .. host .. ') %t%( %M%)%( (%{expand("%:~:h")})%)%a - NVIM'
 end
 vim.opt.ruler = true
 vim.opt.number = true

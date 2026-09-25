@@ -31,7 +31,9 @@ It is kept short on purpose - every line here is paid on every session.
   tracked files and commits use placeholders (`<host>`, `vm`). Removing one
   after a push means rewriting history and force-pushing.
 - Changed fish, JSON or nvim config: `scripts/check_configs.sh` before pushing
-  (CI runs it, `.github/workflows/configs.yml`).
+  (CI runs it, `.github/workflows/configs.yml`). It does not format-check Lua;
+  for any `.lua` change also run `git ls-files -z '*.lua' | xargs -0 stylua --check`
+  (`.github/workflows/lua.yml`), which e.g. rejects `"...\"..."` for `'..."...'`.
 - `home/.codex/config.toml` is linked as `~/.codex/config.toml`, and Codex and
   the ChatGPT app write machine-local state into it (model, app paths, MCP
   servers, `notify`), so it often shows as modified. Never stage or commit it
