@@ -327,6 +327,18 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 PromptOnQuit -bool false
   defaults write com.googlecode.iterm2 OnlyWhenMoreTabs -bool false
   defaults write com.googlecode.iterm2 CopySelection -bool true
+  # 24-bit colours from programs in sRGB, like the profile colours (and
+  # Ghostty's window-colorspace = srgb). iTerm2 reads them as Display P3 by
+  # default, so nvim's gruvbox bg #fbf1c7 drew visibly off from the same
+  # #fbf1c7 of the profile background around it.
+  defaults write com.googlecode.iterm2 P3 -bool false
+  # No blue new-output dot and no activity spinner on background tabs: the
+  # Claude Code status line redraws its clock every minute (refreshInterval
+  # 60), so every idle Claude tab got the dot and a spinner blip, and
+  # neither meant anything. The Stop hook's bell still marks a finished
+  # turn with the tab's bell icon, which is all Ghostty shows too.
+  defaults write com.googlecode.iterm2 ShowNewOutputIndicator -bool false
+  defaults write com.googlecode.iterm2 HideActivityIndicator -bool true
   # New tabs open right after the current one, as Ghostty's default
   # window-new-tab-position = current does; iTerm2 appends them at the end.
   defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
