@@ -311,6 +311,18 @@ if [ "$(uname)" = "Darwin" ]; then
   # resets a change made in Preferences > General.
   defaults write com.colliderli.iina pauseWhenOpen -bool false
 
+  # Ctrl+Return is Claude Code's "send queued prompt now" (chat:sendNow), but
+  # macOS binds it system-wide to "Show contextual menu" (symbolic hotkey 159,
+  # System Settings > Keyboard > Keyboard Shortcuts > Keyboard), so the key
+  # opened the terminal's context menu and never reached the program. Disable
+  # that shortcut; parameters keep the stock key (65535 = no char, 36 = Return,
+  # 262144 = ctrl) so re-enabling it in System Settings restores it as it was.
+  # activateSettings applies it to the running session without a re-login.
+  defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 159 \
+    '<dict><key>enabled</key><false/><key>value</key><dict><key>parameters</key><array><integer>65535</integer><integer>36</integer><integer>262144</integer></array><key>type</key><string>standard</string></dict></dict>'
+  /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u \
+    || warn "activateSettings failed; log out and back in for the Ctrl+Return shortcut change"
+
   # iTerm2 set up to match home/.config/ghostty/config. The profile is a
   # Dynamic Profile (JSON, no comments possible, so the mapping lives here);
   # iTerm2 watches the folder, so edits apply to new sessions without a
