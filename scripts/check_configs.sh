@@ -5,7 +5,7 @@
 # change to fish, JSON or nvim config: dotup links these straight into every
 # machine, where a syntax error breaks the shell, Claude Code or nvim.
 #
-#   1. fish   fish -n on every tracked .fish file (vendored plugins included)
+#   1. fish   fish -n on every tracked .fish file
 #   2. json   every tracked .json parses; .devcontainer/ is exempt, as the
 #             devcontainer format is JSONC and its comments are deliberate
 #   3. nvim   home/.config/nvim starts clean from an empty data dir, as on a

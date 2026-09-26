@@ -200,13 +200,40 @@ ln -s ~/.claude/skills ~/.agents/skills
 # second link inside the repo directory instead of replacing it.
 ln -sfn ~/.dotfiles/home/.config/ghostty ~/.config/ghostty
 
-# fish, with its plugins vendored in the repo (see conf.d/plugins.fish). Any
-# fish run before this install leaves a real ~/.config/fish (fish_variables
-# at least), where ln -sfn would drop the link inside; let the user decide.
+# fish. Any fish run before this install leaves a real ~/.config/fish
+# (fish_variables at least), where ln -sfn would drop the link inside; let the
+# user decide.
 if [ -d ~/.config/fish ] && [ ! -L ~/.config/fish ]; then
   warn "$HOME/.config/fish is a real directory, not a symlink; move it aside (keep fish_variables if you want its universal variables) and re-run"
 else
   ln -sfn ~/.dotfiles/home/.config/fish ~/.config/fish
+fi
+
+# fish plugins: bring fisher's installed set in line with the pinned
+# fish_plugins (see home/.config/fish/conf.d/plugins.fish). Gated on the two
+# lists differing, compared sorted since fisher appends a re-pinned plugin at
+# the end of its list, so a dotup with nothing changed downloads nothing.
+#   fresh machine   fisher missing -> source fisher.fish at its pinned commit,
+#                   then `fisher update` installs everything, fisher included
+#   pin changed     `fisher update` swaps the old commit for the new one
+# fisher prints download failures but still exits 0, so the lists are
+# compared again afterwards. No fish on this machine: nothing to do.
+if command -v fish >/dev/null; then
+  fish_plugins=~/.dotfiles/home/.config/fish/fish_plugins
+  fisher_plugins_differ() {
+    [ "$(tr '[:upper:]' '[:lower:]' <"$fish_plugins" | sort)" != \
+      "$(fish -c 'string join \n -- $_fisher_plugins' 2>/dev/null | sort)" ]
+  }
+  if fisher_plugins_differ; then
+    fisher_rev=$(sed -n 's|^jorgebucaran/fisher@||p' "$fish_plugins")
+    if [ -z "$fisher_rev" ]; then
+      warn "$fish_plugins has no jorgebucaran/fisher@<sha> line; add it back so fisher can be bootstrapped"
+    else
+      echo "fish plugins: syncing with $fish_plugins"
+      fish -c "functions -q fisher; or curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/$fisher_rev/functions/fisher.fish | source; and fisher update"
+      fisher_plugins_differ && warn "fisher's installed plugins still differ from $fish_plugins; see the fisher output above, fix, and re-run"
+    fi
+  fi
 fi
 # Neovim (see its init.lua). Same real-directory guard as fish: an older
 # hand-made config dir may exist. vim.pack writes nvim-pack-lock.json into the
