@@ -28,10 +28,6 @@
 #
 #   check -> "UPDATE AVAILABLE" -> --apply -> git diff (review) -> git commit
 #
-# The vendored fish plugins use the same .upstream pins; point SKILLS_DIR at
-# them: SKILLS_DIR=~/.dotfiles/home/.config/fish/plugins (see
-# home/.config/fish/conf.d/plugins.fish).
-#
 # Needs `gh` (preferred) or `curl`+`jq`, plus `git` for --apply. Set
 # GITHUB_TOKEN to lift the unauthenticated GitHub API rate limit on the curl path.
 
