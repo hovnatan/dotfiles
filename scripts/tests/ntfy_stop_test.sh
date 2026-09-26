@@ -44,6 +44,7 @@ t() { tmux -S "$SOCK" "$@"; }
 cleanup() {
   [ -n "${listener:-}" ] && kill "$listener" 2>/dev/null
   [ -n "${client:-}" ] && kill "$client" 2>/dev/null
+  [ -n "${toucher:-}" ] && kill "$toucher" 2>/dev/null
   t kill-server 2>/dev/null
   rm -f "$SOCK"
   if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
@@ -141,11 +142,23 @@ hook "$sid_cancel" "$OK_URL"
 hook "$sid_fail" "$BAD_URL"
 hook "$sid_gone" "$OK_URL"
 hook "$sid_grows" "$OK_URL"
+# grows: keep the transcript growing from right after its waiter is armed,
+# every 0.5 s for 9 s, in the background while the other scenarios proceed.
+# The waiter polls every 5 s against a 6 s window, so only its poll at ~W+5
+# (W = waiter start) falls inside the window and must see growth. The old
+# three touches 2 s apart, after the other scenarios' steps, landed first at
+# ~W+4: a slow macOS runner missed that poll ("FAIL grows: 0 'transcript
+# grew' lines", push still sent; reproduced by adding 1.5 s of lag there).
+#   W+5   grew -> logged, window re-armed to W+11
+#   W+10  grew again -> same streak, not logged
+#   W+15  quiet; W+20 past the window -> push
+( for _ in $(seq 18); do sleep 0.5; touch "$WORK/transcript"; done ) &
+toucher=$!
 hook "$sid_watched" "$OK_URL"
 sleep 2
 hook "$sid_cancel" "$OK_URL" --cancel
 t kill-session -t =goes
-for _ in 1 2 3; do sleep 2; touch "$WORK/transcript"; done
+wait "$toucher"
 
 # Wait out the longest window: grows restarts it on each touch.
 for _ in $(seq 40); do
