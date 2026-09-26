@@ -45,6 +45,12 @@ set -u fish_color_param normal
 # colour dimmed (SGR 2, as the Claude Code statusline does) reads as a hint on
 # both the light and the dark background.
 set -u fish_color_autosuggestion normal --dim
+# The part of a history-search result (ctrl-p/Up) that matched what was typed.
+# The theme's white on brblack showed as a grey block over the prefix; bold in
+# the normal colour still marks it and reads on light and dark backgrounds.
+# The completion pager's selected row does not fall back to this: the theme
+# sets fish_pager_color_selected_background (reverse video) itself.
+set -u fish_color_search_match normal --bold
 
 # When a command taking > 1s finishes: ring the terminal bell (tmux window
 # flag, Ghostty/iTerm2 dock bounce + tab mark) and post a macOS notification.
