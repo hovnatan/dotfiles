@@ -1,5 +1,5 @@
--- Switch to the U.S. English keyboard whenever Ghostty or VS Code becomes
--- the active app.
+-- Switch to the U.S. English keyboard whenever an app in FORCE_US_APPS
+-- becomes the active app.
 local M = {}
 
 local US_SOURCE_ID = "com.apple.keylayout.US"
@@ -7,6 +7,7 @@ local US_SOURCE_ID = "com.apple.keylayout.US"
 -- renamable (and WhatsApp shows why they cannot be trusted at all).
 local FORCE_US_APPS = {
   ["com.mitchellh.ghostty"] = true,
+  ["com.googlecode.iterm2"] = true,
   ["com.microsoft.VSCode"] = true,
 }
 
