@@ -391,8 +391,11 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 CompactMinimalTabBarHeight -float 28
   # Bell -> dock bounce while iTerm2 is in the background, as Ghostty does.
   # The fish/zsh long-command hooks and ~/.claude/notify-stop.sh ring only
-  # the bell, no desktop notification, so the dock count is one per event;
-  # the profile's per-bell notification (Send Bell Alert) stays off.
+  # the bell, no OSC notification of their own. The profile's Send Bell
+  # Alert turns a bell into a macOS notification instead, but Suppress
+  # Alerts in Active Session keeps it to other tabs: macOS never bounces the
+  # dock for the frontmost app, so while iTerm2 is in front the banner is
+  # the only signal that a background tab rang.
   defaults write com.googlecode.iterm2 BounceOnInactiveBell -bool true
   # Tip of the Day, at most one a day after launch. Without the permission
   # key iTerm2 first asks whether to show tips at all; NoSyncTipsDisabled
