@@ -400,6 +400,22 @@ if [ "$(uname)" = "Darwin" ]; then
   # NoSyncTipsToNotShow, left alone so they do not repeat.
   defaults write com.googlecode.iterm2 NoSyncPermissionToShowTip -bool true
   defaults write com.googlecode.iterm2 NoSyncTipsDisabled -bool false
+  # Terminal modes a remote tmux/nvim/Claude Code switches on and never
+  # switches off when the ssh connection drops (sleep, network change).
+  # Back at the local prompt they turn into junk input: focus -> ^[[I/^[[O
+  # on every window switch, mouse -> ^[[<0;45;12M on clicks, DEC 2048 ->
+  # size reports on resize, bracketed paste -> ^[[200~ in a plain sh.
+  # iTerm2 notices when the host changes back and asks "Looks like focus
+  # reporting was left on ... Turn it off?"; true is the banner's "Always":
+  # reset them silently. A local program that wants a mode re-enables it.
+  defaults write com.googlecode.iterm2 NoSyncTurnOffFocusReportingOnHostChange -bool true
+  defaults write com.googlecode.iterm2 NoSyncTurnOffMouseReportingOnHostChange -bool true
+  defaults write com.googlecode.iterm2 NoSyncTurnOffBracketedPasteOnHostChange -bool true
+  defaults write com.googlecode.iterm2 NoSyncTurnOffDEC2048OnHostChange -bool true
+  # Same banner family for the title: a remote prompt/tmux/nvim retitles the
+  # tab and the title outlives the ssh session. true restores the pre-ssh
+  # tab and window title silently instead of asking.
+  defaults write com.googlecode.iterm2 NoSyncRestoreIconAndWindowNameOnHostChange -bool true
   # Key "<char>-<modifiers>-<keycode>": the char is what the key types with
   # shift applied and option ignored (cmd+option+j -> "j"), modifiers
   # 0x100000 cmd, 0x80000 option; keycodes 38 = j, 40 = k. Actions: 0 next
