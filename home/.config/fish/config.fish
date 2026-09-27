@@ -52,31 +52,17 @@ set -u fish_color_autosuggestion normal --dim
 # sets fish_pager_color_selected_background (reverse video) itself.
 set -u fish_color_search_match normal --bold
 
-# When a command taking > 1s finishes: ring the terminal bell (tmux window
-# flag, Ghostty/iTerm2 dock bounce + tab mark) and post a macOS notification.
-# The notification goes out twice, once per terminal dialect, and each
-# terminal ignores the other's: OSC 777 for Ghostty, OSC 1337 Notification
-# (base64 fields) for iTerm2, which does not parse 777. Both suppress it
-# while the session is focused. Inside tmux the OSCs must be wrapped in the
-# passthrough envelope (needs allow-passthrough, .tmux.conf); the bell needs
-# no wrapping (monitor-bell/bell-action forward it). Same behaviour as the
-# zsh hook in .zshrc.shared and ~/.claude/notify-stop.sh; fish hands
-# postexec the command line and $CMD_DURATION (ms).
-#   `sleep 2` -> bell + "Command finished (2.0s);sleep 2"; `true` -> nothing
+# When a command taking > 1s finishes, ring the terminal bell: tmux window
+# flag, Ghostty/iTerm2 dock bounce + tab mark. tmux forwards the bell
+# natively (monitor-bell/bell-action, .tmux.conf), so it needs no
+# passthrough wrapping. No desktop notification on purpose: it doubled
+# iTerm2's dock count and tmux dropped it for hidden panes. Same behaviour
+# as the zsh hook in .zshrc.shared and ~/.claude/notify-stop.sh; fish hands
+# postexec $CMD_DURATION (ms).
+#   `sleep 2` -> bell; `true` -> nothing
 function __bell_on_long_command --on-event fish_postexec
     test "$CMD_DURATION" -gt 1000; or return
-    set -l elapsed (printf '%.1f' (math $CMD_DURATION / 1000))
-    set -l cmd (string replace -a \n ' ' -- $argv[1] | string sub -l 80)
-    set -l title "Command finished ("$elapsed"s)"
     printf '\a'
-    set -l osc \e"]777;notify;$title;$cmd"\a
-    set -a osc \e"]1337;Notification=title="(printf '%s' $title | base64 | string join '')";message="(printf '%s' $cmd | base64 | string join '')\a
-    set osc (string join '' $osc)
-    if set -q TMUX
-        printf '%s' \ePtmux\;(string replace -a \e \e\e -- $osc)\e\\
-    else
-        printf '%s' $osc
-    end
 end
 
 function reload-color-config --on-variable _reload_color_config
