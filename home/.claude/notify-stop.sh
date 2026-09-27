@@ -1,10 +1,12 @@
 #!/bin/sh
-# Claude Code Stop hook: ring the bell and post a desktop notification
-# (Ghostty and iTerm2) when Claude finishes responding. Hook processes
-# may lack a controlling tty (/dev/tty fails), so walk up the process tree
-# to the claude process and write to its terminal device directly. Inside
-# tmux the OSC needs the passthrough envelope (allow-passthrough in
-# .tmux.conf), while the bell is forwarded natively.
+# Claude Code Stop hook: ring the bell when Claude finishes responding.
+# The bell marks the tab (Ghostty and iTerm2), bounces the dock while the
+# terminal is in the background, and flags the tmux window; tmux forwards
+# it natively, so it survives ssh and nested tmux. No desktop notification:
+# it was the second event in iTerm2's dock count and was dropped by tmux
+# for hidden panes; away-from-desk alerts are ntfy-stop.sh's job. Hook
+# processes may lack a controlling tty (/dev/tty fails), so walk up the
+# process tree to the claude process and write to its terminal device.
 
 # Inside tmux, skip entirely while a client of this session is focused:
 # the user is already looking at the pane, so a bell would only annoy.
@@ -46,21 +48,5 @@ if [ -z "$T" ]; then
   T="/dev/$t"
 fi
 
-# The notification goes out in two dialects and each terminal ignores the
-# other's: OSC 777 for Ghostty, OSC 1337 Notification (base64 fields) for
-# iTerm2, which does not parse 777. Inside tmux every ESC is doubled and the
-# lot wrapped in the passthrough envelope.
-title="Claude Code"
-body="Finished responding"
-b64() { printf '%s' "$1" | base64 | tr -d '\n'; }
-if [ -n "${TMUX:-}" ]; then
-  e='\033\033' pre='\033Ptmux;' post='\033\\'
-else
-  e='\033' pre='' post=''
-fi
-{
-  printf '\a' > "$T"
-  printf "$pre$e]777;notify;%s;%s\007$e]1337;Notification=title=%s;message=%s\007$post" \
-    "$title" "$body" "$(b64 "$title")" "$(b64 "$body")" > "$T"
-} 2>/dev/null
+printf '\a' > "$T" 2>/dev/null
 exit 0
