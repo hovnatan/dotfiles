@@ -394,6 +394,12 @@ if [ "$(uname)" = "Darwin" ]; then
   # long-command hooks and ~/.claude/notify-stop.sh); the profile turns on
   # notifications but not the per-bell one, which would post it twice.
   defaults write com.googlecode.iterm2 BounceOnInactiveBell -bool true
+  # Tip of the Day, at most one a day after launch. Without the permission
+  # key iTerm2 first asks whether to show tips at all; NoSyncTipsDisabled
+  # turns them off outright. Tips already seen are kept in
+  # NoSyncTipsToNotShow, left alone so they do not repeat.
+  defaults write com.googlecode.iterm2 NoSyncPermissionToShowTip -bool true
+  defaults write com.googlecode.iterm2 NoSyncTipsDisabled -bool false
   # Key "<char>-<modifiers>-<keycode>": the char is what the key types with
   # shift applied and option ignored (cmd+option+j -> "j"), modifiers
   # 0x100000 cmd, 0x80000 option; keycodes 38 = j, 40 = k. Actions: 0 next
