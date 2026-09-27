@@ -8,7 +8,7 @@ description: Add a day's work, and a Next section of the following day's tasks, 
 The user keeps a work log in a Google Doc and asks, usually at the end of a
 day, to add that day's entry. Everything identifying -- the document ids,
 the project areas, who the colleagues are, which zone the user is in -- lives
-OUTSIDE this file, in `~/.config/claude-worklog/routine.md`, because this
+outside this file, in `~/.config/claude-worklog/routine.md`, because this
 repo is public. Read that first; if it is missing the user's private dotfiles
 repo is not cloned on this machine, so ask for it rather than guessing.
 
@@ -25,13 +25,13 @@ status`): the day's commits are read from GitHub, not from local clones.
 
 ## Writing the entry
 
-Write with `gws`, already OAuth-authenticated AS THE USER -- edits carry
+Write with `gws`, already OAuth-authenticated as the user -- edits carry
 their name in version history and nothing needs sharing. The Google Drive MCP connector can read
-a document but CANNOT write one: its `update_file` changes metadata only.
+a document but cannot write one: its `update_file` changes metadata only.
 
-The log is ONE TAB PER MONTH, titled `MM/YYYY`, newest tab at index 0;
+The log is one tab per month, titled `MM/YYYY`, newest tab at index 0;
 within a tab the days are newest-first too. So an entry goes at index 1 of
-the CURRENT MONTH's tab -- look its `tabId` up by title, and when the month
+the current month's tab -- look its `tabId` up by title, and when the month
 has rolled over create it first with `addDocumentTab`
 (`tabProperties: {title, index: 0}`) so it lands above the previous month.
 `gws docs +write` is append-only and therefore wrong here.
@@ -53,16 +53,16 @@ indices. Note `gws` prints "Using keyring backend: keyring" ahead of the
 JSON on some invocations (stdout, not stderr) - strip the first line before
 parsing, or send stderr to /dev/null and check whether it is there.
 
-`includeTabsContent` is not optional: WITHOUT it a `get` silently returns
+`includeTabsContent` is not optional: without it a `get` silently returns
 only the first tab as `body`, with no error and no hint that other tabs
 exist. With it, every tab comes back under `tabs[]` keyed by
 `tabProperties.tabId`. Tabs can also be created and removed
 (`addDocumentTab`, `deleteTab`), and Drive full-text search does index
 non-default tabs, though its index lags an API edit by several minutes.
 
-Build the whole entry as ONE `insertText` and compute every style range
+Build the whole entry as one `insertText` and compute every style range
 from cumulative offsets of that block, so no request depends on existing
-content. `--dry-run` renders the payload without sending it. When REWRITING
+content. `--dry-run` renders the payload without sending it. When rewriting
 an existing entry, an equal-length swap (delete then insert the same number
 of characters) leaves every other precomputed index valid, so a batch of
 them needs no reordering.
@@ -105,13 +105,13 @@ never estimate them. A merge commit, a squash landing on the day it merged
 the counts the script gives for that landing, so the same diff can appear
 on two days with the same numbers -- that is correct, both days moved it.
 
-Group by TASK, never a flat list of the day's actions: a HEADING_3 per task
+Group by task, never a flat list of the day's actions: a HEADING_3 per task
 labelled `<area>: <task>` (`backend: idempotency addition`), with that
 task's bullets under it. A task then shows up in the document outline, and
 the day reads as a handful of threads rather than scattered lines. Heading,
 not bullet nesting, on purpose: `createParagraphBullets` has no
-nesting-level field, it takes nesting from LEADING TABS in the inserted text
-and CONSUMES them, which shifts every index after the request and breaks
+nesting-level field, it takes nesting from leading tabs in the inserted text
+and consumes them, which shifts every index after the request and breaks
 style ranges computed from the insert.
 
 Order groups, and bullets within a group, by their first source event.
@@ -126,7 +126,7 @@ guess a time to fill the slot; drop the stamp and say so when the source has
 none. The `Next` section takes no stamps, because nothing in it has happened
 yet.
 
-Stamps are in the USER'S LOCAL TIME for that day, which is NOT this machine's
+Stamps are in the user's local time for that day, which is not this machine's
 -- assume the box is UTC and the user is not. Resolve the zone per entry
 rather than hardcoding it; the user moves between countries, and an entry
 stamped in the wrong zone looks perfectly plausible. Two sources, both
@@ -151,22 +151,22 @@ self-updating:
   the disagreement is worth reporting -- it means a move.
 
 If neither speaks -- no Slack connector attached, and a day whose commits
-were all made on this box -- ASK. Do not fall back to the zone the last
+were all made on this box -- ask. Do not fall back to the zone the last
 entry used, and do not read one off the history in the private file: that
-history records where the user HAS been, which is not evidence about today.
+history records where the user has been, which is not evidence about today.
 A wrong zone is invisible in the finished entry, so it is not the place to
 save the user a question.
 
-Either way, state the zone you resolved and how, in one line, BEFORE writing
+Either way, state the zone you resolved and how, in one line, before writing
 the entry ("stamping in Asia/Yerevan, from Slack; the day's merges agree").
 The user is in the loop when the log is written and will catch a wrong one
 instantly; nothing downstream will.
 
 So convert every git, CI and transcript time. Two traps: `git log
---date=format:` renders each commit in ITS OWN recorded zone, so local
+--date=format:` renders each commit in its own recorded zone, so local
 commits and GitHub merges in one listing are hours apart --
 `--date=format-local:` normalises them to the box. And times lifted from a
-Google daily-agenda mail are ALREADY in the calendar's own zone; converting
+Google daily-agenda mail are already in the calendar's own zone; converting
 those is the mistake, not leaving them.
 
 Name the city in the date heading -- `08/31/2026 (Lisbon)` -- so entries
@@ -176,7 +176,7 @@ written on either side of a move can still be read.
 
 The user works past midnight, so a calendar day would split one evening's
 work in two and file its tail under a date nobody associates with it. An
-entry dated D covers D 05:00 up to D+1 05:00 IN THE ZONE RESOLVED ABOVE;
+entry dated D covers D 05:00 up to D+1 05:00 in the zone resolved above;
 anything before 05:00 belongs to the previous date's entry. The cutoff sits
 in the middle of the user's overnight gap; move it on fresh evidence, not
 on one late night. Four things follow.
@@ -186,7 +186,7 @@ up today, write D. And a date whose only work fell before 05:00 is not a
 missing day -- that work is the previous date's, and no entry is added for
 it.
 
-Gather by the WINDOW, never by a calendar date in any zone. Compute both
+Gather by the window, never by a calendar date in any zone. Compute both
 ends once, in local time for git and GitHub and in UTC for the transcripts.
 Spell the end date out: GNU date reads `05:00 + 1 day` as 05:00 in zone
 +01, silently.
@@ -211,13 +211,13 @@ of the span, inside the bold: `**23:40-01:30 +1**`, `**01:45-02:30 +1**`.
 Never run the clock past 24 (`25:30`).
 
 Order by absolute time, not by the stamp text: post-midnight bullets are
-the day's LAST events, and a sort on `HH:MM` would put them first. The
+the day's last events, and a sort on `HH:MM` would put them first. The
 every-day-it-moved rule (below) uses this window too: a PR merged at 01:00
 on D+1 moved on D.
 
 ## Gathering the material
 
-Use BOTH the day's commits and the sessions' transcripts. The commits,
+Use both the day's commits and the sessions' transcripts. The commits,
 which supply the links, come from
 
     ~/.dotfiles/scripts/worklog_commits.sh '<local start>' '<local end>'
@@ -228,12 +228,12 @@ which walks every branch of every repo under the GitHub owners named in
 the commits whose author name or email matches `git-author-pattern` --
 about a minute, progress on stderr, two TSV sections on stdout:
 
-- `#work`: commits AUTHORED inside the window, one line each (committed
+- `#work`: commits authored inside the window, one line each (committed
   and authored dates, repo, sha, branches, subject, url, and the lines
   `added` and `removed` -- one extra API call per commit, or `git show
   --shortstat` for a local clone). These are the day's entries, and the
   two count columns are what the task headings and sha links quote.
-- `#relanded`: commits authored BEFORE the window that a release or
+- `#relanded`: commits authored before the window that a release or
   rebase re-committed inside it, collapsed to one line per batch (repo,
   branches, committer, count, authored range, subjects). A batch is one
   event -- "released N commits from D1..D2 to main" -- never N entries,
@@ -250,7 +250,7 @@ the day's window, above, and keep `type == "user"` messages) -- work that
 produced no commit, such as a benchmark run or a policy change on a VM,
 only shows up there. Exclude other people's commits.
 
-One piece of work earns an entry on EVERY day it moved, not once on the day
+One piece of work earns an entry on every day it moved, not once on the day
 it was written: the day it was opened, and again on the day it merged, each
 dated by its own event. A merge days later is real work with real
 consequences (who approved it, what CI was skipped) even though the diff has
