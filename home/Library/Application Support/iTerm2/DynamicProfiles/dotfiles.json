@@ -24,7 +24,7 @@
       "BM Growl": true,
       "Send Terminal Generated Alerts": true,
       "Suppress Alerts in Active Session": true,
-      "Send Bell Alert": false,
+      "Send Bell Alert": true,
       "Send Session Ended Alert": false,
       "Option Key Sends": 2,
       "Right Option Key Sends": 2,
