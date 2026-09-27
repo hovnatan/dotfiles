@@ -395,7 +395,11 @@ if [ "$(uname)" = "Darwin" ]; then
   # Alert turns a bell into a macOS notification instead, but Suppress
   # Alerts in Active Session keeps it to other tabs: macOS never bounces the
   # dock for the frontmost app, so while iTerm2 is in front the banner is
-  # the only signal that a background tab rang.
+  # the only signal that a background tab rang. Manual step per machine:
+  # System Settings > Notifications > iTerm2 > Persistent, so a banner
+  # waits until dismissed (the style lives in an undocumented com.apple.ncprefs
+  # bitfield, not scripted here); alt+0 clears them all
+  # (home/.hammerspoon/clear_notifications.lua).
   defaults write com.googlecode.iterm2 BounceOnInactiveBell -bool true
   # Tip of the Day, at most one a day after launch. Without the permission
   # key iTerm2 first asks whether to show tips at all; NoSyncTipsDisabled

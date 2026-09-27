@@ -14,7 +14,8 @@ hs.accessibilityState(true)
 require("force_us_layout")
 require("url_dispatcher")
 require("app_hotkeys")
-require("fullscreen_apps")
+-- require("fullscreen_apps")
+require("clear_notifications")
 -- require("meeting_focus")
 
 -- hs CLI (`hs -c "..."`) for scripting and debugging from the shell.
