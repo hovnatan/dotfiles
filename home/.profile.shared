@@ -11,7 +11,8 @@
 # Fallback for environments that don't set a locale (bare SSH, cron); plain C breaks UTF-8
 export LANG="${LANG:-en_US.UTF-8}"
 
-# Personal word list for hunspell (technical terms), tracked in dotfiles
+# Personal word list for hunspell (technical terms), tracked in the private
+# companion repo (~/.dotfiles-private) and linked here when it is cloned
 export WORDLIST="$HOME/.hunspell_en_US"
 
 export COLORTERM=truecolor
