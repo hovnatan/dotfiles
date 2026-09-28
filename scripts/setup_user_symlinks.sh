@@ -428,6 +428,23 @@ if [ "$(uname)" = "Darwin" ]; then
   # tab and the title outlives the ssh session. true restores the pre-ssh
   # tab and window title silently instead of asking.
   defaults write com.googlecode.iterm2 NoSyncRestoreIconAndWindowNameOnHostChange -bool true
+  # No restore on relaunch: a launch opens one fresh default window, as
+  # Ghostty does here. Three switches, all read at launch:
+  #   runJobsInServers false               -> no session restoration (Advanced
+  #                                           setting): shells no longer run in
+  #                                           iTermServer daemons that outlive
+  #                                           a quit and reattach, scrollback
+  #                                           and all, on the next launch
+  #   NoSyncIgnoreSystemWindowRestoration  -> false undoes the "Window
+  #                                           Restoration Disabled" banner's
+  #                                           restore-anyway answer, which
+  #                                           overrides the macOS setting
+  #   NSQuitAlwaysKeepsWindows false       -> per-app "Close windows when
+  #                                           quitting", whatever the system
+  #                                           default says
+  defaults write com.googlecode.iterm2 runJobsInServers -bool false
+  defaults write com.googlecode.iterm2 NoSyncIgnoreSystemWindowRestoration -bool false
+  defaults write com.googlecode.iterm2 NSQuitAlwaysKeepsWindows -bool false
   # Key "<char>-<modifiers>-<keycode>": the char is what the key types with
   # shift applied and option ignored (cmd+option+j -> "j"), modifiers
   # 0x100000 cmd, 0x80000 option; keycodes 38 = j, 40 = k. Actions: 0 next
