@@ -173,6 +173,20 @@ elif [ -d ~/.dotfiles-private/home ]; then
   # points here too, covering other locales. Interactive saves write through
   # the link.
   ln -sf ~/.dotfiles-private/home/.hunspell_en_US ~/.hunspell_en_US
+
+  # The same list is nvim's spellfile (core/options.lua), so zg and a
+  # hunspell save add to one list. nvim wants the name to end in
+  # .utf-8.add, hence a second link rather than ~/.hunspell_en_US itself;
+  # its compiled .spl lands next to this link, outside every repo. A real
+  # file here holds words zg added before the link - merge them first.
+  nvim_spell=~/.local/share/nvim/spell/en.utf-8.add
+  if [ -e "$nvim_spell" ] && [ ! -L "$nvim_spell" ]; then
+    warn "$nvim_spell is a real file; append its words to ~/.dotfiles-private/home/.hunspell_en_US, delete it and re-run"
+  else
+    mkdir -p "$(dirname "$nvim_spell")"
+    ln -sf ~/.dotfiles-private/home/.hunspell_en_US "$nvim_spell"
+  fi
+
   link_private_config ~/.dotfiles-private
 else
   # The word list used to live in this repo; drop the link left dangling by
@@ -180,7 +194,7 @@ else
   if [ -L ~/.hunspell_en_US ] && [ ! -e ~/.hunspell_en_US ]; then
     rm ~/.hunspell_en_US
   fi
-  echo "$HOME/.dotfiles-private not cloned - hunspell has no personal word list"
+  echo "$HOME/.dotfiles-private not cloned - hunspell and nvim have no personal word list"
 fi
 
 if [ -d ~/.hov-dotfiles-private/home ]; then
