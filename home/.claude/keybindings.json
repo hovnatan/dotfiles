@@ -10,6 +10,13 @@
       }
     },
     {
+      "context": "EffortSlider",
+      "bindings": {
+        "h": "effortSlider:decreaseEffort",
+        "l": "effortSlider:increaseEffort"
+      }
+    },
+    {
       "context": "Chat",
       "bindings": {
         "escape": null
