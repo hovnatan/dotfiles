@@ -76,8 +76,12 @@ esac
 # The window is taken with whatever offset it carries and normalised to UTC:
 # the API compares against UTC, and `gh repo list`'s pushedAt is UTC too, so
 # one form serves both the queries and the repo prefilter below.
-START=$(date -u -d "$1" +%FT%TZ 2>/dev/null) || die "cannot parse START: $1"
-END=$(date -u -d "$2" +%FT%TZ 2>/dev/null) || die "cannot parse END: $2"
+# gdate is GNU date on every box (coreutils-prefixed in nix/flake.nix): macOS
+# date has no -d, and would fail below as an unparseable START.
+command -v gdate >/dev/null \
+  || die "gdate (GNU date) not on PATH -- it comes from coreutils-prefixed in nix/flake.nix; run dotup"
+START=$(gdate -u -d "$1" +%FT%TZ 2>/dev/null) || die "cannot parse START: $1"
+END=$(gdate -u -d "$2" +%FT%TZ 2>/dev/null) || die "cannot parse END: $2"
 [[ "$START" < "$END" ]] || die "START must precede END ($START >= $END)"
 
 # The identifying half -- who the user is, which owners -- lives in the

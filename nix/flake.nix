@@ -85,6 +85,11 @@
             # timg sends PNG (~0.7 MB for the same image) but pulls ~490 MiB
             # of ffmpeg/poppler vs chafa's ~57 MiB (2026-09-24)
             pkgs.chafa
+            # GNU coreutils as gdate, gsed, ...: the g prefix keeps macOS's
+            # BSD tools as the plain names, and Linux gets the same gdate, so
+            # a script needing GNU date (worklog_commits.sh, the work-log
+            # skill's window recipe) calls gdate everywhere (2026-09-28)
+            pkgs.coreutils-prefixed
             # fd -- the fish fzf plugin's file search (FZF_FIND_FILE_COMMAND
             # in home/.config/fish/config.fish)
             pkgs.fd

@@ -188,14 +188,15 @@ it.
 
 Gather by the window, never by a calendar date in any zone. Compute both
 ends once, in local time for git and GitHub and in UTC for the transcripts.
-Spell the end date out: GNU date reads `05:00 + 1 day` as 05:00 in zone
-+01, silently.
+Use `gdate`, GNU date on every box (macOS `date` has no `-d`; nix/flake.nix
+ships it as coreutils-prefixed). Spell the end date out: GNU date reads
+`05:00 + 1 day` as 05:00 in zone +01, silently.
 
-    D=2026-08-31; E=$(date -d "$D + 1 day" +%F); Z=Asia/Yerevan
-    TZ=$Z date -d "$D 05:00" --iso-8601=seconds     # 2026-08-31T05:00:00+04:00
-    TZ=$Z date -d "$E 05:00" --iso-8601=seconds     # 2026-09-01T05:00:00+04:00
-    date -u -d "TZ=\"$Z\" $D 05:00" +%FT%TZ         # 2026-08-31T01:00:00Z
-    date -u -d "TZ=\"$Z\" $E 05:00" +%FT%TZ         # 2026-09-01T01:00:00Z
+    D=2026-08-31; E=$(gdate -d "$D + 1 day" +%F); Z=Asia/Yerevan
+    TZ=$Z gdate -d "$D 05:00" --iso-8601=seconds    # 2026-08-31T05:00:00+04:00
+    TZ=$Z gdate -d "$E 05:00" --iso-8601=seconds    # 2026-09-01T05:00:00+04:00
+    gdate -u -d "TZ=\"$Z\" $D 05:00" +%FT%TZ        # 2026-08-31T01:00:00Z
+    gdate -u -d "TZ=\"$Z\" $E 05:00" +%FT%TZ        # 2026-09-01T01:00:00Z
 
 `git log --since=<local start> --until=<local end>` takes those as they
 are -- ISO with an offset, time and offset both honoured. GitHub search
@@ -203,7 +204,7 @@ takes the same form, but its range is inclusive at both ends, so
 `merged:<local start>..<E 04:59:59 with offset>`. A transcript record's
 `timestamp` is a UTC ISO string (`2026-08-31T21:55:57.247Z`), so compare it
 to the UTC pair as strings: `.timestamp >= $A and .timestamp < $B`. On a
-DST night the window is 23 or 25 hours long; `date` with the IANA zone
+DST night the window is 23 or 25 hours long; `gdate` with the IANA zone
 gets that right, a hand-written offset does not.
 
 Stamps keep the real clock time and mark the crossing with ` +1` at the end
