@@ -22,6 +22,9 @@ vim.pack.add({
   { src = "https://github.com/NeogitOrg/neogit", version = "master" },
   -- Last tag 2.0.0 trails main by 122 commits (2026-09-24), so follow main.
   { src = "https://github.com/ellisonleao/gruvbox.nvim", version = "main" },
+  -- Only its picker module is used (setup below). Semver releases, main
+  -- only 11 commits past v2.31.0 (2026-09-27), so stay on 2.x like gitsigns.
+  { src = "https://github.com/folke/snacks.nvim", version = vim.version.range("2") },
 }, {
   -- The lockfile already pins what gets installed, so a fresh machine
   -- installs without asking (a prompt would also hang a headless nvim).
@@ -98,3 +101,42 @@ require("gitsigns").setup({
 -- hunk or visual selection under the cursor; c commits. Side-by-side review
 -- stays with `git dt` (home/.config/git/config.shared), so no diffview.
 require("neogit").setup({})
+
+-- snacks.nvim: only the picker; every other snacks module stays off. The
+-- <space> keys are the ones the old telescope setup had (3456c4f4^):
+--
+--   <space>f  smart: open buffers, then recent files, then all files (fd),
+--             frecency-ranked with a cwd bonus (was telescope smart_open)
+--   <space>b  open buffers
+--   <space>g  live grep: rg reruns as you type (was live_grep_args)
+--   <space>G  grep the word under the cursor, or the visual selection
+--
+-- rg reads home/.config/ripgrep/rc first and snacks' own flags come after, so
+-- snacks wins on conflicts: its default --no-hidden would hide dotfiles while
+-- the rc's --no-ignore-vcs still searched node_modules. hidden = true lines
+-- grep up with the rc (hidden and git-ignored files, never .git). Files get
+-- hidden = true too, as the old `fd --hidden` picker did; fd still skips
+-- .gitignore'd files and snacks excludes .git.
+local snacks = require("snacks")
+snacks.setup({
+  picker = {
+    enabled = true,
+    sources = {
+      files = { hidden = true },
+      grep = { hidden = true },
+      grep_word = { hidden = true },
+    },
+  },
+})
+vim.keymap.set("n", "<space>f", function()
+  snacks.picker.smart()
+end, { desc = "Find file" })
+vim.keymap.set("n", "<space>b", function()
+  snacks.picker.buffers()
+end, { desc = "Find buffer" })
+vim.keymap.set("n", "<space>g", function()
+  snacks.picker.grep()
+end, { desc = "Live grep" })
+vim.keymap.set({ "n", "x" }, "<space>G", function()
+  snacks.picker.grep_word()
+end, { desc = "Grep word or selection" })
