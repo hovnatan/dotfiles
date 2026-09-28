@@ -449,6 +449,16 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 runJobsInServers -bool false
   defaults write com.googlecode.iterm2 NoSyncIgnoreSystemWindowRestoration -bool false
   defaults write com.googlecode.iterm2 NSQuitAlwaysKeepsWindows -bool false
+  # Clicked links open in the system browser, as in Ghostty. Without a
+  # plugin installed, iTerm2 3.6+ asks "Plugin Required ... download the
+  # Browser Plugin" (Download / Use System Browser / Cancel) on every click.
+  # The pair below is what ticking "Remember my choice" and picking "Use
+  # System Browser" (button 1) writes; the bool alone still showed the
+  # dialog. NoSyncOpenLinksInApp is Advanced > Warnings "Open links using
+  # the in-app browser?" (unset = ask each time).
+  defaults write com.googlecode.iterm2 NoSyncOpenLinksInApp -bool false
+  defaults write com.googlecode.iterm2 NoSyncBrowserUpsell -bool true
+  defaults write com.googlecode.iterm2 NoSyncBrowserUpsell_selection -int 1
   # Key "<char>-<modifiers>-<keycode>": the char is what the key types with
   # shift applied and option ignored (cmd+option+j -> "j"), modifiers
   # 0x100000 cmd, 0x80000 option; keycodes 38 = j, 40 = k. Actions: 0 next
