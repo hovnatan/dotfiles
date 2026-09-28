@@ -109,9 +109,10 @@ vim.o.clipboard = "unnamedplus"
 
 vim.opt.exrc = true
 
--- Command-line completion in a popup menu, matched fuzzily; noselect keeps
--- typing narrowing instead of inserting the first entry, lastused lists the
--- most recent buffer first for :b. (Moved here from the plugin-free
--- core/picker.lua when snacks' picker took over <space>f / <space>b.)
-vim.o.wildmode = "noselect:lastused,full"
+-- Command-line completion in a popup menu, matched fuzzily. The first <Tab>
+-- already inserts the top match (:neo<Tab> -> :Neogit) and further <Tab>s
+-- cycle; lastused lists the most recent buffer first for :b. (Moved here
+-- from the plugin-free core/picker.lua when snacks' picker took over
+-- <space>f / <space>b.)
+vim.o.wildmode = "full:lastused"
 vim.o.wildoptions = "pum,fuzzy"
