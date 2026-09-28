@@ -16,6 +16,9 @@ export WORDLIST="$HOME/.hunspell_en_US"
 
 export COLORTERM=truecolor
 
+# ripgrep reads its defaults only from this variable (home/.config/ripgrep/rc)
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/rc"
+
 MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"
 export MAKEFLAGS
 

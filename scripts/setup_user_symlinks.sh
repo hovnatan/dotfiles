@@ -254,6 +254,11 @@ fi
 
 # fd's global ignore file; fish's FZF_FIND_FILE_COMMAND also passes it explicitly
 ln -sfn ~/.dotfiles/home/.config/fd ~/.config/fd
+# ripgrep's defaults; RIPGREP_CONFIG_PATH in home/.profile.shared points here
+ln -sfn ~/.dotfiles/home/.config/ripgrep ~/.config/ripgrep
+# ruff's user config, used only where a project has no ruff settings of its
+# own; ~/.config/ruff on macOS too (checked with ruff 0.15.7 and 0.16.8)
+ln -sfn ~/.dotfiles/home/.config/ruff ~/.config/ruff
 
 mkdir -p ~/.local/{bin,local}
 ln -sf ~/.dotfiles/home/.npmrc ~/.npmrc

@@ -145,10 +145,15 @@
             pkgs.python3
             # Rsync for cloud storage
             pkgs.rclone
-            # ripgrep -- rg, also behind fish's g/rgh abbreviations
+            # ripgrep -- rg; defaults in home/.config/ripgrep/rc
             pkgs.ripgrep
             # rsync 3.x; Apple's /usr/bin/rsync is openrsync (see ssh_folder_sync.sh)
             pkgs.rsync
+            # ruff -- Python linter and formatter; the user config outside
+            # projects is home/.config/ruff (every rule on). Replaces a stray
+            # binary in /opt/homebrew/bin that no package manager owned
+            # (2026-09-27)
+            pkgs.ruff
             # Static analysis and lint tool, for (ba)sh scripts
             pkgs.shellcheck
             # stylua -- Lua formatter, style in .stylua.toml; nvim formats on

@@ -57,13 +57,6 @@ tmux source ~/.config/tmux/tmux.conf
 
 "$script_full_path/color_switcher.sh" ~/.config/bat/config ~/.config/bat/option ~/.config/bat/config_$COLOR
 
-SIOYEK="$HOME/.config/sioyek/"
-"$script_full_path/color_switcher.sh" "$SIOYEK/prefs_user.config" "$SIOYEK/prefs_user_common" "$SIOYEK/$COLOR" reverse
-if [[ "$WSL_DISTRO_NAME" ]]; then
-  cp ~/.config/sioyek/prefs_user.config "$WINDOWS_HOME/Downloads/sioyek-release-windows-portable/sioyek-release-windows/"
-  cp ~/.config/sioyek/keys_user.config "$WINDOWS_HOME/Downloads/sioyek-release-windows-portable/sioyek-release-windows/"
-fi
-
 if [ $COLOR == "dark" ]; then
   if [ "$machine" == "Linux" ]; then
     sed -i 's/gruvbox-light/gruvbox-dark/g' ~/.gitconfig

@@ -1,0 +1,30 @@
+# ripgrep defaults, read via RIPGREP_CONFIG_PATH (home/.profile.shared).
+# One argument per line; a flag and its value can share a line with "=".
+# Restored from the old ~/.dotfiles/.ripgreprc (2021-05 .. 2024-07).
+# Tools that run rg themselves are not affected when they pass
+# --no-config, as Claude Code's built-in rg does.
+
+# Long lines (minified JS, JSON dumps): cut at 150 columns, but still show
+# the start of the line instead of just "[Omitted long line]".
+--max-columns=150
+--max-columns-preview
+
+# `rg -tweb foo` searches html, css and js.
+--type-add=web:*.{html,css,js}*
+
+# Line numbers in bold instead of green.
+--colors=line:none
+--colors=line:style:bold
+
+# Case-insensitive unless the pattern has an uppercase letter.
+--smart-case
+
+# Also search dotfiles and files git ignores (build output, node_modules,
+# .venv): a search here means "anywhere in this tree".
+--hidden
+--no-ignore-vcs
+
+# ...but never git's own object store and refs, which --hidden would
+# otherwise open up. The old file had "!git/*" here, missing the dot: it
+# skipped folders named git/ (home/.config/git) and still searched .git/.
+--glob=!.git/
