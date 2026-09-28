@@ -346,6 +346,10 @@ if [ "$(uname)" = "Darwin" ]; then
   #                                   Intel One Mono, Cascadia Code, Commit
   #                                   Mono 400/450/500 (86b41fb5 has the 500
   #                                   build)
+  #   built-in Nerd Font icons     -> Non-ASCII font Symbols Nerd Font
+  #                                   Mono (SymbolsNFM, Brewfile cask
+  #                                   font-symbols-only-nerd-font); Menlo
+  #                                   has none, so icons drew as ? boxes
   #   fullscreen = true            -> Window Type 4 (native fullscreen;
   #                                   5 docks to the bottom edge)
   #   command $SHELL -l -> fish    -> same chain via /bin/sh, since iTerm2
