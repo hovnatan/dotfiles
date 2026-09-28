@@ -327,7 +327,7 @@ native_flags() {
 # natively (monitor-bell/bell-action, .tmux.conf), so it needs no
 # passthrough wrapping. No desktop notification on purpose: it doubled
 # iTerm2's dock count and tmux dropped it for hidden panes. Same behaviour
-# as the fish hook in config.fish and ~/.claude/notify-stop.sh.
+# as the fish hook in config.fish.
 #   `sleep 2` -> bell; `true` -> nothing
 autoload -Uz add-zsh-hook
 zmodload zsh/datetime

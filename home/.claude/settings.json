@@ -68,11 +68,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.dotfiles/home/.claude/notify-stop.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
             "command": "~/.dotfiles/home/.claude/ntfy-stop.sh",
             "timeout": 5
           }

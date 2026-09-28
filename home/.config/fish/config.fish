@@ -57,8 +57,7 @@ set -u fish_color_search_match normal --bold
 # natively (monitor-bell/bell-action, .tmux.conf), so it needs no
 # passthrough wrapping. No desktop notification on purpose: it doubled
 # iTerm2's dock count and tmux dropped it for hidden panes. Same behaviour
-# as the zsh hook in .zshrc.shared and ~/.claude/notify-stop.sh; fish hands
-# postexec $CMD_DURATION (ms).
+# as the zsh hook in .zshrc.shared; fish hands postexec $CMD_DURATION (ms).
 #   `sleep 2` -> bell; `true` -> nothing
 function __bell_on_long_command --on-event fish_postexec
     test "$CMD_DURATION" -gt 1000; or return
