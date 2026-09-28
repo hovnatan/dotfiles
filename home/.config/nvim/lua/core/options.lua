@@ -91,16 +91,6 @@ end
 
 vim.g.python3_host_prog = "python3"
 
-vim.g.netrw_banner = 0
-vim.g.netrw_winsize = 20
-vim.g.netrw_altv = 1
-vim.g.netrw_cursor = 1
-vim.g.netrw_browsex_viewer = "open"
-vim.g.netrw_fastbrowse = 0
-vim.g.netrw_altfile = 1
-vim.g.netrw_liststyle = 1
-vim.g.netrw_maxfilenamelen = 50
-
 vim.o.spelllang = "en_us"
 vim.o.spellfile = vim.fn.expand("~/Dropbox/container_in_out/vim-spell-en.utf-8.add")
 vim.opt.spelloptions = "camel"
