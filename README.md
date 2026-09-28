@@ -45,8 +45,8 @@ On the machine that is behind:
 dotup            # alias for ~/.dotfiles/scripts/update.sh
 ```
 
-It fast-forwards `~/.dotfiles` (and `~/.dotfiles-private` when cloned) from
-origin, prints the pulled commit range, re-runs `setup_user_symlinks.sh` so
+It fast-forwards `~/.dotfiles` (and the private repos `~/.dotfiles-private`
+and `~/.hov-dotfiles-private` when cloned) from origin, prints the pulled commit range, re-runs `setup_user_symlinks.sh` so
 new files get linked, reports Brewfile drift (macOS), applies the pinned
 Nix package set (where Nix is installed; see "Nix packages"), and lists
 what to reload (tmux, Hammerspoon, open shells). Dirty tracked files are

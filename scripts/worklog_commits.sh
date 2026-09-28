@@ -82,7 +82,7 @@ END=$(date -u -d "$2" +%FT%TZ 2>/dev/null) || die "cannot parse END: $2"
 
 # The identifying half -- who the user is, which owners -- lives in the
 # private dotfiles, never in this public script.
-[ -r "$CONF/github-owners" ] || die "missing $CONF/github-owners -- is ~/.dotfiles-private installed?"
+[ -r "$CONF/github-owners" ] || die "missing $CONF/github-owners -- is ~/.hov-dotfiles-private installed?"
 [ -r "$CONF/git-author-pattern" ] || die "missing $CONF/git-author-pattern"
 PATTERN=$(grep -v -E '^[[:space:]]*(#|$)' "$CONF/git-author-pattern" | head -1)
 OWNERS=$(grep -v -E '^[[:space:]]*(#|$)' "$CONF/github-owners")

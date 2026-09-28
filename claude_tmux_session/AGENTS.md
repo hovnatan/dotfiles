@@ -186,7 +186,7 @@ The user may ask, at the end of a day, to add that day's work -- and a
 Invoke the `work-log` skill, which carries the whole routine; the document
 ids and the other identifying details it needs are in
 `~/.config/claude-worklog/`, symlinked out of the private companion repo at
-`~/.dotfiles-private`. If that directory is missing, the repo is not cloned
+`~/.hov-dotfiles-private`. If that directory is missing, the repo is not cloned
 -- ask the user for it.
 
 ## Azure

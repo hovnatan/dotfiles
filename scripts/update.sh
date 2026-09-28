@@ -5,14 +5,15 @@
 # linked. Run on the machine being updated; aliased as `dotup` in
 # home/.zshrc.shared.
 #
-#   origin/main --fetch, ff-only--> ~/.dotfiles ---------------.
-#   origin/main --fetch, ff-only--> ~/.dotfiles-private (opt) --+
-#                                                              v
-#                                   scripts/setup_user_symlinks.sh
-#                                                              v
+#   origin/main --fetch, ff-only--> ~/.dotfiles -------------------.
+#   origin/main --fetch, ff-only--> ~/.dotfiles-private (opt) ------+
+#   origin/main --fetch, ff-only--> ~/.hov-dotfiles-private (opt) --+
+#                                                                  v
+#                                       scripts/setup_user_symlinks.sh
+#                                                                  v
 #                              macOS only: Brewfile drift report (advisory)
 #                              apply the pinned Nix package set (if installed)
-#                                                              v
+#                                                                  v
 #                              reminders: tmux, Hammerspoon, open shells
 #
 # Local state on this machine, and what happens to it:
@@ -160,10 +161,14 @@ nix_apply() {
 main() {
   update_repo ~/.dotfiles
 
-  # Optional private companion repo; absent on most machines by design.
-  if [ -d ~/.dotfiles-private/.git ]; then
-    update_repo ~/.dotfiles-private
-  fi
+  # Optional private companion repos, personal and work; either may be
+  # absent by design.
+  local repo
+  for repo in ~/.dotfiles-private ~/.hov-dotfiles-private; do
+    if [ -d "$repo/.git" ]; then
+      update_repo "$repo"
+    fi
+  done
 
   # Re-install so new files under home/ get their links. Its warnings are
   # non-fatal for the install itself but make this run exit non-zero too.
