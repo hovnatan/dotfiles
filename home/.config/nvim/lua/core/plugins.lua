@@ -101,6 +101,8 @@ require("gitsigns").setup({
 -- hunk or visual selection under the cursor; c commits. Side-by-side review
 -- stays with `git dt` (home/.config/git/config.shared), so no diffview.
 require("neogit").setup({})
+-- ,gg opens the status tab (leader is ","); plain gg stays "first line".
+vim.keymap.set("n", "<leader>gg", "<cmd>Neogit<cr>", { desc = "Neogit status" })
 
 -- snacks.nvim: only the picker; every other snacks module stays off. The
 -- <space> keys are the ones the old telescope setup had (3456c4f4^):
