@@ -154,6 +154,19 @@ vim.keymap.set({ "n", "x" }, "<space>G", function()
   snacks.picker.grep_word()
 end, { desc = "Grep word or selection" })
 
+-- ,u<key>: option toggles (Snacks.toggle, a utility that needs no setup
+-- entry). The keys follow LazyVim's <leader>u set; each press echoes the new
+-- state ("Enabled **wrap**"). Window options (wrap, list, numbers) and spell
+-- flip for the current window/buffer only, background for the whole session.
+--   ,uw wrap    ,us spell    ,ul line numbers    ,uL relative numbers
+--   ,ui invisible chars (list)    ,ub light/dark background
+snacks.toggle.option("wrap", { name = "wrap" }):map("<leader>uw")
+snacks.toggle.option("spell", { name = "spell" }):map("<leader>us")
+snacks.toggle.line_number():map("<leader>ul")
+snacks.toggle.option("relativenumber", { name = "relative number" }):map("<leader>uL")
+snacks.toggle.option("list", { name = "invisible chars" }):map("<leader>ui")
+snacks.toggle.option("background", { off = "light", on = "dark", name = "dark background" }):map("<leader>ub")
+
 -- -: sidebar tree with the current file revealed (vim-vinegar's key, 2b52bdee).
 -- Pressing it outside the tree while it is open closes it; q closes it too.
 --   l / <CR> open    h close dir    - / <BS> up    a add (dir/ for a dir)
