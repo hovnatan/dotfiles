@@ -92,7 +92,25 @@ end
 vim.g.python3_host_prog = "python3"
 
 vim.o.spelllang = "en_us"
-vim.o.spellfile = vim.fn.expand("~/Dropbox/container_in_out/vim-spell-en.utf-8.add")
+-- zg adds to the hunspell personal word list in ~/.dotfiles-private, linked
+-- here by scripts/setup_user_symlinks.sh, so nvim and hunspell (Claude Code's
+-- spellcheck) share one list. Plain words only: nvim cannot read hunspell's
+-- "word/dog" affix hints, and hunspell cannot read zw's "word/!". Without the
+-- clone, zg starts a local file here, which the installer flags once the
+-- clone arrives.
+vim.o.spellfile = vim.fn.stdpath("data") .. "/spell/en.utf-8.add"
+
+-- nvim reads only the compiled .spl and rebuilds it on zg alone, so words
+-- arriving any other way (a dotup pull, a hunspell save, a fresh machine)
+-- would stay flagged. Rebuild at startup when the list is newer: two stats,
+-- and a few ms of mkspell for ~100 words.
+local add_stat = vim.uv.fs_stat(vim.o.spellfile)
+if add_stat then
+  local spl_stat = vim.uv.fs_stat(vim.o.spellfile .. ".spl")
+  if not spl_stat or spl_stat.mtime.sec <= add_stat.mtime.sec then
+    vim.cmd("silent mkspell! " .. vim.fn.fnameescape(vim.o.spellfile))
+  end
+end
 vim.opt.spelloptions = "camel"
 
 vim.o.clipboard = "unnamedplus"
