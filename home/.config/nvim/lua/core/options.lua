@@ -46,7 +46,12 @@ vim.opt.shortmess = "atIF"
 vim.opt.modeline = true
 vim.opt.modelines = 3
 vim.opt.whichwrap = "b,s,<,>,[,],h,l"
-vim.opt.wrap = false
+-- Soft wrap on: long lines break at a word boundary (linebreak), not
+-- mid-word, and continuation rows keep the line's indent (breakindent).
+-- ,uw turns it off for the current window (core/plugins.lua).
+vim.opt.wrap = true
+vim.opt.linebreak = true
+vim.opt.breakindent = true
 vim.opt.visualbell = false
 vim.opt.iskeyword = "@,48-57,_,192-255"
 vim.opt.isfname = vim.opt.isfname - "="
