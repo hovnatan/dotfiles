@@ -26,7 +26,8 @@ It is kept short on purpose - every line here is paid on every session.
   CI runs them on Linux and macOS (`.github/workflows/tests.yml`); locally
   they are safe beside live sessions.
 - This repo is public, commit messages included. Host names, IPs, tailnet
-  names and internal documents go in `~/.dotfiles-private` or in
+  names and internal documents go in the private repos (`~/.dotfiles-private`
+  personal, `~/.hov-dotfiles-private` work; see CONTEXT.md) or in
   machine-local state (fish universal variables, `~/.ssh/local_config`);
   tracked files and commits use placeholders (`<host>`, `vm`). Removing one
   after a push means rewriting history and force-pushing.

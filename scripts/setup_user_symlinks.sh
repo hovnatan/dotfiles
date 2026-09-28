@@ -138,35 +138,55 @@ ln -sf ~/.dotfiles/home/.claude/keybindings.json ~/.claude/keybindings.json
 # there land in the repo too.
 ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
 
-# Private companion repo, cloned at ~/.dotfiles-private: anything that should
-# not be public (internal documents, hosts, the spelling word list) lives
-# there. It is OPTIONAL - a machine without the clone still installs cleanly,
-# it just has no work log routine and hunspell flags the custom words.
-if [ -d ~/.dotfiles-private/home ]; then
+# Private companion repos, both OPTIONAL: a machine without a clone still
+# installs cleanly, it just goes without what that clone carries.
+#
+#   ~/.dotfiles-private      personal: the hunspell word list
+#   ~/.hov-dotfiles-private  work: claude-worklog (the work log routine),
+#                            anything naming an internal document or host
+#
+# Each mirrors $HOME under home/, like this repo; every home/.config/<dir>
+# in either is linked whole into ~/.config.
+link_private_config() {
+  local repo=$1 d target
+  mkdir -p ~/.config
+  for d in "$repo"/home/.config/*/; do
+    [ -d "$d" ] || continue
+    target=~/.config/"$(basename "$d")"
+    # ln -sfn would drop the link INSIDE a real directory of the same name
+    if [ -d "$target" ] && [ ! -L "$target" ]; then
+      warn "$target is a real directory; move its contents into $repo and re-run"
+      continue
+    fi
+    ln -sfn "${d%/}" "$target"
+  done
+}
+
+# Until 2026-09-28 the work repo was cloned at ~/.dotfiles-private. Left
+# there, its config would be linked as if personal and the personal repo
+# could not be cloned; moving it relinks everything on the re-run.
+if git -C ~/.dotfiles-private remote get-url origin 2>/dev/null | grep -q '/hov-dotfiles-private'; then
+  warn "$HOME/.dotfiles-private is the work repo; mv ~/.dotfiles-private ~/.hov-dotfiles-private, then re-run"
+elif [ -d ~/.dotfiles-private/home ]; then
   # Hunspell personal word list (technical terms). The name matches the en_US
   # dictionary so hunspell finds it by default; WORDLIST in .profile.shared
   # points here too, covering other locales. Interactive saves write through
   # the link.
   ln -sf ~/.dotfiles-private/home/.hunspell_en_US ~/.hunspell_en_US
-
-  mkdir -p ~/.config
-  for d in ~/.dotfiles-private/home/.config/*/; do
-    [ -d "$d" ] || continue
-    target=~/.config/"$(basename "$d")"
-    # ln -sfn would drop the link INSIDE a real directory of the same name
-    if [ -d "$target" ] && [ ! -L "$target" ]; then
-      echo -e "\033[33m$target is a real directory - leaving it, move its contents into the private repo\033[0m"
-      continue
-    fi
-    ln -sfn "${d%/}" "$target"
-  done
+  link_private_config ~/.dotfiles-private
 else
   # The word list used to live in this repo; drop the link left dangling by
   # the move rather than let a hunspell save recreate it here untracked.
   if [ -L ~/.hunspell_en_US ] && [ ! -e ~/.hunspell_en_US ]; then
     rm ~/.hunspell_en_US
   fi
-  echo "$HOME/.dotfiles-private not cloned - skipping private config"
+  echo "$HOME/.dotfiles-private not cloned - hunspell has no personal word list"
+fi
+
+if [ -d ~/.hov-dotfiles-private/home ]; then
+  link_private_config ~/.hov-dotfiles-private
+else
+  echo "$HOME/.hov-dotfiles-private not cloned - no work log routine"
 fi
 
 # Claude Code personal skills. Keep ~/.claude/skills as a real directory so
