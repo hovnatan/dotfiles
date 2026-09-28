@@ -432,22 +432,37 @@ if [ "$(uname)" = "Darwin" ]; then
   # tab and the title outlives the ssh session. true restores the pre-ssh
   # tab and window title silently instead of asking.
   defaults write com.googlecode.iterm2 NoSyncRestoreIconAndWindowNameOnHostChange -bool true
-  # No restore on relaunch: a launch opens one fresh default window, as
-  # Ghostty does here. Three switches, all read at launch:
-  #   runJobsInServers false               -> no session restoration (Advanced
-  #                                           setting): shells no longer run in
-  #                                           iTermServer daemons that outlive
-  #                                           a quit and reattach, scrollback
-  #                                           and all, on the next launch
-  #   NoSyncIgnoreSystemWindowRestoration  -> false undoes the "Window
-  #                                           Restoration Disabled" banner's
-  #                                           restore-anyway answer, which
-  #                                           overrides the macOS setting
-  #   NSQuitAlwaysKeepsWindows false       -> per-app "Close windows when
-  #                                           quitting", whatever the system
-  #                                           default says
-  defaults write com.googlecode.iterm2 runJobsInServers -bool false
-  defaults write com.googlecode.iterm2 NoSyncIgnoreSystemWindowRestoration -bool false
+  # No restore on relaunch or after a restart: a launch opens one fresh
+  # default window, as Ghostty does here. iTerm2 has two restore paths and
+  # both must go, or a restart with macOS's "Reopen windows when logging
+  # back in" ticked still brings back every tab with "Session Contents
+  # Restored" printed under its old scrollback:
+  #
+  #   quit / restart --> iTerm2's own SQLite store  --> restored at launch
+  #                      (UseRestorableStateController)  unconditionally
+  #                  --> macOS saved window state   --> restored unless
+  #                      (NSPersistentUIManager)         ignored per app
+  #
+  # Advanced settings are read from the capitalized key (UI name
+  # runJobsInServers -> key RunJobsInServers); a lowercase key is ignored.
+  # All four are read at launch:
+  #   RunJobsInServers false             -> shells no longer run in
+  #                                         iTermServer daemons that outlive
+  #                                         a quit and reattach on relaunch
+  #   UseRestorableStateController false -> no SQLite store; it saves on a
+  #                                         restart whatever the per-app
+  #                                         setting below says. iTerm2 also
+  #                                         mirrors this into
+  #                                         NoSyncIgnoreSystemWindowRestoration
+  #                                         at every launch
+  #   ApplePersistenceIgnoreState true   -> macOS skips iTerm2's saved window
+  #                                         state at launch, restart included
+  #   NSQuitAlwaysKeepsWindows false     -> per-app "Close windows when
+  #                                         quitting", so a plain quit saves
+  #                                         nothing either
+  defaults write com.googlecode.iterm2 RunJobsInServers -bool false
+  defaults write com.googlecode.iterm2 UseRestorableStateController -bool false
+  defaults write com.googlecode.iterm2 ApplePersistenceIgnoreState -bool true
   defaults write com.googlecode.iterm2 NSQuitAlwaysKeepsWindows -bool false
   # Clicked links open in the system browser, as in Ghostty. Without a
   # plugin installed, iTerm2 3.6+ asks "Plugin Required ... download the
