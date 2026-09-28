@@ -34,8 +34,9 @@ The tracked counterpart includes or requires it.
 _Avoid_: Private (that means the private companion repo)
 
 **Private repo**:
-`~/.dotfiles-private`, the optional companion clone for anything that names
-an internal document or host. Updated alongside this repo when present.
+`~/.dotfiles-private`, the optional companion clone for anything that should
+not be public: internal documents, hosts, the hunspell word list. Updated
+alongside this repo when present.
 
 **Vendored skill**:
 A Claude Code skill copied into `home/.claude/skills/<name>/` and pinned by

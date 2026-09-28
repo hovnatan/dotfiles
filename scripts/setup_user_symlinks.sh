@@ -56,11 +56,6 @@ mkdir -p ~/.vimundo/
 rm -rf ~/.vimrc
 ln -s ~/.dotfiles/home/.vimrc ~/.vimrc
 
-# Hunspell personal word list (technical terms). The name matches the en_US
-# dictionary so hunspell finds it by default; WORDLIST in .profile.shared points
-# here too, covering other locales. Interactive saves write through the link.
-ln -sf ~/.dotfiles/home/.hunspell_en_US ~/.hunspell_en_US
-
 # # Check if .bashrc_local is already sourced in .bashrc
 # if ! grep -q '\.bashrc_local' ~/.bashrc; then
 #     cat <<EOT >> ~/.bashrc
@@ -143,11 +138,17 @@ ln -sf ~/.dotfiles/home/.claude/keybindings.json ~/.claude/keybindings.json
 # there land in the repo too.
 ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
 
-# Private companion repo, cloned at ~/.dotfiles-private: anything naming an
-# internal document or host lives there, not in this public repo. It is
-# OPTIONAL - a machine without the clone still installs cleanly, it just has
-# no work log routine.
-if [ -d ~/.dotfiles-private/home/.config ]; then
+# Private companion repo, cloned at ~/.dotfiles-private: anything that should
+# not be public (internal documents, hosts, the spelling word list) lives
+# there. It is OPTIONAL - a machine without the clone still installs cleanly,
+# it just has no work log routine and hunspell flags the custom words.
+if [ -d ~/.dotfiles-private/home ]; then
+  # Hunspell personal word list (technical terms). The name matches the en_US
+  # dictionary so hunspell finds it by default; WORDLIST in .profile.shared
+  # points here too, covering other locales. Interactive saves write through
+  # the link.
+  ln -sf ~/.dotfiles-private/home/.hunspell_en_US ~/.hunspell_en_US
+
   mkdir -p ~/.config
   for d in ~/.dotfiles-private/home/.config/*/; do
     [ -d "$d" ] || continue
@@ -160,6 +161,11 @@ if [ -d ~/.dotfiles-private/home/.config ]; then
     ln -sfn "${d%/}" "$target"
   done
 else
+  # The word list used to live in this repo; drop the link left dangling by
+  # the move rather than let a hunspell save recreate it here untracked.
+  if [ -L ~/.hunspell_en_US ] && [ ! -e ~/.hunspell_en_US ]; then
+    rm ~/.hunspell_en_US
+  fi
   echo "$HOME/.dotfiles-private not cloned - skipping private config"
 fi
 
