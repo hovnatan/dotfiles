@@ -17,10 +17,9 @@
 # semantics the native push lacks.
 #
 # The session is identified by ID (third $TMUX field, stable across
-# renames for the server's lifetime; same idiom as notify-stop.sh's
-# guard). Unlike the bell's pure focus check, the cancel here also
-# requires the focus to be FRESH (see watched()) -- a bell into a locked
-# screen is harmless, a suppressed push is not.  The human-readable name
+# renames for the server's lifetime). The cancel requires the focus to
+# be FRESH, not just present (see watched()): a client left focused on a
+# locked screen must not suppress the push.  The human-readable name
 # is resolved in hook mode for the log lines, and again at push time for
 # the title (a /label may have renamed the session meanwhile), whose
 # <hostname>-<name> form matches the conversation/peer naming

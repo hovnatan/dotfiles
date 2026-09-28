@@ -390,12 +390,12 @@ if [ "$(uname)" = "Darwin" ]; then
   # theme); 28 sits nearer Ghostty's native macOS tab bar. Read at launch.
   defaults write com.googlecode.iterm2 CompactMinimalTabBarHeight -float 28
   # Bell -> dock bounce while iTerm2 is in the background, as Ghostty does.
-  # The fish/zsh long-command hooks and ~/.claude/notify-stop.sh ring only
-  # the bell, no OSC notification of their own. The profile's Send Bell
-  # Alert turns a bell into a macOS notification instead, but Suppress
-  # Alerts in Active Session keeps it to other tabs: macOS never bounces the
-  # dock for the frontmost app, so while iTerm2 is in front the banner is
-  # the only signal that a background tab rang. Manual step per machine:
+  # The fish/zsh long-command hooks and Claude Code (preferredNotifChannel
+  # terminal_bell) ring only the bell, no OSC notification of their own.
+  # The profile's Send Bell Alert turns a bell into a macOS notification
+  # instead, but Suppress Alerts in Active Session keeps it to other tabs:
+  # macOS never bounces the dock for the frontmost app, so while iTerm2 is
+  # in front the banner is the only signal that a background tab rang. Manual step per machine:
   # System Settings > Notifications > iTerm2 > Persistent, so a banner
   # waits until dismissed (the style lives in an undocumented com.apple.ncprefs
   # bitfield, not scripted here); alt+0 clears them all
