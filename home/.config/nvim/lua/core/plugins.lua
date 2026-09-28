@@ -22,7 +22,7 @@ vim.pack.add({
   { src = "https://github.com/NeogitOrg/neogit", version = "master" },
   -- Last tag 2.0.0 trails main by 122 commits (2026-09-24), so follow main.
   { src = "https://github.com/ellisonleao/gruvbox.nvim", version = "main" },
-  -- Only its picker module is used (setup below). Semver releases, main
+  -- Only its picker and explorer modules are used (setup below). Semver releases, main
   -- only 11 commits past v2.31.0 (2026-09-27), so stay on 2.x like gitsigns.
   { src = "https://github.com/folke/snacks.nvim", version = vim.version.range("2") },
 }, {
@@ -104,8 +104,9 @@ require("neogit").setup({})
 -- ,gg opens the status tab (leader is ","); plain gg stays "first line".
 vim.keymap.set("n", "<leader>gg", "<cmd>Neogit<cr>", { desc = "Neogit status" })
 
--- snacks.nvim: only the picker; every other snacks module stays off. The
--- <space> keys are the ones the old telescope setup had (3456c4f4^):
+-- snacks.nvim: only the picker and the explorer (a picker in disguise);
+-- every other snacks module stays off. The <space> keys are the ones the old
+-- telescope setup had (3456c4f4^):
 --
 --   <space>f  smart: open buffers, then recent files, then all files (fd),
 --             frecency-ranked with a cwd bonus (was telescope smart_open)
@@ -127,8 +128,18 @@ snacks.setup({
       files = { hidden = true },
       grep = { hidden = true },
       grep_word = { hidden = true },
+      -- Dotfiles shown like the files picker (this repo is mostly home/.*);
+      -- git-ignored ones stay hidden, I toggles them, H toggles hidden.
+      -- Inside the tree, - goes up a directory as vim-vinegar's did.
+      explorer = {
+        hidden = true,
+        win = { list = { keys = { ["-"] = "explorer_up" } } },
+      },
     },
   },
+  -- Also opens on `nvim <dir>` or :e <dir> (netrw itself is off,
+  -- core/options.lua). Deletes go to the system trash.
+  explorer = { enabled = true },
 })
 vim.keymap.set("n", "<space>f", function()
   snacks.picker.smart()
@@ -142,3 +153,11 @@ end, { desc = "Live grep" })
 vim.keymap.set({ "n", "x" }, "<space>G", function()
   snacks.picker.grep_word()
 end, { desc = "Grep word or selection" })
+
+-- -: sidebar tree with the current file revealed (vim-vinegar's key, 2b52bdee).
+-- Pressing it outside the tree while it is open closes it; q closes it too.
+--   l / <CR> open    h close dir    - / <BS> up    a add (dir/ for a dir)
+--   r rename    d delete    c copy    m move    y / p yank and paste files
+vim.keymap.set("n", "-", function()
+  snacks.explorer()
+end, { desc = "File explorer" })
