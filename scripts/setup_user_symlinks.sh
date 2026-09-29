@@ -121,16 +121,18 @@ mkdir -p ~/opt
 mkdir -p ~/.codex
 ln -sf ~/.dotfiles/home/.codex/config.toml ~/.codex/config.toml
 
-# Global agent instructions: one canonical file, home/AGENTS.md, installed
-# under whatever name each tool reads. At user level Claude Code reads only
-# ~/.claude/CLAUDE.md (since v2.1.277 it reads AGENTS.md in projects, never at
-# user level); Codex reads
+# Global agent instructions: one canonical file,
+# home/AGENTS_global_instructions.md, installed under whatever name each tool
+# reads. At user level Claude Code reads only ~/.claude/CLAUDE.md (since
+# v2.1.277 it reads AGENTS.md in projects, never at user level); Codex reads
 # ~/.codex/AGENTS.md. Add ~/.config/opencode/AGENTS.md if opencode is ever
-# installed.
-ln -sf ~/.dotfiles/home/AGENTS.md ~/.codex/AGENTS.md
+# installed. The source is not named AGENTS.md: in a project an agent loads
+# every AGENTS.md above the files it reads, so work under home/ got the same
+# instructions a second time.
+ln -sf ~/.dotfiles/home/AGENTS_global_instructions.md ~/.codex/AGENTS.md
 
 mkdir -p ~/.claude
-ln -sf ~/.dotfiles/home/AGENTS.md ~/.claude/CLAUDE.md
+ln -sf ~/.dotfiles/home/AGENTS_global_instructions.md ~/.claude/CLAUDE.md
 ln -sf ~/.dotfiles/home/.claude/settings.json ~/.claude/settings.json
 ln -sf ~/.dotfiles/home/.claude/keybindings.json ~/.claude/keybindings.json
 # Custom /theme presets (gruvbox-light, gruvbox-dark). Claude Code watches this
