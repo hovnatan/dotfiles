@@ -58,9 +58,45 @@ M.visible = {} -- session ids on screen at the last snapshot
 M.queue = {} -- new bell banners { id, desc } waiting for a snapshot
 M.waiting = {} -- callbacks for the snapshot being taken or the next one
 
+-- Event log: each step below is one line, with a UTC time, both in the
+-- Hammerspoon console and appended to
+--   <dotfiles>/.logs/<UTC load time>_iterm2_bell_banners/events.log
+-- (the repo's .logs convention, ignored through home/.config/git/ignore),
+-- one directory per load of this module, i.e. per Hammerspoon reload. The
+-- file is line-buffered, so it can be read while Hammerspoon runs, e.g.
+--   2026-09-29T16:01:23.412Z banner 282D14E5 -> session 487197CF (tab #2, fish:~)
+-- The dotfiles checkout is where ~/.hammerspoon points; anything else is
+-- an install this module does not know, so it raises.
+local configDir = hs.fs.pathToAbsolute(hs.configdir)
+local repo = configDir:match("^(.*)/home/%.hammerspoon$")
+if not repo then
+  error("iterm2_bell_banners: ~/.hammerspoon resolves to " .. configDir .. ", not <dotfiles>/home/.hammerspoon")
+end
+M.logDir = repo .. "/.logs/" .. os.date("!%Y%m%d_%H%M%S") .. "_iterm2_bell_banners"
+for _, dir in ipairs({ repo .. "/.logs", M.logDir }) do
+  if hs.fs.attributes(dir, "mode") ~= "directory" then
+    assert(hs.fs.mkdir(dir))
+  end
+end
+M.logFile = assert(io.open(M.logDir .. "/events.log", "a"))
+M.logFile:setvbuf("line")
+
+local function log(fmt, ...)
+  local msg = string.format(fmt, ...)
+  local now = hs.timer.secondsSinceEpoch()
+  local stamp = os.date("!%Y-%m-%dT%H:%M:%S", math.floor(now)) .. string.format(".%03dZ", math.floor(now % 1 * 1000))
+  M.logFile:write(stamp, " ", msg, "\n")
+  print("iterm2_bell_banners: " .. msg)
+end
+
 local function fail(msg)
+  log("ERROR %s", msg)
   hs.alert.show("iterm2_bell_banners: " .. msg, 4)
   error("iterm2_bell_banners: " .. msg)
+end
+
+local function short(id)
+  return id:sub(1, 8)
 end
 
 local function startsWith(s, prefix)
@@ -77,8 +113,14 @@ local takeSnapshot
 
 -- Not while iTerm2 is closed: the script would launch it. A banner left by
 -- an iTerm2 that has quit has no session to belong to, so it is dropped.
+-- "Running" is the iTerm2 observer being attached, which the app watcher
+-- keeps in step with its launch and quit; hs.application's lookup is not
+-- used here, as it has come back empty for running processes.
 local function snapshot(callback)
-  if not hs.application.applicationsForBundleID(ITERM2)[1] then
+  if not M.itermObserver then
+    if #M.queue > 0 then
+      log("iTerm2 is not running; dropping %d queued banner(s)", #M.queue)
+    end
     M.queue = {}
     return
   end
@@ -91,6 +133,7 @@ end
 function takeSnapshot()
   local callbacks = M.waiting
   M.waiting = {}
+  local started = hs.timer.secondsSinceEpoch()
   local function done(code, out, err)
     M.task = nil
     M.queryTimer:stop()
@@ -102,6 +145,12 @@ function takeSnapshot()
       )
     end
     local data = hs.json.decode(out)
+    log(
+      "snapshot: %d session(s) in %.0f ms for %d caller(s)",
+      #data.sessions,
+      (hs.timer.secondsSinceEpoch() - started) * 1000,
+      #callbacks
+    )
     local live = {}
     for _, s in ipairs(data.sessions) do
       live[s.sessionId] = true
@@ -164,7 +213,7 @@ local function resolve(desc, sessions)
     end
   end
   if #rose == 0 then
-    print("iterm2_bell_banners: no session rang for banner '" .. desc .. "', leaving it (arrived unseen)")
+    log("no session rang for banner '%s', leaving it (arrived unseen)", desc)
     return nil
   end
   local picks = rose
@@ -192,15 +241,7 @@ local function resolveQueued(data)
     if s then
       M.pending[s.sessionId] = M.pending[s.sessionId] or {}
       M.pending[s.sessionId][banner.id] = true
-      print(
-        string.format(
-          "iterm2_bell_banners: banner %s -> session %s (tab #%d, %s)",
-          banner.id:sub(1, 8),
-          s.sessionId:sub(1, 8),
-          s.tabNumber,
-          s.sessionName
-        )
-      )
+      log("banner %s -> session %s (tab #%d, %s)", short(banner.id), short(s.sessionId), s.tabNumber, s.sessionName)
     end
   end
 end
@@ -213,6 +254,7 @@ local function consider(id, desc)
   end
   M.seen[id] = true
   if startsWith(desc, BELL_PREFIX) then
+    log("banner %s arrived: %s", short(id), desc)
     table.insert(M.queue, { id = id, desc = desc })
     snapshot(resolveQueued)
   end
@@ -274,14 +316,23 @@ local function close(ids, expanded)
     if banner.subrole == "AXNotificationCenterAlert" and ids[banner.id] then
       notifications.press(banner)
       ids[banner.id] = nil
-      print("iterm2_bell_banners: closed banner " .. banner.id:sub(1, 8))
+      log("closed banner %s", short(banner.id))
     elseif banner.subrole == "AXNotificationCenterAlertStack" and startsWith(banner.desc, ITERM2_PREFIX) then
       table.insert(stacks, banner.el)
     end
   end
-  if next(ids) == nil or expanded or #stacks == 0 then
+  if next(ids) == nil then
     return
   end
+  local missing = {}
+  for id in pairs(ids) do
+    table.insert(missing, short(id))
+  end
+  if expanded or #stacks == 0 then
+    log("banner(s) %s already gone (clicked or cleared)", table.concat(missing, ","))
+    return
+  end
+  log("expanding %d iTerm2 stack(s) for banner(s) %s", #stacks, table.concat(missing, ","))
   for _, stack in ipairs(stacks) do
     stack:performAction("AXPress")
   end
@@ -299,6 +350,7 @@ local function prunePending()
       return
     end
   end
+  log("no iTerm2 banner on screen; nothing pending any more")
   M.pending = {}
 end
 
@@ -315,7 +367,17 @@ local function afterFocus(data)
     end
   end
   M.visible = visible
-  if next(M.pending) == nil then
+  local pendingCount = 0
+  for _ in pairs(M.pending) do
+    pendingCount = pendingCount + 1
+  end
+  log(
+    "focus: session %s%s, %d session(s) with pending banners",
+    short(data.current),
+    data.frontmost and "" or " (iTerm2 in background)",
+    pendingCount
+  )
+  if pendingCount == 0 then
     return
   end
   prunePending()
@@ -335,12 +397,12 @@ local watchNotificationCenter
 -- it restarts (killall NotificationCenter, a crash, some macOS updates), the
 -- old observer then sits on a dead pid and reports nothing, and
 -- hs.application.watcher does not report the relaunch (checked on macOS
--- 27). A rescan picks up banners posted in between. While it is not running
--- at all (for a few seconds after it quits) there is nothing to watch yet.
+-- 27). A rescan picks up banners posted in between. While none runs there
+-- is nothing to watch yet.
 local function onFocus()
   local pid = notifications.pid()
   if pid and pid ~= M.ncPid then
-    print("iterm2_bell_banners: Notification Center restarted, watching it again")
+    log("Notification Center restarted (pid %s -> %d), watching it again", tostring(M.ncPid), pid)
     watchNotificationCenter()
     scan()
   end
@@ -390,8 +452,10 @@ M.watcher = hs.application.watcher.new(function(_, eventType, app)
     return
   end
   if eventType == hs.application.watcher.launched then
+    log("iTerm2 launched (pid %d)", app:pid())
     watchITerm2(app)
   elseif eventType == hs.application.watcher.terminated then
+    log("iTerm2 quit")
     watchITerm2(nil)
   end
 end)
@@ -401,14 +465,24 @@ M.watcher:start()
 -- no longer measurable from bellCount. The first snapshot sets every
 -- baseline; it is asked for before any banner can be, so banners are
 -- measured against it. Only while iTerm2 runs: the script would launch it.
+local onScreen = 0
 for _, banner in ipairs(notifications.banners()) do
   if banner.id then
     M.seen[banner.id] = true
+    onScreen = onScreen + 1
   end
 end
 watchNotificationCenter()
 local iterm = hs.application.applicationsForBundleID(ITERM2)[1]
+log(
+  "loaded: Notification Center pid %d, %d banner(s) already on screen, iTerm2 %s",
+  M.ncPid,
+  onScreen,
+  iterm and "running" or "not running"
+)
 if iterm then
+  -- The observer first: snapshot() takes it as the sign that iTerm2 runs.
+  watchITerm2(iterm)
   snapshot(function(data)
     for _, s in ipairs(data.sessions) do
       M.bells[s.sessionId] = s.bells
@@ -417,7 +491,6 @@ if iterm then
       end
     end
   end)
-  watchITerm2(iterm)
 end
 
 return M
