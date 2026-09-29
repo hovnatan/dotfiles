@@ -100,6 +100,9 @@
             pkgs.fzf
             # GitHub command-line tool
             pkgs.gh
+            # GitLab CLI (glab): issues on GitLab-hosted projects, e.g.
+            # iTerm2, whose GitHub mirror has issues turned off (2026-09-29)
+            pkgs.glab
             # git and git-lfs, the same version everywhere; the rest of the
             # former apt_base list of deqart_backend's setup_workspace.sh
             # follows under its own name (2026-09-23)
