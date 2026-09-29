@@ -24,21 +24,23 @@ vim.opt.wildignorecase = true
 vim.opt.showbreak = "↪ "
 vim.opt.ls = 2
 vim.opt.title = true
+-- "nvim: <file name>" and a modified flag, e.g. "nvim: options.lua +";
+-- an unnamed buffer reads "nvim: [No Name]" (%t does both).
+local title = "nvim: %t%( %M%)"
 -- Over ssh the title leads with the machine, as the fish and zsh titles do
--- ("(<host>) vim"): nvim's own title replaced theirs, so a remote nvim tab
--- read like a local one. The rest is nvim's default titlestring:
---   "(<host>) options.lua (~/.dotfiles/home/.config/nvim/lua/core) - NVIM"
--- Host is the hostname up to its first dot; fish's fish_prompt_host override
--- is a fish-only variable nvim cannot see. Inside tmux this only names the
--- pane, since tmux's set-titles-string (with its own host prefix) wins.
--- Not in iTerm2, which shows the host itself; same test as fish's is_iterm2
--- (home/.config/fish/functions/is_iterm2.fish).
+-- ("(<host>) nvim: ..."): nvim's own title replaced theirs, so a remote nvim
+-- tab read like a local one. Host is the hostname up to its first dot; fish's
+-- fish_prompt_host override is a fish-only variable nvim cannot see. Inside
+-- tmux this only names the pane, since tmux's set-titles-string (with its own
+-- host prefix) wins. Not in iTerm2, which shows the host itself; same test as
+-- fish's is_iterm2 (home/.config/fish/functions/is_iterm2.fish).
 local in_iterm2 = vim.env.LC_TERMINAL == "iTerm2"
   and (vim.env.TERM_PROGRAM == nil or vim.env.TERM_PROGRAM == "iTerm.app")
 if vim.env.SSH_CONNECTION and not in_iterm2 then
   local host = vim.fn.hostname():gsub("%..*", "")
-  vim.opt.titlestring = "(" .. host .. ') %t%( %M%)%( (%{expand("%:~:h")})%)%a - NVIM'
+  title = "(" .. host .. ") " .. title
 end
+vim.opt.titlestring = title
 vim.opt.ruler = true
 vim.opt.number = true
 vim.opt.showcmd = true
