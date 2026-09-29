@@ -16,7 +16,7 @@ require("url_dispatcher")
 require("app_hotkeys")
 -- require("fullscreen_apps")
 require("clear_notifications")
-require("iterm2_ctrl_m")
+require("iterm2_keys")
 -- require("meeting_focus")
 
 -- hs CLI (`hs -c "..."`) for scripting and debugging from the shell.

@@ -5,9 +5,10 @@ function machine_name --description 'Short name of this machine, as the prompt a
     # repo.
     #
     # Not the builtin prompt_hostname: its `string replace` exits 1 when there
-    # is no dot to strip ("hov-8cpu"), and ssh-title-flag.sh runs this under
-    # `set -e`, so every tmux attach on such a host failed the hook. This
-    # match exits 0 for any non-empty name and 1 only when there is none.
+    # is no dot to strip ("hov-8cpu"), and iterm2_report_host fails on that
+    # status, so every tmux attach on such a host failed the hook
+    # (report-attach.sh). This match exits 0 for any non-empty name and 1
+    # only when there is none.
     if set -q fish_prompt_host
         echo $fish_prompt_host
     else
