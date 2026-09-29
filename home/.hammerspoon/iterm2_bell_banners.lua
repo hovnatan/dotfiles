@@ -58,36 +58,10 @@ M.visible = {} -- session ids on screen at the last snapshot
 M.queue = {} -- new bell banners { id, desc } waiting for a snapshot
 M.waiting = {} -- callbacks for the snapshot being taken or the next one
 
--- Event log: each step below is one line, with a UTC time, both in the
--- Hammerspoon console and appended to
---   <dotfiles>/.logs/<UTC load time>_iterm2_bell_banners/events.log
--- (the repo's .logs convention, ignored through home/.config/git/ignore),
--- one directory per load of this module, i.e. per Hammerspoon reload. The
--- file is line-buffered, so it can be read while Hammerspoon runs, e.g.
+-- Every step below is logged (event_log.lua), e.g.
 --   2026-09-29T16:01:23.412Z banner 282D14E5 -> session 487197CF (tab #2, fish:~)
--- The dotfiles checkout is where ~/.hammerspoon points; anything else is
--- an install this module does not know, so it raises.
-local configDir = hs.fs.pathToAbsolute(hs.configdir)
-local repo = configDir:match("^(.*)/home/%.hammerspoon$")
-if not repo then
-  error("iterm2_bell_banners: ~/.hammerspoon resolves to " .. configDir .. ", not <dotfiles>/home/.hammerspoon")
-end
-M.logDir = repo .. "/.logs/" .. os.date("!%Y%m%d_%H%M%S") .. "_iterm2_bell_banners"
-for _, dir in ipairs({ repo .. "/.logs", M.logDir }) do
-  if hs.fs.attributes(dir, "mode") ~= "directory" then
-    assert(hs.fs.mkdir(dir))
-  end
-end
-M.logFile = assert(io.open(M.logDir .. "/events.log", "a"))
-M.logFile:setvbuf("line")
-
-local function log(fmt, ...)
-  local msg = string.format(fmt, ...)
-  local now = hs.timer.secondsSinceEpoch()
-  local stamp = os.date("!%Y-%m-%dT%H:%M:%S", math.floor(now)) .. string.format(".%03dZ", math.floor(now % 1 * 1000))
-  M.logFile:write(stamp, " ", msg, "\n")
-  print("iterm2_bell_banners: " .. msg)
-end
+local log
+log, M.logDir = require("event_log").new("iterm2_bell_banners")
 
 local function fail(msg)
   log("ERROR %s", msg)

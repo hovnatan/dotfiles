@@ -44,8 +44,8 @@ It is kept short on purpose - every line here is paid on every session.
   job) logs its actions to `~/.dotfiles/.logs/<UTC YYYYMMDD_HHMMSS>_<name>/`,
   one directory per run or load: a UTC-timestamped line per action,
   line-buffered so the file reads mid-run. `.logs` is ignored through
-  `home/.config/git/ignore`; `log()` in `home/.hammerspoon/iterm2_bell_banners.lua`
-  is the pattern.
+  `home/.config/git/ignore`; Hammerspoon modules use
+  `home/.hammerspoon/event_log.lua`.
 
 ## Maintaining this file
 

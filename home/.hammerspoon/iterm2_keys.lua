@@ -20,6 +20,17 @@ local M = {}
 
 local ITERM2 = "com.googlecode.iterm2"
 local KEY = hs.keycodes.map
+
+-- Each Ctrl-U / Ctrl-D decision and every error is logged (event_log.lua),
+-- to the file only: a line per keypress would crowd the Console. E.g.
+--   2026-09-29T20:10:02.114Z Ctrl-U: pass through (full-screen program, alt-screen check 18 ms)
+local log
+log, M.logDir = require("event_log").new("iterm2_keys", { console = false })
+
+local function fail(msg)
+  log("ERROR %s", msg)
+  error("iterm2_keys: " .. msg)
+end
 local AUTOREPEAT = hs.eventtap.event.properties.keyboardEventAutorepeat
 
 -- Ctrl-M: in iTerm2, Ctrl-M is turned into a plain Return, so it accepts the
@@ -78,8 +89,8 @@ local function onAlternateScreen()
   -- control iTerm2, no window), so raise rather than guess where the key goes.
   local ok, value, raw = hs.osascript.applescript(ALT_SCREEN)
   if not ok then
-    error(
-      "iterm2_keys: reading iTerm2 showingAlternateScreen failed (allow Hammerspoon "
+    fail(
+      "reading iTerm2 showingAlternateScreen failed (allow Hammerspoon "
         .. "to control iTerm2 in System Settings > Privacy & Security > Automation): "
         .. hs.inspect(raw)
     )
@@ -92,7 +103,7 @@ local function onAlternateScreen()
   elseif value == "0" then
     return false
   end
-  error("iterm2_keys: iTerm2 showingAlternateScreen is " .. hs.inspect(value) .. ', not "0" or "1"')
+  fail("iTerm2 showingAlternateScreen is " .. hs.inspect(value) .. ', not "0" or "1"')
 end
 
 -- The focused session's terminal view, read through the accessibility tree:
@@ -122,8 +133,8 @@ local function scrolledBack(terminal)
   local area = terminal:attributeValue("AXParent")
   local bar = area and area:attributeValue("AXVerticalScrollBar")
   if not bar then
-    error(
-      "iterm2_keys: iTerm2's terminal view has no AXScrollArea parent with a vertical "
+    fail(
+      "iTerm2's terminal view has no AXScrollArea parent with a vertical "
         .. "scroll bar; its accessibility layout changed, see focusedTerminal"
     )
   end
@@ -131,20 +142,27 @@ local function scrolledBack(terminal)
 end
 
 -- What a press of Control plus keyCode does: a rewrite function, or nil to
--- let the key through. Checks run cheapest first (~0.3ms accessibility reads,
--- then the ~17ms AppleScript), so a Ctrl-D at the bottom never pays for it.
+-- let the key through, and why (for the log). Checks run cheapest first
+-- (~0.3ms accessibility reads, then the ~17ms AppleScript), so a Ctrl-D at
+-- the bottom never pays for it.
 local function decide(keyCode)
   if keyCode == KEY.m then
     return sendReturn
   end
   local terminal = focusedTerminal()
   if not terminal then
-    return nil
+    return nil, "focus not on a terminal view"
   end
-  if keyCode == KEY.u then
-    return not onAlternateScreen() and scrollUp or nil
+  if keyCode == KEY.d and not scrolledBack(terminal) then
+    return nil, "at the bottom"
   end
-  return scrolledBack(terminal) and not onAlternateScreen() and scrollDown or nil
+  local started = hs.timer.absoluteTime()
+  local alternate = onAlternateScreen()
+  local ms = (hs.timer.absoluteTime() - started) / 1e6
+  if alternate then
+    return nil, string.format("full-screen program, alt-screen check %.0f ms", ms)
+  end
+  return keyCode == KEY.u and scrollUp or scrollDown, string.format("main screen, alt-screen check %.0f ms", ms)
 end
 
 -- A held key repeats what its first press decided, without asking again:
@@ -161,7 +179,15 @@ local function onKeyDown(event)
     return false
   end
   if event:getProperty(AUTOREPEAT) == 0 or held.keyCode ~= keyCode then
-    held.keyCode, held.action = keyCode, decide(keyCode)
+    local reason
+    held.keyCode, held.action, reason = keyCode, decide(keyCode)
+    if keyCode ~= KEY.m then
+      local key = keyCode == KEY.u and "Ctrl-U" or "Ctrl-D"
+      local what = held.action == scrollUp and "scroll up"
+        or held.action == scrollDown and "scroll down"
+        or "pass through"
+      log("%s: %s (%s)", key, what, reason)
+    end
   end
   if not held.action then
     return false
