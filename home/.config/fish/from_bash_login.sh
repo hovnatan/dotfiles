@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Hand a person's terminal login over to fish, and nothing else. The passwd
 # shell stays bash: claude_tmux_run.sh starts every pane as
 # `bash -lc '... exec claude'` (fish cannot take that form), and Claude
