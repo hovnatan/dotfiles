@@ -27,15 +27,37 @@ local function fail(msg)
   error("clear_notifications: " .. msg)
 end
 
--- The Notification Center process that draws the banners. Not
--- hs.application.get(): see chrome.lua for why its miss path blocks
--- Hammerspoon. Also used by iterm2_bell_banners.lua, as is everything below.
-function M.app()
+-- The pid of the Notification Center process that draws the banners, or
+-- nil while none runs (launchd starts it again on demand after it quits).
+-- Cached while its accessibility element still answers as Notification
+-- Center (0.2ms; a dead pid has no element at all, and the title check
+-- catches a pid reused after a restart). Only then is it looked up by
+-- bundle id: hs.application's lookup has returned nothing for the running
+-- process during a burst of hs CLI calls, so it stays off the common path;
+-- not hs.application.get() either, see chrome.lua for why its miss path
+-- blocks Hammerspoon. Also used by iterm2_bell_banners.lua, as is
+-- everything below.
+local NC_TITLE = "Notification Center"
+local cachedPid
+
+function M.pid()
+  local el = cachedPid and hs.axuielement.applicationElementForPID(cachedPid)
+  if el and el:attributeValue("AXTitle") == NC_TITLE then
+    return cachedPid
+  end
   local app = hs.application.applicationsForBundleID(NC_BUNDLE_ID)[1]
-  if not app then
+  cachedPid = app and app:pid()
+  return cachedPid
+end
+
+-- Its accessibility element, where banners are about to be read and a
+-- missing process is a broken setup.
+function M.element()
+  local pid = M.pid()
+  if not pid then
     fail("NotificationCenter process not found")
   end
-  return app
+  return hs.axuielement.applicationElementForPID(pid)
 end
 
 -- Every banner in Notification Center's windows, as { el, subrole, id, desc }
@@ -62,7 +84,7 @@ function M.banners()
       walk(child)
     end
   end
-  for _, window in ipairs(hs.axuielement.applicationElement(M.app()):attributeValue("AXWindows") or {}) do
+  for _, window in ipairs(M.element():attributeValue("AXWindows") or {}) do
     walk(window)
   end
   return found
