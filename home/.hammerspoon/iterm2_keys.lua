@@ -124,11 +124,16 @@ local function focusedTerminal()
   end
 end
 
--- The scroll bar's value is exactly 1 at the bottom, with a long scrollback
--- or none (checked on iTerm2 3.7.3), and below 1 once scrolled back. A
--- terminal view outside a scroll area with a scroll bar means iTerm2's view
--- layout changed under us: raise, since guessing "at the bottom" would turn
--- a scroll into EOF.
+-- Whether the view is scrolled back, from the scroll bar (iTerm2 3.7.3):
+--   content taller than the view   enabled, value exactly 1 at the bottom,
+--                                  below 1 once scrolled back
+--   content fits (nothing to       disabled, value 0: that is the bottom,
+--   scroll: a fresh ssh session)   not scrolled to the top
+-- Reading 0 as "scrolled back" there turned every Ctrl-D into a no-op
+-- Shift-PageDown, so EOF never reached a fresh remote shell. A terminal view
+-- outside a scroll area with a scroll bar, or a bar without a boolean
+-- AXEnabled, means iTerm2's view layout changed under us: raise, since
+-- guessing "at the bottom" would turn a scroll into EOF.
 local function scrolledBack(terminal)
   local area = terminal:attributeValue("AXParent")
   local bar = area and area:attributeValue("AXVerticalScrollBar")
@@ -138,7 +143,11 @@ local function scrolledBack(terminal)
         .. "scroll bar; its accessibility layout changed, see focusedTerminal"
     )
   end
-  return bar:attributeValue("AXValue") < 1
+  local enabled = bar:attributeValue("AXEnabled")
+  if type(enabled) ~= "boolean" then
+    fail("iTerm2's scroll bar AXEnabled is " .. hs.inspect(enabled) .. ", not a boolean; see scrolledBack")
+  end
+  return enabled and bar:attributeValue("AXValue") < 1
 end
 
 -- What a press of Control plus keyCode does: a rewrite function, or nil to
