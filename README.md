@@ -10,9 +10,9 @@ installed selectively or handled specially (`~/.zshrc` / `~/.zprofile` /
 `~/.profile` are appended to rather than linked; `home/.profile.shared` is the
 environment every login shell reads, bash or zsh).
 
-`home/AGENTS.md` is the one canonical agent policy, installed under whatever
-name each tool reads; `scripts/setup_user_symlinks.sh` lists the links and
-why each name. Edit `home/AGENTS.md`; every tool sees the change.
+`home/AGENTS_global_instructions.md` is the one canonical agent policy,
+installed under whatever name each tool reads; `scripts/setup_user_symlinks.sh`
+lists the links and why each name. Edit that file; every tool sees the change.
 Situational policy (remote runs, ntfy) lives in skills under
 `home/.claude/skills/`, which Codex also sees via `~/.agents/skills`.
 
