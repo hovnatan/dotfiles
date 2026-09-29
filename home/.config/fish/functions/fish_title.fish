@@ -1,13 +1,15 @@
 function fish_title
+    # Idle: "fish:" and the prompt's short path, e.g. "fish:~/d/summit";
+    # while a command runs, its name, e.g. "vim".
     set out ""
     if test (status current-command) = fish
-        set out $PWD
+        set out "fish:"(prompt_pwd)
     else
         set out (status current-command)
     end
 
     # Over ssh the tab leads with the machine, as named in the prompt, so a
-    # remote tab reads "(<host>) ~/.dotfiles" or "(<host>) vim" rather than
+    # remote tab reads "(<host>) fish:~/.dotfiles" or "(<host>) vim" rather than
     # passing for a local one. tmux titles do the same (~/.tmux.conf,
     # set-titles-string). Not in iTerm2, which shows the host itself
     # (iterm2_report_host).
