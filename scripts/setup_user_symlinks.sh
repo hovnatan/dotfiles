@@ -456,6 +456,11 @@ if [ "$(uname)" = "Darwin" ]; then
   # Minimal theme's tab bar height in points (default 38, 22 = compact
   # theme); 28 sits nearer Ghostty's native macOS tab bar. Read at launch.
   defaults write com.googlecode.iterm2 CompactMinimalTabBarHeight -float 28
+  # Tab titles at the profile's font size (dotfiles.json "Menlo-Regular 14"),
+  # not the smaller default. Only the size can be set: the face stays the
+  # system font, and it does not follow cmd+/- zoom.
+  defaults write com.googlecode.iterm2 UseCustomTabBarFontSize -bool true
+  defaults write com.googlecode.iterm2 CustomTabBarFontSize -float 14
   # Bell -> dock bounce while iTerm2 is in the background, as Ghostty does.
   # The fish/zsh long-command hooks and Claude Code (preferredNotifChannel
   # terminal_bell) ring only the bell, no OSC notification of their own.
