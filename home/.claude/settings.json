@@ -128,7 +128,7 @@
   },
   "autoCompactWindow": 900000,
   "dialogExpiry": "never",
-  "tui": "fullscreen",
+  "tui": "default",
   "voice": {
     "enabled": true,
     "mode": "tap"
