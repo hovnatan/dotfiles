@@ -27,37 +27,49 @@ local function fail(msg)
   error("clear_notifications: " .. msg)
 end
 
-local function describe(el)
-  return el:attributeValue("AXDescription") or "?"
-end
-
--- Every banner in Notification Center's windows, as { el, subrole } pairs.
--- Only windows are walked: the process also owns the menu bar, whose tree
--- is large and has no notifications in it. Not hs.application.get(): see
--- chrome.lua for why its miss path blocks Hammerspoon.
-local function banners()
+-- The Notification Center process that draws the banners. Not
+-- hs.application.get(): see chrome.lua for why its miss path blocks
+-- Hammerspoon. Also used by iterm2_bell_banners.lua, as is everything below.
+function M.app()
   local app = hs.application.applicationsForBundleID(NC_BUNDLE_ID)[1]
   if not app then
     fail("NotificationCenter process not found")
   end
+  return app
+end
+
+-- Every banner in Notification Center's windows, as { el, subrole, id, desc }
+-- records, e.g. desc "iTerm2, Bell, Session fish:~ #2 just rang a bell!".
+-- Only windows are walked: the process also owns the menu bar, whose tree
+-- is large and has no notifications in it. A stack counts as one banner:
+-- collapsed, its id and text are its newest notification's (desc then ends
+-- in ", stacked"), and its older ones only appear, as single banners, once
+-- it is expanded.
+function M.banners()
   local found = {}
   local function walk(el)
     local subrole = el:attributeValue("AXSubrole")
     if ACTION[subrole] then
-      table.insert(found, { el = el, subrole = subrole })
+      table.insert(found, {
+        el = el,
+        subrole = subrole,
+        id = el:attributeValue("AXIdentifier"),
+        desc = el:attributeValue("AXDescription") or "",
+      })
       return -- a stack's children are its texts, not further banners
     end
     for _, child in ipairs(el:attributeValue("AXChildren") or {}) do
       walk(child)
     end
   end
-  for _, window in ipairs(hs.axuielement.applicationElement(app):attributeValue("AXWindows") or {}) do
+  for _, window in ipairs(hs.axuielement.applicationElement(M.app()):attributeValue("AXWindows") or {}) do
     walk(window)
   end
   return found
 end
 
-local function press(banner)
+-- Close one banner, or clear a whole stack.
+function M.press(banner)
   local wanted = ACTION[banner.subrole]
   for _, name in ipairs(banner.el:actionNames() or {}) do
     if name:find(wanted, 1, true) then
@@ -65,26 +77,26 @@ local function press(banner)
       return
     end
   end
-  fail("no " .. wanted .. " action on " .. banner.subrole .. ": " .. describe(banner.el))
+  fail("no " .. wanted .. " action on " .. banner.subrole .. ": " .. banner.desc)
 end
 
 -- One pass presses every banner's action; the next pass, after the tree has
 -- settled, catches banners that were queued behind the ones just closed.
 -- Banners still there after MAX_PASSES mean the actions stopped working.
 local function pass(n)
-  local found = banners()
+  local found = M.banners()
   if #found == 0 then
     return
   end
   if n > MAX_PASSES then
     local descs = {}
     for _, banner in ipairs(found) do
-      table.insert(descs, describe(banner.el))
+      table.insert(descs, banner.desc)
     end
     fail(#found .. " banner(s) left after " .. MAX_PASSES .. " passes: " .. table.concat(descs, "; "))
   end
   for _, banner in ipairs(found) do
-    press(banner)
+    M.press(banner)
   end
   M.timer = hs.timer.doAfter(PASS_DELAY, function()
     pass(n + 1)
