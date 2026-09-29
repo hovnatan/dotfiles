@@ -261,6 +261,7 @@ fi
 if command -v fish >/dev/null; then
   fish_plugins=~/.dotfiles/home/.config/fish/fish_plugins
   fisher_plugins_differ() {
+    # shellcheck disable=SC2016 # $_fisher_plugins is fish's, expanded by fish
     [ "$(tr '[:upper:]' '[:lower:]' <"$fish_plugins" | sort)" != \
       "$(fish -c 'string join \n -- $_fisher_plugins' 2>/dev/null | sort)" ]
   }
@@ -550,6 +551,16 @@ if [ "$(uname)" = "Darwin" ]; then
   iterm_key k 40 0x100000 0  # cmd+k: next tab
   iterm_key j 38 0x180000 33 # cmd+option+j: move tab left
   iterm_key k 40 0x180000 34 # cmd+option+k: move tab right
+  # shift+pageup / shift+pagedown: Scroll One Page Up / Down (actions 9 / 8),
+  # the keys the Ctrl-U / Ctrl-D rewrites send outside tmux
+  # (home/.hammerspoon/iterm2_keys.lua). They are in iTerm2's
+  # DefaultGlobalKeyMap.plist, but a GlobalKeyMap in the prefs replaces that
+  # whole file, so they are pinned here, in the plist's own form (no
+  # keycode: 0xf72c / 0xf72d are NSPageUp/DownFunctionKey, 0x20000 shift).
+  defaults write com.googlecode.iterm2 GlobalKeyMap -dict-add 0xf72c-0x20000 \
+    "<dict><key>Action</key><integer>9</integer><key>Text</key><string></string></dict>"
+  defaults write com.googlecode.iterm2 GlobalKeyMap -dict-add 0xf72d-0x20000 \
+    "<dict><key>Action</key><integer>8</integer><key>Text</key><string></string></dict>"
 
   # ~/Applications/Zathura.app: Finder/"Open With" front end for the Nix
   # zathura (the script says why not homebrew-zathura's). Rebuilt each run,

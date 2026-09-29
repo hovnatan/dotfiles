@@ -1,17 +1,25 @@
--- Key rewrites that apply only while iTerm2 is frontmost:
+-- Key rewrites in iTerm2, through one key-down event tap that runs only while
+-- iTerm2 is frontmost, so the same keys in other apps (Emacs bindings in text
+-- fields, for one) are untouched:
 --
---   app watcher --(iTerm2 frontmost?)--> enable / disable both hotkeys
+--   app watcher --(iTerm2 frontmost?)--> start / stop the tap
 --
---   Ctrl-M --> Return
---   Ctrl-U --> read iTerm2 user.at_prompt of the current session
---                1     --> Shift-PageUp: iTerm2 scrolls up one page
---                other --> Ctrl-U, unchanged, to the program
+--   key down, Control only
+--     Ctrl-M --> Return
+--     Ctrl-U / Ctrl-D --> focus on a terminal view, outside tmux?
+--        no  --> the key, unchanged (tmux, the composer, the find bar)
+--        yes --> Ctrl-U: Shift-PageUp, iTerm2 scrolls up one page
+--                Ctrl-D: scrolled back?  yes --> Shift-PageDown
+--                                        no  --> Ctrl-D, unchanged (EOF, nvim)
+--     anything else --> unchanged
 --
--- Only while iTerm2 is frontmost, so Ctrl-M and Ctrl-U in other apps (Emacs
--- bindings in text fields, for one) are untouched.
+-- A key the tap leaves alone goes on as the real event; a rewritten one is
+-- swallowed and replaced by a synthetic keystroke.
 local M = {}
 
 local ITERM2 = "com.googlecode.iterm2"
+local KEY = hs.keycodes.map
+local AUTOREPEAT = hs.eventtap.event.properties.keyboardEventAutorepeat
 
 -- Ctrl-M: in iTerm2, Ctrl-M is turned into a plain Return, so it accepts the
 -- selected entry in the Auto Composer's completion popup just as Return does.
@@ -26,39 +34,47 @@ local ITERM2 = "com.googlecode.iterm2"
 -- The exception is a program that asks for the kitty keyboard protocol
 -- (nvim does): it now receives <CR> for Ctrl-M, never <C-m>.
 --
--- Delay 0: the default 200ms between key down and up would stall the hotkey
--- callback. The explicit {} mods clear the Control the user is still holding.
+-- Delay 0: the default 200ms between key down and up would stall the tap
+-- callback. The explicit mods replace the Control the user is still holding.
 local function sendReturn()
   hs.eventtap.keyStroke({}, "return", 0)
 end
 
--- repeatfn keeps a held Ctrl-M auto-repeating like Return.
-M.ctrlM = hs.hotkey.new({ "ctrl" }, "m", sendReturn, nil, sendReturn)
-
--- Ctrl-U: at a shell prompt, scroll iTerm2 up a page; anywhere else, Ctrl-U
--- as usual. Mirrors C-u in ~/.tmux.conf, which enters copy mode unless a
--- full-screen program runs, so the key means "scroll back" in and out of
--- tmux. fish reports the prompt as the user variable at_prompt
--- (~/.config/fish/functions/iterm2_report_prompt.fish): 1 at its prompt, 0
--- while a command (nvim, tmux, ssh, ...) runs. It is unset in a tab whose
--- shell never reported, e.g. bash, and Ctrl-U then passes through.
+-- Ctrl-U / Ctrl-D: outside tmux, page iTerm2's scrollback up and down. Inside
+-- tmux both keys go to tmux, which binds C-u itself (~/.tmux.conf). Unlike
+-- tmux's binding, Ctrl-U scrolls even over a full-screen program such as
+-- nvim, on purpose. Ctrl-D scrolls only while the view is scrolled back, so
+-- at the bottom it is Ctrl-D again: EOF still exits a shell, nvim still pages.
 --
--- Shift-PageUp is iTerm2's own "Scroll One Page Up" key (GlobalKeyMap,
--- scripts/setup_user_symlinks.sh).
-local AT_PROMPT = [[
+-- Shift-PageUp / Shift-PageDown are iTerm2's own "Scroll One Page Up/Down"
+-- keys (GlobalKeyMap, scripts/setup_user_symlinks.sh). The scroll area's
+-- AXScrollUpByPage / AXScrollDownByPage would skip that dependency, but
+-- iTerm2 3.7.3 gets them wrong: up does nothing, down scrolls up.
+local function scrollUp()
+  hs.eventtap.keyStroke({ "shift" }, "pageup", 0)
+end
+
+local function scrollDown()
+  hs.eventtap.keyStroke({ "shift" }, "pagedown", 0)
+end
+
+-- Whether a tmux client owns the tab: user.in_tmux, explained in
+-- ~/.config/fish/functions/iterm2_report_host.fish. Unset (a shell that never
+-- reported, e.g. bash) counts as not tmux.
+local IN_TMUX = [[
 tell application "iTerm2" to tell current session of current window
-  return variable named "user.at_prompt"
+  return variable named "user.in_tmux"
 end tell
 ]]
 
-local function atPrompt()
-  -- About 10ms per call. A failure is a broken setup (no Automation
-  -- permission for Hammerspoon to control iTerm2, no window), so raise
-  -- rather than guess which way the key should go.
-  local ok, value, raw = hs.osascript.applescript(AT_PROMPT)
+local function inTmux()
+  -- About 17ms per call, an Apple Event round trip, so it runs last. A
+  -- failure is a broken setup (no Automation permission for Hammerspoon to
+  -- control iTerm2, no window), so raise rather than guess where the key goes.
+  local ok, value, raw = hs.osascript.applescript(IN_TMUX)
   if not ok then
     error(
-      "iterm2_keys: reading iTerm2 user.at_prompt failed (allow Hammerspoon to control "
+      "iterm2_keys: reading iTerm2 user.in_tmux failed (allow Hammerspoon to control "
         .. "iTerm2 in System Settings > Privacy & Security > Automation): "
         .. hs.inspect(raw)
     )
@@ -66,27 +82,88 @@ local function atPrompt()
   return value == "1"
 end
 
-local function ctrlU()
-  if atPrompt() then
-    hs.eventtap.keyStroke({ "shift" }, "pageup", 0)
-  else
-    -- The hotkey would catch its own synthetic Ctrl-U, so step aside for it.
-    M.ctrlU:disable()
-    hs.eventtap.keyStroke({ "ctrl" }, "u", 0)
-    M.ctrlU:enable()
+-- The focused session's terminal view, read through the accessibility tree:
+--
+--   AXScrollArea                    holds AXVerticalScrollBar, value 0..1
+--     AXTextArea "shell"            the terminal; keyboard focus when typing
+--
+-- nil when focus is elsewhere in iTerm2 (the composer, the find bar, Settings).
+local function focusedTerminal()
+  local app = hs.axuielement.applicationElement(hs.application.frontmostApplication())
+  local focused = app:attributeValue("AXFocusedUIElement")
+  if
+    focused
+    and focused:attributeValue("AXRole") == "AXTextArea"
+    and focused:attributeValue("AXDescription") == "shell"
+  then
+    return focused
   end
 end
 
-M.ctrlU = hs.hotkey.new({ "ctrl" }, "u", ctrlU, nil, ctrlU)
+-- The scroll bar's value is exactly 1 at the bottom, with a long scrollback
+-- or none (checked on iTerm2 3.7.3), and below 1 once scrolled back. A
+-- terminal view outside a scroll area with a scroll bar means iTerm2's view
+-- layout changed under us: raise, since guessing "at the bottom" would turn
+-- a scroll into EOF.
+local function scrolledBack(terminal)
+  local area = terminal:attributeValue("AXParent")
+  local bar = area and area:attributeValue("AXVerticalScrollBar")
+  if not bar then
+    error(
+      "iterm2_keys: iTerm2's terminal view has no AXScrollArea parent with a vertical "
+        .. "scroll bar; its accessibility layout changed, see focusedTerminal"
+    )
+  end
+  return bar:attributeValue("AXValue") < 1
+end
+
+-- What a press of Control plus keyCode does: a rewrite function, or nil to
+-- let the key through. Checks run cheapest first (~0.3ms accessibility reads,
+-- then the ~17ms AppleScript), so a Ctrl-D at the bottom never pays for it.
+local function decide(keyCode)
+  if keyCode == KEY.m then
+    return sendReturn
+  end
+  local terminal = focusedTerminal()
+  if not terminal then
+    return nil
+  end
+  if keyCode == KEY.u then
+    return not inTmux() and scrollUp or nil
+  end
+  return scrolledBack(terminal) and not inTmux() and scrollDown or nil
+end
+
+-- A held key repeats what its first press decided, without asking again:
+-- repeats of a pass-through pass through (nvim paging down), repeats of a
+-- scroll scroll. A held Ctrl-D thus stops at the bottom, where Shift-PageDown
+-- does nothing, and never overshoots into an EOF that closes the shell.
+local held = { keyCode = nil, action = nil }
+
+local function onKeyDown(event)
+  local keyCode = event:getKeyCode()
+  if
+    (keyCode ~= KEY.m and keyCode ~= KEY.u and keyCode ~= KEY.d) or not event:getFlags():containExactly({ "ctrl" })
+  then
+    return false
+  end
+  if event:getProperty(AUTOREPEAT) == 0 or held.keyCode ~= keyCode then
+    held.keyCode, held.action = keyCode, decide(keyCode)
+  end
+  if not held.action then
+    return false
+  end
+  held.action()
+  return true
+end
+
+M.tap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, onKeyDown)
 
 local function update(app)
-  local inITerm2 = app ~= nil and app:bundleID() == ITERM2
-  for _, hotkey in ipairs({ M.ctrlM, M.ctrlU }) do
-    if inITerm2 then
-      hotkey:enable()
-    else
-      hotkey:disable()
-    end
+  if app and app:bundleID() == ITERM2 then
+    M.tap:start()
+  else
+    M.tap:stop()
   end
 end
 
