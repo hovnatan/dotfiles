@@ -17,6 +17,7 @@ require("app_hotkeys")
 -- require("fullscreen_apps")
 require("clear_notifications")
 require("iterm2_keys")
+require("iterm2_bell_banners")
 -- require("meeting_focus")
 
 -- hs CLI (`hs -c "..."`) for scripting and debugging from the shell.
