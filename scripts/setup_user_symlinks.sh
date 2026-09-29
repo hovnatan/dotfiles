@@ -557,7 +557,7 @@ if [ "$(uname)" = "Darwin" ]; then
   iterm_key j 38 0x180000 33 # cmd+option+j: move tab left
   iterm_key k 40 0x180000 34 # cmd+option+k: move tab right
   # shift+pageup / shift+pagedown: Scroll One Page Up / Down (actions 9 / 8),
-  # the keys the Ctrl-U / Ctrl-D rewrites send outside tmux
+  # the keys the Ctrl-U / Ctrl-D rewrites send on the main screen
   # (home/.hammerspoon/iterm2_keys.lua). They are in iTerm2's
   # DefaultGlobalKeyMap.plist, but a GlobalKeyMap in the prefs replaces that
   # whole file, so they are pinned here, in the plist's own form (no

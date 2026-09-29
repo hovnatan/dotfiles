@@ -6,11 +6,12 @@
 --
 --   key down, Control only
 --     Ctrl-M --> Return
---     Ctrl-U / Ctrl-D --> focus on a terminal view, outside tmux?
---        no  --> the key, unchanged (tmux, the composer, the find bar)
+--     Ctrl-U / Ctrl-D --> focus on a terminal view, on the main screen?
+--        no  --> the key, unchanged (a full-screen program, the composer,
+--                the find bar)
 --        yes --> Ctrl-U: Shift-PageUp, iTerm2 scrolls up one page
 --                Ctrl-D: scrolled back?  yes --> Shift-PageDown
---                                        no  --> Ctrl-D, unchanged (EOF, nvim)
+--                                        no  --> Ctrl-D, unchanged (EOF)
 --     anything else --> unchanged
 --
 -- A key the tap leaves alone goes on as the real event; a rewritten one is
@@ -40,11 +41,11 @@ local function sendReturn()
   hs.eventtap.keyStroke({}, "return", 0)
 end
 
--- Ctrl-U / Ctrl-D: outside tmux, page iTerm2's scrollback up and down. Inside
--- tmux both keys go to tmux, which binds C-u itself (~/.tmux.conf). Unlike
--- tmux's binding, Ctrl-U scrolls even over a full-screen program such as
--- nvim, on purpose. Ctrl-D scrolls only while the view is scrolled back, so
--- at the bottom it is Ctrl-D again: EOF still exits a shell, nvim still pages.
+-- Ctrl-U / Ctrl-D: on the main screen (a shell, Claude Code), page iTerm2's
+-- scrollback up and down; a full-screen program (onAlternateScreen) gets
+-- them and pages itself, tmux into its copy mode (~/.tmux.conf). Ctrl-D
+-- scrolls only while the view is scrolled back, so at the bottom it is
+-- Ctrl-D again: EOF still exits a shell.
 --
 -- Shift-PageUp / Shift-PageDown are iTerm2's own "Scroll One Page Up/Down"
 -- keys (GlobalKeyMap, scripts/setup_user_symlinks.sh). The scroll area's
@@ -58,28 +59,40 @@ local function scrollDown()
   hs.eventtap.keyStroke({ "shift" }, "pagedown", 0)
 end
 
--- Whether a tmux client owns the tab: user.in_tmux, explained in
--- ~/.config/fish/functions/iterm2_report_host.fish. Unset (a shell that never
--- reported, e.g. bash) counts as not tmux.
-local IN_TMUX = [[
+-- Whether a full-screen program owns the tab: iTerm2's own
+-- showingAlternateScreen, 1 while a program has switched to the alternate
+-- screen (nvim, less, htop, a tmux client; `less -X` and fzf --height stay
+-- on the main screen, so they do not count). iTerm2 tracks it from the
+-- terminal stream, so it holds over ssh and needs no report from the shell,
+-- and a tmux detach clears it at once. The one miss is a dropped ssh
+-- connection, which never switches back: it stays 1 until `reset`.
+local ALT_SCREEN = [[
 tell application "iTerm2" to tell current session of current window
-  return variable named "user.in_tmux"
+  return variable named "showingAlternateScreen"
 end tell
 ]]
 
-local function inTmux()
+local function onAlternateScreen()
   -- About 17ms per call, an Apple Event round trip, so it runs last. A
   -- failure is a broken setup (no Automation permission for Hammerspoon to
   -- control iTerm2, no window), so raise rather than guess where the key goes.
-  local ok, value, raw = hs.osascript.applescript(IN_TMUX)
+  local ok, value, raw = hs.osascript.applescript(ALT_SCREEN)
   if not ok then
     error(
-      "iterm2_keys: reading iTerm2 user.in_tmux failed (allow Hammerspoon to control "
-        .. "iTerm2 in System Settings > Privacy & Security > Automation): "
+      "iterm2_keys: reading iTerm2 showingAlternateScreen failed (allow Hammerspoon "
+        .. "to control iTerm2 in System Settings > Privacy & Security > Automation): "
         .. hs.inspect(raw)
     )
   end
-  return value == "1"
+  -- Always "0" or "1"; anything else (nil when iTerm2 renamed or dropped the
+  -- variable) would otherwise read as "main screen" and silently take every
+  -- full-screen program's Ctrl-U.
+  if value == "1" then
+    return true
+  elseif value == "0" then
+    return false
+  end
+  error("iterm2_keys: iTerm2 showingAlternateScreen is " .. hs.inspect(value) .. ', not "0" or "1"')
 end
 
 -- The focused session's terminal view, read through the accessibility tree:
@@ -129,9 +142,9 @@ local function decide(keyCode)
     return nil
   end
   if keyCode == KEY.u then
-    return not inTmux() and scrollUp or nil
+    return not onAlternateScreen() and scrollUp or nil
   end
-  return scrolledBack(terminal) and not inTmux() and scrollDown or nil
+  return scrolledBack(terminal) and not onAlternateScreen() and scrollDown or nil
 end
 
 -- A held key repeats what its first press decided, without asking again:
