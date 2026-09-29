@@ -111,12 +111,24 @@ function takeSnapshot()
   local function done(code, out, err)
     M.task = nil
     M.queryTimer:stop()
+    -- iTerm2 quitting fires one last focus change, and the snapshot it asks
+    -- for then finds no iTerm2: "Application can't be found. (-2700)", or
+    -- -600, "Application isn't running" (the log shows each quit this way:
+    -- the error, then "iTerm2 quit" 40ms later). That is the expected end of
+    -- a session, so the snapshot's callers are dropped, as snapshot() drops
+    -- them while iTerm2 is closed. Any other failure raises; -1743 is the
+    -- missing Automation permission.
     if code ~= 0 then
-      fail(
-        "iterm2_sessions.js failed (allow Hammerspoon to control iTerm2 in System Settings > "
-          .. "Privacy & Security > Automation): "
-          .. tostring(err)
-      )
+      err = tostring(err)
+      if err:find("(-2700)", 1, true) or err:find("(-600)", 1, true) then
+        log("iTerm2 went away during a snapshot; dropping %d caller(s)", #callbacks)
+        M.queue = {}
+        return
+      end
+      local hint = err:find("(-1743)", 1, true)
+          and " (allow Hammerspoon to control iTerm2 in System Settings > Privacy & Security > Automation)"
+        or ""
+      fail("iterm2_sessions.js failed" .. hint .. ": " .. err)
     end
     local data = hs.json.decode(out)
     log(
