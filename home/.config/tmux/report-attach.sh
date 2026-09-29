@@ -9,9 +9,8 @@
 #   local tmux attach, iTerm2        --> host_tag     --> "(<local>) [cl]"
 #   local tmux attach, other         --> @ssh unset   --> "[cl]"
 #
-# iTerm2 clients also get in_tmux=1 (iterm2_report_host.fish explains it).
-# client-session-changed matters for that: it is the only one of the two
-# hooks that `tmux new-session` fires.
+# client-session-changed is the only one of the two hooks that
+# `tmux new-session` fires, so `ssh -t <host> tmux new` gets its report too.
 #
 # Formats cannot read the environment, so the session environment carries
 # it: tmux's update-environment copies the attaching client's SSH_CONNECTION,
@@ -51,8 +50,8 @@ iterm2=
 case $lc_terminal:$term_program in iTerm2: | iTerm2:iTerm.app) iterm2=1 ;; esac
 
 # The reports the prompt sends, from the same fish function so tab and
-# prompt agree, with in_tmux 1. This process's environment is the tmux
-# server's, so the client's ssh state goes in as the flag.
+# prompt agree. This process's environment is the tmux server's, so the
+# client's ssh state goes in as the flag.
 if [ -n "$iterm2" ]; then
   where=local
   [ -n "$ssh" ] && where=ssh
