@@ -356,6 +356,13 @@ if [ "$(uname)" = "Darwin" ]; then
   # resets a change made in Preferences > General.
   defaults write com.colliderli.iina pauseWhenOpen -bool false
 
+  # Keyboard navigation (System Settings > Keyboard): Tab moves focus to
+  # every button in a dialog and Space presses it, not only Return (default
+  # button) and Esc (Cancel). E.g. iTerm2's Paste Image dialog: cmd+v, Tab,
+  # Space reaches "Paste Base64-Encoded Contents" (pasteimg on a remote).
+  # Apps launched afterwards pick it up; restart the ones already running.
+  defaults write -g AppleKeyboardUIMode -int 2
+
   # Ctrl+Return is Claude Code's "send queued prompt now" (chat:sendNow), but
   # macOS binds it system-wide to "Show contextual menu" (symbolic hotkey 159,
   # System Settings > Keyboard > Keyboard Shortcuts > Keyboard), so the key
