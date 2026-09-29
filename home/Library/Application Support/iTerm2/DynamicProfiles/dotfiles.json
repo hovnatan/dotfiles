@@ -16,6 +16,8 @@
       "Command": "/bin/sh -c 'exec \"$SHELL\" -l -c \"exec fish\"'",
       "Custom Directory": "Recycle",
       "Title Components": 1,
+      "Use Custom Tab Title": true,
+      "Custom Tab Title": "\\(currentSession.user.host_tag?)\\(currentSession.name)",
       "Show Mark Indicators": false,
       "Prompt Before Closing 2": 0,
       "Close Sessions On End": true,

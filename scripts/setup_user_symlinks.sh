@@ -408,6 +408,9 @@ if [ "$(uname)" = "Darwin" ]; then
   # mouse-hide-while-typing has no iTerm2 equivalent.
   iterm_profiles="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
   mkdir -p "$iterm_profiles"
+  # iTerm2 reloads dynamic profiles when this folder changes, and an edit to
+  # the linked file leaves the folder alone: re-running this ln -sf (dotup) is
+  # what makes a running iTerm2 pick the edit up.
   ln -sf ~/.dotfiles/"home/Library/Application Support/iTerm2/DynamicProfiles/dotfiles.json" "$iterm_profiles/"
   defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string 45FCCF80-D41B-400A-A797-004E6F3CAD2A
   defaults write com.googlecode.iterm2 TabStyleWithAutomaticOption -int 5
@@ -430,6 +433,13 @@ if [ "$(uname)" = "Darwin" ]; then
   # New tabs open right after the current one, as Ghostty's default
   # window-new-tab-position = current does; iTerm2 appends them at the end.
   defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
+  # Long tab titles always lose their end, never their start, so the host tag
+  # that leads them ("(mbp) ~/.dotfiles", iterm2_report_host.fish) stays
+  # visible. Smart truncation (the default) cuts the start instead whenever a
+  # window's titles share it: six tabs titled "(mbp) START ... END" all read
+  # "...well past the tab width END". No setting always cuts the start, so a
+  # tag at the end would be lost whenever titles differ early.
+  defaults write com.googlecode.iterm2 TabTitlesUseSmartTruncation -bool false
   # OSC 52 clipboard writes (remote tmux/nvim/Claude Code copying to the Mac
   # clipboard), allowed as Ghostty's clipboard-write = allow does; iTerm2
   # denies them by default. Reads stay at iTerm2's ask-each-time, matching
