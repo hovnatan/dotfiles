@@ -40,7 +40,12 @@ It is kept short on purpose - every line here is paid on every session.
   servers, `notify`), so it often shows as modified. Never stage or commit it
   as part of other work (no `git add -A`/`.`/`-u`, no `commit -a`); change it
   only when the user asks for that file, staging just the lines they want.
-- backpass adds further evidence-backed entries here from real sessions.
+- Every new script or process (Hammerspoon module, hook, daemon, scheduled
+  job) logs its actions to `~/.dotfiles/.logs/<UTC YYYYMMDD_HHMMSS>_<name>/`,
+  one directory per run or load: a UTC-timestamped line per action,
+  line-buffered so the file reads mid-run. `.logs` is ignored through
+  `home/.config/git/ignore`; `log()` in `home/.hammerspoon/iterm2_bell_banners.lua`
+  is the pattern.
 
 ## Maintaining this file
 
