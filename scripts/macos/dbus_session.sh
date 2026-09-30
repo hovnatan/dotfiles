@@ -18,17 +18,18 @@
 # GLib does not use; that agent also fails here, for want of
 # /etc/dbus-1/session.conf.
 #
-# Logs to ~/.dotfiles/.logs/<UTC>_dbus_session/events.log: one line at the
-# start, then whatever dbus-daemon reports.
+# Logs to ~/.dotfiles/.logs/<UTC>_dbus_session/events.log
+# (scripts/lib/event_log.sh): one line at the start, then whatever
+# dbus-daemon reports.
 
 set -euo pipefail
 
 [ "$(uname)" = "Darwin" ] || { echo "dbus_session.sh: macOS only; Linux has a session bus" >&2; exit 1; }
 
-logdir="$HOME/.dotfiles/.logs/$(date -u +%Y%m%d_%H%M%S)_dbus_session"
-mkdir -p "$logdir"
-exec >> "$logdir/events.log" 2>&1
-log() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
+# shellcheck source=scripts/lib/event_log.sh
+. "$(dirname "$0")/../lib/event_log.sh"
+# No prune from here: the bus must not come up later for one, or not at all.
+event_log_start dbus_session --no-prune
 
 daemon="$HOME/.nix-profile/bin/dbus-daemon"
 conf="$HOME/.nix-profile/share/dbus-1/session.conf"
@@ -38,4 +39,4 @@ bus="$HOME/.cache/bus"
 
 mkdir -p "$HOME/.cache"
 log "dbus-daemon on $bus"
-exec "$daemon" --nofork --config-file="$conf" --address="unix:path=$bus"
+exec "$daemon" --nofork --config-file="$conf" --address="unix:path=$bus" >> "$EVENT_LOG_FILE" 2>&1
