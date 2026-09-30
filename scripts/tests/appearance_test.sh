@@ -201,8 +201,8 @@ fi
 # The server's PATH is the system's: the machine's zathura stays out of reach.
 sed -i.bak '$d' "$H/.config/zathura/gruvbox-dark" # the map line from above
 rm "$H/bin/zathura"
-mkdir -p "$H/.dotfiles/scripts"
-ln -s "$SCRIPT" "$H/.dotfiles/scripts/appearance.sh"
+mkdir -p "$H/.dotfiles"
+ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
 grep -E '^set-hook -g client-(dark|light)-theme ' "$REPO/home/.tmux.conf" > "$WORK/hooks.conf"
 if [ "$(wc -l < "$WORK/hooks.conf")" -eq 2 ]; then
   pass "tmux: home/.tmux.conf has the two hooks"

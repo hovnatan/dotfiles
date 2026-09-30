@@ -4,9 +4,9 @@
 # builds `dotup` installs on the real machines:
 #
 #   ubuntu-latest   ntfy_stop_test.sh, appearance_test.sh,
-#                   claude_tmux_run_test.sh (needs a user systemd manager:
-#                   lingering on)
-#   macos-latest    ntfy_stop_test.sh, appearance_test.sh
+#                   prune_logs_test.sh, claude_tmux_run_test.sh (needs a
+#                   user systemd manager: lingering on)
+#   macos-latest    ntfy_stop_test.sh, appearance_test.sh, prune_logs_test.sh
 #                   (claude_tmux_run_test.sh is Linux only)
 #
 # The tmux test links ~/.nix-profile into its throwaway HOME, so tmux has to
@@ -52,5 +52,6 @@ jobs:
       - run: tmux -V; bash --version | head -1; python3 --version
       - run: scripts/tests/ntfy_stop_test.sh
       - run: scripts/tests/appearance_test.sh
+      - run: scripts/tests/prune_logs_test.sh
       - run: scripts/tests/claude_tmux_run_test.sh
         if: runner.os == 'Linux'

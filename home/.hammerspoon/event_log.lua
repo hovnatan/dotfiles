@@ -14,6 +14,9 @@
 -- it can be read while Hammerspoon runs. Each line is also printed to the
 -- Console as "<name>: <message>" unless `console = false`, for modules that
 -- log per keypress and would crowd everything else out of it.
+--
+-- The first log of a load also prunes the old ones (scripts/prune_logs.sh,
+-- which says what goes; once a day), in a process of its own.
 local M = {}
 
 -- The dotfiles checkout is where ~/.hammerspoon points; anything else is an
@@ -25,6 +28,22 @@ local function repoRoot()
     error("event_log: ~/.hammerspoon resolves to " .. configDir .. ", not <dotfiles>/home/.hammerspoon")
   end
   return repo
+end
+
+-- Once per load, whichever module asks for its log first. Kept in M so the
+-- task is not garbage-collected before it ends.
+local function prune(repo)
+  if M.pruneTask then
+    return
+  end
+  M.pruneTask = hs.task.new(repo .. "/scripts/prune_logs.sh", function(code, out, err)
+    if code ~= 0 then
+      local msg = string.format("prune_logs.sh failed (exit %d): %s%s", code, out, err)
+      hs.alert.show("event_log: " .. msg, 4)
+      error("event_log: " .. msg)
+    end
+  end)
+  M.pruneTask:start()
 end
 
 -- A log function for `name`, plus the directory it writes to.
@@ -39,6 +58,7 @@ function M.new(name, opts)
   end
   local file = assert(io.open(dir .. "/events.log", "a"))
   file:setvbuf("line")
+  prune(repo)
 
   local function log(fmt, ...)
     local msg = string.format(fmt, ...)

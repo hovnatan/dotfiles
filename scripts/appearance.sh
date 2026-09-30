@@ -30,16 +30,16 @@
 # org.pwmt.zathura.PID-<pid>. A window opened before that bus ran is not on
 # it and keeps its colours until reopened.
 #
-# Logs to ~/.dotfiles/.logs/<UTC>_appearance_sh/events.log, one directory a run.
+# Logs to ~/.dotfiles/.logs/<UTC>_appearance_sh/events.log (scripts/lib/event_log.sh).
 
 set -euo pipefail
 
 # From Hammerspoon and launchd PATH is the system's alone.
 PATH="$HOME/.nix-profile/bin:$PATH"
 
-logdir="$HOME/.dotfiles/.logs/$(date -u +%Y%m%d_%H%M%S)_appearance_sh"
-mkdir -p "$logdir"
-log() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" | tee -a "$logdir/events.log"; }
+# shellcheck source=scripts/lib/event_log.sh
+. "$(dirname "$0")/lib/event_log.sh"
+event_log_start appearance_sh
 die() { log "ERROR $*" >&2; exit 1; }
 
 # --- which appearance ---------------------------------------------------------
