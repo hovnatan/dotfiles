@@ -142,17 +142,19 @@ hook "$sid_cancel" "$OK_URL"
 hook "$sid_fail" "$BAD_URL"
 hook "$sid_gone" "$OK_URL"
 hook "$sid_grows" "$OK_URL"
-# grows: keep the transcript growing from right after its waiter is armed,
-# every 0.5 s for 9 s, in the background while the other scenarios proceed.
-# The waiter polls every 5 s against a 6 s window, so only its poll at ~W+5
-# (W = waiter start) falls inside the window and must see growth. The old
-# three touches 2 s apart, after the other scenarios' steps, landed first at
-# ~W+4: a slow macOS runner missed that poll ("FAIL grows: 0 'transcript
-# grew' lines", push still sent; reproduced by adding 1.5 s of lag there).
-#   W+5   grew -> logged, window re-armed to W+11
-#   W+10  grew again -> same streak, not logged
+# grows: keep the transcript growing, every 0.5 s in the background while
+# the other scenarios proceed, until the waiter has logged the growth (or
+# 30 s). The waiter compares the transcript against its pid file, written
+# when it starts, and polls every 5 s, so the touches have to outlast its
+# start: a macOS runner has started it over 9 s after the hook armed it, and
+# a fixed 9 s of touching then all fell before the pid file ("FAIL grows: 0
+# 'transcript grew' lines", push still sent; reproduced by delaying the
+# waiter 10 s). With W the waiter's start:
+#   W+5   grew -> logged, window re-armed to W+11; the touches stop
+#   W+10  the last touch may still count -> same streak, not logged
 #   W+15  quiet; W+20 past the window -> push
-( for _ in $(seq 18); do sleep 0.5; touch "$WORK/transcript"; done ) &
+grew() { grep -F -- "grows (\$$sid_grows)" "$LOG" 2>/dev/null | grep -qF "wait: transcript grew"; }
+( for _ in $(seq 60); do sleep 0.5; touch "$WORK/transcript"; grew && break; done ) &
 toucher=$!
 hook "$sid_watched" "$OK_URL"
 sleep 2
