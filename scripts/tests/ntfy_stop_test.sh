@@ -15,6 +15,9 @@
 #     goes        unwatched, session killed mid-window  -> "session gone"
 #     grows       unwatched, transcript keeps growing   -> one "grew" line, push
 #     watched     a real client attached in a pty, focus-in sent -> no waiter
+#                 then the same client reports focus-out: a waiter is armed,
+#                 and the line says what it saw ("<tty> not focused, input
+#                 Ns ago"); cancelled before it pushes
 #
 # Checks the decision log line by line (and that it is an event log under
 # ~/.dotfiles/.logs), what the listener received, and that no lock directory
@@ -111,17 +114,22 @@ hook() {
 # terminal emits when its window gains focus, which sets client_flags focused
 # and refreshes client_activity -- exactly what watched() tests.
 sid_watched=$(new_session watched)
-python3 - "$SOCK" <<'PYEOF' &
-import os, pty, sys, time
+# When $WORK/unfocus appears it sends the focus-out a terminal emits on losing
+# focus, for the second half of the scenario.
+python3 - "$SOCK" "$WORK/unfocus" <<'PYEOF' &
+import os, pty, select, sys, time
 pid, fd = pty.fork()
 if pid == 0:
     env = {k: v for k, v in os.environ.items() if k not in ("TMUX", "TMUX_PANE")} | {"TERM": "xterm-256color"}
     os.execvpe("tmux", ["tmux", "-S", sys.argv[1], "attach", "-t", "=watched"], env)
 time.sleep(1); os.write(fd, b"\x1b[I")
-end = time.time() + 40
+end = time.time() + 60; unfocused = False
 while time.time() < end:
-    try: os.read(fd, 65536)
-    except OSError: break
+    if not unfocused and os.path.exists(sys.argv[2]):
+        os.write(fd, b"\x1b[O"); unfocused = True
+    if select.select([fd], [], [], 0.1)[0]:
+        try: os.read(fd, 65536)
+        except OSError: break
 PYEOF
 client=$!
 for _ in $(seq 30); do
@@ -165,6 +173,20 @@ grew() { ntfy_log | grep -F -- "grows (\$$sid_grows)" | grep -qF "wait: transcri
 ( for _ in $(seq 60); do sleep 0.5; touch "$WORK/transcript"; grew && break; done ) &
 toucher=$!
 hook "$sid_watched" "$OK_URL"
+# The same client loses focus: the next Stop arms a waiter, whose line names
+# the client as not focused. Cancelled once its lock is there, or the cancel
+# finds nothing to cancel and the waiter pushes.
+touch "$WORK/unfocus"
+for _ in $(seq 30); do
+  t list-clients -t "\$$sid_watched" -F '#{client_flags}' 2>/dev/null | grep -q focused || break
+  sleep 0.2
+done
+hook "$sid_watched" "$OK_URL"
+for _ in $(seq 50); do
+  [ -d "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/claude-ntfy/${SOCK##*/}-$sid_watched.lock" ] && break
+  sleep 0.1
+done
+hook "$sid_watched" "$OK_URL" --cancel
 sleep 2
 hook "$sid_cancel" "$OK_URL" --cancel
 t kill-session -t =goes
@@ -192,6 +214,16 @@ has "goes (\$$sid_gone)" "wait: session gone, no push" && pass "goes: session go
   || fail "grows: $(count "grows (\$$sid_grows)" "wait: transcript grew") 'transcript grew' lines"
 has "grows (\$$sid_grows)" "push: sent via $OK_URL" && pass "grows: pushed after the quiet window" || fail "grows: no push"
 has "watched (\$$sid_watched)" "stop: watched now, no push" && pass "watched: focused client suppresses the waiter" || fail "watched: not seen as watched"
+
+# The evidence behind "unwatched": what tmux knew of the session's clients.
+has "push-ok (\$$sid_ok)" "waiter armed (debounce ${DEBOUNCE}s; no client attached)" \
+  && pass "push-ok: armed, and says no client was attached" || fail "push-ok: arm line without its clients: $(ntfy_log | grep -F 'push-ok' | head -1)"
+has "push-ok (\$$sid_ok)" "unwatched (no client attached)" \
+  && pass "push-ok: the push says the same" || fail "push-ok: push line without its clients: $(ntfy_log | grep -F 'push: sent' | head -1)"
+ntfy_log | grep -F "watched (\$$sid_watched) stop: unwatched" | grep -q -E '; (ttys[0-9]+|pts/[0-9]+) not focused, input [0-9]+s ago\)$' \
+  && pass "watched: after focus-out it is armed, naming the client as not focused" \
+  || fail "watched: no 'not focused' evidence: $(ntfy_log | grep -F "watched (\$$sid_watched)")"
+has "watched (\$$sid_watched)" "prompt: user replied, pending push cancelled" && pass "watched: that waiter was cancelled" || fail "watched: waiter not cancelled"
 
 posts=$(grep -c '^POST /testtopic' "$WORK/listener.out")
 [ "$posts" = 2 ] && pass "listener got exactly 2 pushes" || fail "listener got $posts pushes"

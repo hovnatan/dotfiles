@@ -97,7 +97,15 @@ done < <(ls -t "$(dirname "$transcript")"/*.jsonl 2>/dev/null)
 case "$color" in default) color="" ;; esac
 
 # Rename first: the color is per session and survives the rename either way.
-type_command() { tmux -S "$socket" send-keys -t "$TMUX_PANE" -l "$1" \; send-keys -t "$TMUX_PANE" Enter; }
+# What was typed is logged with the other tmux hooks (log-event.sh): keys
+# arriving in a pane by themselves are otherwise hard to account for.
+#   2026-09-30T13:24:58Z clear: typed "/rename vm-claude" into %0 (title was vm-claude/old-task)
+# shellcheck source=scripts/lib/event_log.sh
+. "${0%/*}/../../../scripts/lib/event_log.sh"
+type_command() {
+  tmux -S "$socket" send-keys -t "$TMUX_PANE" -l "$1" \; send-keys -t "$TMUX_PANE" Enter
+  event_log_note tmux_hooks "clear: typed \"$1\" into $TMUX_PANE (title was $title)"
+}
 [ -z "$bare" ] || type_command "/rename $bare"
 [ -z "$color" ] || type_command "/color $color"
 exit 0

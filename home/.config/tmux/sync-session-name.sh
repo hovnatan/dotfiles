@@ -42,4 +42,14 @@ case "$glyph" in *[A-Za-z0-9]*) exit 0 ;; esac
 case "$want" in "$HOSTNAME-"*) want=${want#"$HOSTNAME-"} ;; *) exit 0 ;; esac
 case "$want" in *" "*) exit 0 ;; esac
 [ "$want" != "$sname" ] || exit 0
-exec tmux -S "$socket" rename-session -t "$sid" "$want"
+# Logged with the other tmux hooks (log-event.sh): session names are how
+# every other line there says which session it means.
+#   2026-09-30T13:25:01Z session $0 renamed claude/old-task -> claude (pane title "* vm-claude")
+# shellcheck source=scripts/lib/event_log.sh
+. "${0%/*}/../../../scripts/lib/event_log.sh"
+if tmux -S "$socket" rename-session -t "$sid" "$want"; then
+  event_log_note tmux_hooks "session $sid renamed $sname -> $want (pane title \"$title\")"
+else
+  event_log_note tmux_hooks "session $sid: FAILED to rename $sname -> $want (pane title \"$title\")"
+  exit 1
+fi

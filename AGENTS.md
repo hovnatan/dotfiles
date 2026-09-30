@@ -21,8 +21,9 @@ It is kept short on purpose - every line here is paid on every session.
   (pinned by `nix/flake.lock`; setup in README.md); `Brewfile` (repo root)
   holds only the Mac apps. Read the relevant header before any `nix profile`
   change or brew install, uninstall or cask adopt.
-- Changing `scripts/claude_tmux_run.sh`, the claude-tmux unit or
-  `home/.claude/ntfy-stop.sh`: extend `scripts/tests/` with the new behaviour.
+- Changing `scripts/claude_tmux_run.sh`, the claude-tmux unit,
+  `home/.claude/ntfy-stop.sh` or a tmux hook (`home/.config/tmux/`, the
+  `set-hook` lines): extend `scripts/tests/` with the new behaviour.
   CI runs them on Linux and macOS (`.github/workflows/tests.yml`); locally
   they are safe beside live sessions.
 - This repo is public, commit messages included. Host names, IPs, tailnet
