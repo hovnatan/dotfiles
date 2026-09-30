@@ -88,6 +88,16 @@ event_log_daily() {
   event_log_start "$@"
 }
 
+# event_log_note <name> <message...>: one line in today's log of <name>, for a
+# hook: nothing on stdout, which is often somebody else's (Claude Code's,
+# tmux's), and no prune, which would run on that somebody's clock.
+event_log_note() {
+  local name=$1
+  shift
+  event_log_daily "$name" --no-prune || return 1
+  log "$@" > /dev/null
+}
+
 # log <message>: a UTC-stamped line, to the log and to stdout.
 log() {
   local stamp

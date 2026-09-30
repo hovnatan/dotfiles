@@ -35,8 +35,10 @@
 # are three processes writing one story, so they share a log: a directory
 # per UTC day (scripts/lib/event_log.sh, event_log_daily), not one per run.
 #   tail -f ~/.dotfiles/.logs/*_claude_ntfy/events.log
-#   2026-09-23T13:40:02Z backend ($3) stop: unwatched, waiter armed (debounce 600s)
+#   2026-09-23T13:40:02Z backend ($3) stop: unwatched, waiter armed (debounce 600s; pts/1 not focused, input 41s ago)
 #   2026-09-23T13:41:10Z backend ($3) wait: seen after 65s, no push
+# An "unwatched" verdict carries what tmux knew of the session's clients
+# (see clients()), so a push that should not have been sent explains itself.
 # Events: stop (watched now | waiter armed), wait (coalesced | seen |
 # session gone | transcript grew), prompt (pending push cancelled), push
 # (sent | FAILED with curl's exit code). The topic is never logged -- it is
@@ -67,16 +69,32 @@ esac
 # shellcheck source=scripts/lib/event_log.sh
 . "$here/../../scripts/lib/event_log.sh"
 
-# note <who> <event...>: the line "<UTC time> <who> <event>" in today's log.
-# No fork on bash 4.2 and later once the day's directory exists. Nothing on
-# stdout, which is Claude Code's in the hook and cancel modes. No prune from
-# here either, for the same clock's sake: the waiter does that.
+# note <who> <event...>: the line "<UTC time> <who> <event>" in today's log
+# (event_log_note: no fork on bash 4.2 and later once the day's directory
+# exists, nothing on stdout, no prune; the waiter prunes).
 note() {
-  if ! event_log_daily claude_ntfy --no-prune; then
-    echo "ntfy-stop.sh: cannot start a log under $EVENT_LOG_ROOT" >&2
-    return 1
-  fi
-  log "$@" > /dev/null
+  event_log_note claude_ntfy "$@" ||
+    echo "ntfy-stop.sh: cannot log under $EVENT_LOG_ROOT" >&2
+}
+
+# clients <socket> <session-id>: set $clients to what tmux knows of the
+# session's clients, the evidence behind a verdict of "unwatched":
+#   "pts/1 not focused, input 14s ago; pts/5 focused, input 2400s ago"
+#   "no client attached"
+# Input seconds ago with no focus is a contradiction worth seeing: somebody
+# is at that terminal, and its focus reports are not arriving (iTerm2
+# switches them off when it takes the host for changed; 2026-09-30).
+clients() {
+  local now tty flags activity out=
+  now=${EPOCHSECONDS:-$(date +%s)}
+  while read -r tty flags activity; do
+    [ -n "$tty" ] || continue
+    case ",$flags," in *,focused,*) flags=focused ;; *) flags="not focused" ;; esac
+    out="${out:+$out; }${tty#/dev/} $flags, input $((now - activity))s ago"
+  done <<LIST
+$(tmux -S "$1" list-clients -t "\$$2" -F '#{client_tty} #{client_flags} #{client_activity}' 2>/dev/null)
+LIST
+  clients=${out:-no client attached}
 }
 
 # watched <socket> <session-id>: status 0 if a client of the session is
@@ -172,10 +190,11 @@ if [ "${1:-}" = --wait ]; then
     -d "finished a turn ${DEBOUNCE_SECONDS}s ago and is still unwatched" \
     "$NTFY_URL/$topic" > /dev/null
   rc=$?
+  clients "$socket" "$sid"
   if [ "$rc" -eq 0 ]; then
-    note "$who" "push: sent via $NTFY_URL after $((SECONDS - start))s unwatched"
+    note "$who" "push: sent via $NTFY_URL after $((SECONDS - start))s unwatched ($clients)"
   else
-    note "$who" "push: FAILED, curl exit $rc ($NTFY_URL)"
+    note "$who" "push: FAILED, curl exit $rc ($NTFY_URL; $clients)"
   fi
   exit 0
 fi
@@ -217,7 +236,8 @@ transcript=$(sed -n 's/.*"transcript_path":"\([^"]*\)".*/\1/p' 2>/dev/null)
 # setsid fully detaches (survives signals to claude's process group);
 # stock macOS has no setsid, so fall back to nohup there.
 runner=$(command -v setsid || echo nohup)
-note "$who" "stop: unwatched, waiter armed (debounce ${DEBOUNCE_SECONDS}s)"
+clients "$socket" "$sid"
+note "$who" "stop: unwatched, waiter armed (debounce ${DEBOUNCE_SECONDS}s; $clients)"
 "$runner" "$0" --wait "$socket" "$sid" "$topic" "$transcript" "$who" \
   < /dev/null > /dev/null 2>&1 &
 exit 0
