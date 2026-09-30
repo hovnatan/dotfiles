@@ -42,7 +42,8 @@ It is kept short on purpose - every line here is paid on every session.
   only when the user asks for that file, staging just the lines they want.
 - Every new script or process (Hammerspoon module, hook, daemon, scheduled
   job) logs its actions to `~/.dotfiles/.logs/<UTC YYYYMMDD_HHMMSS>_<name>/events.log`,
-  one directory per run or load: a UTC-timestamped line per action,
+  one directory per run or load (per UTC day for a hook that fires at every
+  turn, `event_log_daily`): a UTC-timestamped line per action,
   line-buffered so the file reads mid-run. Use `scripts/lib/event_log.sh`
   (shell) or `home/.hammerspoon/event_log.lua`; `.logs` is ignored through
   `home/.config/git/ignore`. A directory holding only `events.log` is pruned
