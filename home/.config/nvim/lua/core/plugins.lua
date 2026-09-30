@@ -34,9 +34,8 @@ vim.pack.add({
 -- Colorscheme: classic gruvbox, matched to Ghostty's Gruvbox Light/Dark themes
 -- (home/.config/ghostty/config). Its default contrast is the palette those
 -- themes use: dark bg #282828 / fg #ebdbb2, light bg #fbf1c7 / fg #3c3836.
--- Light or dark follows 'background', which nvim detects from the terminal at
--- startup (or ~/.my_colors, core/options.lua). Gruvbox Material was tried
--- first on 2026-09-24 and looked off.
+-- Light or dark follows 'background', which nvim detects from the terminal.
+-- Gruvbox Material was tried first on 2026-09-24 and looked off.
 vim.cmd.colorscheme("gruvbox")
 
 -- gitsigns: hunks against the index, shown with the defaults - bars in the
