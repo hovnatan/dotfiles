@@ -1,6 +1,5 @@
 # zathura: PDF / EPUB / DjVu / PostScript / comic-book viewer, installed from
-# nix/flake.nix on macOS. Was home/.config/zathura_light with the gruvbox
-# lines commented out; recolouring is now on at startup (2026-09-24).
+# nix/flake.nix on macOS. Recolouring is on at startup (2026-09-24).
 
 set font 'monospace normal 14'
 set adjust-open best-fit
@@ -22,24 +21,17 @@ map <C-n> toggle_statusbar
 unmap o
 map <S-o> focus_inputbar ":open "
 
-# Gruvbox recolouring: page white -> gruvbox light background, page black ->
-# gruvbox foreground, the shades in between blended. Same palette as Ghostty
-# (Gruvbox Light), nvim (gruvbox.nvim) and the Claude Code theme. `r` toggles
-# it off for pages where colour matters (photos, plots).
+# Gruvbox recolouring: page white -> the theme's background, page black ->
+# its foreground, the shades in between blended. Same palette as Ghostty,
+# nvim (gruvbox.nvim) and the Claude Code theme. `r` toggles it off for pages
+# where colour matters (photos, plots).
 set recolor true
-set recolor-lightcolor "#fbf1c7"
-set recolor-darkcolor "#3c3836"
-set default-bg "#fbf1c7"
-set statusbar-bg "#fbf1c7"
-set statusbar-fg "#3c3836"
 map r recolor
 
-# Gruvbox dark instead:
-#set recolor-lightcolor "#282828"
-#set recolor-darkcolor "#ebdbb2"
-#set default-bg "#282828"
-#set statusbar-bg "#282828"
-#set statusbar-fg "#ebdbb2"
+# The colours: `theme` is a machine-local link to gruvbox-light or
+# gruvbox-dark, whichever the system appearance is. scripts/appearance.sh
+# points it, and recolours the zathura windows that are open.
+include theme
 
 # Keep the hue of coloured content while recolouring (off: all-gruvbox pages)
 #set recolor-keephue true

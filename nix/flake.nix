@@ -199,6 +199,12 @@
             # sioyek (MuPDF has no DjVu). A CLI binary, no .app: start it from
             # a terminal. Mac only: the Linux boxes are headless (2026-09-24)
             pkgs.zathura
+            # dbus -- the session bus zathura takes commands on: dbus-daemon
+            # (scripts/macos/dbus_session.sh) and dbus-send, with which
+            # scripts/appearance.sh recolours open zathura windows when the
+            # system turns light or dark. macOS has no session bus of its
+            # own (2026-09-29)
+            pkgs.dbus
           ];
         in
         {

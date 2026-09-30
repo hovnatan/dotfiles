@@ -1,0 +1,7 @@
+# zathura colours for the light appearance; see zathurarc. Only `set` lines:
+# scripts/appearance.sh sends each one to the zathura windows that are open.
+set recolor-lightcolor "#fbf1c7"
+set recolor-darkcolor "#3c3836"
+set default-bg "#fbf1c7"
+set statusbar-bg "#fbf1c7"
+set statusbar-fg "#3c3836"

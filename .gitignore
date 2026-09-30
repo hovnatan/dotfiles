@@ -8,3 +8,6 @@ venv_python_neovim
 *.swp
 # machine-local symlink into Dropbox; see scripts/setup_user_symlinks.sh
 home/.hammerspoon/local_hammerspoon.lua
+# machine-local links to the light or dark variant; see scripts/appearance.sh
+home/.claude/themes/gruvbox.json
+home/.config/zathura/theme

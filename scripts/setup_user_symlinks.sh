@@ -139,6 +139,9 @@ ln -sf ~/.dotfiles/home/.claude/keybindings.json ~/.claude/keybindings.json
 # directory, and "New custom theme..." in /theme writes here, so themes made
 # there land in the repo too.
 ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
+# settings.json names the theme "custom:gruvbox": gruvbox.json in there is a
+# machine-local link to the light or the dark one, pointed at the end of this
+# script (scripts/appearance.sh).
 
 # Private companion repos, both OPTIONAL: a machine without a clone still
 # installs cleanly, it just goes without what that clone carries.
@@ -346,6 +349,22 @@ if [ "$(uname)" = "Darwin" ]; then
   ln -sf ~/.dotfiles/home/Library/LaunchAgents/"$keyremap_label".plist ~/Library/LaunchAgents/
   launchctl bootout "gui/$(id -u)/$keyremap_label" 2>/dev/null
   launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/"$keyremap_label".plist
+
+  # D-Bus session bus, over which scripts/appearance.sh recolours the zathura
+  # windows that are open (scripts/macos/dbus_session.sh). Started only if
+  # it does not run: zathura joins the bus once, at its start, so a restart
+  # would cut every open window off from it.
+  dbus_label=com.hovnatan.dbus-session
+  ln -sf ~/.dotfiles/home/Library/LaunchAgents/"$dbus_label".plist ~/Library/LaunchAgents/
+  if [ ! -x ~/.nix-profile/bin/dbus-daemon ]; then
+    warn "dbus is not installed yet, so open zathura windows will not follow light/dark:
+       nix profile upgrade nix (dotup does it after this script), then re-run this script"
+  elif ! launchctl print "gui/$(id -u)/$dbus_label" 2>/dev/null | grep -q 'state = running'; then
+    launchctl bootout "gui/$(id -u)/$dbus_label" 2>/dev/null
+    launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/"$dbus_label".plist
+    for _ in $(seq 50); do [ -S ~/.cache/bus ] && break; sleep 0.1; done
+    [ -S ~/.cache/bus ] || warn "the D-Bus session bus did not come up at ~/.cache/bus; see the newest ~/.dotfiles/.logs/*_dbus_session/events.log"
+  fi
 
   # Preview markup colors (magenta annotations for LLM screenshot review) are
   # not applied here: the script has to quit Preview, which declines with
@@ -576,6 +595,17 @@ if [ "$(uname)" = "Darwin" ]; then
   ~/.dotfiles/scripts/macos/build_zathura_app.sh >/dev/null \
     || warn "Zathura.app build failed (scripts/macos/build_zathura_app.sh)"
 
+fi
+
+# Light or dark, for Claude Code's theme and zathura (scripts/appearance.sh).
+# A Mac is asked for its appearance, and Hammerspoon keeps the links in step
+# from then on (home/.hammerspoon/appearance.lua). Linux cannot be asked, so
+# the links are made once, dark; from then on they follow the terminal
+# attached to tmux (home/.tmux.conf), or `scripts/appearance.sh light`.
+if [ "$(uname)" = "Darwin" ]; then
+  ~/.dotfiles/scripts/appearance.sh >/dev/null || warn "scripts/appearance.sh failed (message above)"
+elif [ ! -L ~/.claude/themes/gruvbox.json ] || [ ! -L ~/.config/zathura/theme ]; then
+  ~/.dotfiles/scripts/appearance.sh dark >/dev/null || warn "scripts/appearance.sh dark failed (message above)"
 fi
 
 if [ "$failed" -ne 0 ]; then
