@@ -503,25 +503,27 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 NoSyncTipsDisabled -bool false
   # Terminal modes a remote tmux/nvim/Claude Code switches on and never
   # switches off when the ssh connection drops (sleep, network change).
-  # Back at the local prompt they turn into junk input: mouse ->
-  # ^[[<0;45;12M on clicks, DEC 2048 -> size reports on resize, bracketed
-  # paste -> ^[[200~ in a plain sh. iTerm2 notices when the host changes
-  # back and asks "Looks like mouse reporting was left on ... Turn it
-  # off?"; true is the banner's "Always": reset them silently. A local
-  # program that wants a mode re-enables it.
-  defaults write com.googlecode.iterm2 NoSyncTurnOffMouseReportingOnHostChange -bool true
-  defaults write com.googlecode.iterm2 NoSyncTurnOffBracketedPasteOnHostChange -bool true
-  defaults write com.googlecode.iterm2 NoSyncTurnOffDEC2048OnHostChange -bool true
-  # Focus reporting is left out of that set, and its "Always" taken back
-  # from machines that had it (2026-09-27 to 09-30): the banner is to show.
-  # iTerm2 also takes a host for changed while a tab is still attached to a
-  # remote tmux (what makes it do so is not known yet), and silently
-  # switching focus reports off there blinds tmux for the rest of the
-  # attach: it asks for them once, at attach. home/.claude/ntfy-stop.sh
-  # then sees nobody looking and pushes every turn left unanswered; that
-  # happened on 2026-09-30, with no banner to say why. Answer the banner No
-  # while attached, Yes back at a local prompt after a dropped connection.
-  defaults delete com.googlecode.iterm2 NoSyncTurnOffFocusReportingOnHostChange 2>/dev/null
+  # Back at the local prompt they turn into junk input: focus -> ^[[I/^[[O
+  # on every window switch, mouse -> ^[[<0;45;12M on clicks, DEC 2048 ->
+  # size reports on resize, bracketed paste -> ^[[200~ in a plain sh.
+  # iTerm2 notices when the host changes back and asks "Looks like focus
+  # reporting was left on ... Turn it off?", one banner per mode.
+  #
+  # The banners are left to ask. From 2026-09-27 to 09-30 these keys were
+  # true, the banner's "Always", which resets the modes silently; they are
+  # deleted from machines that got that. iTerm2 also takes a host for
+  # changed while a tab is still attached to a remote tmux (what makes it
+  # do so is not known yet), and tmux asks for these modes once, at attach:
+  # a silent reset there leaves it without them for the rest of the attach.
+  # With focus reports gone, home/.claude/ntfy-stop.sh saw nobody looking
+  # and pushed a turn that was being watched (2026-09-30), and nothing on
+  # screen said why. Answer No while attached, Yes back at a local prompt
+  # after a dropped connection; "Always" sets the key true again.
+  #   unset: the banner asks   true: reset silently   false: never reset,
+  #   never ask (checked for focus reporting in iTerm2 3.7.3)
+  for mode in FocusReporting MouseReporting BracketedPaste DEC2048; do
+    defaults delete com.googlecode.iterm2 "NoSyncTurnOff${mode}OnHostChange" 2>/dev/null
+  done
   # Same banner family for the title: a remote prompt/tmux/nvim retitles the
   # tab and the title outlives the ssh session. true restores the pre-ssh
   # tab and window title silently instead of asking.
