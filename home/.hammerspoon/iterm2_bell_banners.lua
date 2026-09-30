@@ -8,14 +8,16 @@
 --   AXLayoutChanged on a banner              focus change (tab, pane, app)
 --        |  (only that element is read)           |
 --        v                                        v
---   new bell banner? --> queue            reset the bell baseline of the
---                          |              sessions on screen now and before
+--   new bell banner? --> queue + saved    reset the bell baseline of the
+--                        counters         sessions on screen now and before
+--                          |                      |
 --                          v                      |
 --   snapshot (iterm2_sessions.js, own process) <--+
 --                          |                      |
 --                          v                      v
---   resolve: tab #<n>, bellCount rose     sessions on screen, or gone:
---        |                                  struck from each banner's owners
+--   resolve older arrivals: counters     sessions on screen, or gone:
+--   rose since their saved baselines      struck from each banner's owners
+--        |                                        |
 --        v                                        |
 --   pending[banner id] = its owners  -------------+
 --                                                 v
@@ -23,10 +25,12 @@
 --                                         closed (expanding an iTerm2 stack
 --                                         first)
 --
--- The banner text cannot name its tab later: <n> is the tab's position when
--- it rang, and tabs shift as others open, close or move. So the owner is
--- resolved the moment the banner appears, from bellCount, a per-session
--- counter iTerm2 bumps on every bell, and <n> narrows the candidates down.
+-- The banner text cannot identify its session: <n> is the tab's position
+-- when it rang, and tabs can shift before even the first snapshot finishes.
+-- Match bellCount rises by stable session id instead. Every arrival saves
+-- its counter baselines and the current snapshot generation; only a later
+-- snapshot may resolve it. A focus change or a failed snapshot cannot erase
+-- that evidence while the banner waits.
 --
 -- The name in the text is not used. It is the session's name when it rang,
 -- and the snapshot, 0.4s later, often has another: a bell at the end of
@@ -34,8 +38,8 @@
 -- (11 of 28 banners in a day's log), and Claude animates its first
 -- character. Names also repeat, so a match could even pick the wrong pane.
 --
--- Several sessions can qualify: two panes of a tab, or the same tab position
--- in two windows, one with a rise that posted no banner. The banner then
+-- Several sessions can qualify: concurrent bells, or a session with a rise
+-- that posted no banner. Native banners expose no session id. A banner then
 -- belongs to all of them and closes once each has been on screen. That can
 -- keep a banner longer than needed, and never closes one whose bell is still
 -- unseen.
@@ -49,12 +53,13 @@
 -- a session's bell flag turns on while its tab is off screen (or iTerm2 is
 -- in the background), so bells in the tab on screen, in any of its panes,
 -- and repeat bells before a visit count without a banner. Left alone, such a
--- rise would make its session a candidate for a later banner at the same
--- tab position (a split pane, another window). So every focus change resets
--- the baseline of the sessions on screen and those that just left it. That
+-- rise would make its session a candidate for a later banner. Every focus
+-- change resets the baseline of sessions on screen and those that just left it. That
 -- reset can also take the rise of a bell that did post a banner (iTerm2 in
 -- the background, or a bell racing a tab switch), so resolve still accepts
--- such a rise for ABSORB_WINDOW seconds.
+-- such a rise when it arrives within ABSORB_WINDOW seconds of the reset.
+-- Once saved with an arrival, the evidence lasts until resolution, even if
+-- an error delays the next valid snapshot beyond that window.
 local M = {}
 
 local notifications = require("clear_notifications")
@@ -86,8 +91,9 @@ M.seen = {} -- banner ids already looked at, bell banner or not
 M.bells = {} -- session id -> bellCount baseline, pruned to live sessions
 M.visible = {} -- session ids on screen at the last snapshot
 M.absorbed = {} -- session id -> { before, at }: a rise a baseline reset took
-M.queue = {} -- new bell banners { id, desc } waiting for a snapshot
+M.queue = {} -- arrivals { id, desc, baselines, generation } awaiting a newer snapshot
 M.waiting = {} -- callbacks for the snapshot being taken or the next one
+M.generation = 0 -- incremented at snapshot start, not completion
 
 -- Every step below is logged (event_log.lua), e.g.
 --   2026-09-29T16:01:23.412Z banner 282D14E5 -> session 487197CF (tab #2, fish:~)
@@ -147,6 +153,7 @@ local takeSnapshot
 local function dropQueue(why)
   log("%s; dropping %d queued banner(s)", why, #M.queue)
   M.queue = {}
+  M.waiting = {}
 end
 
 -- Not while iTerm2 is closed: the script would launch it. "Running" is the
@@ -167,8 +174,22 @@ end
 function takeSnapshot()
   local callbacks = M.waiting
   M.waiting = {}
+  M.generation = M.generation + 1
+  local generation = M.generation
   local started = hs.timer.secondsSinceEpoch()
   local task, timer
+
+  -- Preserve failed work ahead of newer requests. The next event retries
+  -- it; an immediate retry loop would keep alerting on missing permission.
+  local function failed(msg)
+    local waiting = callbacks
+    for _, callback in ipairs(M.waiting) do
+      addOnce(waiting, callback)
+    end
+    M.waiting = waiting
+    log("retained %d snapshot caller(s) for the next event", #waiting)
+    fail(msg)
+  end
 
   local function done(code, out, err)
     -- A snapshot that ran out of time was reported by its timer and killed;
@@ -197,16 +218,17 @@ function takeSnapshot()
       local hint = err:find("(-1743)", 1, true)
           and " (allow Hammerspoon to control iTerm2 in System Settings > Privacy & Security > Automation)"
         or ""
-      fail("iterm2_sessions.js failed" .. hint .. ": " .. err)
+      failed("iterm2_sessions.js failed" .. hint .. ": " .. err)
     end
-    local data = hs.json.decode(out)
-    if type(data) ~= "table" then
-      fail("iterm2_sessions.js printed no JSON: " .. tostring(out))
+    local decoded, data = pcall(hs.json.decode, out)
+    if not decoded or type(data) ~= "table" then
+      failed("iterm2_sessions.js printed no JSON: " .. tostring(out))
     end
     if data.gone then
       dropQueue(string.format("iTerm2 quit during a snapshot for %d caller(s)", #callbacks))
       return
     end
+    data.generation = generation
     log(
       "snapshot: %d session(s) in %.0f ms for %d caller(s)",
       #data.sessions,
@@ -244,45 +266,49 @@ function takeSnapshot()
     if M.task == task then
       M.task = nil
       task:terminate()
-      fail("iterm2_sessions.js took over " .. QUERY_TIMEOUT .. "s; is iTerm2 hung?")
+      failed("iterm2_sessions.js took over " .. QUERY_TIMEOUT .. "s; is iTerm2 hung?")
     end
   end)
   M.task, M.queryTimer = task, timer
   task:start()
 end
 
--- The sessions that may have rung a new bell banner (see the header for why
--- these keys): none, one, or several that cannot be told apart. A rise alone
--- is not enough: bells without a banner rise too.
+-- Freeze the evidence at arrival, including a recent rise taken by a focus
+-- reset. Reading M.bells later would let an earlier snapshot's afterFocus
+-- consume this banner's rise, especially during recovery from an error.
+local function baselines()
+  local now = hs.timer.secondsSinceEpoch()
+  local saved = {}
+  for sid, count in pairs(M.bells) do
+    local a = M.absorbed[sid]
+    saved[sid] = a and now - a.at < ABSORB_WINDOW and a.before or count
+  end
+  return saved
+end
+
+-- The sessions that may have rung a new bell banner: none, one, or several
+-- that cannot be told apart. A tab's old number cannot rule a session out.
 --
 -- None is expected, and only logged: a banner this module never saw arrive
 -- has no rise left to match. That is every banner a Notification Center
 -- restart brings back from its history, and any that were already on screen
 -- at load, once expanding a stack reveals them.
-local function resolve(desc, sessions)
-  local n = tonumber(desc:match(BELL_PATTERN))
-  if not n then
-    fail("bell banner text changed, cannot parse: " .. desc)
+local function resolve(banner, sessions)
+  if not banner.desc:match(BELL_PATTERN) then
+    fail("bell banner text changed, cannot parse: " .. banner.desc)
   end
-  -- A rise is measured from the baseline, or from before a reset that took
-  -- it within ABSORB_WINDOW (afterFocus), so a focus change just before the
-  -- banner cannot hide its bell. Seen live: a bell in the tab on screen
-  -- while iTerm2 was in the background, a focus change 0.1s before the banner.
-  local now = hs.timer.secondsSinceEpoch()
   local rose = {}
   for _, s in ipairs(sessions) do
-    local base = M.bells[s.sessionId] or 0
-    local a = M.absorbed[s.sessionId]
-    if a and now - a.at < ABSORB_WINDOW then
-      base = a.before
-    end
-    if s.tabNumber == n and s.bells > base then
+    -- Sessions created since the last baseline have never rung before it.
+    local base = banner.baselines[s.sessionId] or 0
+    if s.bells > base then
       table.insert(rose, s)
     end
   end
   -- The rise of a session that rang alone is used up by its banner. With
   -- several, none is: which of them the banner took it from is not known,
-  -- and the next banner of that tab position has to find them all again.
+  -- and a subsequent banner must still consider them all. Arrivals already
+  -- queued retain their own evidence regardless of this baseline update.
   if #rose == 1 then
     M.bells[rose[1].sessionId] = rose[1].bells
     M.absorbed[rose[1].sessionId] = nil
@@ -391,10 +417,16 @@ local function closeAttended(data)
 end
 
 local function resolveQueued(data)
-  local queue = M.queue
+  local queue = {}
+  local waiting = M.queue
   M.queue = {}
+  -- A's snapshot may finish after B arrives but have read B before it rang.
+  -- Leave B for the snapshot requested by B, even though both are queued.
+  for _, banner in ipairs(waiting) do
+    table.insert(banner.generation < data.generation and queue or M.queue, banner)
+  end
   local firstError = each(queue, function(banner)
-    local owners = resolve(banner.desc, data.sessions)
+    local owners = resolve(banner, data.sessions)
     if #owners == 0 then
       log("no session rang for banner '%s', leaving it (arrived unseen)", banner.desc)
       return
@@ -409,10 +441,9 @@ local function resolveQueued(data)
       log("banner %s -> session %s, tab #%d", short(banner.id), names[1], owners[1].tabNumber)
     else
       log(
-        "banner %s -> one of %d sessions of tab #%d, closed once each was on screen: %s",
+        "banner %s -> one of %d sessions, closed once each was on screen: %s",
         short(banner.id),
         #owners,
-        owners[1].tabNumber,
         table.concat(names, ", ")
       )
     end
@@ -432,7 +463,7 @@ local function consider(id, desc)
   M.seen[id] = true
   if startsWith(desc, BELL_PREFIX) then
     log("banner %s arrived: %s", short(id), desc)
-    table.insert(M.queue, { id = id, desc = desc })
+    table.insert(M.queue, { id = id, desc = desc, baselines = baselines(), generation = M.generation })
     snapshot(resolveQueued)
   end
 end
