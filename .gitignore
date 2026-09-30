@@ -6,6 +6,8 @@ venv_python_neovim
 .DS_Store
 *.bak
 *.swp
+# Test logs also stay untracked on CI and machines without the global ignore.
+.logs/
 # machine-local symlink into Dropbox; see scripts/setup_user_symlinks.sh
 home/.hammerspoon/local_hammerspoon.lua
 # machine-local links to the light or dark variant; see scripts/appearance.sh
