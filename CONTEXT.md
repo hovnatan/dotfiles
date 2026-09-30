@@ -29,7 +29,8 @@ _Avoid_: Remote, second computer
 
 **Machine-local file**:
 A file that lives on one machine only and is never tracked: the git email in
-`~/.gitconfig`, `~/.hammerspoon/local_hammerspoon.lua`, `~/.ssh/local_config`.
+`~/.gitconfig`, `~/.hammerspoon/local_hammerspoon.lua`, `~/.ssh/local_config`,
+the light/dark links that `scripts/appearance.sh` points.
 The tracked counterpart includes or requires it.
 _Avoid_: Private (that means the private companion repo)
 
