@@ -61,13 +61,25 @@ function M.element()
 end
 
 -- Every banner in Notification Center's windows, as { el, subrole, id, desc }
--- records, e.g. desc "iTerm2, Bell, Session fish:~ #2 just rang a bell!".
--- Only windows are walked: the process also owns the menu bar, whose tree
--- is large and has no notifications in it. A stack counts as one banner:
--- collapsed, its id and text are its newest notification's (desc then ends
--- in ", stacked"), and its older ones only appear, as single banners, once
--- it is expanded.
+-- records, e.g. desc "iTerm2, Bell, Session fish:~ #2 just rang a bell!",
+-- and the number of windows walked, for a caller that wants to say what an
+-- empty result was read from. Only windows are walked: the process also
+-- owns the menu bar, whose tree is large and has no notifications in it. A
+-- stack counts as one banner: collapsed, its id and text are its newest
+-- notification's (desc then ends in ", stacked"), and its older ones only
+-- appear, as single banners, once it is expanded.
+--
+-- With nothing on screen the window list is an empty table (checked on
+-- macOS 27, as for any windowless process), so nil is an accessibility
+-- read that failed, not an empty screen, and is raised: a caller that took
+-- it for "no banners" would act on a screen it never saw.
 function M.banners()
+  local windows = M.element():attributeValue("AXWindows")
+  if windows == nil then
+    fail(
+      "Notification Center's window list could not be read (is Hammerspoon allowed in System Settings > Privacy & Security > Accessibility?)"
+    )
+  end
   local found = {}
   local function walk(el)
     local subrole = el:attributeValue("AXSubrole")
@@ -84,10 +96,10 @@ function M.banners()
       walk(child)
     end
   end
-  for _, window in ipairs(M.element():attributeValue("AXWindows") or {}) do
+  for _, window in ipairs(windows) do
     walk(window)
   end
-  return found
+  return found, #windows
 end
 
 -- Close one banner, or clear a whole stack.

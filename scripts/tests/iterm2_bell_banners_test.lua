@@ -52,7 +52,7 @@ local function fresh()
       return 2
     end,
     banners = function()
-      return ui.banners
+      return ui.banners, 1
     end,
     press = function(banner)
       assert(not ui.closed[banner.id], "banner was closed twice")
@@ -330,6 +330,87 @@ test("iTerm2 exit drops failed callers without relaunching it", function()
   m.focusTimer.fn()
   complete(m, { gone = true })
   assert(#m.queue == 0 and #m.waiting == 0 and not m.task)
+end)
+
+-- The 2026-09-30 miss: a focus scan sees no banner for an instant while the
+-- banner stays on screen. Pending must survive it, so the visit closes it.
+test("one empty scan keeps pending; the banner closes on the visit", function()
+  local m, ui = fresh()
+  complete(m, data(0, 0))
+  arrive(m, ui, "BANNER_A", 2)
+  complete(m, data(1, 0))
+  local shown = ui.banners
+  ui.banners = {}
+  local background = data(1, 0)
+  background.frontmost = false
+  focus(m, background)
+  focus(m, background) -- a second scan within PRUNE_CONFIRM is not confirmation
+  assert(m.pending.BANNER_A and m.emptySince, "an unconfirmed empty scan emptied pending")
+  ui.banners = shown
+  now = now + 5
+  focus(m, data(1, 0, "SESSION_A"))
+  assert(ui.closed.BANNER_A and not m.pending.BANNER_A and not m.emptySince)
+end)
+
+test("absence at two focus changes apart prunes a dismissed banner", function()
+  local m, ui = fresh()
+  complete(m, data(0, 0))
+  arrive(m, ui, "BANNER_A", 2)
+  complete(m, data(1, 0))
+  ui.banners = {} -- clicked, or cleared with alt+0
+  focus(m, data(1, 0))
+  assert(m.pending.BANNER_A, "pruned on a single scan")
+  now = now + 2
+  focus(m, data(1, 0))
+  assert(not m.pending.BANNER_A and not m.emptySince)
+  focus(m, data(1, 0, "SESSION_A"))
+  assert(not ui.closed.BANNER_A)
+end)
+
+-- The real clear_notifications.lua against a stub Notification Center
+-- element: an empty window list is an empty screen, a nil one is a failed
+-- accessibility read and must not pass for it.
+local function realNotifications(windows)
+  local element = {
+    attributeValue = function(_, name)
+      return ({ AXTitle = "Notification Center", AXWindows = windows })[name]
+    end,
+  }
+  _G.hs = {
+    hotkey = {
+      bind = function() end,
+    },
+    alert = {
+      show = function(msg)
+        log("alert: %s", msg)
+      end,
+    },
+    timer = {
+      doAfter = function(_, fn)
+        return object(fn)
+      end,
+    },
+    axuielement = {
+      applicationElementForPID = function()
+        return element
+      end,
+    },
+    application = {
+      applicationsForBundleID = function()
+        return { object() }
+      end,
+    },
+  }
+  package.loaded.clear_notifications = nil
+  return assert(loadfile(repo .. "/home/.hammerspoon/clear_notifications.lua"))()
+end
+
+test("an unreadable window list raises; an empty one is an empty screen", function()
+  local found, windows = realNotifications({}).banners()
+  assert(#found == 0 and windows == 0)
+  raises("could not be read", function()
+    realNotifications(nil).banners()
+  end)
 end)
 
 scenario = "summary"

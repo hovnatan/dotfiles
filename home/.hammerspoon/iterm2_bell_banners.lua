@@ -516,14 +516,55 @@ end
 -- With no iTerm2 banner left on screen (all focused, clicked, or cleared
 -- with alt+0), nothing is pending any more. Stacked ids cannot be pruned one
 -- by one, since a collapsed stack shows only its newest.
+--
+-- One empty scan is not proof. On 2026-09-30 a scan during a focus change
+-- (iTerm2 going to the background) saw no iTerm2 banner while the one just
+-- matched never left the screen; pending was emptied, and the visit to its
+-- tab 35s later had nothing to close. What hid it for that instant is not
+-- known (not a plain app or Space switch, nor a hover: polled at 30ms, the
+-- scan found the banner through all of those). So an empty scan is only
+-- noted, with what it read, and pending is dropped when a later focus
+-- change, PRUNE_CONFIRM or more seconds on, finds the screen still empty. A
+-- banner really dismissed is still pruned at the next focus change; a miss
+-- that heals costs one log line.
+local PRUNE_CONFIRM = 1 -- seconds
+M.emptySince = nil -- when a scan first saw no iTerm2 banner, until one is seen
+
 local function prunePending()
-  for _, banner in ipairs(notifications.banners()) do
+  local banners, windows = notifications.banners()
+  local others = 0
+  for _, banner in ipairs(banners) do
     if startsWith(banner.desc, ITERM2_PREFIX) then
+      if M.emptySince then
+        log("iTerm2 banner(s) on screen again; the earlier empty scan was a miss")
+        M.emptySince = nil
+      end
       return
     end
+    others = others + 1
   end
-  log("no iTerm2 banner on screen; nothing pending any more")
+
+  local now = hs.timer.secondsSinceEpoch()
+  if not M.emptySince then
+    M.emptySince = now
+    log(
+      "no iTerm2 banner on screen (%d window(s), %d other banner(s)); confirming at a later focus change",
+      windows,
+      others
+    )
+    return
+  end
+  if now - M.emptySince < PRUNE_CONFIRM then
+    return
+  end
+  log(
+    "no iTerm2 banner on screen for %.1fs (%d window(s), %d other banner(s)); nothing pending any more",
+    now - M.emptySince,
+    windows,
+    others
+  )
   M.pending = {}
+  M.emptySince = nil
 end
 
 -- After a focus change: reset the baselines (see the header), then close the
