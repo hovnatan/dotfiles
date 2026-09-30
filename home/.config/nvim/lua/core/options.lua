@@ -92,14 +92,6 @@ vim.opt.fixendofline = true
 vim.opt.completeopt = "menuone,noselect"
 vim.opt.timeoutlen = 1000
 
--- ~/.my_colors (light|dark) is optional machine state that scripts/cw.sh
--- writes; without it Neovim detects the background from the terminal.
-local file = io.open(vim.fn.expand("~/.my_colors"), "r")
-if file then
-  vim.o.background = vim.trim(file:read("*a"))
-  file:close()
-end
-
 vim.g.python3_host_prog = "python3"
 
 vim.o.spelllang = "en_us"

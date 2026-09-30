@@ -23,16 +23,8 @@ set -U fish_cursor_insert line
 set -U fish_cursor_visual block
 
 set -u fish_color_cwd brcyan
-# ~/.my_colors (light|dark) is optional machine state that scripts/cw.sh
-# writes; without it the dark prompt colour applies.
 if [ $TMUX ]
-  set light_dark
-  test -r ~/.my_colors; and set light_dark (cat ~/.my_colors)
-  if test "$light_dark" = "light"
-    set -u fish_color_prompt_bg bdae93
-  else
-    set -u fish_color_prompt_bg 665c54
-  end
+  set -u fish_color_prompt_bg 665c54
 else
   set -u fish_color_prompt_bg red
 end
@@ -62,14 +54,6 @@ set -u fish_color_search_match normal --bold
 function __bell_on_long_command --on-event fish_postexec
     test "$CMD_DURATION" -gt 1000; or return
     printf '\a'
-end
-
-function reload-color-config --on-variable _reload_color_config
-  if test "$_reload_color_config" = "light"
-    set -u fish_color_prompt_bg bdae93
-  else
-    set -u fish_color_prompt_bg 665c54
-  end
 end
 
 
