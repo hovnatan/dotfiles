@@ -16,8 +16,9 @@
 #     grows       unwatched, transcript keeps growing   -> one "grew" line, push
 #     watched     a real client attached in a pty, focus-in sent -> no waiter
 #
-# Checks the decision log line by line, what the listener received, and that
-# no lock directory is left behind. Exit 0 = all passed; on failure the work
+# Checks the decision log line by line (and that it is an event log under
+# ~/.dotfiles/.logs), what the listener received, and that no lock directory
+# is left behind. Exit 0 = all passed; on failure the work
 # dir (log, listener output) is kept and printed.
 
 set -uo pipefail
@@ -32,8 +33,15 @@ WORK=$(mktemp -d)
 H="$WORK/home"
 # Unix socket paths are capped near 108 bytes, so not under $WORK.
 SOCK="/tmp/ntfytest-$$.sock"
-LOG="$H/.local/state/claude-ntfy/log"
-DEBOUNCE=6
+# The hook's log: one directory per UTC day under the repo's event logs
+# (two, if the test runs across midnight).
+ntfy_log() { cat "$H"/.dotfiles/.logs/*_claude_ntfy/events.log 2>/dev/null; }
+# The waiter polls every 5 s, so a window holds its polls at 0 and 5 s and
+# ends at the one at 10 s. With a 6 s window the poll at 5 s had 1 s to
+# spare: a first iteration that took a second longer (five waiters starting
+# at once, each pruning logs) put it outside, and grows was pushed with no
+# growth seen. 8 s costs no time, the window still ends at the 10 s poll.
+DEBOUNCE=8
 
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
@@ -94,7 +102,7 @@ new_session() {        # prints the session id without its "$"
 hook() {
   echo "{\"transcript_path\":\"$WORK/transcript\"}" |
     env -u TMUX_PANE HOME="$H" TMUX="$SOCK,1,$1" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
-      CLAUDE_NTFY_URL="$2" bash "$HOOK" ${3:+"$3"}
+      CLAUDE_NTFY_URL="$2" bash "$HOOK" ${3:+"$3"} >> "$WORK/hook.out"
 }
 
 # --- a focused client for the "watched" scenario -----------------------------
@@ -150,10 +158,10 @@ hook "$sid_grows" "$OK_URL"
 # a fixed 9 s of touching then all fell before the pid file ("FAIL grows: 0
 # 'transcript grew' lines", push still sent; reproduced by delaying the
 # waiter 10 s). With W the waiter's start:
-#   W+5   grew -> logged, window re-armed to W+11; the touches stop
+#   W+5   grew -> logged, window re-armed to W+13; the touches stop
 #   W+10  the last touch may still count -> same streak, not logged
-#   W+15  quiet; W+20 past the window -> push
-grew() { grep -F -- "grows (\$$sid_grows)" "$LOG" 2>/dev/null | grep -qF "wait: transcript grew"; }
+#   W+15  quiet, and past the window (or W+20, if W+10 re-armed it) -> push
+grew() { ntfy_log | grep -F -- "grows (\$$sid_grows)" | grep -qF "wait: transcript grew"; }
 ( for _ in $(seq 60); do sleep 0.5; touch "$WORK/transcript"; grew && break; done ) &
 toucher=$!
 hook "$sid_watched" "$OK_URL"
@@ -171,8 +179,8 @@ sleep 1
 
 # --- checks ------------------------------------------------------------------
 
-has() { grep -F -- "$1" "$LOG" | grep -qF -- "$2"; }
-count() { grep -F -- "$1" "$LOG" | grep -cF -- "$2"; }
+has() { ntfy_log | grep -F -- "$1" | grep -qF -- "$2"; }
+count() { ntfy_log | grep -F -- "$1" | grep -cF -- "$2"; }
 
 has "push-ok (\$$sid_ok)" "push: sent via $OK_URL" && pass "push-ok: pushed" || fail "push-ok: no push logged"
 has "push-ok (\$$sid_ok)" "wait: coalesced into pending waiter" && pass "push-ok: second Stop coalesced" || fail "push-ok: second Stop not coalesced"
@@ -188,7 +196,19 @@ has "watched (\$$sid_watched)" "stop: watched now, no push" && pass "watched: fo
 posts=$(grep -c '^POST /testtopic' "$WORK/listener.out")
 [ "$posts" = 2 ] && pass "listener got exactly 2 pushes" || fail "listener got $posts pushes"
 grep -qF "title='CC: $(hostname)-push-ok'" "$WORK/listener.out" && pass "push title names host and session" || fail "push title wrong: $(head -1 "$WORK/listener.out")"
-grep -q testtopic "$LOG" && fail "the topic leaked into the log" || pass "topic never logged"
+ntfy_log | grep -q testtopic && fail "the topic leaked into the log" || pass "topic never logged"
+
+# Where and how it logs: with the repo's other event logs, UTC-stamped, and
+# nothing on the hook's stdout, which is Claude Code's.
+dirs=$(cd "$H/.dotfiles/.logs" 2>/dev/null && ls -d ./*_claude_ntfy 2>/dev/null | wc -l | tr -d ' ')
+{ [ "$dirs" = 1 ] || [ "$dirs" = 2 ]; } && pass "one log directory for the day, under ~/.dotfiles/.logs" \
+  || fail "$dirs claude_ntfy directories under $H/.dotfiles/.logs: $(ls "$H/.dotfiles/.logs" 2>&1)"
+odd=$(ntfy_log | grep -c -v -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z [^ ]+ \(\$[0-9]+\) (stop|wait|prompt|push): ')
+[ "$odd" = 0 ] && pass "every line is '<UTC time> <session> (\$<id>) <event>: ...' ($(ntfy_log | wc -l | tr -d ' ') lines)" \
+  || fail "$odd line(s) of another form: $(ntfy_log | grep -v -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z ' | head -3)"
+[ ! -e "$H/.local/state/claude-ntfy" ] && pass "nothing written to the old ~/.local/state/claude-ntfy" \
+  || fail "the old log location was written: $(ls "$H/.local/state/claude-ntfy")"
+[ ! -s "$WORK/hook.out" ] && pass "the hook prints nothing on stdout" || fail "hook stdout: $(head -3 "$WORK/hook.out")"
 locks_left && fail "lock directories left behind" || pass "no lock directories left"
 
 log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"
