@@ -14,17 +14,36 @@
 --   snapshot (iterm2_sessions.js, own process) <--+
 --                          |                      |
 --                          v                      v
---   resolve: tab #<n>, bellCount rose,    focused session S:
---     name breaks a tie                     close its pending banners
---        |                                  (expanding an iTerm2 stack first)
---        +--> pending[session][banner id] ----^
+--   resolve: tab #<n>, bellCount rose     sessions on screen, or gone:
+--        |                                  struck from each banner's owners
+--        v                                        |
+--   pending[banner id] = its owners  -------------+
+--                                                 v
+--                                         a banner with no owner left is
+--                                         closed (expanding an iTerm2 stack
+--                                         first)
 --
 -- The banner text cannot name its tab later: <n> is the tab's position when
--- it rang, and tabs shift as others open, close or move; names repeat
--- ("fish:~") and change (a job name, Claude's animated first character). So
--- the owner is resolved the moment the banner appears, from bellCount, a
--- per-session counter iTerm2 bumps on every bell, and <n> and the name only
--- narrow the candidates down.
+-- it rang, and tabs shift as others open, close or move. So the owner is
+-- resolved the moment the banner appears, from bellCount, a per-session
+-- counter iTerm2 bumps on every bell, and <n> narrows the candidates down.
+--
+-- The name in the text is not used. It is the session's name when it rang,
+-- and the snapshot, 0.4s later, often has another: a bell at the end of
+-- `sleep 5` says "Session sleep #2" of a session by then named "fish:~"
+-- (11 of 28 banners in a day's log), and Claude animates its first
+-- character. Names also repeat, so a match could even pick the wrong pane.
+--
+-- Several sessions can qualify: two panes of a tab, or the same tab position
+-- in two windows, one with a rise that posted no banner. The banner then
+-- belongs to all of them and closes once each has been on screen. That can
+-- keep a banner longer than needed, and never closes one whose bell is still
+-- unseen.
+--
+-- "On screen" is the tab, not the pane: iTerm2 clears a tab's bell icon when
+-- the tab is selected, whichever of its panes has focus, and every pane is
+-- in view then. A session that is gone (its tab closed unvisited) has
+-- nothing left to look at, so it gives up its banners too.
 --
 -- bellCount also rises for bells that post no banner: iTerm2 posts only when
 -- a session's bell flag turns on while its tab is off screen (or iTerm2 is
@@ -32,7 +51,10 @@
 -- and repeat bells before a visit count without a banner. Left alone, such a
 -- rise would make its session a candidate for a later banner at the same
 -- tab position (a split pane, another window). So every focus change resets
--- the baseline of the sessions on screen and those that just left it.
+-- the baseline of the sessions on screen and those that just left it. That
+-- reset can also take the rise of a bell that did post a banner (iTerm2 in
+-- the background, or a bell racing a tab switch), so resolve still accepts
+-- such a rise for ABSORB_WINDOW seconds.
 local M = {}
 
 local notifications = require("clear_notifications")
@@ -43,18 +65,27 @@ local ITERM2 = "com.googlecode.iterm2"
 --   "iTerm2, Bell, Session fish:~ #2 just rang a bell!"
 local ITERM2_PREFIX = "iTerm2, "
 local BELL_PREFIX = "iTerm2, Bell, "
-local BELL_PATTERN = "^iTerm2, Bell, Session (.+) #(%d+) just rang a bell!"
+local BELL_PATTERN = "^iTerm2, Bell, Session .+ #(%d+) just rang a bell!"
 local SESSIONS_SCRIPT = hs.configdir .. "/iterm2_sessions.js"
-local QUERY_TIMEOUT = 5 -- seconds; the script takes about 0.35
+-- Seconds; the script takes about 0.4, and up to 3.5 when tabs open or close
+-- while it runs and it has to start over.
+local QUERY_TIMEOUT = 5
+-- What osascript reports when iTerm2 is gone before the script starts.
+-- Matched on the text where the code says too little: -2700 is the code of
+-- every JavaScript error, e.g.
+--   "Error: TypeError: undefined is not an object ... (-2700)"
+local GONE_ERRORS = { "Application can't be found. (-2700)", "(-600)" }
 local EXPAND_DELAY = 0.5 -- seconds for an expanded stack's banners to appear
+local ABSORB_WINDOW = 5 -- seconds; a banner is matched ~0.65s after its bell
 -- A focus change fires a burst (iTerm2 activating plus its focus change);
 -- it is handled once, after the burst.
 local FOCUS_DELAY = 0.05
 
-M.pending = {} -- session id -> set of its banner ids, until it gets focus
+M.pending = {} -- banner id -> set of session ids that may have rung it
 M.seen = {} -- banner ids already looked at, bell banner or not
 M.bells = {} -- session id -> bellCount baseline, pruned to live sessions
 M.visible = {} -- session ids on screen at the last snapshot
+M.absorbed = {} -- session id -> { before, at }: a rise a baseline reset took
 M.queue = {} -- new bell banners { id, desc } waiting for a snapshot
 M.waiting = {} -- callbacks for the snapshot being taken or the next one
 
@@ -77,6 +108,32 @@ local function startsWith(s, prefix)
   return s:sub(1, #prefix) == prefix
 end
 
+-- Call fn on every item, even after one raises, and return the first error
+-- (nil if none) for the caller to raise once its own work is done. So one
+-- banner that cannot be handled does not take the ones behind it along.
+local function each(items, fn)
+  local firstError
+  for _, item in ipairs(items) do
+    local ok, err = pcall(fn, item)
+    if not ok and not firstError then
+      firstError = err
+    end
+  end
+  return firstError
+end
+
+-- Append `callback` unless the list has it: a burst of focus changes while a
+-- snapshot is in flight asks for afterFocus each time, and running it five
+-- times over the same snapshot only repeats its log line.
+local function addOnce(callbacks, callback)
+  for _, waiting in ipairs(callbacks) do
+    if waiting == callback then
+      return
+    end
+  end
+  table.insert(callbacks, callback)
+end
+
 -- Take a snapshot of iTerm2's sessions (see iterm2_sessions.js) off the main
 -- thread and hand it to `callback`. One osascript runs at a time; callbacks
 -- that arrive meanwhile get the next snapshot, since theirs must postdate
@@ -85,20 +142,23 @@ end
 -- so it raises instead of leaving banners silently unhandled.
 local takeSnapshot
 
--- Not while iTerm2 is closed: the script would launch it. A banner left by
--- an iTerm2 that has quit has no session to belong to, so it is dropped.
--- "Running" is the iTerm2 observer being attached, which the app watcher
--- keeps in step with its launch and quit; hs.application's lookup is not
--- used here, as it has come back empty for running processes.
+-- iTerm2 is gone, as it was seen to be or as a snapshot found out: a banner
+-- it left has no session to belong to, so the queue is dropped.
+local function dropQueue(why)
+  log("%s; dropping %d queued banner(s)", why, #M.queue)
+  M.queue = {}
+end
+
+-- Not while iTerm2 is closed: the script would launch it. "Running" is the
+-- iTerm2 observer being attached, which the app watcher keeps in step with
+-- its launch and quit; hs.application's lookup is not used here, as it has
+-- come back empty for running processes.
 local function snapshot(callback)
   if not M.itermObserver then
-    if #M.queue > 0 then
-      log("iTerm2 is not running; dropping %d queued banner(s)", #M.queue)
-    end
-    M.queue = {}
+    dropQueue("iTerm2 is not running")
     return
   end
-  table.insert(M.waiting, callback)
+  addOnce(M.waiting, callback)
   if not M.task then
     takeSnapshot()
   end
@@ -108,22 +168,31 @@ function takeSnapshot()
   local callbacks = M.waiting
   M.waiting = {}
   local started = hs.timer.secondsSinceEpoch()
+  local task, timer
+
   local function done(code, out, err)
+    -- A snapshot that ran out of time was reported by its timer and killed;
+    -- its end arrives here later (34ms, measured), when the next snapshot
+    -- may be under way, and must not clear that one's task and timer.
+    if M.task ~= task then
+      return
+    end
     M.task = nil
-    M.queryTimer:stop()
+    timer:stop()
+
     -- iTerm2 quitting fires one last focus change, and the snapshot it asks
-    -- for then finds no iTerm2: "Application can't be found. (-2700)", or
-    -- -600, "Application isn't running" (the log shows each quit this way:
-    -- the error, then "iTerm2 quit" 40ms later). That is the expected end of
-    -- a session, so the snapshot's callers are dropped, as snapshot() drops
-    -- them while iTerm2 is closed. Any other failure raises; -1743 is the
-    -- missing Automation permission.
+    -- for then finds no iTerm2 (the log shows each quit this way: the error,
+    -- then "iTerm2 quit" 40ms later). That is the expected end of a session,
+    -- so the snapshot's callers are dropped, as snapshot() drops them while
+    -- iTerm2 is closed. Any other failure raises; -1743 is the missing
+    -- Automation permission.
     if code ~= 0 then
-      err = tostring(err)
-      if err:find("(-2700)", 1, true) or err:find("(-600)", 1, true) then
-        log("iTerm2 went away during a snapshot; dropping %d caller(s)", #callbacks)
-        M.queue = {}
-        return
+      err = tostring(err):gsub("%s+$", "")
+      for _, gone in ipairs(GONE_ERRORS) do
+        if err:find(gone, 1, true) then
+          dropQueue(string.format("iTerm2 went away during a snapshot for %d caller(s) (%s)", #callbacks, err))
+          return
+        end
       end
       local hint = err:find("(-1743)", 1, true)
           and " (allow Hammerspoon to control iTerm2 in System Settings > Privacy & Security > Automation)"
@@ -131,31 +200,37 @@ function takeSnapshot()
       fail("iterm2_sessions.js failed" .. hint .. ": " .. err)
     end
     local data = hs.json.decode(out)
+    if type(data) ~= "table" then
+      fail("iterm2_sessions.js printed no JSON: " .. tostring(out))
+    end
+    if data.gone then
+      dropQueue(string.format("iTerm2 quit during a snapshot for %d caller(s)", #callbacks))
+      return
+    end
     log(
       "snapshot: %d session(s) in %.0f ms for %d caller(s)",
       #data.sessions,
       (hs.timer.secondsSinceEpoch() - started) * 1000,
       #callbacks
     )
-    local live = {}
+
+    -- For the callbacks: which sessions exist, and which are on screen.
+    data.live, data.visible = {}, {}
     for _, s in ipairs(data.sessions) do
-      live[s.sessionId] = true
+      data.live[s.sessionId] = true
+      data.visible[s.sessionId] = s.visible or nil
     end
     for sid in pairs(M.bells) do
-      if not live[sid] then
+      if not data.live[sid] then
         M.bells[sid] = nil
+        M.absorbed[sid] = nil
       end
     end
-    -- Every callback runs even if one raises (else a failed focus step would
-    -- also lose the banners queued behind it); the first error is raised
-    -- once they all have.
-    local firstError
-    for _, cb in ipairs(callbacks) do
-      local ok, err = pcall(cb, data)
-      if not ok and not firstError then
-        firstError = err
-      end
-    end
+
+    -- A failed focus step must not lose the banners queued behind it.
+    local firstError = each(callbacks, function(callback)
+      callback(data)
+    end)
     if #M.waiting > 0 then
       takeSnapshot()
     end
@@ -163,72 +238,188 @@ function takeSnapshot()
       error(firstError, 0)
     end
   end
-  M.task = hs.task.new("/usr/bin/osascript", done, { "-l", "JavaScript", SESSIONS_SCRIPT })
-  M.queryTimer = hs.timer.doAfter(QUERY_TIMEOUT, function()
-    if M.task then
-      M.task:terminate()
+
+  task = hs.task.new("/usr/bin/osascript", done, { "-l", "JavaScript", SESSIONS_SCRIPT })
+  timer = hs.timer.doAfter(QUERY_TIMEOUT, function()
+    if M.task == task then
       M.task = nil
+      task:terminate()
       fail("iterm2_sessions.js took over " .. QUERY_TIMEOUT .. "s; is iTerm2 hung?")
     end
   end)
-  M.task:start()
+  M.task, M.queryTimer = task, timer
+  task:start()
 end
 
--- The session a new bell banner belongs to (see the header for why these
--- keys), or nil. A rise alone is not enough: bells without a banner rise too.
+-- The sessions that may have rung a new bell banner (see the header for why
+-- these keys): none, one, or several that cannot be told apart. A rise alone
+-- is not enough: bells without a banner rise too.
 --
--- No candidate at all is expected, and only logged: a banner this module
--- never saw arrive has no rise left to match. That is every banner a
--- Notification Center restart brings back from its history, and any that
--- were already on screen at load, once expanding a stack reveals them. The
--- same goes, rarely, for a bell within a fraction of a second of switching
--- to or from its tab, whose rise the baseline reset can take; that banner
--- then just stays. Several candidates are a real ambiguity and raise:
--- guessing could close the wrong tab's banner and hide a bell that still
--- needs attention.
+-- None is expected, and only logged: a banner this module never saw arrive
+-- has no rise left to match. That is every banner a Notification Center
+-- restart brings back from its history, and any that were already on screen
+-- at load, once expanding a stack reveals them.
 local function resolve(desc, sessions)
-  local name, n = desc:match(BELL_PATTERN)
-  if not name then
+  local n = tonumber(desc:match(BELL_PATTERN))
+  if not n then
     fail("bell banner text changed, cannot parse: " .. desc)
   end
-  n = tonumber(n)
+  -- A rise is measured from the baseline, or from before a reset that took
+  -- it within ABSORB_WINDOW (afterFocus), so a focus change just before the
+  -- banner cannot hide its bell. Seen live: a bell in the tab on screen
+  -- while iTerm2 was in the background, a focus change 0.1s before the banner.
+  local now = hs.timer.secondsSinceEpoch()
   local rose = {}
   for _, s in ipairs(sessions) do
-    if s.tabNumber == n and s.bells > (M.bells[s.sessionId] or 0) then
+    local base = M.bells[s.sessionId] or 0
+    local a = M.absorbed[s.sessionId]
+    if a and now - a.at < ABSORB_WINDOW then
+      base = a.before
+    end
+    if s.tabNumber == n and s.bells > base then
       table.insert(rose, s)
     end
   end
-  if #rose == 0 then
-    log("no session rang for banner '%s', leaving it (arrived unseen)", desc)
-    return nil
+  -- The rise of a session that rang alone is used up by its banner. With
+  -- several, none is: which of them the banner took it from is not known,
+  -- and the next banner of that tab position has to find them all again.
+  if #rose == 1 then
+    M.bells[rose[1].sessionId] = rose[1].bells
+    M.absorbed[rose[1].sessionId] = nil
   end
-  local picks = rose
-  if #rose > 1 then
-    picks = {}
-    for _, s in ipairs(rose) do
-      if s.sessionName == name then
-        table.insert(picks, s)
-      end
+  return rose
+end
+
+local function shortIds(ids)
+  local list = {}
+  for id in pairs(ids) do
+    table.insert(list, short(id))
+  end
+  table.sort(list)
+  return table.concat(list, ",")
+end
+
+-- Close the single banners on screen that are in `ids` (a set of banner
+-- ids), taking them out of it, and return the iTerm2 stacks on screen.
+local function closeSingles(ids)
+  local stacks = {}
+  for _, banner in ipairs(notifications.banners()) do
+    if banner.subrole == "AXNotificationCenterAlert" and ids[banner.id] then
+      notifications.press(banner)
+      ids[banner.id] = nil
+      log("closed banner %s", short(banner.id))
+    elseif banner.subrole == "AXNotificationCenterAlertStack" and startsWith(banner.desc, ITERM2_PREFIX) then
+      table.insert(stacks, banner.el)
     end
   end
-  if #picks ~= 1 then
-    fail(#picks .. " sessions match banner '" .. desc .. "' (tab #" .. n .. ", bell count up): " .. hs.inspect(rose))
+  return stacks
+end
+
+-- Close the banners in `ids`. A single banner is closed directly; an iTerm2
+-- stack is expanded first, since collapsed it offers only Clear All, which
+-- would take other tabs' banners with it, and a second pass EXPAND_DELAY
+-- later finds its older banners as single ones. Ids still missing after that
+-- were dismissed some other way (clicked, alt+0).
+--
+--   close({a}) -> stack expanded, M.expanding = {a}, timer
+--   close({b}) 0.4s later -> M.expanding = {a, b}, same timer
+--   timer -> closes a and b
+--
+-- Banners that come while a stack is expanding join its second pass: a timer
+-- of their own would replace the first in M.expandTimer, which is then free
+-- to be collected before it fires, its banners already off the pending list.
+local function close(ids)
+  local stacks = closeSingles(ids)
+  if next(ids) == nil then
+    return
   end
-  local s = picks[1]
-  M.bells[s.sessionId] = s.bells
-  return s
+  if M.expanding then
+    log("banner(s) %s join the stack being expanded", shortIds(ids))
+    for id in pairs(ids) do
+      M.expanding[id] = true
+    end
+    return
+  end
+  if #stacks == 0 then
+    log("banner(s) %s already gone (clicked or cleared)", shortIds(ids))
+    return
+  end
+
+  -- M.expanding is set only once the timer that clears it is: set before a
+  -- press that raises, it would send every later banner to a pass that
+  -- never comes.
+  log("expanding %d iTerm2 stack(s) for banner(s) %s", #stacks, shortIds(ids))
+  for _, stack in ipairs(stacks) do
+    stack:performAction("AXPress")
+  end
+  M.expanding = ids
+  M.expandTimer = hs.timer.doAfter(EXPAND_DELAY, function()
+    local waiting = M.expanding
+    M.expanding = nil
+    closeSingles(waiting)
+    if next(waiting) ~= nil then
+      log("banner(s) %s already gone (clicked or cleared)", shortIds(waiting))
+    end
+  end)
+end
+
+-- Strike from each pending banner the owners that hold it no longer: a
+-- session on screen with iTerm2 in front, and one that is gone. A banner
+-- with no owner left is closed. Run after each focus change, and after new
+-- banners are matched, since a bell that raced a switch to its tab (or back
+-- to iTerm2) is matched only after the focus change that should have closed
+-- it.
+local function closeAttended(data)
+  local ids = {}
+  for id, owners in pairs(M.pending) do
+    for sid in pairs(owners) do
+      if not data.live[sid] then
+        log("session %s of banner %s is gone", short(sid), short(id))
+        owners[sid] = nil
+      elseif data.frontmost and data.visible[sid] then
+        owners[sid] = nil
+      end
+    end
+    if next(owners) == nil then
+      M.pending[id] = nil
+      ids[id] = true
+    end
+  end
+  if next(ids) ~= nil then
+    close(ids)
+  end
 end
 
 local function resolveQueued(data)
   local queue = M.queue
   M.queue = {}
-  for _, banner in ipairs(queue) do
-    local s = resolve(banner.desc, data.sessions)
-    if s then
-      M.pending[s.sessionId] = M.pending[s.sessionId] or {}
-      M.pending[s.sessionId][banner.id] = true
-      log("banner %s -> session %s (tab #%d, %s)", short(banner.id), short(s.sessionId), s.tabNumber, s.sessionName)
+  local firstError = each(queue, function(banner)
+    local owners = resolve(banner.desc, data.sessions)
+    if #owners == 0 then
+      log("no session rang for banner '%s', leaving it (arrived unseen)", banner.desc)
+      return
     end
+    M.pending[banner.id] = {}
+    local names = {}
+    for _, s in ipairs(owners) do
+      M.pending[banner.id][s.sessionId] = true
+      table.insert(names, string.format("%s (%s)", short(s.sessionId), s.sessionName))
+    end
+    if #owners == 1 then
+      log("banner %s -> session %s, tab #%d", short(banner.id), names[1], owners[1].tabNumber)
+    else
+      log(
+        "banner %s -> one of %d sessions of tab #%d, closed once each was on screen: %s",
+        short(banner.id),
+        #owners,
+        owners[1].tabNumber,
+        table.concat(names, ", ")
+      )
+    end
+  end)
+  closeAttended(data)
+  if firstError then
+    error(firstError, 0)
   end
 end
 
@@ -291,42 +482,6 @@ local function scan()
   end
 end
 
--- Close the banners in `ids` (a set of banner ids). A single banner is closed
--- directly; an iTerm2 stack is expanded first, since collapsed it offers only
--- Clear All, which would take other tabs' banners with it, and a second pass
--- then finds its older banners as single ones. Ids still missing after that
--- were dismissed some other way (clicked, alt+0).
-local function close(ids, expanded)
-  local stacks = {}
-  for _, banner in ipairs(notifications.banners()) do
-    if banner.subrole == "AXNotificationCenterAlert" and ids[banner.id] then
-      notifications.press(banner)
-      ids[banner.id] = nil
-      log("closed banner %s", short(banner.id))
-    elseif banner.subrole == "AXNotificationCenterAlertStack" and startsWith(banner.desc, ITERM2_PREFIX) then
-      table.insert(stacks, banner.el)
-    end
-  end
-  if next(ids) == nil then
-    return
-  end
-  local missing = {}
-  for id in pairs(ids) do
-    table.insert(missing, short(id))
-  end
-  if expanded or #stacks == 0 then
-    log("banner(s) %s already gone (clicked or cleared)", table.concat(missing, ","))
-    return
-  end
-  log("expanding %d iTerm2 stack(s) for banner(s) %s", #stacks, table.concat(missing, ","))
-  for _, stack in ipairs(stacks) do
-    stack:performAction("AXPress")
-  end
-  M.expandTimer = hs.timer.doAfter(EXPAND_DELAY, function()
-    close(ids, true)
-  end)
-end
-
 -- With no iTerm2 banner left on screen (all focused, clicked, or cleared
 -- with alt+0), nothing is pending any more. Stacked ids cannot be pruned one
 -- by one, since a collapsed stack shows only its newest.
@@ -341,11 +496,16 @@ local function prunePending()
 end
 
 -- After a focus change: reset the baselines (see the header), then close the
--- banners of the focused session.
+-- banners whose sessions have all been on screen.
 local function afterFocus(data)
   local visible = {}
+  local now = hs.timer.secondsSinceEpoch()
   for _, s in ipairs(data.sessions) do
     if s.visible or M.visible[s.sessionId] then
+      local before = M.bells[s.sessionId] or 0
+      if s.bells > before then
+        M.absorbed[s.sessionId] = { before = before, at = now }
+      end
       M.bells[s.sessionId] = s.bells
     end
     if s.visible then
@@ -358,7 +518,7 @@ local function afterFocus(data)
     pendingCount = pendingCount + 1
   end
   log(
-    "focus: session %s%s, %d session(s) with pending banners",
+    "focus: session %s%s, %d banner(s) pending",
     short(data.current),
     data.frontmost and "" or " (iTerm2 in background)",
     pendingCount
@@ -367,11 +527,7 @@ local function afterFocus(data)
     return
   end
   prunePending()
-  local ids = data.frontmost and M.pending[data.current]
-  if ids then
-    M.pending[data.current] = nil
-    close(ids, false)
-  end
+  closeAttended(data)
 end
 
 local watchNotificationCenter
