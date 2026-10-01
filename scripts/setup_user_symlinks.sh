@@ -606,6 +606,13 @@ if [ "$(uname)" = "Darwin" ]; then
   ~/.dotfiles/scripts/macos/build_zathura_app.sh >/dev/null \
     || warn "Zathura.app build failed (scripts/macos/build_zathura_app.sh)"
 
+  # Dark Reader for Chrome, built from source at the commit pinned in the
+  # script, into ~/.local/share/dark-reader/chrome-mv3 (loaded in Chrome by
+  # hand, once; the script says how). One line when that pin is already
+  # built. Its output is shown: after a build it says what to do in Chrome.
+  ~/.dotfiles/scripts/macos/build_dark_reader.sh \
+    || warn "Dark Reader build failed (scripts/macos/build_dark_reader.sh)"
+
 fi
 
 # Light or dark, for Claude Code's theme and zathura (scripts/appearance.sh).
