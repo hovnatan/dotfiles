@@ -7,8 +7,8 @@ It is kept short on purpose - every line here is paid on every session.
 
 - `home/` mirrors `$HOME`: entries install at the same relative path under `~`
   (`home/.tmux.conf` -> `~/.tmux.conf`). Everything outside `home/` (`scripts/`,
-  `claude_tmux_session/`, `nix/`, `docs/`, `.devcontainer/`, `docker/`) is repo tooling that never
-  lands in `$HOME`; all executables live in `scripts/` and are invoked by
+  `claude_tmux_session/`, `nix/`, `apt/`, `docs/`, `.devcontainer/`, `docker/`) is repo tooling
+  that never lands in `$HOME`; all executables live in `scripts/` and are invoked by
   absolute path, nothing here is on `PATH`. `scripts/setup_user_symlinks.sh` is the authoritative
   install map - add a line there when adding a file under `home/`.
   It is safe to re-run; `scripts/update.sh` (alias `dotup`) pulls and re-runs it
@@ -19,8 +19,10 @@ It is kept short on purpose - every line here is paid on every session.
   via `#!/usr/bin/env bash`; never `#!/bin/bash`, which is 3.2 on macOS.
 - `nix/flake.nix` is the curated CLI package list for Linux and macOS
   (pinned by `nix/flake.lock`; setup in README.md); `Brewfile` (repo root)
-  holds only the Mac apps. Read the relevant header before any `nix profile`
-  change or brew install, uninstall or cask adopt.
+  holds only the Mac apps; `apt/Aptfile` holds what an Ubuntu box needs from
+  apt (daemons such as docker), applied by `scripts/apt_bundle.sh`. Read the
+  relevant header before any `nix profile` change, brew install, uninstall
+  or cask adopt, or apt install.
 - Changing `scripts/claude_tmux_run.sh`, the claude-tmux unit,
   `home/.claude/ntfy-stop.sh` or a tmux hook (`home/.config/tmux/`, the
   `set-hook` lines): extend `scripts/tests/` with the new behaviour.
