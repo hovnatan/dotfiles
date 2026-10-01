@@ -51,7 +51,7 @@ set -euo pipefail
 app="$HOME/Applications/Zathura.app"
 helper="$app/Contents/Helpers/Zathura.app"
 plist="$app/Contents/Info.plist"
-svg="$HOME/.nix-profile/share/icons/hicolor/scalable/apps/org.pwmt.zathura.svg"
+icons="$(cd "$(dirname "$0")" && pwd)/zathura_icon"
 buddy=/usr/libexec/PlistBuddy
 lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 
@@ -60,8 +60,6 @@ lsregister=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchSe
 # pdf-mupdf registers org.idpf.epub-container and opens EPUB 3 (tested
 # 2026-09-24; MuPDF only warns "unknown epub version: 3.0").
 exts=(pdf epub djvu djv ps eps cbr cbz cbt cba cb7)
-
-[ -f "$svg" ] || { echo "build_zathura_app.sh: $svg missing; install zathura with dotup (nix/flake.nix)" >&2; exit 1; }
 
 # osacompile and codesign --force note every re-sign on stderr
 # ("<bundle>: replacing existing signature"), which happens on each run as the
@@ -76,23 +74,45 @@ trap 'rm -rf "$work"' EXIT
 
 # --- 1. icon ------------------------------------------------------------------
 
-# From zathura's own SVG, so it tracks the installed version. rsvg-convert
-# (librsvg, pinned nixpkgs) renders each size iconutil wants, e.g. 16x16 and
-# 16x16@2x (32 px) up to 512x512@2x (1024 px).
-mkdir "$work/AppIcon.iconset"
-nix shell --inputs-from "path:$HOME/.dotfiles/nix" nixpkgs#librsvg --command bash -c '
-  for s in 16 32 128 256 512; do
-    rsvg-convert -w "$s" -h "$s" "$1" -o "$2/icon_${s}x${s}.png"
-    rsvg-convert -w $((s * 2)) -h $((s * 2)) "$1" -o "$2/icon_${s}x${s}@2x.png"
-  done' _ "$svg" "$work/AppIcon.iconset"
-iconutil -c icns "$work/AppIcon.iconset" -o "$work/AppIcon.icns"
+# Prebuilt and tracked in zathura_icon/, never built here: actool only comes
+# with a full Xcode, and its output differs on every run (it stamps UUIDs into
+# the .car), which would change the app's signature and lose its file-access
+# grants on each dotup. Copied in as is, the app stays byte for byte the same.
+#
+#   zathura_icon/
+#     AppIcon.icon/icon.json         background + glyph fill, per appearance
+#     AppIcon.icon/Assets/glyph.svg  zathura's SVG minus its white disc
+#          |  actool, by hand (below)
+#          v
+#     Assets.car    named by CFBundleIconName (step 3):
+#                     light: black glyph on white (upstream's colours)
+#                     dark:  gruvbox fg #ebdbb2 on bg #282828, as in
+#                            home/.config/zathura/gruvbox-dark
+#                     tinted/clear: derived by macOS from the same layers
+#
+# macOS 26+ only: there is no .icns (one appearance, the pre-26 format), so
+# an older macOS would show a generic icon.
+#
+# In the .icon the system draws the rounded square itself, so the disc
+# upstream puts behind the glyph is dropped; the fill colours replace it. The
+# canvas is 1024 pt and the SVG 128, so the layer is scaled: 6.5 puts the
+# glyph at a little over half the icon's width, where 8 would run it to the
+# edges.
+#
+# To change the icon, edit AppIcon.icon and recompile (Xcode 26+), then commit
+# the new Assets.car; expect macOS to ask for file access again:
+#   cd scripts/macos/zathura_icon && xcrun actool AppIcon.icon --compile . \
+#     --app-icon AppIcon --output-partial-info-plist /dev/null \
+#     --platform macosx --minimum-deployment-target 11.0
+# (actool also writes an AppIcon.icns there; delete it).
+[ -f "$icons/Assets.car" ] || { echo "build_zathura_app.sh: $icons/Assets.car missing; it is tracked in ~/.dotfiles: git checkout it" >&2; exit 1; }
 
 # --- 2. the applet ------------------------------------------------------------
 
 # open-viewer.sh's errors (zathura missing, wrapper layout changed) surface as
 # an AppleScript error dialog naming the fix, not as a silent no-op. -n: one
 # zathura process (and Dock entry) per document, as zathura has one window
-# per process.
+# per process. Cmd-` between them: home/.hammerspoon/zathura_windows.lua.
 cat >"$work/open-viewer.sh" <<'EOF'
 #!/bin/sh
 # Start one zathura viewer (Helpers/Zathura.app) for $1, or an empty one.
@@ -136,16 +156,17 @@ install -m 755 "$work/open-viewer.sh" "$app/Contents/Resources/open-viewer.sh"
 
 # osacompile writes some of these keys and not others (no CFBundleIdentifier),
 # so each is deleted if present, then added. Its icon comes from Assets.car
-# via CFBundleIconName, which beats CFBundleIconFile: drop both for ours.
+# via CFBundleIconName, which beats CFBundleIconFile: drop both for ours
+# (step 1's Assets.car).
 for key in CFBundleIdentifier CFBundleName CFBundleIconName CFBundleIconFile \
   CFBundleDocumentTypes UTImportedTypeDeclarations; do
   "$buddy" -c "Delete :$key" "$plist" 2>/dev/null || true
 done
 rm -f "$app/Contents/Resources/Assets.car"
-cp "$work/AppIcon.icns" "$app/Contents/Resources/AppIcon.icns"
+cp "$icons/Assets.car" "$app/Contents/Resources/Assets.car"
 "$buddy" -c "Add :CFBundleIdentifier string com.hovnatan.zathura" \
   -c "Add :CFBundleName string Zathura" \
-  -c "Add :CFBundleIconFile string AppIcon" "$plist"
+  -c "Add :CFBundleIconName string AppIcon" "$plist"
 
 # Rank Alternate: the app claims no type by itself; step 6 picks which types
 # it is the default for.
@@ -180,8 +201,10 @@ done
 
 # Declares no document types, so it never shows up under "Open With". Its
 # executable is compiled, not a script: see the header on interpreters.
+# home/.hammerspoon/zathura_windows.lua finds the viewers by this bundle id
+# and by the launcher's argv[0] ("zathura"): change them there too.
 mkdir -p "$helper/Contents/MacOS" "$helper/Contents/Resources"
-cp "$work/AppIcon.icns" "$helper/Contents/Resources/AppIcon.icns"
+cp "$icons/Assets.car" "$helper/Contents/Resources/Assets.car"
 cat >"$work/launcher.c" <<'EOF'
 /* Zathura.app viewer: become the Nix zathura binary wrapper named by
  * ZATHURA_APP_EXEC (set by open-viewer.sh), keeping this process and so this
@@ -213,7 +236,7 @@ clang -O2 -Wall -Werror -o "$helper/Contents/MacOS/zathura" "$work/launcher.c"
   -c "Add :CFBundleIdentifier string com.hovnatan.zathura.viewer" \
   -c "Add :CFBundleName string Zathura" \
   -c "Add :CFBundlePackageType string APPL" \
-  -c "Add :CFBundleIconFile string AppIcon" "$helper/Contents/Info.plist" >/dev/null
+  -c "Add :CFBundleIconName string AppIcon" "$helper/Contents/Info.plist" >/dev/null
 
 # --- 5. sign and register -----------------------------------------------------
 

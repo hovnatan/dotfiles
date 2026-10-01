@@ -54,12 +54,18 @@ cleanup() {
 trap cleanup EXIT
 
 # The throwaway HOME holds the repo at ~/.dotfiles, where the hook lines
-# expect their scripts; the logs land in its .logs, not the checkout's. The
-# server's PATH is the system's plus tmux's own directory, for the scripts.
+# expect their scripts; the logs land in its .logs, not the checkout's.
+#
+# The server's PATH is tmux's own directory, then the system's: the hook
+# scripts run `tmux`, and it has to be the server's own. A distro tmux found
+# first cannot talk to it (Ubuntu's /usr/bin/tmux 3.4 against a 3.7c server:
+# "server exited unexpectedly" on every command), which failed every hook
+# that calls tmux on the Ubuntu runner while macOS, with no /usr/bin/tmux,
+# passed.
 mkdir -p "$H/.dotfiles"
 ln -s "$REPO/home" "$H/.dotfiles/home"
 ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
-t() { env -i HOME="$H" PATH="/usr/bin:/bin:$(dirname "$TMUX_BIN")" TERM=xterm-256color "$TMUX_BIN" -S "$SOCK" "$@"; }
+t() { env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin" TERM=xterm-256color "$TMUX_BIN" -S "$SOCK" "$@"; }
 hooks_log() { cat "$H"/.dotfiles/.logs/*_tmux_hooks/events.log 2>/dev/null; }
 # wait_for <pattern>: until the log has a line matching it, 5 s at most
 wait_for() {

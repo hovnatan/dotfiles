@@ -44,6 +44,8 @@ local function object(fn)
   }
 end
 
+local stubHs
+
 local function fresh()
   now = 100
   local ui = { banners = {}, closed = {} }
@@ -53,6 +55,9 @@ local function fresh()
     end,
     banners = function()
       return ui.banners
+    end,
+    onClearAll = function(fn)
+      ui.clearAll = fn
     end,
     press = function(banner)
       assert(not ui.closed[banner.id], "banner was closed twice")
@@ -70,7 +75,13 @@ local function fresh()
       return log, repo .. "/.logs"
     end,
   }
-  _G.hs = {
+  _G.hs = stubHs()
+  return assert(loadfile(repo .. "/home/.hammerspoon/iterm2_bell_banners.lua"))(), ui
+end
+
+-- The Hammerspoon surface the modules touch, as inert doubles.
+function stubHs()
+  return {
     configdir = repo .. "/home/.hammerspoon",
     alert = {
       show = function(msg)
@@ -122,7 +133,6 @@ local function fresh()
       end,
     },
   }
-  return assert(loadfile(repo .. "/home/.hammerspoon/iterm2_bell_banners.lua"))(), ui
 end
 
 local function data(a, b, shown, aTab, bTab)
@@ -330,6 +340,108 @@ test("iTerm2 exit drops failed callers without relaunching it", function()
   m.focusTimer.fn()
   complete(m, { gone = true })
   assert(#m.queue == 0 and #m.waiting == 0 and not m.task)
+end)
+
+-- The 2026-09-30 miss: a scan sees no banner while it stays on screen. No
+-- scan runs on a focus change that visits nothing, and none may drop
+-- pending; the visit still closes the banner.
+test("a banner missing from the screen for an instant stays pending", function()
+  local m, ui = fresh()
+  complete(m, data(0, 0))
+  arrive(m, ui, "BANNER_A", 2)
+  complete(m, data(1, 0))
+  local shown = ui.banners
+  ui.banners = {}
+  local background = data(1, 0)
+  background.frontmost = false
+  focus(m, background)
+  focus(m, background)
+  owner(m, "BANNER_A", "SESSION_A")
+  ui.banners = shown
+  focus(m, data(1, 0, "SESSION_A"))
+  assert(ui.closed.BANNER_A and not m.pending.BANNER_A)
+end)
+
+test("a banner dismissed by hand leaves pending on the visit, closing nothing", function()
+  local m, ui = fresh()
+  complete(m, data(0, 0))
+  arrive(m, ui, "BANNER_A", 2)
+  complete(m, data(1, 0))
+  ui.banners = {} -- clicked
+  focus(m, data(1, 0, "SESSION_A"))
+  assert(not m.pending.BANNER_A and not ui.closed.BANNER_A)
+end)
+
+test("alt+0 empties pending", function()
+  local m, ui = fresh()
+  complete(m, data(0, 0))
+  arrive(m, ui, "BANNER_A", 2)
+  complete(m, data(1, 0))
+  owner(m, "BANNER_A", "SESSION_A")
+  ui.clearAll()
+  assert(next(m.pending) == nil)
+end)
+
+-- The real clear_notifications.lua against stub accessibility elements. As
+-- hs.axuielement does, a read that fails returns nil and a message, and an
+-- attribute with no value (kAXErrorNoValue) a plain nil.
+local NO_VALUE = {}
+
+local function axElement(attrs)
+  return {
+    attributeValue = function(_, name)
+      local value = attrs[name]
+      if value == NO_VALUE then
+        return nil
+      end
+      if value == nil then
+        return nil, "Attribute is not supported by target"
+      end
+      return value
+    end,
+  }
+end
+
+local function realNotifications(windows)
+  _G.hs = stubHs()
+  hs.hotkey = {
+    bind = function() end,
+  }
+  hs.axuielement.applicationElementForPID = function()
+    return axElement({ AXTitle = "Notification Center", AXWindows = windows })
+  end
+  package.loaded.clear_notifications = nil
+  return assert(loadfile(repo .. "/home/.hammerspoon/clear_notifications.lua"))()
+end
+
+test("an empty screen is no banner; a failed read at any level raises", function()
+  assert(#realNotifications({}).banners() == 0)
+  assert(#realNotifications({ axElement({ AXChildren = {} }) }).banners() == 0)
+  assert(#realNotifications({ axElement({ AXChildren = NO_VALUE }) }).banners() == 0)
+  assert(#realNotifications(NO_VALUE).banners() == 0)
+  raises("window list could not be read", function()
+    realNotifications(nil).banners()
+  end)
+  raises("child list could not be read", function()
+    realNotifications({ axElement({}) }).banners()
+  end)
+end)
+
+test("clearAll tells its listeners once the first pass pressed, not when it fails", function()
+  local n = realNotifications({})
+  local told = false
+  n.onClearAll(function()
+    told = true
+  end)
+  n.clearAll()
+  assert(told)
+  n = realNotifications(nil)
+  told = false
+  n.onClearAll(function()
+    told = true
+  end)
+  raises("window list could not be read", n.clearAll)
+  assert(not told, "a failed pass told the listeners")
 end)
 
 scenario = "summary"

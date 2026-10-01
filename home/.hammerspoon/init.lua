@@ -19,6 +19,7 @@ require("clear_notifications")
 require("iterm2_keys")
 require("iterm2_bell_banners")
 require("appearance")
+require("zathura_windows")
 -- require("meeting_focus")
 
 -- hs CLI (`hs -c "..."`) for scripting and debugging from the shell.

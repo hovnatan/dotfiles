@@ -18,10 +18,10 @@ Situational policy (remote runs, ntfy) lives in skills under
 
 Everything outside `home/` is repo tooling that never lands in `$HOME`:
 `scripts/` (all executables, invoked by absolute path), `claude_tmux_session/`,
-`nix/`, `docs/` (handoffs for one-off migrations), `.devcontainer/`, `docker/`.
-`scripts/setup_user_symlinks.sh` performs the install and is the authoritative
-map of what goes where. Nothing in this repo is on `PATH`; `~/.local/bin` is
-the PATH directory.
+`nix/`, `apt/`, `docs/` (handoffs for one-off migrations), `.devcontainer/`,
+`docker/`. `scripts/setup_user_symlinks.sh` performs the install and is the
+authoritative map of what goes where. Nothing in this repo is on `PATH`;
+`~/.local/bin` is the PATH directory.
 
 To setup standalone:
 
@@ -48,14 +48,15 @@ dotup            # alias for ~/.dotfiles/scripts/update.sh
 It fast-forwards `~/.dotfiles` (and the private repos `~/.dotfiles-private` and
 `~/.hov-dotfiles-private` when cloned) from origin, prints the pulled commit
 range, re-runs `setup_user_symlinks.sh` so new files get linked, reports
-Brewfile drift (macOS), applies the pinned Nix package set (where Nix is
-installed; see "Nix packages"), and lists what to reload (tmux, Hammerspoon,
-open shells). Dirty tracked files are stashed around the pull and popped after;
-a pop conflict stops the run with the paths listed and the stash kept. Local
-commits not on origin make it refuse: push or rebase them first. The installer
-is safe to re-run; anything that needs a decision (IINA key bindings differing
-from the repo, a real directory where a skill link belongs) is reported as a
-warning and makes the run exit non-zero once the rest is done.
+Brewfile drift (macOS) or Aptfile drift (Ubuntu; see "Apt packages"), applies
+the pinned Nix package set (where Nix is installed; see "Nix packages"), and
+lists what to reload (tmux, Hammerspoon, open shells). Dirty tracked files are
+stashed around the pull and popped after; a pop conflict stops the run with the
+paths listed and the stash kept. Local commits not on origin make it refuse:
+push or rebase them first. The installer is safe to re-run; anything that needs
+a decision (IINA key bindings differing from the repo, a real directory where a
+skill link belongs) is reported as a warning and makes the run exit non-zero
+once the rest is done.
 
 ## Nix packages
 
@@ -135,6 +136,23 @@ Gotchas:
   shells, systemd's own PATH) still resolve `/usr/bin/tmux`.
 - `nix profile add nixpkgs#foo` installs an unpinned package that no other
   machine knows about. Add it to `nix/flake.nix` instead.
+
+## Apt packages
+
+What Nix cannot give an Ubuntu box comes from apt: daemons and whatever else
+has to be wired into the system. The curated list is `apt/Aptfile`, the
+Brewfile's counterpart; today it holds Docker (the engine with its buildx
+and compose plugins, from Docker's own repository). Its header has the
+format, how to add a package or a repository, and the gotchas.
+
+```bash
+~/.dotfiles/scripts/apt_bundle.sh check      # what the Aptfile lists and the box lacks
+~/.dotfiles/scripts/apt_bundle.sh install    # add the repositories, install what is missing (sudo)
+```
+
+`dotup` prints the `check` report on Ubuntu and never installs. The script
+does nothing past the packages: the docker group, `/etc/docker/daemon.json`
+and the fleet policy in `claude_tmux_session/AGENTS.md` stay separate steps.
 
 ## Claude Code in tmux from boot (VMs)
 

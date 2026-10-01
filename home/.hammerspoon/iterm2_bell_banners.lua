@@ -513,21 +513,21 @@ local function scan()
   end
 end
 
--- With no iTerm2 banner left on screen (all focused, clicked, or cleared
--- with alt+0), nothing is pending any more. Stacked ids cannot be pruned one
--- by one, since a collapsed stack shows only its newest.
-local function prunePending()
-  for _, banner in ipairs(notifications.banners()) do
-    if startsWith(banner.desc, ITERM2_PREFIX) then
-      return
-    end
-  end
-  log("no iTerm2 banner on screen; nothing pending any more")
-  M.pending = {}
-end
-
 -- After a focus change: reset the baselines (see the header), then close the
 -- banners whose sessions have all been on screen.
+--
+-- No scan of the screen here: a banner leaves M.pending on evidence only
+-- (its owners all on screen, its session gone, or alt+0 pressed every
+-- banner), never because a scan did not show it. Until 2026-09-30 a focus
+-- change with banners pending scanned Notification Center and, seeing no
+-- iTerm2 banner, emptied M.pending; one such scan came back empty while the
+-- banner just matched never left the screen (cause unknown: polled at 30ms,
+-- the scan found the banner through app and Space switches and a hover), so
+-- the visit to its tab closed nothing. Across all logs that prune fired 7
+-- times and close() never once found a banner "already gone". A banner
+-- dismissed by hand now stays pending until its tab is visited or its
+-- session ends, when close() finds it gone and, if an iTerm2 stack is on
+-- screen just then, expands that stack once for nothing.
 local function afterFocus(data)
   local visible = {}
   local now = hs.timer.secondsSinceEpoch()
@@ -557,7 +557,6 @@ local function afterFocus(data)
   if pendingCount == 0 then
     return
   end
-  prunePending()
   closeAttended(data)
 end
 
@@ -633,6 +632,12 @@ M.watcher = hs.application.watcher.new(function(_, eventType, app)
   end
 end)
 M.watcher:start()
+
+-- alt+0 pressed every banner on screen, ours included.
+notifications.onClearAll(function()
+  log("alt+0 clears every banner; nothing pending any more")
+  M.pending = {}
+end)
 
 -- Banners already on screen at load are left alone: whatever rang them is
 -- no longer measurable from bellCount. The first snapshot sets every

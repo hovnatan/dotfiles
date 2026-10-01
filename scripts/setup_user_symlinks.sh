@@ -315,6 +315,21 @@ ln -sf ~/.dotfiles/home/.npmrc ~/.npmrc
 
 ln -sfn ~/.dotfiles/home/.config/uv ~/.config/uv
 
+# docker's zsh completion, where home/.zshrc.shared's fpath looks for it.
+# Regenerated on every run, so it follows the docker installed (apt/Aptfile
+# on Ubuntu, Docker Desktop on macOS); written beside and renamed in, so a
+# docker that fails leaves the old file. No docker on this machine: nothing
+# to do.
+if command -v docker >/dev/null; then
+  mkdir -p ~/.docker/completions
+  if docker completion zsh >~/.docker/completions/_docker.new; then
+    mv ~/.docker/completions/_docker.new ~/.docker/completions/_docker
+  else
+    rm -f ~/.docker/completions/_docker.new
+    warn "'docker completion zsh' failed (message above); $HOME/.docker/completions/_docker left as it was"
+  fi
+fi
+
 # macOS only
 if [ "$(uname)" = "Darwin" ]; then
   # IINA reads ~/.config/iina as its mpv config dir, incl. scripts/
@@ -466,6 +481,10 @@ if [ "$(uname)" = "Darwin" ]; then
   # New tabs open right after the current one, as Ghostty's default
   # window-new-tab-position = current does; iTerm2 appends them at the end.
   defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
+  # Tab bar shown for a one-tab window too (Appearance > Tabs > Show tab bar
+  # even when there is only one tab). iTerm2 hides it by default, so the
+  # terminal lost a row of height the moment a second tab opened.
+  defaults write com.googlecode.iterm2 HideTab -bool false
   # Long tab titles always lose their end, never their start, so the host tag
   # that leads them ("(mbp) ~/.dotfiles", iterm2_report_host.fish) stays
   # visible. Smart truncation (the default) cuts the start instead whenever a
@@ -609,6 +628,13 @@ if [ "$(uname)" = "Darwin" ]; then
   # about a second, so the app follows the script.
   ~/.dotfiles/scripts/macos/build_zathura_app.sh >/dev/null \
     || warn "Zathura.app build failed (scripts/macos/build_zathura_app.sh)"
+
+  # Dark Reader for Chrome, built from source at the commit pinned in the
+  # script, into ~/.local/share/dark-reader/chrome-mv3 (loaded in Chrome by
+  # hand, once; the script says how). One line when that pin is already
+  # built. Its output is shown: after a build it says what to do in Chrome.
+  ~/.dotfiles/scripts/macos/build_dark_reader.sh \
+    || warn "Dark Reader build failed (scripts/macos/build_dark_reader.sh)"
 
 fi
 

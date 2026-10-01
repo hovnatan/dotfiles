@@ -12,6 +12,7 @@
 #                                       scripts/setup_user_symlinks.sh
 #                                                                  v
 #                              macOS only: Brewfile drift report (advisory)
+#                              Ubuntu only: Aptfile drift report (advisory)
 #                              apply the pinned Nix package set (if installed)
 #                                                                  v
 #                              reminders: tmux, Hammerspoon, open shells
@@ -99,6 +100,26 @@ brew_drift() {
   HOMEBREW_NO_AUTO_UPDATE=1 brew missing 2>&1 | sed 's/^/  missing dep: /' || true
 }
 
+# Report what apt/Aptfile lists and this Ubuntu box lacks: a repository not
+# configured, a package not installed (scripts/apt_bundle.sh check; one
+# direction only). Advisory like the Brewfile report, and never installed
+# from here: the Aptfile's header says why. check exits 1 on drift, which is
+# not a failed update; 2 is an error (a malformed Aptfile) and is one.
+apt_drift() {
+  echo "--- Aptfile drift (advisory)"
+  local rc=0
+  ~/.dotfiles/scripts/apt_bundle.sh check 2>&1 | sed 's/^/  /' || rc=$?
+  [ "$rc" -le 1 ]
+}
+
+# Whether this is an Ubuntu box, the only kind the Aptfile is for. Asked the
+# way scripts/apt_bundle.sh asks, so the two cannot disagree: that script
+# exits 2 on any other box, which would fail the update.
+is_ubuntu() {
+  # shellcheck disable=SC1091  # the box's own file, not part of the repo
+  [ -r /etc/os-release ] && (. /etc/os-release && [ "${ID:-}" = ubuntu ])
+}
+
 # Apply nix/flake.nix + flake.lock to this machine's Nix profile, so a pulled
 # change to the package list or the nixpkgs pin lands on every machine that
 # runs dotup, not only the one where it was made (README.md, "Nix packages"):
@@ -178,6 +199,8 @@ main() {
 
   if [ "$(uname)" = "Darwin" ]; then
     brew_drift || status=1
+  elif is_ubuntu; then
+    apt_drift || status=1
   fi
   nix_apply || status=1
 

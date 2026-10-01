@@ -60,13 +60,38 @@ function M.element()
   return hs.axuielement.applicationElementForPID(pid)
 end
 
+-- A window's or element's list attribute, raised when the read fails.
+-- attributeValue reports a failed read (a dead pid, missing Accessibility
+-- permission, an unsupported attribute) as nil plus a message, e.g.
+--   nil, "Attribute is not supported by target"
+-- and an attribute that has no value (kAXErrorNoValue) as a plain nil. With
+-- nothing there the list is normally an empty table (checked on macOS 27: a
+-- windowless process's AXWindows, a leaf's AXChildren), so the plain nil is
+-- an empty list too. Only the message is a failure: a caller that took a
+-- failed read for an empty list would act on a screen it never saw, and the
+-- bell module used to drop its banners that way.
+local function list(el, attribute, what)
+  local value, err = el:attributeValue(attribute)
+  if err ~= nil then
+    fail(
+      "Notification Center's "
+        .. what
+        .. " could not be read ("
+        .. tostring(err)
+        .. "); is Hammerspoon allowed in System Settings > Privacy & Security > Accessibility?"
+    )
+  end
+  return value or {}
+end
+
 -- Every banner in Notification Center's windows, as { el, subrole, id, desc }
 -- records, e.g. desc "iTerm2, Bell, Session fish:~ #2 just rang a bell!".
 -- Only windows are walked: the process also owns the menu bar, whose tree
 -- is large and has no notifications in it. A stack counts as one banner:
 -- collapsed, its id and text are its newest notification's (desc then ends
 -- in ", stacked"), and its older ones only appear, as single banners, once
--- it is expanded.
+-- it is expanded. Returns the screen, or raises: never an empty list for a
+-- read that failed.
 function M.banners()
   local found = {}
   local function walk(el)
@@ -80,11 +105,11 @@ function M.banners()
       })
       return -- a stack's children are its texts, not further banners
     end
-    for _, child in ipairs(el:attributeValue("AXChildren") or {}) do
+    for _, child in ipairs(list(el, "AXChildren", "child list")) do
       walk(child)
     end
   end
-  for _, window in ipairs(M.element():attributeValue("AXWindows") or {}) do
+  for _, window in ipairs(list(M.element(), "AXWindows", "window list")) do
     walk(window)
   end
   return found
@@ -93,7 +118,11 @@ end
 -- Close one banner, or clear a whole stack.
 function M.press(banner)
   local wanted = ACTION[banner.subrole]
-  for _, name in ipairs(banner.el:actionNames() or {}) do
+  local names, err = banner.el:actionNames()
+  if names == nil then
+    fail("actions of " .. banner.subrole .. " could not be read (" .. tostring(err) .. "): " .. banner.desc)
+  end
+  for _, name in ipairs(names) do
     if name:find(wanted, 1, true) then
       banner.el:performAction(name)
       return
@@ -125,6 +154,18 @@ local function pass(n)
   end)
 end
 
+-- Called once the first pass has pressed every banner on screen: the one
+-- bulk dismissal there is, so a module tracking banners
+-- (iterm2_bell_banners.lua) can forget them all without a scan of its own.
+-- After the pass, not before: a pass that raises (a failed read, a banner
+-- without its action) leaves banners on screen, and a tracker told
+-- beforehand would have forgotten them for good.
+M.listeners = {}
+
+function M.onClearAll(fn)
+  table.insert(M.listeners, fn)
+end
+
 -- A second press while passes are still pending restarts them rather than
 -- running two chains that press the same banners twice.
 function M.clearAll()
@@ -132,6 +173,9 @@ function M.clearAll()
     M.timer:stop()
   end
   pass(1)
+  for _, fn in ipairs(M.listeners) do
+    fn()
+  end
 end
 
 hs.hotkey.bind({ "alt" }, "0", M.clearAll)
