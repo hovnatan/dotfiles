@@ -129,6 +129,12 @@
             pkgs.jq
             # Sophisticated file transfer program
             pkgs.lftp
+            # markdownlint-cli2 -- Markdown linter; rules for projects without
+            # a config of their own in home/.config/markdownlint, this repo's
+            # in .markdownlint-cli2.yaml, CI checks
+            # (.github/workflows/markdown.yml). Pinned here so a new release's
+            # rules cannot fail files nobody touched, as `npx` would (2026-10-01)
+            pkgs.markdownlint-cli2
             # Unified display of technical and tag data for audio/video
             pkgs.mediainfo
             # Remote terminal application

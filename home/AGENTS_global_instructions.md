@@ -120,6 +120,36 @@ unless non-ASCII is genuinely required. In prose, fancy typography (em dashes,
 smart quotes) reads as an LLM tell; in code, lookalike Unicode trips ruff
 RUF001-003. Use `-`/`--`, straight quotes, `...`, `->`.
 
+# Markdown: lint what you write
+
+Lint every markdown file you create or edit with markdownlint-cli2 before
+calling it done, and get it to 0 issues. The binary is in my Nix package set
+(pinned, so its rules do not shift under you); on a machine without it,
+`npx markdownlint-cli2` is the same tool at its latest release. Where the
+project has its own config (`.markdownlint-cli2.*` or `.markdownlint.*`), run
+it the way the project does - its rules win, and if it lints a whole set of
+files the whole set must pass. Where it has none, pass mine:
+
+```bash
+markdownlint-cli2 --config ~/.config/markdownlint/.markdownlint.yaml <files>
+```
+
+That config holds prose and lists to 100 characters per line. Table rows and
+code blocks cannot wrap and are exempt, front matter is skipped, and a line
+whose overflow is one unbreakable token (a long path or URL) is allowed. Keep
+table cells to a phrase: when a cell needs a sentence, write a list or a
+section instead.
+
+The findings worth the most are text that renders wrong: a `|` inside a table
+cell (write `\|`), `*` or `_` in math read as emphasis (escape it or use a
+code span), a line starting with `+` read as a bullet, a `<placeholder>`
+outside a code span read as HTML. `--fix` is safe for spacing but rewrites
+exactly those cases wrongly - it turned a `+` into a `-` and subscripts into
+`*` - so read its diff before keeping it, and fix them by hand.
+
+Lint the files you touched. Do not reflow or re-style someone else's file to
+satisfy the linter unless I ask or the project's config already covers it.
+
 # Slack: self-DM only
 
 When sending through the Slack MCP tools, never send directly to the real

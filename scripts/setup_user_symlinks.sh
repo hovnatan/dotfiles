@@ -305,6 +305,10 @@ ln -sfn ~/.dotfiles/home/.config/ripgrep ~/.config/ripgrep
 # ruff's user config, used only where a project has no ruff settings of its
 # own; ~/.config/ruff on macOS too (checked with ruff 0.15.7 and 0.16.8)
 ln -sfn ~/.dotfiles/home/.config/ruff ~/.config/ruff
+# markdownlint-cli2's user config, used only where a project has none of its
+# own; the tool reads no user-level file by itself, so the global agent
+# instructions pass it with --config
+ln -sfn ~/.dotfiles/home/.config/markdownlint ~/.config/markdownlint
 
 mkdir -p ~/.local/{bin,local}
 ln -sf ~/.dotfiles/home/.npmrc ~/.npmrc

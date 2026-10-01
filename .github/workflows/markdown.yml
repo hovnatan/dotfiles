@@ -1,0 +1,26 @@
+# Every tracked .md file must pass markdownlint-cli2 under
+# .markdownlint-cli2.yaml (which files, which are ignored) and the rules it
+# extends, home/.config/markdownlint/.markdownlint.yaml. The linter comes from
+# the pinned nixpkgs (nix/flake.lock), the build `dotup` installs, since a new
+# markdownlint release can add rules and fail files nobody touched.
+# Run it locally from the repo root:  markdownlint-cli2
+# Add --fix for the spacing rules, then read its diff: it rewrites `|` in table
+# cells, `*` and `_` in math, and URLs inside shell commands wrongly.
+name: markdown
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: markdownlint-cli2
+        run: |
+          nix shell --inputs-from "path:$PWD/nix" nixpkgs#markdownlint-cli2 --command bash -c \
+            "markdownlint-cli2 --version | head -1; markdownlint-cli2"
