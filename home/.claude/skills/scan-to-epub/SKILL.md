@@ -13,7 +13,7 @@ text layer.
 
 ## The pipeline
 
-```
+```text
 raw scans -> ScanTailor Advanced -> convert_to_pdf.sh -> [this skill] -> .epub
 ```
 
@@ -64,7 +64,7 @@ convert_to_pdf.sh <scantailor-output-folder>     # folder holding the *.tif
 It writes everything into `<folder>/out_pdf/`:
 
 | file | what it is |
-|---|---|
+| --- | --- |
 | `1_XXX.pdf` | one PDF per page (JPEG for colour pages, bitonal otherwise) |
 | `out.pdf` | all pages merged (`pdfunite`) |
 | `out_ocr.pdf` | + OCR text layer (`ocrmypdf`) |
@@ -100,7 +100,7 @@ with checks that do not share assumptions with the code they check.
 
 ## Workflow
 
-### 0. The TOC is manual. Budget for it.
+### 0. The TOC is manual. Budget for it
 
 The builder takes its sections from the PDF's outline. That outline is **not
 free** - it is there only because a `toc.txt` was written **by hand** and piped

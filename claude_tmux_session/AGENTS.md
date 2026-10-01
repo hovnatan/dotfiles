@@ -54,7 +54,7 @@ sessions on this machine.
 
 When asked to bring up / resume a session `<name>` (e.g. "backend"), run:
 
-```
+```bash
 ~/.dotfiles/scripts/claude_tmux_run.sh spawn <name>[/<task>] [dir]
 ```
 
@@ -80,7 +80,7 @@ but say so when it happens, since the user may have wanted the older
 thread. To see them all, newest first, each with its label and opening
 prompt:
 
-```
+```bash
 ~/.dotfiles/scripts/claude_tmux_run.sh history <name>
 ```
 
@@ -92,7 +92,7 @@ label.
 
 Before starting a NEW conversation, list what already exists:
 
-```
+```bash
 ~/.dotfiles/scripts/claude_tmux_run.sh conversations [pattern]
 ```
 
@@ -140,7 +140,7 @@ come back for them once they go quiet.
 
 Which build each session actually runs:
 
-```
+```bash
 tmux -L claude list-panes -a -F '#{session_name} #{pane_pid}' |
   while read s p; do
     for q in $p $(pgrep -P $p) $(pgrep -P $p | xargs -r -I{} pgrep -P {}); do
@@ -225,6 +225,7 @@ benchmarks. Boot-time upgrades keep boxes patched when no workload exists
 yet.
 
 How:
+
 - `"exec-opts": ["native.cgroupdriver=cgroupfs"]` merged into
   /etc/docker/daemon.json, then restart docker (idle box only). Verify
   with `docker info --format '{{.CgroupDriver}}'`.
@@ -256,6 +257,7 @@ and grade containers -- fails with cudaErrorNoDevice, because MIG-on with
 zero instances exposes no CUDA devices.
 
 After every VM start on a GPU box:
+
 - `nvidia-smi --query-gpu=mig.mode.current --format=csv,noheader`; if
   Enabled: `sudo nvidia-smi -mig 0 && sudo nvidia-smi --gpu-reset`
   (works in place on passthrough boxes, no reboot).
