@@ -462,6 +462,10 @@ if [ "$(uname)" = "Darwin" ]; then
   # New tabs open right after the current one, as Ghostty's default
   # window-new-tab-position = current does; iTerm2 appends them at the end.
   defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
+  # Tab bar shown for a one-tab window too (Appearance > Tabs > Show tab bar
+  # even when there is only one tab). iTerm2 hides it by default, so the
+  # terminal lost a row of height the moment a second tab opened.
+  defaults write com.googlecode.iterm2 HideTab -bool false
   # Long tab titles always lose their end, never their start, so the host tag
   # that leads them ("(mbp) ~/.dotfiles", iterm2_report_host.fish) stays
   # visible. Smart truncation (the default) cuts the start instead whenever a
