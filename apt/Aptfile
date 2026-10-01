@@ -1,0 +1,56 @@
+# Aptfile -- the curated list of apt packages an Ubuntu box should have: the
+# Brewfile's counterpart. Command-line tools come from Nix (nix/flake.nix),
+# the same builds on every machine; this file holds what Nix cannot give a
+# box that is not NixOS: daemons and whatever else has to be wired into the
+# system (systemd units, root-owned sockets, kernel features).
+#
+# Install:  ~/.dotfiles/scripts/apt_bundle.sh install   (sudo: your own terminal)
+# Drift:    ~/.dotfiles/scripts/apt_bundle.sh check     (listed here, not on the box)
+#           `dotup` (scripts/update.sh) prints it on Ubuntu, and never
+#           installs: that takes sudo, and on a box running GPU containers
+#           it is a decision (gotchas below), not a side effect of an update.
+#
+# One entry per line. `#` starts a comment at the start of a line only.
+#   repo <name> <uri> <suite> <component>...
+#       a third-party repository, signed by keys/<name>.asc beside this
+#       file; {codename} in <suite> is the box's Ubuntu codename (noble on
+#       24.04). Covers a repository with a suite and components that every
+#       box should have; a flat one (suite `/`) or one for some boxes only
+#       (GPU) needs the format extended in scripts/apt_bundle.sh first.
+#   apt <package>
+#       a package that should be installed.
+#
+# Curated, like the Brewfile: add a package by hand, with a comment saying
+# why it is here and when. A new repo needs its signing key vendored in
+# keys/: download it, compare the fingerprint with the one its publisher
+# documents (`gpg --show-keys --with-fingerprint keys/<name>.asc`), and note
+# it beside the entry, so trust is pinned in git rather than fetched anew on
+# every box.
+#
+# Gotchas:
+# - Drift is reported one way only. "Installed, not listed" has no useful
+#   answer on Ubuntu: `apt-mark showmanual` marks hundreds of packages of
+#   the base image as manual.
+# - `install` only installs what is missing; it never upgrades. Upgrades
+#   are the box's own business (unattended upgrades, `apt-get upgrade`).
+# - apt removes packages the listed ones conflict with (docker-ce and
+#   containerd.io replace Ubuntu's docker.io, containerd and runc). Without
+#   --yes apt shows the removals and asks first.
+# - Package scripts may run `systemctl daemon-reload`. On a GPU box not yet
+#   on docker's cgroupfs driver that kills CUDA inside running containers
+#   (fleet policy in claude_tmux_session/AGENTS.md): install only while no
+#   GPU container is running.
+# - `install` refuses a repo that another file in /etc/apt already lists
+#   (docker.list, on a box set up by the retired scripts/install_docker.sh)
+#   and names the file to remove.
+
+# docker -- the engine with its buildx and compose plugins, from Docker's
+# own repository rather than Ubuntu's docker.io, which lags it by months.
+# Key fingerprint 9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88, as on
+# https://docs.docker.com/engine/install/ubuntu/ (2026-10-01)
+repo docker https://download.docker.com/linux/ubuntu {codename} stable
+apt docker-ce
+apt docker-ce-cli
+apt containerd.io
+apt docker-buildx-plugin
+apt docker-compose-plugin
