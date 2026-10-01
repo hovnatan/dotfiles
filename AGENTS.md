@@ -36,6 +36,9 @@ It is kept short on purpose - every line here is paid on every session.
   (CI runs it, `.github/workflows/configs.yml`). It does not format-check Lua;
   for any `.lua` change also run `git ls-files -z '*.lua' | xargs -0 stylua --check`
   (`.github/workflows/lua.yml`), which e.g. rejects `"...\"..."` for `'..."...'`.
+- Changed a `.md`: run the linter from the repo root before pushing (command and
+  `--fix` caveats in `.github/workflows/markdown.yml`, which CI runs). Vendored
+  skills are ignored in `.markdownlint-cli2.yaml`: add a skill there when vendoring it.
 - `home/.codex/config.toml` is linked as `~/.codex/config.toml`, and Codex and
   the ChatGPT app write machine-local state into it (model, app paths, MCP
   servers, `notify`), so it often shows as modified. Never stage or commit it

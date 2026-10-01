@@ -1,0 +1,30 @@
+# User-level markdownlint rules, used only where a project has no config of its
+# own. markdownlint-cli2 never looks above the directory it runs in, so this
+# file is passed explicitly, and a project's own config still wins:
+#
+#   markdownlint-cli2 --config ~/.config/markdownlint/.markdownlint.yaml <files>
+#
+# The file name is fixed: --config only accepts the tool's own config names.
+# This repo lints itself with the same rules: /.markdownlint-cli2.yaml extends
+# this file, so there is one copy of them.
+
+# 100 characters: prose and lists wrap, so they are held to it. Table rows and
+# code blocks cannot wrap and are exempt. Front matter is skipped by the linter
+# itself, and a line whose overflow is one unbreakable token (a long path or
+# URL) is allowed.
+MD013:
+  line_length: 100
+  tables: false
+  code_blocks: false
+
+# Several top-level headings are a legitimate layout: an instructions file such
+# as home/AGENTS_global_instructions.md gives each rule its own `#`.
+MD025: false
+
+# A skill body, an agent-instructions file or a command cheat sheet opens with
+# prose or a code block; requiring a top-level heading first adds nothing there.
+MD041: false
+
+# A space inside a code span can be the point (` +1`: the literal suffix
+# starts with a space). It renders as written, and --fix deletes it.
+MD038: false

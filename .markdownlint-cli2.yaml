@@ -1,0 +1,13 @@
+# Markdown lint for this repo: `markdownlint-cli2` from the repo root (the
+# binary is in nix/flake.nix). CI runs it: .github/workflows/markdown.yml.
+globs:
+  - "**/*.md"
+ignores:
+  # Vendored skills (a .upstream file beside SKILL.md): byte-for-byte copies of
+  # a reviewed upstream commit, replaced whole by check_skill_updates.sh --apply.
+  # Restyling one here would show as drift from upstream. Add a skill to this
+  # list when vendoring it.
+  - "home/.claude/skills/retro/**"
+config:
+  # The rules live in one place, shared with every project that has no config.
+  extends: home/.config/markdownlint/.markdownlint.yaml
