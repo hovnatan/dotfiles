@@ -112,7 +112,7 @@ trap 'rm -rf "$work"' EXIT
 # open-viewer.sh's errors (zathura missing, wrapper layout changed) surface as
 # an AppleScript error dialog naming the fix, not as a silent no-op. -n: one
 # zathura process (and Dock entry) per document, as zathura has one window
-# per process.
+# per process. Cmd-` between them: home/.hammerspoon/zathura_windows.lua.
 cat >"$work/open-viewer.sh" <<'EOF'
 #!/bin/sh
 # Start one zathura viewer (Helpers/Zathura.app) for $1, or an empty one.
@@ -201,6 +201,8 @@ done
 
 # Declares no document types, so it never shows up under "Open With". Its
 # executable is compiled, not a script: see the header on interpreters.
+# home/.hammerspoon/zathura_windows.lua finds the viewers by this bundle id
+# and by the launcher's argv[0] ("zathura"): change them there too.
 mkdir -p "$helper/Contents/MacOS" "$helper/Contents/Resources"
 cp "$icons/Assets.car" "$helper/Contents/Resources/Assets.car"
 cat >"$work/launcher.c" <<'EOF'
