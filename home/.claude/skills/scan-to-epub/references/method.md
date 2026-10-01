@@ -32,7 +32,7 @@ Two consequences that drive everything else:
 ## 1. Structure from geometry
 
 | element | signal |
-|---|---|
+| --- | --- |
 | heading | size >= `heading_min`, short line, gap above, no terminal punctuation, near left margin |
 | list item | bullet/number glyph + indent past the text column |
 | list wrap | no marker, gap < 8pt, indented >= the item's own `x0` |

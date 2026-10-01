@@ -45,7 +45,8 @@ failure mode below comes from that. The safe path is a script file.
 
 4. **Verify from the client, not only from the box.** Port state: `nc -z -w 4 host 22`
    (works with BSD and GNU netcat).
-   A fresh session that bypasses the multiplexed master: `ssh -o ControlPath=none -o BatchMode=yes host echo ok`.
+   A fresh session that bypasses the multiplexed master:
+   `ssh -o ControlPath=none -o BatchMode=yes host echo ok`.
 
 5. **Report done only after the verify block in the script prints.** Every script ends
    with a verify section that re-reads the state it changed.
@@ -61,7 +62,8 @@ failure mode below comes from that. The safe path is a script file.
 
 - Order of preference: `msiexec /x {code} /qn /norestart`; the registry `UninstallString` with `/S`;
   manual removal (program folder, `%LOCALAPPDATA%` data, the uninstall key, Run entries, scheduled tasks).
-- winget hangs on uninstallers that want a prompt. If it does, `taskkill /IM winget.exe /F` and fall back.
+- winget hangs on uninstallers that want a prompt. If it does,
+  `taskkill /IM winget.exe /F` and fall back.
 - Store apps: `Remove-AppxPackage` then `Remove-AppxProvisionedPackage -Online`, or the next
   feature update reinstalls them.
 - Sync clients (Dropbox, OneDrive): deleting the local folder while linked deletes in the cloud.

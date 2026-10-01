@@ -18,21 +18,21 @@ Situational policy (remote runs, ntfy) lives in skills under
 
 Everything outside `home/` is repo tooling that never lands in `$HOME`:
 `scripts/` (all executables, invoked by absolute path), `claude_tmux_session/`,
-`nix/`, `docs/` (handoffs for one-off migrations), `.devcontainer/`, `docker/`. `scripts/setup_user_symlinks.sh` performs the
-install and is the authoritative map of what goes where. Nothing in this repo
-is on `PATH`; `~/.local/bin` is the PATH directory.
-
+`nix/`, `docs/` (handoffs for one-off migrations), `.devcontainer/`, `docker/`.
+`scripts/setup_user_symlinks.sh` performs the install and is the authoritative
+map of what goes where. Nothing in this repo is on `PATH`; `~/.local/bin` is
+the PATH directory.
 
 To setup standalone:
 
-```
+```bash
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/scripts/setup_user_standalone.sh -o ~/setup_user_standalone.sh
 bash -x ~/setup_user_standalone.sh
 ```
 
 For setup symlinks:
 
-```
+```bash
 git clone https://github.com/hovnatan/dotfiles.git ~/.dotfiles
 bash -x ~/.dotfiles/scripts/setup_user_symlinks.sh
 ```
@@ -41,21 +41,21 @@ bash -x ~/.dotfiles/scripts/setup_user_symlinks.sh
 
 On the machine that is behind:
 
-```
+```bash
 dotup            # alias for ~/.dotfiles/scripts/update.sh
 ```
 
-It fast-forwards `~/.dotfiles` (and the private repos `~/.dotfiles-private`
-and `~/.hov-dotfiles-private` when cloned) from origin, prints the pulled commit range, re-runs `setup_user_symlinks.sh` so
-new files get linked, reports Brewfile drift (macOS), applies the pinned
-Nix package set (where Nix is installed; see "Nix packages"), and lists
-what to reload (tmux, Hammerspoon, open shells). Dirty tracked files are
-stashed around the pull and popped after; a pop conflict stops the run with the paths listed and the stash kept.
-Local commits not on origin make it refuse: push or rebase them first.
-The installer is safe to re-run; anything that needs a decision (IINA key
-bindings differing from the repo, a real directory where a skill link
-belongs) is reported as a warning and makes the run exit non-zero once the
-rest is done.
+It fast-forwards `~/.dotfiles` (and the private repos `~/.dotfiles-private` and
+`~/.hov-dotfiles-private` when cloned) from origin, prints the pulled commit
+range, re-runs `setup_user_symlinks.sh` so new files get linked, reports
+Brewfile drift (macOS), applies the pinned Nix package set (where Nix is
+installed; see "Nix packages"), and lists what to reload (tmux, Hammerspoon,
+open shells). Dirty tracked files are stashed around the pull and popped after;
+a pop conflict stops the run with the paths listed and the stash kept. Local
+commits not on origin make it refuse: push or rebase them first. The installer
+is safe to re-run; anything that needs a decision (IINA key bindings differing
+from the repo, a real directory where a skill link belongs) is reported as a
+warning and makes the run exit non-zero once the rest is done.
 
 ## Nix packages
 
@@ -74,7 +74,7 @@ Install Nix, multi-user with a daemon (needs sudo). The versioned URL pins
 the installer and the Nix it installs; drop the version from the path
 (`https://nixos.org/nix/install`) to get the current release instead:
 
-```
+```bash
 sh <(curl -fsSL https://releases.nixos.org/nix/nix-2.35.2/install) --daemon --yes
 echo 'experimental-features = nix-command flakes' | sudo tee -a /etc/nix/nix.conf
 sudo systemctl restart nix-daemon                              # Linux
@@ -87,7 +87,7 @@ On a Mac that had the formulae from Homebrew, retire those copies once the
 Nix set is in (`which -a tmux` lists both until then; whichever comes first
 on PATH wins):
 
-```
+```bash
 dscl . -read ~ UserShell    # must not be /opt/homebrew/bin/bash before bash goes
 brew autoremove --dry-run   # see the Brewfile header: uninstall autoremoves deps
 brew uninstall azure-cli bash gh googleworkspace-cli htop hunspell imagemagick \
@@ -102,7 +102,7 @@ Adding a package, applying a new lock and bumping nixpkgs are in the header
 of `nix/flake.nix`. `dotup` applies the committed list and lock on every
 machine that has the set installed (`nix profile upgrade`), and fails if Nix
 is installed but missing from PATH. Uninstalling Nix:
-https://nix.dev/manual/nix/stable/installation/uninstall.html
+<https://nix.dev/manual/nix/stable/installation/uninstall.html>
 
 What the installer changes: `/nix`, the `nixbld` group and its build users,
 `/etc/nix/nix.conf`, the `nix-daemon.service`/`.socket` units, and a hook
@@ -113,13 +113,13 @@ in `/etc/bash.bashrc`, `/etc/bashrc`, `/etc/zshrc`, `/etc/zsh/zshrc` and
 
 Which shells get `~/.nix-profile/bin` on PATH, and how:
 
-| Shell                                   | Reached through                                   |
-|-----------------------------------------|---------------------------------------------------|
-| interactive bash / zsh                  | installer hook in `/etc/bash.bashrc`, `/etc/zsh/zshrc` |
-| login bash                              | `/etc/profile` -> `/etc/profile.d/nix.sh`         |
+| Shell | Reached through |
+| --- | --- |
+| interactive bash / zsh | installer hook in `/etc/bash.bashrc`, `/etc/zsh/zshrc` |
+| login bash | `/etc/profile` -> `/etc/profile.d/nix.sh` |
 | login zsh, incl. the claude-tmux service's `$SHELL -lc` when the account's shell is zsh | `home/.zprofile` (Ubuntu's zsh never reads `/etc/profile`) |
-| macOS zsh, login or not                 | installer hook in `/etc/zshrc`, plus `home/.zprofile` |
-| systemd units that run no shell         | none: use absolute paths                          |
+| macOS zsh, login or not | installer hook in `/etc/zshrc`, plus `home/.zprofile` |
+| systemd units that run no shell | none: use absolute paths |
 
 Gotchas:
 
@@ -148,7 +148,7 @@ bypassed only on explicit request). Spawned sessions are
 unmanaged: they survive service restarts and stops, and nothing recreates one
 that exits. Opt-in per machine:
 
-```
+```bash
 bash -x ~/.dotfiles/scripts/setup_claude_tmux_service.sh
 ```
 
@@ -156,7 +156,7 @@ On a fresh machine, run `claude` once in `~/.dotfiles` first and accept the
 workspace trust dialog; the manager starts inside the repo and would
 otherwise sit at that prompt, invisible, in its detached pane.
 
-```
+```bash
 tmux -L claude attach -t claude            # attach (any session name works)
 systemctl --user status claude-tmux        # is it up?
 journalctl --user -u claude-tmux -f        # logs

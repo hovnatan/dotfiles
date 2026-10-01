@@ -36,7 +36,7 @@ has rolled over create it first with `addDocumentTab`
 (`tabProperties: {title, index: 0}`) so it lands above the previous month.
 `gws docs +write` is append-only and therefore wrong here.
 
-```
+```bash
 ID=$(cat ~/.config/claude-worklog/doc-id)
 # tab titles and ids
 gws docs documents get --params "{\"documentId\":\"$ID\",\"includeTabsContent\":true}" |
@@ -69,12 +69,14 @@ them needs no reordering.
 
 ## Shape of an entry
 
-    HEADING_1    MM/DD/YYYY (City)
-    HEADING_2      <area>
-    HEADING_3        <area>: <task> (N commits, +A -R)
-    bullet             HH:MM-HH:MM  what happened, sha links each with +a -r
-    HEADING_2      Next
-    bullet           what tomorrow starts from, no stamp
+```text
+HEADING_1    MM/DD/YYYY (City)
+HEADING_2      <area>
+HEADING_3        <area>: <task> (N commits, +A -R)
+bullet             HH:MM-HH:MM  what happened, sha links each with +a -r
+HEADING_2      Next
+bullet           what tomorrow starts from, no stamp
+```
 
 Bullets are NORMAL_TEXT via `createParagraphBullets`
 (`BULLET_DISC_CIRCLE_SQUARE`); commit and PR links are `updateTextStyle`
@@ -139,8 +141,10 @@ self-updating:
   day. Commits made on this box carry the box's offset, but GitHub merge and
   squash commits carry the merging browser's, and so do laptop commits:
 
-      git -C <repo> log --all -i --author="<user>" --since=<date> \
-        --pretty='%ai' | grep -v '+0000'
+  ```bash
+  git -C <repo> log --all -i --author="<user>" --since=<date> \
+    --pretty='%ai' | grep -v '+0000'
+  ```
 
   `<user>` is the pattern in `~/.config/claude-worklog/git-author-pattern`,
   and the `-i` is part of the rule. This needs a local clone: GitHub's API
@@ -192,11 +196,13 @@ Use `gdate`, GNU date on every box (macOS `date` has no `-d`; nix/flake.nix
 ships it as coreutils-prefixed). Spell the end date out: GNU date reads
 `05:00 + 1 day` as 05:00 in zone +01, silently.
 
-    D=2026-08-31; E=$(gdate -d "$D + 1 day" +%F); Z=Asia/Yerevan
-    TZ=$Z gdate -d "$D 05:00" --iso-8601=seconds    # 2026-08-31T05:00:00+04:00
-    TZ=$Z gdate -d "$E 05:00" --iso-8601=seconds    # 2026-09-01T05:00:00+04:00
-    gdate -u -d "TZ=\"$Z\" $D 05:00" +%FT%TZ        # 2026-08-31T01:00:00Z
-    gdate -u -d "TZ=\"$Z\" $E 05:00" +%FT%TZ        # 2026-09-01T01:00:00Z
+```bash
+D=2026-08-31; E=$(gdate -d "$D + 1 day" +%F); Z=Asia/Yerevan
+TZ=$Z gdate -d "$D 05:00" --iso-8601=seconds    # 2026-08-31T05:00:00+04:00
+TZ=$Z gdate -d "$E 05:00" --iso-8601=seconds    # 2026-09-01T05:00:00+04:00
+gdate -u -d "TZ=\"$Z\" $D 05:00" +%FT%TZ        # 2026-08-31T01:00:00Z
+gdate -u -d "TZ=\"$Z\" $E 05:00" +%FT%TZ        # 2026-09-01T01:00:00Z
+```
 
 `git log --since=<local start> --until=<local end>` takes those as they
 are -- ISO with an offset, time and offset both honoured. GitHub search
@@ -221,7 +227,9 @@ on D+1 moved on D.
 Use both the day's commits and the sessions' transcripts. The commits,
 which supply the links, come from
 
-    ~/.dotfiles/scripts/worklog_commits.sh '<local start>' '<local end>'
+```bash
+~/.dotfiles/scripts/worklog_commits.sh '<local start>' '<local end>'
+```
 
 which walks every branch of every repo under the GitHub owners named in
 `~/.config/claude-worklog/github-owners`, plus the local clones listed in
