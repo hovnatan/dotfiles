@@ -19,7 +19,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "claude-fable-5-1",
+  "model": "fable",
   "hooks": {
     "SessionStart": [
       {
@@ -121,13 +121,13 @@
     "enabled": true,
     "checker": "hunspell"
   },
+  "promptCacheTtl": "1h",
   "modelSettings": {
     "claude-opus-5-5": {
       "effortLevel": "high"
     }
   },
   "autoCompactWindow": 900000,
-  "promptCacheTtl": "1h",
   "dialogExpiry": "never",
   "tui": "default",
   "voice": {
