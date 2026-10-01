@@ -311,6 +311,21 @@ ln -sf ~/.dotfiles/home/.npmrc ~/.npmrc
 
 ln -sfn ~/.dotfiles/home/.config/uv ~/.config/uv
 
+# docker's zsh completion, where home/.zshrc.shared's fpath looks for it.
+# Regenerated on every run, so it follows the docker installed (apt/Aptfile
+# on Ubuntu, Docker Desktop on macOS); written beside and renamed in, so a
+# docker that fails leaves the old file. No docker on this machine: nothing
+# to do.
+if command -v docker >/dev/null; then
+  mkdir -p ~/.docker/completions
+  if docker completion zsh >~/.docker/completions/_docker.new; then
+    mv ~/.docker/completions/_docker.new ~/.docker/completions/_docker
+  else
+    rm -f ~/.docker/completions/_docker.new
+    warn "'docker completion zsh' failed (message above); $HOME/.docker/completions/_docker left as it was"
+  fi
+fi
+
 # macOS only
 if [ "$(uname)" = "Darwin" ]; then
   # IINA reads ~/.config/iina as its mpv config dir, incl. scripts/
