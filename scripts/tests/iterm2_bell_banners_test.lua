@@ -9,6 +9,7 @@ local repo = assert(arg[1], "pass the repo path")
 local file = assert(io.open(assert(arg[2], "pass the event log path"), "a"))
 file:setvbuf("line")
 local scenario, now = "setup", 100
+local alerts = 0 -- hs.alert.show calls since fresh(): what the user sees on screen
 local function log(fmt, ...)
   local line = os.date("!%Y-%m-%dT%H:%M:%SZ") .. " [" .. scenario .. "] " .. string.format(fmt, ...)
   file:write(line, "\n")
@@ -47,7 +48,7 @@ end
 local stubHs
 
 local function fresh()
-  now = 100
+  now, alerts = 100, 0
   local ui = { banners = {}, closed = {} }
   package.loaded.clear_notifications = {
     pid = function()
@@ -85,6 +86,7 @@ function stubHs()
     configdir = repo .. "/home/.hammerspoon",
     alert = {
       show = function(msg)
+        alerts = alerts + 1
         log("alert: %s", msg)
       end,
     },
@@ -268,12 +270,33 @@ test("failed work precedes and deduplicates newer callbacks", function()
   assert(#m.queue == 0 and #m.waiting == 0)
 end)
 
+-- The 2026-10-02 false alarms: iTerm2 serves no Apple Events while a menu
+-- is open or a tab is dragged (4 to 13s in that day's log), and the snapshot
+-- was killed at 5s with an "is iTerm2 hung?" alert, 7 times in 8 minutes.
+-- The slow timer firing is those 5s passing; the answer comes 13s later.
+test("a snapshot iTerm2 answers late is waited for: a log line, no alert, no kill", function()
+  local m, ui = fresh()
+  complete(m, data(0, 0))
+  arrive(m, ui, "BANNER_A", 2)
+  local task, slow = m.task, assert(m.slowTimer, "no slow timer beside the snapshot")
+  slow.fn()
+  assert(m.task == task and not task.terminated, "the waiting snapshot was killed")
+  assert(alerts == 0 and #m.queue == 1 and #m.waiting == 0)
+  now = now + 13
+  complete(m, data(1, 0))
+  assert(slow.stopped, "the slow timer outlived its snapshot")
+  owner(m, "BANNER_A", "SESSION_A")
+  focus(m, data(1, 0, "SESSION_A"))
+  assert(ui.closed.BANNER_A and alerts == 0)
+end)
+
 test("timeout preserves work and ignores the late completion", function()
   local m, ui = fresh()
   complete(m, data(0, 0))
   arrive(m, ui, "BANNER_A", 2)
   local old = m.task
-  raises("took over 5s", m.queryTimer.fn)
+  raises("took over 60s", m.queryTimer.fn)
+  assert(alerts == 1, "a snapshot that never answers must still alert")
   assert(old.terminated and #m.waiting == 1)
   m.focusTimer.fn()
   local current = m.task

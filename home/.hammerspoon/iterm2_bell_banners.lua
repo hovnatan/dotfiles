@@ -72,9 +72,23 @@ local ITERM2_PREFIX = "iTerm2, "
 local BELL_PREFIX = "iTerm2, Bell, "
 local BELL_PATTERN = "^iTerm2, Bell, Session .+ #(%d+) just rang a bell!"
 local SESSIONS_SCRIPT = hs.configdir .. "/iterm2_sessions.js"
--- Seconds; the script takes about 0.4, and up to 3.5 when tabs open or close
--- while it runs and it has to start over.
-local QUERY_TIMEOUT = 5
+-- Seconds. The script takes 0.4 (2 sessions) to 0.7 (8 sessions in 3
+-- windows), and about 5 when tabs open or close while it runs and it has to
+-- start over. It also waits for as long as iTerm2 serves no Apple Events,
+-- which is whenever its main run loop is tracking the mouse: a menu held
+-- open, a tab dragged out of its window.
+--
+--   10:03:44 snapshot asked for, a menu is open
+--   10:03:49 SLOW_AFTER: one log line, nothing else
+--   10:03:57 menu closed, iTerm2 answers -> snapshot handled as usual
+--
+-- That is not a failure, so only QUERY_TIMEOUT kills the script and alerts.
+-- Until 2026-10-02 the kill came at 5s: that day's waits were 4 to 13s, each
+-- "is iTerm2 hung?" alert was false (7 in 8 minutes), and killing bought
+-- nothing, as the retry queued behind the same menu. 60 leaves a held menu
+-- room and still reports an iTerm2 that never answers.
+local SLOW_AFTER = 5
+local QUERY_TIMEOUT = 60
 -- What osascript reports when iTerm2 is gone before the script starts.
 -- Matched on the text where the code says too little: -2700 is the code of
 -- every JavaScript error, e.g.
@@ -177,7 +191,7 @@ function takeSnapshot()
   M.generation = M.generation + 1
   local generation = M.generation
   local started = hs.timer.secondsSinceEpoch()
-  local task, timer
+  local task, timer, slow
 
   -- Preserve failed work ahead of newer requests. The next event retries
   -- it; an immediate retry loop would keep alerting on missing permission.
@@ -200,6 +214,7 @@ function takeSnapshot()
     end
     M.task = nil
     timer:stop()
+    slow:stop()
 
     -- iTerm2 quitting fires one last focus change, and the snapshot it asks
     -- for then finds no iTerm2 (the log shows each quit this way: the error,
@@ -262,6 +277,18 @@ function takeSnapshot()
   end
 
   task = hs.task.new("/usr/bin/osascript", done, { "-l", "JavaScript", SESSIONS_SCRIPT })
+
+  -- Waiting on iTerm2 (see SLOW_AFTER): said once, so a slow snapshot can be
+  -- told from a missing one in the log. Banners that arrive meanwhile queue
+  -- behind it with their evidence saved, as behind any snapshot in flight.
+  slow = hs.timer.doAfter(SLOW_AFTER, function()
+    log(
+      "snapshot unanswered after %ds for %d caller(s); iTerm2 serves no Apple Events while a menu is open or a tab is dragged, waiting up to %ds",
+      SLOW_AFTER,
+      #callbacks,
+      QUERY_TIMEOUT
+    )
+  end)
   timer = hs.timer.doAfter(QUERY_TIMEOUT, function()
     if M.task == task then
       M.task = nil
@@ -269,7 +296,9 @@ function takeSnapshot()
       failed("iterm2_sessions.js took over " .. QUERY_TIMEOUT .. "s; is iTerm2 hung?")
     end
   end)
-  M.task, M.queryTimer = task, timer
+
+  -- Kept in M so the timers are not garbage-collected before they fire.
+  M.task, M.queryTimer, M.slowTimer = task, timer, slow
   task:start()
 end
 
