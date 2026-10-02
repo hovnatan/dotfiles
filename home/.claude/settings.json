@@ -92,7 +92,8 @@
     "discernment-nudge@anthropic-agent-skills": true,
     "academy-guide@anthropic-agent-skills": true,
     "eli5@claude-community": true,
-    "mattpocock-skills@claude-plugins-official": true
+    "mattpocock-skills@claude-plugins-official": true,
+    "cc-plugin-you-should-know@builtin": true
   },
   "extraKnownMarketplaces": {
     "astral-sh": {
