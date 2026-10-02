@@ -129,6 +129,12 @@
             pkgs.jq
             # Sophisticated file transfer program
             pkgs.lftp
+            # Lua 5.4, the version Hammerspoon embeds: runs its modules
+            # outside the app, against stub `hs` objects
+            # (scripts/tests/iterm2_bell_banners_test.sh). CI installs the
+            # same attribute (.github/workflows/tests.yml); without it here
+            # the test only ran locally through `nix shell` (2026-10-02)
+            pkgs.lua5_4
             # markdownlint-cli2 -- Markdown linter; rules for projects without
             # a config of their own in home/.config/markdownlint, this repo's
             # in .markdownlint-cli2.yaml, CI checks
