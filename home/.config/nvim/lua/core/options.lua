@@ -118,6 +118,35 @@ vim.opt.spelloptions = "camel"
 
 vim.o.clipboard = "unnamedplus"
 
+-- A headless Linux box (ssh, docker exec, sudo -i) has no clipboard tool, so
+-- every yank failed with "clipboard: No provider". nvim's own OSC 52 fallback
+-- stays off while 'clipboard' is set (provider/clipboard.vim), so opt in here:
+-- yanks travel as OSC 52 through the pty (and any local tmux, set-clipboard
+-- on) to iTerm2/Ghostty, which write the Mac clipboard.
+--   remote nvim -yy-> OSC 52 -> ssh -> [local tmux] -> terminal -> Mac clipboard
+-- The gate mirrors the env half of that file's probe: mac has pbcopy, a
+-- display has xclip/wl-copy, tmux has its own provider (load-buffer -w).
+-- Paste stays local: iTerm2 never answers an OSC 52 read, so nvim would wait
+-- on it; p puts the last yank from this cache, Cmd+V pastes the Mac clipboard.
+-- Both registers send to "+", as pbcopy does: the Mac has no primary selection.
+local has_native_clipboard = vim.fn.has("mac") == 1 or vim.env.DISPLAY or vim.env.WAYLAND_DISPLAY or vim.env.TMUX
+if not has_native_clipboard then
+  local send = require("vim.ui.clipboard.osc52").copy("+")
+  local last_yank = { {}, "v" }
+  local function copy(lines, regtype)
+    last_yank = { lines, regtype }
+    send(lines)
+  end
+  local function paste()
+    return last_yank
+  end
+  vim.g.clipboard = {
+    name = "OSC 52 copy, local paste",
+    copy = { ["+"] = copy, ["*"] = copy },
+    paste = { ["+"] = paste, ["*"] = paste },
+  }
+end
+
 vim.opt.exrc = true
 
 -- Command-line completion in a popup menu, matched fuzzily. The first <Tab>
