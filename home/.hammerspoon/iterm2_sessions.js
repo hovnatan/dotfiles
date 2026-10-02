@@ -71,7 +71,8 @@ function steady(before) {
 // while tabs opened and closed) or, worse, hands a session the bell count of
 // its neighbour. Neither can have happened if the layout is the same after
 // as before, so only such a snapshot is printed; otherwise another is taken
-// after PAUSE, up to ATTEMPTS in all (3.5s, within the caller's 5s).
+// after PAUSE, up to ATTEMPTS in all: about 5s at the 0.7s an attempt takes
+// with 8 sessions in 3 windows, well within the caller's 60s.
 //
 //   attempt 1: a tab closes mid-read -> "Invalid index"  -> layout changed
 //   attempt 2, 0.3s later: layout the same after as before -> printed
