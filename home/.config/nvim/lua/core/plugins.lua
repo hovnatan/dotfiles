@@ -127,11 +127,14 @@ snacks.setup({
       files = { hidden = true },
       grep = { hidden = true },
       grep_word = { hidden = true },
-      -- Dotfiles shown like the files picker (this repo is mostly home/.*);
-      -- git-ignored ones stay hidden, I toggles them, H toggles hidden.
+      -- Dotfiles shown like the files picker (this repo is mostly home/.*).
+      -- Git-ignored files are shown too: the tree is for seeing what is on
+      -- disk (e.g. captured logs under a .gitignore'd dir), unlike the
+      -- pickers above, which still skip them. I toggles ignored, H hidden.
       -- Inside the tree, - goes up a directory as vim-vinegar's did.
       explorer = {
         hidden = true,
+        ignored = true,
         win = { list = { keys = { ["-"] = "explorer_up" } } },
       },
     },
