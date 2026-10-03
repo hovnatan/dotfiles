@@ -9,6 +9,13 @@ local FORCE_US_APPS = {
   ["com.mitchellh.ghostty"] = true,
   ["com.googlecode.iterm2"] = true,
   ["com.microsoft.VSCode"] = true,
+  -- The viewer helper, not the com.hovnatan.zathura launcher: the windows
+  -- belong to the helper (scripts/macos/build_zathura_app.sh).
+  ["com.hovnatan.zathura.viewer"] = true,
+  -- Siri AI and the system Siri. Not the Cmd-Space panel, though campo owns
+  -- it: it opens without activating campo, so no activated event fires.
+  ["com.apple.campo"] = true,
+  ["com.apple.Siri"] = true,
 }
 
 local function forceUSLayout(app)
