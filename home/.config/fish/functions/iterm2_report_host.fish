@@ -27,6 +27,13 @@ function iterm2_report_host --description 'Tell iTerm2 which machine this tab ru
     # (TabTitlesUseSmartTruncation off, scripts/setup_user_symlinks.sh);
     # iTerm2 has no setting that always cuts the start.
     #
+    # The window title (Dock menu, Window menu, Cmd+`) is a separate
+    # Custom Window Title with the same text, one scope up: a window
+    # expression reaches the session through currentTab, and a bare
+    # currentSession there renders as "". iTerm2 reads it when a window
+    # opens, so a profile change reaches only windows opened after it; a
+    # window restored from an arrangement keeps the title it was saved with.
+    #
     # RemoteHost is how iTerm2 tells local from remote, and it must be the real
     # hostname locally, never "": an empty host is a remote one named "", and
     # Cmd+V of an image then takes the remote path ("Upload and Paste Path")
