@@ -518,6 +518,13 @@ if [ "$(uname)" = "Darwin" ]; then
   # (home/.hammerspoon/iterm2_bell_banners.lua); alt+0 clears them all
   # (home/.hammerspoon/clear_notifications.lua).
   defaults write com.googlecode.iterm2 BounceOnInactiveBell -bool true
+  # Launch opens the default window arrangement (General > Startup > Open
+  # Default Window Arrangement). The arrangement itself is per machine,
+  # saved by hand: Window > Save Window Arrangement, then Settings >
+  # Arrangements > Set Default. It keeps each window as it was saved, the
+  # window title included, so re-save it after changing the profile's
+  # Custom Window Title (iterm2_report_host.fish).
+  defaults write com.googlecode.iterm2 OpenArrangementAtStartup -bool true
   # Tip of the Day, at most one a day after launch. Without the permission
   # key iTerm2 first asks whether to show tips at all; NoSyncTipsDisabled
   # turns them off outright. Tips already seen are kept in

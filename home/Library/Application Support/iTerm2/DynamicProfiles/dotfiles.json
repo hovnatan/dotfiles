@@ -18,6 +18,8 @@
       "Title Components": 1,
       "Use Custom Tab Title": true,
       "Custom Tab Title": "\\(currentSession.user.host_tag?)\\(currentSession.name)",
+      "Use Custom Window Title": true,
+      "Custom Window Title": "\\(currentTab.currentSession.user.host_tag?)\\(currentTab.currentSession.name)",
       "Show Mark Indicators": false,
       "Prompt Before Closing 2": 0,
       "Close Sessions On End": true,
