@@ -91,7 +91,6 @@
     "example-skills@anthropic-agent-skills": true,
     "discernment-nudge@anthropic-agent-skills": true,
     "academy-guide@anthropic-agent-skills": true,
-    "eli5@claude-community": true,
     "mattpocock-skills@claude-plugins-official": true,
     "cc-plugin-you-should-know@builtin": true,
     "context7@anthropic-plugin-directory": true
@@ -110,12 +109,6 @@
         "repo": "anthropics/skills"
       },
       "autoUpdate": true
-    },
-    "claude-community": {
-      "source": {
-        "source": "github",
-        "repo": "anthropics/claude-plugins-community"
-      }
     }
   },
   "maxProseWidth": 100,
