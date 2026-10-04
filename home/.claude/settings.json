@@ -93,7 +93,8 @@
     "academy-guide@anthropic-agent-skills": true,
     "eli5@claude-community": true,
     "mattpocock-skills@claude-plugins-official": true,
-    "cc-plugin-you-should-know@builtin": true
+    "cc-plugin-you-should-know@builtin": true,
+    "context7@anthropic-plugin-directory": true
   },
   "extraKnownMarketplaces": {
     "astral-sh": {
