@@ -1,5 +1,5 @@
 {
-  "cleanupPeriodDays": 730,
+  "cleanupPeriodDays": 3650,
   "env": {
     "CLAUDE_CODE_TMUX_TRUECOLOR": "1",
     "CLAUDE_CODE_AUTO_CONNECT_IDE": "false",
