@@ -56,6 +56,19 @@ function __bell_on_long_command --on-event fish_postexec
     printf '\a'
 end
 
+# Workaround for a Claude Code bug (seen in 2.1.289): cancelling the
+# `claude --resume` picker (Esc) exits with the cursor parked mid-frame,
+# without erasing the frame below it. zsh's prompt clears to the end of
+# the screen and hides it; fish (and bash) draw the prompt in place and
+# leave the rest of the session list under it. Return to column 0 and
+# erase to the end of the screen after any `claude` command. After a
+# clean exit the cursor already sits on an empty line, so this is a no-op.
+#   `claude --resume`, Esc -> prompt right under the search box, no list
+function __clear_after_claude --on-event fish_postexec
+    string match -rq '^\s*claude(\s|$)' -- $argv[1]; or return
+    printf '\r\e[J'
+end
+
 
 bind -M insert \cg forget
 
