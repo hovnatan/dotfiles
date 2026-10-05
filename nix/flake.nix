@@ -63,6 +63,10 @@
           # same versions (2026-09-23). The macOS entries came from the
           # Brewfile's formulae, their comments carried over.
           common = [
+            # ansible -- agentless configuration management over ssh
+            # (ansible, ansible-playbook, ansible-galaxy); its Python and
+            # modules come with it, so no pip install (2026-10-05)
+            pkgs.ansible
             # Microsoft Azure CLI, with its extensions declared here: Nix's az
             # runs a Python without pip, so `az extension add` fails, and
             # extensions pip-installed under another Python break on its
