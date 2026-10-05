@@ -94,12 +94,19 @@
             # a script needing GNU date (worklog_commits.sh, the work-log
             # skill's window recipe) calls gdate everywhere (2026-09-28)
             pkgs.coreutils-prefixed
+            # cowsay -- ASCII-art speech bubbles, e.g. `fortune | cowsay`
+            # (2026-10-05)
+            pkgs.cowsay
             # fd -- the fish fzf plugin's file search (FZF_FIND_FILE_COMMAND
             # in home/.config/fish/config.fish)
             pkgs.fd
             # fish -- interactive shell, config in home/.config/fish with its
             # plugins vendored there; the login shell stays the account's own
             pkgs.fish
+            # fortune -- random quotes (fortune-mod with its bundled
+            # databases), the fish greeting
+            # (home/.config/fish/functions/fish_greeting.fish) (2026-10-05)
+            pkgs.fortune
             # fzf -- the fish fzf plugin's ctrl-t/alt-c pickers
             pkgs.fzf
             # GitHub command-line tool
