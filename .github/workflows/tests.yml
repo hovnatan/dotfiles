@@ -5,13 +5,14 @@
 #
 #   ubuntu-latest   ntfy_stop_test.sh, appearance_test.sh,
 #                   prune_logs_test.sh, tmux_hooks_test.sh,
-#                   iterm2_bell_banners_test.sh,
+#                   iterm2_bell_banners_test.sh, ssh_command_test.sh,
 #                   claude_tmux_run_test.sh (needs a
 #                   user systemd manager: lingering on)
 #                   apt_bundle_test.sh (in an ubuntu:24.04
 #                   container, on the runner's docker)
 #   macos-latest    ntfy_stop_test.sh, appearance_test.sh, prune_logs_test.sh,
-#                   tmux_hooks_test.sh, iterm2_bell_banners_test.sh
+#                   tmux_hooks_test.sh, iterm2_bell_banners_test.sh,
+#                   ssh_command_test.sh
 #                   (claude_tmux_run_test.sh and apt_bundle_test.sh are
 #                   Linux only: the macOS runner has no docker)
 #
@@ -61,6 +62,7 @@ jobs:
       - run: scripts/tests/prune_logs_test.sh
       - run: scripts/tests/tmux_hooks_test.sh
       - run: scripts/tests/iterm2_bell_banners_test.sh
+      - run: scripts/tests/ssh_command_test.sh
       - run: scripts/tests/claude_tmux_run_test.sh
         if: runner.os == 'Linux'
       - run: scripts/tests/apt_bundle_test.sh
