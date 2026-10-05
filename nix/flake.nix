@@ -54,9 +54,10 @@
           # so every machine compiles it after each lock bump.
           #   terraform -- BUSL since 1.6; the infra in deqart_backend/deploy_scripts
           #                is Terraform (~4.5 min to build on an 8-CPU VM)
+          #   vagrant   -- BUSL since 2.3.8; Mac only, see darwin below
           pkgs = import nixpkgs {
             inherit system;
-            config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "terraform" ];
+            config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "terraform" "vagrant" ];
           };
 
           # Every machine: Linux boxes and Macs get the same tools at the
@@ -228,6 +229,11 @@
             # system turns light or dark. macOS has no session bus of its
             # own (2026-09-29)
             pkgs.dbus
+            # vagrant -- scripted VMs on the VirtualBox cask (Brewfile). Mac
+            # only: the Linux boxes are cloud VMs with no hypervisor to drive,
+            # and as an unfree package every machine listing it builds it
+            # locally after each lock bump (2026-10-05)
+            pkgs.vagrant
           ];
         in
         {

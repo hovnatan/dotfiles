@@ -37,9 +37,15 @@ SYSTEMS=(x86_64-linux aarch64-linux aarch64-darwin)
 # fixed-output fetches come along: its `source` (the GitHub tarball; that
 # generic name is what fetchFromGitHub gives any source) and its vendored
 # `-go-modules`, both hash-pinned downloads, not compiles.
+# And vagrant (Mac only), unfree for the same reason: with it comes its whole
+# gem closure, ~50 derivations - `.gem` and vagrant-spec-<rev> downloads, the
+# Gemfile/Gemfile.lock text, a `ruby3.x-<gem>` build per gem (a few compile
+# small C extensions) - 59 s in all on an M-series Mac (2026-10-05). They
+# match by shape, not name, so a lock bump that changes the gem set passes;
+# the cost is that a ruby3.x- package added later would slip past this check.
 # Extend only with a derivation you have checked is trivial, or say here what
 # it costs.
-LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|zathura-with-plugins-[0-9.]+|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+(-go-modules)?|source)$'
+LOCAL_OK='^(dotfiles-packages|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|zathura-with-plugins-[0-9.]+|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+(-go-modules)?|source|vagrant-[0-9.]+|vagrant-spec-[0-9a-f]+|ruby3\.[0-9]+-.+|.+\.gem|Gemfile(\.lock)?|gemfile-and-lockfile)$'
 
 build=0
 case "${1:-}" in
