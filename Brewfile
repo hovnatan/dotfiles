@@ -78,6 +78,8 @@ cask "tailscale-app"
 cask "temurin"
 cask "tor-browser"
 cask "tunnelblick"
+# virtualbox -- local VMs; pkg installer, so install needs sudo (2026-10-05)
+cask "virtualbox"
 cask "visual-studio-code"
 cask "vlc"
 cask "zoom"
