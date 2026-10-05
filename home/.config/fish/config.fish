@@ -63,6 +63,7 @@ end
 # leave the rest of the session list under it. Return to column 0 and
 # erase to the end of the screen after any `claude` command. After a
 # clean exit the cursor already sits on an empty line, so this is a no-op.
+# Drop once https://github.com/anthropics/claude-code/issues/99718 is fixed.
 #   `claude --resume`, Esc -> prompt right under the search box, no list
 function __clear_after_claude --on-event fish_postexec
     string match -rq '^\s*claude(\s|$)' -- $argv[1]; or return
