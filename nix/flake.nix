@@ -188,6 +188,9 @@
             pkgs.ruff
             # Static analysis and lint tool, for (ba)sh scripts
             pkgs.shellcheck
+            # shfmt -- shell formatter, style in .editorconfig; CI checks
+            # (scripts/check.sh shell) (2026-10-05)
+            pkgs.shfmt
             # stylua -- Lua formatter, style in .stylua.toml; nvim formats on
             # save (home/.config/nvim/lua/core/format.lua), CI checks
             # (.github/workflows/lua.yml) (2026-09-24)

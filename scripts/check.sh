@@ -5,8 +5,9 @@
 # a push is checked on the machine before CI sees it.
 #
 #   check      what                                            CI workflow
-#   shell      shellcheck -S warning on every tracked .sh      shellcheck.yml
-#              and git hook, and no bare GNU `timeout`
+#   shell      shellcheck -S warning and shfmt -d (style in    shellcheck.yml
+#              .editorconfig) on every tracked .sh and git
+#              hook, and no bare GNU `timeout`
 #   lua        stylua --check on every tracked .lua            lua.yml
 #   configs    scripts/check_configs.sh: fish parse and        configs.yml
 #              layout, JSON, nvim startup
@@ -73,9 +74,14 @@ need() {
 # have no .sh, as git runs them by their bare names.
 shell_files() { git ls-files -z '*.sh' 'scripts/git-hooks/*'; }
 
+# Fix a shfmt failure with:  git ls-files -z '*.sh' 'scripts/git-hooks/*' | xargs -0 shfmt -w
 check_shell() {
-  need shellcheck || return 1
+  need shellcheck shfmt || return 1
   shell_files | xargs -0 shellcheck -S warning || return 1
+
+  # No style flags: shfmt then reads .editorconfig, and any flag would make
+  # it ignore that file. -d prints the diff a fix would apply.
+  shell_files | xargs -0 shfmt -d || return 1
 
   # GNU-only commands shellcheck cannot see (AGENTS.md: scripts run on macOS
   # too). `timeout` is coreutils; macOS has none, so a bare call exits 127
