@@ -33,7 +33,7 @@
 #   plain          clock                   dim was too faint to read at a
 #                  gauges under 50%        glance for either of these: gauges
 #                  cache >10m, "na"        below their threshold, or an unset
-#                                          cache countdown
+#                  "Ctx--"                 cache countdown or context gauge
 #
 # Clean/dirty is a binary, so it is a glyph rather than a hue. Yellow was the
 # obvious candidate and it does not work: GitLab Light has to darken yellow to
@@ -273,11 +273,15 @@ gauge_color() {
   fi
 }
 
-# Context window usage (absent until first API response)
-ctx=""
+# Context window usage. The payload carries no percentage until the session's
+# first API response (it is measured from that response's usage; /context's
+# number is a local estimate that never reaches the payload), so until then
+# the slot draws a plain "Ctx--": the gauge is there, it has no reading yet.
 if [ -n "$ctx_used" ]; then
   ctx_pct=$(printf '%.0f' "$ctx_used")
   ctx=" \033[2m|\033[0m $(gauge_color "$ctx_pct")Ctx${ctx_pct}%\033[0m"
+else
+  ctx=" \033[2m|\033[0m Ctx--"
 fi
 
 # Prompt-cache countdown: how long the conversation's cached prefix stays
