@@ -27,12 +27,18 @@ cd "$REPO" || exit 1
 
 for tool in fish fish_indent nvim git python3; do
   command -v "$tool" >/dev/null \
-    || { echo "check_configs.sh: $tool not on PATH (it comes from nix/flake.nix: run dotup)" >&2; exit 1; }
+    || {
+      echo "check_configs.sh: $tool not on PATH (it comes from nix/flake.nix: run dotup)" >&2
+      exit 1
+    }
 done
 
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-fail() { log "FAIL $*"; failures=$((failures + 1)); }
+fail() {
+  log "FAIL $*"
+  failures=$((failures + 1))
+}
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 

@@ -10,10 +10,10 @@ SSHD_PORT=2222
 
 # Generate host key if it doesn't exist
 if [ ! -f "$HOST_KEY" ]; then
-    echo "Generating host key..."
-    ssh-keygen -t ed25519 -f "$HOST_KEY" -N ""
+  echo "Generating host key..."
+  ssh-keygen -t ed25519 -f "$HOST_KEY" -N ""
 else
-    echo "Host key already exists at $HOST_KEY"
+  echo "Host key already exists at $HOST_KEY"
 fi
 
 echo "Generate a key pair on the host you will connect FROM, keep the private key there,"
@@ -27,12 +27,11 @@ pkill -f "sshd -p $SSHD_PORT" 2>/dev/null || true
 # Start sshd
 echo "Starting sshd on port $SSHD_PORT..."
 /usr/sbin/sshd -p "$SSHD_PORT" -h "$HOST_KEY" \
-    -o "AuthorizedKeysFile=$AUTHORIZED_KEYS" \
-    -o PubkeyAuthentication=yes \
-    -o StrictModes=no
+  -o "AuthorizedKeysFile=$AUTHORIZED_KEYS" \
+  -o PubkeyAuthentication=yes \
+  -o StrictModes=no
 
 echo "sshd running on port $SSHD_PORT"
-
 
 # if you want to connect to the local machine from the internet, you can use the following setup:
 

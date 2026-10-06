@@ -34,13 +34,19 @@
 
 set -uo pipefail
 
-[ "$(uname)" = Linux ] || { echo "claude_tmux_run_test.sh: Linux only (needs systemd --user)" >&2; exit 1; }
+[ "$(uname)" = Linux ] || {
+  echo "claude_tmux_run_test.sh: Linux only (needs systemd --user)" >&2
+  exit 1
+}
 for cmd in tmux systemd-run systemctl getent python3; do
-  command -v "$cmd" >/dev/null || { echo "claude_tmux_run_test.sh: $cmd not on PATH" >&2; exit 1; }
+  command -v "$cmd" >/dev/null || {
+    echo "claude_tmux_run_test.sh: $cmd not on PATH" >&2
+    exit 1
+  }
 done
 
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
-SOCK="cttest-$$"                   # socket, transient unit and scope all carry it
+SOCK="cttest-$$" # socket, transient unit and scope all carry it
 UNIT="$SOCK"
 WORK=$(mktemp -d)
 H="$WORK/home"
@@ -49,7 +55,10 @@ LOGIN_SHELL=$(getent passwd "$(id -un)" | cut -d: -f7)
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 pass() { log "PASS $*"; }
-fail() { log "FAIL $*"; failures=$((failures + 1)); }
+fail() {
+  log "FAIL $*"
+  failures=$((failures + 1))
+}
 t() { tmux -L "$SOCK" "$@"; }
 
 # Tear down everything this run created, whatever state it stopped in.
@@ -73,7 +82,7 @@ ln -s "$REPO" "$H/.dotfiles"
 # which never sets PartOf, and the scope checks below pass without testing.
 [ -e "$HOME/.nix-profile" ] && ln -s "$(readlink -f "$HOME/.nix-profile")" "$H/.nix-profile"
 cp "$(command -v sleep)" "$WORK/idle/claude"
-cat > "$H/.local/bin/claude" <<EOF
+cat >"$H/.local/bin/claude" <<EOF
 #!/usr/bin/env bash
 [ "\${1:-}" = agents ] && { echo '[]'; exit 0; }
 exec "$WORK/idle/claude" 100000
@@ -81,7 +90,7 @@ EOF
 chmod +x "$H/.local/bin/claude"
 
 # ~/.profile exactly as setup_user_symlinks.sh appends it.
-cat > "$H/.profile" <<'EOF'
+cat >"$H/.profile" <<'EOF'
 if [ -f "$HOME/.dotfiles/home/.profile.shared" ]; then
   . "$HOME/.dotfiles/home/.profile.shared"
 fi
@@ -106,11 +115,17 @@ if grep -q Traceback <<<"$out"; then fail "history on a HOME without transcripts
 systemd-run --user --quiet --unit="$UNIT" -p KillMode=process \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" -E CLAUDE_TMUX_ALIVE_SECONDS=2 \
   /bin/sh -c 'exec "$SHELL" -lc "$HOME/.dotfiles/scripts/claude_tmux_run.sh"'
-for _ in $(seq 40); do t has-session -t claude 2>/dev/null && break; sleep 0.25; done
-if t has-session -t claude 2>/dev/null; then pass "manager session up from the unit"; else fail "manager session never appeared"; exit 1; fi
+for _ in $(seq 40); do
+  t has-session -t claude 2>/dev/null && break
+  sleep 0.25
+done
+if t has-session -t claude 2>/dev/null; then pass "manager session up from the unit"; else
+  fail "manager session never appeared"
+  exit 1
+fi
 
 if HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" CLAUDE_TMUX_ALIVE_SECONDS=2 \
-     "$REPO/scripts/claude_tmux_run.sh" spawn ctb /tmp >"$WORK/spawn.out" 2>&1; then
+  "$REPO/scripts/claude_tmux_run.sh" spawn ctb /tmp >"$WORK/spawn.out" 2>&1; then
   pass "spawn ctb: $(cat "$WORK/spawn.out")"
 else
   fail "spawn ctb: $(cat "$WORK/spawn.out")"
@@ -120,7 +135,10 @@ fi
 
 for s in claude ctb; do
   pid=$(t list-panes -t "=$s:" -F '#{pane_pid}' 2>/dev/null)
-  [ -n "$pid" ] || { fail "$s: no pane"; continue; }
+  [ -n "$pid" ] || {
+    fail "$s: no pane"
+    continue
+  }
   start=$(t display -p -t "=$s:" '#{pane_start_command}')
   case "$start" in
     "$LOGIN_SHELL -lc "*) pass "$s: starts as '$LOGIN_SHELL -lc'" ;;
@@ -129,7 +147,7 @@ for s in claude ctb; do
   [ "$(ps -o comm= -p "$pid")" = claude ] && pass "$s: pane process is claude" || fail "$s: pane process is $(ps -o comm= -p "$pid")"
   [ "$(t display -p -t "=$s:" '#{pane_pipe}')" = 0 ] && pass "$s: no pipe-pane log" || fail "$s: pane is piped"
 
-  env_of() { tr '\0' '\n' < "/proc/$pid/environ" | sed -n "s/^$1=//p"; }
+  env_of() { tr '\0' '\n' <"/proc/$pid/environ" | sed -n "s/^$1=//p"; }
   missing=""
   for v in EDITOR MAKEFLAGS WORDLIST COLORTERM LANG; do [ -n "$(env_of "$v")" ] || missing="$missing $v"; done
   [ "$(env_of CLAUDE_CODE_DISABLE_AGENT_VIEW)" = 1 ] || missing="$missing CLAUDE_CODE_DISABLE_AGENT_VIEW"
@@ -168,7 +186,10 @@ stop_line=$(sed -n 's/^ExecStop=//p' "$REPO/home/.config/systemd/user/claude-tmu
 stop_script=$(sed -n "s/^\/bin\/sh -c '\(.*\)'\$/\1/p" <<<"$stop_line")
 stop_script=${stop_script//%h/$H}
 stop_script=${stop_script//\$\{MAINPID\}/1}
-[ -n "$stop_script" ] || { fail "could not parse ExecStop from the unit file: $stop_line"; exit 1; }
+[ -n "$stop_script" ] || {
+  fail "could not parse ExecStop from the unit file: $stop_line"
+  exit 1
+}
 systemd-run --user --quiet --wait --pipe \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" \
   /bin/sh -c "$stop_script" >"$WORK/execstop.out" 2>&1
@@ -177,7 +198,7 @@ alive=$(t list-sessions -F '#S' 2>/dev/null | sort | tr '\n' ' ')
 if [ "$rc" -eq 0 ] && [ "$alive" = "ctb " ]; then
   pass "ExecStop killed only the manager"
 else
-  fail "ExecStop rc=$rc, sessions left: '${alive}'; output: $(tr '\n' ' ' < "$WORK/execstop.out")"
+  fail "ExecStop rc=$rc, sessions left: '${alive}'; output: $(tr '\n' ' ' <"$WORK/execstop.out")"
 fi
 
 log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"

@@ -33,7 +33,10 @@
 set -uo pipefail
 
 for cmd in python3 tmux; do
-  command -v "$cmd" >/dev/null || { echo "appearance_test.sh: $cmd not on PATH" >&2; exit 1; }
+  command -v "$cmd" >/dev/null || {
+    echo "appearance_test.sh: $cmd not on PATH" >&2
+    exit 1
+  }
 done
 
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
@@ -47,7 +50,10 @@ TMUX_BIN=$(command -v tmux)
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 pass() { log "PASS $*"; }
-fail() { log "FAIL $*"; failures=$((failures + 1)); }
+fail() {
+  log "FAIL $*"
+  failures=$((failures + 1))
+}
 
 cleanup() {
   [ -n "${listener:-}" ] && kill "$listener" 2>/dev/null
@@ -63,7 +69,7 @@ mkdir -p "$H/.claude/themes" "$H/.config/zathura" "$H/bin"
 cp "$REPO"/home/.claude/themes/gruvbox-{light,dark}.json "$H/.claude/themes/"
 cp "$REPO"/home/.config/zathura/gruvbox-{light,dark} "$H/.config/zathura/"
 
-cat > "$H/bin/dbus-send" <<'STUB'
+cat >"$H/bin/dbus-send" <<'STUB'
 #!/bin/sh
 # Stand-in for dbus-send: one line per call in $CALLS, the destination and
 # the last argument.
@@ -90,7 +96,7 @@ run() {
   local path=/usr/bin:/bin
   [ "$with_zathura" = zathura ] && path="$H/bin:$path"
   env -i HOME="$H" PATH="$path" XDG_RUNTIME_DIR="$SOCKDIR" CALLS="$WORK/calls" ANSWER="${ANSWER:-true}" \
-    "$SCRIPT" "$@" > "$WORK/out" 2>&1
+    "$SCRIPT" "$@" >"$WORK/out" 2>&1
 }
 points_at() { [ "$(readlink "$1")" = "$2" ]; }
 both_point_at() {
@@ -139,7 +145,7 @@ fi
 # --- a file in the way ----------------------------------------------------------
 
 rm "$H/.config/zathura/theme"
-echo "mine" > "$H/.config/zathura/theme"
+echo "mine" >"$H/.config/zathura/theme"
 if run no-zathura dark; then
   fail "in the way: the file was replaced"
 elif grep -q 'is a file, not a link' "$WORK/out" && [ "$(cat "$H/.config/zathura/theme")" = "mine" ]; then
@@ -163,16 +169,19 @@ fi
 python3 -c 'import socket, sys, time
 s = socket.socket(socket.AF_UNIX); s.bind(sys.argv[1]); time.sleep(60)' "$SOCKDIR/bus" &
 listener=$!
-for _ in $(seq 50); do [ -S "$SOCKDIR/bus" ] && break; sleep 0.1; done
+for _ in $(seq 50); do
+  [ -S "$SOCKDIR/bus" ] && break
+  sleep 0.1
+done
 
-: > "$WORK/calls"
+: >"$WORK/calls"
 {
   echo "org.freedesktop.DBus | org.freedesktop.DBus.ListNames"
   for pid in 11 22; do
     sed -n 's/^set /string:set /p' "$H/.config/zathura/gruvbox-dark" | sed "s/^/org.pwmt.zathura.PID-$pid | /"
   done
-} > "$WORK/expected"
-if run zathura dark && diff "$WORK/expected" "$WORK/calls" > "$WORK/diff"; then
+} >"$WORK/expected"
+if run zathura dark && diff "$WORK/expected" "$WORK/calls" >"$WORK/diff"; then
   pass "windows: both got the $(grep -c '^set ' "$H/.config/zathura/gruvbox-dark") set lines of the dark theme"
 else
   fail "windows: $(cat "$WORK/out" "$WORK/diff")"
@@ -186,7 +195,7 @@ else
   fail "refused: $(cat "$WORK/out")"
 fi
 
-echo 'map r recolor' >> "$H/.config/zathura/gruvbox-dark"
+echo 'map r recolor' >>"$H/.config/zathura/gruvbox-dark"
 if run zathura dark; then
   fail "theme file: a map line passed"
 elif grep -q 'not a set line: map r recolor' "$WORK/out"; then
@@ -204,15 +213,15 @@ sed -i.bak '$d' "$H/.config/zathura/gruvbox-dark" # the map line from above
 rm "$H/bin/zathura"
 mkdir -p "$H/.dotfiles"
 ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
-grep -E '^set-hook -g client-(dark|light)-theme ' "$REPO/home/.tmux.conf" > "$WORK/hooks.conf"
-if [ "$(wc -l < "$WORK/hooks.conf")" -eq 2 ]; then
+grep -E '^set-hook -g client-(dark|light)-theme ' "$REPO/home/.tmux.conf" >"$WORK/hooks.conf"
+if [ "$(wc -l <"$WORK/hooks.conf")" -eq 2 ]; then
   pass "tmux: home/.tmux.conf has the two hooks"
 else
   fail "tmux: hooks in home/.tmux.conf: $(cat "$WORK/hooks.conf")"
 fi
 t() { env -i HOME="$H" PATH=/usr/bin:/bin XDG_RUNTIME_DIR="$SOCKDIR" TERM=xterm-256color "$TMUX_BIN" -S "$SOCKDIR/tmux" "$@"; }
 t -f /dev/null new-session -d -s t
-if t source-file "$WORK/hooks.conf" 2> "$WORK/out"; then
+if t source-file "$WORK/hooks.conf" 2>"$WORK/out"; then
   pass "tmux: $("$TMUX_BIN" -V) takes the hooks"
 else
   fail "tmux: $("$TMUX_BIN" -V) refused the hooks: $(cat "$WORK/out")"
@@ -220,7 +229,7 @@ fi
 
 # A client in a pty, reporting light, then dark, then light; after each it
 # waits for both links and prints "<mode> ok" or what it found instead.
-python3 - "$TMUX_BIN" "$SOCKDIR/tmux" "$H" > "$WORK/client.out" 2>&1 <<'PYEOF'
+python3 - "$TMUX_BIN" "$SOCKDIR/tmux" "$H" >"$WORK/client.out" 2>&1 <<'PYEOF'
 import os, pty, select, sys, time
 tmux, sock, home = sys.argv[1:]
 links = {home + "/.claude/themes/gruvbox.json": "gruvbox-%s.json", home + "/.config/zathura/theme": "gruvbox-%s"}
@@ -248,7 +257,7 @@ for mode, report in (("light", b"\x1b[?997;2n"), ("dark", b"\x1b[?997;1n"), ("li
     wrong = {l: t for l, t in found().items() if t != links[l] % mode}
     print(mode, "ok" if not wrong else "not followed: %s" % wrong, flush=True)
 PYEOF
-if [ "$(tr '\n' ' ' < "$WORK/client.out")" = "light ok dark ok light ok " ]; then
+if [ "$(tr '\n' ' ' <"$WORK/client.out")" = "light ok dark ok light ok " ]; then
   pass "tmux: the links follow the client's theme, light, dark, light"
 else
   fail "tmux: $(cat "$WORK/client.out")"

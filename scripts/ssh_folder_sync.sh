@@ -57,18 +57,18 @@
 
 set -u
 
-INTERVAL=3              # seconds between passes
-CONNECT_WAIT=15         # seconds to wait for the ssh connection before giving up
-LOG_KEEP_BYTES=262144   # log is trimmed back to this
-TRIM_EVERY=200          # passes between trims (~10 min at INTERVAL=3)
+INTERVAL=3            # seconds between passes
+CONNECT_WAIT=15       # seconds to wait for the ssh connection before giving up
+LOG_KEEP_BYTES=262144 # log is trimmed back to this
+TRIM_EVERY=200        # passes between trims (~10 min at INTERVAL=3)
 # Bounds on one pass.  Without them a dead link is a TCP connect that hangs
 # for the kernel's ~15 minutes, and a mux master that stopped answering is
 # never replaced: the log once showed four passes of exactly that, an hour of
 # no sync while the session socket said "connected".
-SSH_CONNECT_TIMEOUT=10  # seconds to establish a new connection
-SSH_ALIVE_INTERVAL=5    # keepalive probe period on the private master ...
-SSH_ALIVE_COUNT=3       # ... and how many unanswered probes kill it (15s)
-RSYNC_TIMEOUT=60        # seconds of no data before rsync gives up
+SSH_CONNECT_TIMEOUT=10 # seconds to establish a new connection
+SSH_ALIVE_INTERVAL=5   # keepalive probe period on the private master ...
+SSH_ALIVE_COUNT=3      # ... and how many unanswered probes kill it (15s)
+RSYNC_TIMEOUT=60       # seconds of no data before rsync gives up
 
 # The control socket is volatile, and must stay SHORT: macOS caps unix socket
 # paths at 104 bytes, which anything under $HOME/.local/state (106 for a
@@ -78,16 +78,19 @@ RSYNC_TIMEOUT=60        # seconds of no data before rsync gives up
 RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}/ssh-folder-sync"
 
 usage() {
-    echo "usage: ${0##*/} {start|run} <host> <local-root> <remote-root>" >&2
-    echo "       ${0##*/} {stop|status} <host>" >&2
-    exit 2
+  echo "usage: ${0##*/} {start|run} <host> <local-root> <remote-root>" >&2
+  echo "       ${0##*/} {stop|status} <host>" >&2
+  exit 2
 }
 
-ACTION="${1:-}"; HOST="${2:-}"; LOCAL_ROOT="${3:-}"; REMOTE_ROOT="${4:-}"
+ACTION="${1:-}"
+HOST="${2:-}"
+LOCAL_ROOT="${3:-}"
+REMOTE_ROOT="${4:-}"
 case "$ACTION" in
-    start|run)   [ -n "$HOST" ] && [ -n "$LOCAL_ROOT" ] && [ -n "$REMOTE_ROOT" ] || usage ;;
-    stop|status) [ -n "$HOST" ] || usage ;;
-    *)           usage ;;
+  start | run) [ -n "$HOST" ] && [ -n "$LOCAL_ROOT" ] && [ -n "$REMOTE_ROOT" ] || usage ;;
+  stop | status) [ -n "$HOST" ] || usage ;;
+  *) usage ;;
 esac
 
 SOCK="$RUN_DIR/cm-$HOST.sock"
@@ -104,8 +107,8 @@ PIDFILE="$LOCK/pid"
 # records its root in the lock (see ROOTFILE) and they read it back from there.
 ROOTFILE="$LOCK/root"
 case "$ACTION" in
-    start|run) LOG="$LOCAL_ROOT/$HOST.log" ;;
-    *)         LOG="$(cat "$ROOTFILE" 2>/dev/null || echo '?')/$HOST.log" ;;
+  start | run) LOG="$LOCAL_ROOT/$HOST.log" ;;
+  *) LOG="$(cat "$ROOTFILE" 2>/dev/null || echo '?')/$HOST.log" ;;
 esac
 
 log() { printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*" >>"$LOG"; }
@@ -127,22 +130,27 @@ ctl() { ssh -O "$1" -o ControlPath="$SOCK" "$HOST" >/dev/null 2>&1; }
 # below: rename that and this stops matching.  -ww stops both macOS and
 # procps ps from truncating the line to the terminal width.
 loop_pid() {
-    _pid=$(cat "$PIDFILE" 2>/dev/null) && [ -n "$_pid" ] || return 1
-    kill -0 "$_pid" 2>/dev/null || return 1
-    ps -ww -o command= -p "$_pid" 2>/dev/null | grep -q "ssh_folder_sync.sh run $HOST " || return 1
-    echo "$_pid"
+  _pid=$(cat "$PIDFILE" 2>/dev/null) && [ -n "$_pid" ] || return 1
+  kill -0 "$_pid" 2>/dev/null || return 1
+  ps -ww -o command= -p "$_pid" 2>/dev/null | grep -q "ssh_folder_sync.sh run $HOST " || return 1
+  echo "$_pid"
 }
 
 case "$ACTION" in
-    stop)
-        if pid=$(loop_pid); then kill "$pid" 2>/dev/null; echo "$HOST: sync loop stopped (pid $pid)"
-        else echo "$HOST: sync loop not running"; fi
-        ctl exit
-        exit 0 ;;
-    status)
-        if pid=$(loop_pid); then echo "$HOST: sync loop running (pid $pid, every ${INTERVAL}s), log: $LOG"
-        else echo "$HOST: sync loop not running"; fi
-        exit 0 ;;
+  stop)
+    if pid=$(loop_pid); then
+      kill "$pid" 2>/dev/null
+      echo "$HOST: sync loop stopped (pid $pid)"
+    else echo "$HOST: sync loop not running"; fi
+    ctl exit
+    exit 0
+    ;;
+  status)
+    if pid=$(loop_pid); then
+      echo "$HOST: sync loop running (pid $pid, every ${INTERVAL}s), log: $LOG"
+    else echo "$HOST: sync loop not running"; fi
+    exit 0
+    ;;
 esac
 
 # rsync has to be a real rsync 3.x.  Apple ships openrsync as /usr/bin/rsync
@@ -150,42 +158,46 @@ esac
 # binary that fails on every single pass.  Probed here, before the fork, so
 # the complaint reaches your terminal instead of the child's /dev/null.
 if [ -z "${RSYNC:-}" ]; then
-    for candidate in "$HOME/.nix-profile/bin/rsync" /opt/homebrew/bin/rsync /usr/local/bin/rsync /opt/local/bin/rsync rsync; do
-        RSYNC=$(command -v "$candidate" 2>/dev/null) && break
-    done
+  for candidate in "$HOME/.nix-profile/bin/rsync" /opt/homebrew/bin/rsync /usr/local/bin/rsync /opt/local/bin/rsync rsync; do
+    RSYNC=$(command -v "$candidate" 2>/dev/null) && break
+  done
 fi
 [ -n "$RSYNC" ] && [ -x "$RSYNC" ] || {
-    echo "${0##*/}: no usable rsync at '${RSYNC:-}'; set RSYNC=/path/to/rsync" >&2; exit 1; }
+  echo "${0##*/}: no usable rsync at '${RSYNC:-}'; set RSYNC=/path/to/rsync" >&2
+  exit 1
+}
 case "$("$RSYNC" --version 2>/dev/null | head -1)" in
-    *"protocol version"*[3-9][0-9]*) : ;;
-    *) echo "${0##*/}: $RSYNC is not a usable rsync 3.x (openrsync lacks -i and --partial-dir); set RSYNC=/path/to/rsync" >&2
-       exit 1 ;;
+  *"protocol version"*[3-9][0-9]*) : ;;
+  *)
+    echo "${0##*/}: $RSYNC is not a usable rsync 3.x (openrsync lacks -i and --partial-dir); set RSYNC=/path/to/rsync" >&2
+    exit 1
+    ;;
 esac
 
 if [ "$ACTION" = start ]; then
-    case "$0" in
-        /*) SELF=$0 ;;
-        *)  SELF="$PWD/$0" ;;
-    esac
-    # LocalCommand blocks the SSH client until it returns, and the client does
-    # not answer its multiplexing socket while it waits -- which the loop needs
-    # in order to see the connection.  So detach hard before doing any SSH.
-    #
-    # The loop has to survive SIGHUP *and* a signal aimed at the terminal's
-    # process group, which means a session of its own.  setsid(1) is the native
-    # way; macOS does not ship it, so fall back to perl's POSIX::setsid.  The
-    # wrapping ( ... & ) & backgrounds twice so the child is not a process
-    # group leader, since setsid() fails with EPERM if it is.
-    if command -v setsid >/dev/null 2>&1; then
-        ( setsid "$SELF" run "$HOST" "$LOCAL_ROOT" "$REMOTE_ROOT" >/dev/null 2>&1 & ) &
-    elif [ -x /usr/bin/perl ]; then
-        ( /usr/bin/perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV or exit 1' \
-            -- "$SELF" run "$HOST" "$LOCAL_ROOT" "$REMOTE_ROOT" >/dev/null 2>&1 & ) &
-    else
-        echo "${0##*/}: need setsid(1) or /usr/bin/perl to detach" >&2
-        exit 1
-    fi
-    exit 0
+  case "$0" in
+    /*) SELF=$0 ;;
+    *) SELF="$PWD/$0" ;;
+  esac
+  # LocalCommand blocks the SSH client until it returns, and the client does
+  # not answer its multiplexing socket while it waits -- which the loop needs
+  # in order to see the connection.  So detach hard before doing any SSH.
+  #
+  # The loop has to survive SIGHUP *and* a signal aimed at the terminal's
+  # process group, which means a session of its own.  setsid(1) is the native
+  # way; macOS does not ship it, so fall back to perl's POSIX::setsid.  The
+  # wrapping ( ... & ) & backgrounds twice so the child is not a process
+  # group leader, since setsid() fails with EPERM if it is.
+  if command -v setsid >/dev/null 2>&1; then
+    (setsid "$SELF" run "$HOST" "$LOCAL_ROOT" "$REMOTE_ROOT" >/dev/null 2>&1 &) &
+  elif [ -x /usr/bin/perl ]; then
+    (/usr/bin/perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV or exit 1' \
+      -- "$SELF" run "$HOST" "$LOCAL_ROOT" "$REMOTE_ROOT" >/dev/null 2>&1 &) &
+  else
+    echo "${0##*/}: need setsid(1) or /usr/bin/perl to detach" >&2
+    exit 1
+  fi
+  exit 0
 fi
 
 mkdir -p "$RUN_DIR" "$LOCAL_ROOT/out" "$LOCAL_ROOT/in" || exit 1
@@ -201,12 +213,12 @@ mkdir -p "$RUN_DIR" "$LOCAL_ROOT/out" "$LOCAL_ROOT/in" || exit 1
 # a plain mkdir it may or may not win.  rm -rf on a shared path would let the
 # second reclaimer delete the first one's freshly created lock.
 if ! mkdir "$LOCK" 2>/dev/null; then
-    loop_pid >/dev/null && exit 0
-    if mv "$LOCK" "$LOCK.stale.$$" 2>/dev/null; then
-        log "reclaimed lock left by a dead loop (pid $(cat "$LOCK.stale.$$/pid" 2>/dev/null || echo '?'))"
-        rm -rf "$LOCK.stale.$$"
-    fi
-    mkdir "$LOCK" 2>/dev/null || exit 0
+  loop_pid >/dev/null && exit 0
+  if mv "$LOCK" "$LOCK.stale.$$" 2>/dev/null; then
+    log "reclaimed lock left by a dead loop (pid $(cat "$LOCK.stale.$$/pid" 2>/dev/null || echo '?'))"
+    rm -rf "$LOCK.stale.$$"
+  fi
+  mkdir "$LOCK" 2>/dev/null || exit 0
 fi
 echo "$$" >"$PIDFILE"
 echo "$LOCAL_ROOT" >"$ROOTFILE"
@@ -215,16 +227,19 @@ echo "$LOCAL_ROOT" >"$ROOTFILE"
 # including the ones stop(1), logout and shutdown cause with SIGTERM, which
 # previously killed the loop without a line in the log.  The lock is removed
 # whole, not just the pid file, so a half-cleaned state cannot exist.
-release() { rm -rf "$LOCK"; ctl exit; }
+release() {
+  rm -rf "$LOCK"
+  ctl exit
+}
 on_signal() {
-    log "got SIG$1; loop exiting"
-    [ -n "${sleeper:-}" ] && kill "$sleeper" 2>/dev/null
-    release
-    exit 0
+  log "got SIG$1; loop exiting"
+  [ -n "${sleeper:-}" ] && kill "$sleeper" 2>/dev/null
+  release
+  exit 0
 }
 trap 'on_signal TERM' TERM
-trap 'on_signal INT'  INT
-trap 'on_signal HUP'  HUP
+trap 'on_signal INT' INT
+trap 'on_signal HUP' HUP
 
 # ssh -G expands the %r/%h/%p tokens, so this is the real socket path.  No
 # ControlPath means no way to tell when you have logged out, and the loop has
@@ -235,9 +250,9 @@ SESSION_SOCK=$(ssh -G "$HOST" 2>/dev/null | awk '$1 == "controlpath" { print $2;
 # rsyncs write to stderr every pass, which is ~0.5 MB/hour of log for exactly
 # as long as the session lasts.
 trim_log() {
-    [ -f "$LOG" ] || return 0
-    [ "$(wc -c <"$LOG")" -gt "$LOG_KEEP_BYTES" ] || return 0
-    tail -c "$LOG_KEEP_BYTES" "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+  [ -f "$LOG" ] || return 0
+  [ "$(wc -c <"$LOG")" -gt "$LOG_KEEP_BYTES" ] || return 0
+  tail -c "$LOG_KEEP_BYTES" "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"
 }
 trim_log
 
@@ -259,11 +274,11 @@ SSH_T="$SSH_T -o PermitLocalCommand=no -o ClearAllForwardings=yes -o BatchMode=y
 # out of sight of the far side's mirror pass, and is excluded so it is never
 # mirrored itself.
 mirror() {
-    _out=$($RSYNC -a --delete -i --timeout="$RSYNC_TIMEOUT" \
-        --exclude=.DS_Store --exclude=.rsync-partial --partial-dir=.rsync-partial \
-        -e "$SSH_T" "$2" "$3" 2>&1)
-    [ -n "$_out" ] && log "$1: $(printf '%s' "$_out" | tr '\n' ' ')"
-    return 0
+  _out=$($RSYNC -a --delete -i --timeout="$RSYNC_TIMEOUT" \
+    --exclude=.DS_Store --exclude=.rsync-partial --partial-dir=.rsync-partial \
+    -e "$SSH_T" "$2" "$3" 2>&1)
+  [ -n "$_out" ] && log "$1: $(printf '%s' "$_out" | tr '\n' ' ')"
+  return 0
 }
 
 # A socket left behind by a killed loop makes ssh warn and fall back to
@@ -273,18 +288,20 @@ mirror() {
 # The master binds its socket before running LocalCommand, so this normally
 # passes on the first try; the wait only covers an unusually slow setup.
 if [ -z "$SESSION_SOCK" ] || [ "$SESSION_SOCK" = none ]; then
-    log "$HOST has no ControlPath; cannot track the session, not starting"
-    release; exit 0
+  log "$HOST has no ControlPath; cannot track the session, not starting"
+  release
+  exit 0
 fi
 
 n=0
 while ! connected; do
-    n=$((n + 1))
-    if [ "$n" -ge "$CONNECT_WAIT" ]; then
-        log "no ssh master socket for $HOST after ${CONNECT_WAIT}s; not starting (is ControlMaster/ControlPath set for this host?)"
-        release; exit 0
-    fi
-    sleep 1
+  n=$((n + 1))
+  if [ "$n" -ge "$CONNECT_WAIT" ]; then
+    log "no ssh master socket for $HOST after ${CONNECT_WAIT}s; not starting (is ControlMaster/ControlPath set for this host?)"
+    release
+    exit 0
+  fi
+  sleep 1
 done
 
 $SSH_T "$HOST" "mkdir -p '$REMOTE_ROOT/in' '$REMOTE_ROOT/out'" >/dev/null 2>&1
@@ -298,12 +315,14 @@ log "loop started (pid $$, every ${INTERVAL}s): $LOCAL_ROOT/out -> $HOST:$REMOTE
 # pause of a few seconds.
 passes=0
 while connected; do
-    mirror "out -> $HOST" "$LOCAL_ROOT/out/"        "$HOST:$REMOTE_ROOT/in/"
-    mirror "$HOST -> in"  "$HOST:$REMOTE_ROOT/out/" "$LOCAL_ROOT/in/"
-    passes=$((passes + 1))
-    [ $((passes % TRIM_EVERY)) -eq 0 ] && trim_log
-    sleep "$INTERVAL" & sleeper=$!
-    wait "$sleeper"; sleeper=
+  mirror "out -> $HOST" "$LOCAL_ROOT/out/" "$HOST:$REMOTE_ROOT/in/"
+  mirror "$HOST -> in" "$HOST:$REMOTE_ROOT/out/" "$LOCAL_ROOT/in/"
+  passes=$((passes + 1))
+  [ $((passes % TRIM_EVERY)) -eq 0 ] && trim_log
+  sleep "$INTERVAL" &
+  sleeper=$!
+  wait "$sleeper"
+  sleeper=
 done
 log "connection to $HOST closed; loop exiting"
 release

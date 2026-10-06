@@ -51,14 +51,23 @@ build=0
 case "${1:-}" in
   --build) build=1 ;;
   "") ;;
-  *) echo "usage: $0 [--build]" >&2; exit 2 ;;
+  *)
+    echo "usage: $0 [--build]" >&2
+    exit 2
+    ;;
 esac
 
-command -v nix >/dev/null || { echo "check_nix_flake.sh: nix not on PATH (see README.md \"Nix packages\")" >&2; exit 1; }
+command -v nix >/dev/null || {
+  echo "check_nix_flake.sh: nix not on PATH (see README.md \"Nix packages\")" >&2
+  exit 1
+}
 
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-fail() { log "FAIL $*"; failures=$((failures + 1)); }
+fail() {
+  log "FAIL $*"
+  failures=$((failures + 1))
+}
 err=$(mktemp)
 # The throwaway store for step 2. Its path must have no symlinked parent
 # (macOS $TMPDIR is under the /var -> /private/var link), and store paths are

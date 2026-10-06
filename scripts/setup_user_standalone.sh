@@ -13,7 +13,7 @@ curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.tmux.conf -o
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.vimrc -o ~/.vimrc
 
 if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
-    cat <<EOT >> ~/.gitconfig
+  cat <<EOT >>~/.gitconfig
 [include]
   path = ~/.gitconfig_common
 [user]
@@ -23,9 +23,8 @@ EOT
 fi
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.gitconfig_common -o ~/.gitconfig_common
 
-
 if ! grep -q '\.bashrc_local' ~/.bashrc; then
-    cat <<EOT >> ~/.bashrc
+  cat <<EOT >>~/.bashrc
 if [[ -f "$HOME/.bashrc_local" ]]; then
     source "$HOME/.bashrc_local"
 fi

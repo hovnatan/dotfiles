@@ -34,7 +34,10 @@ WORK=$(mktemp -d)
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 pass() { log "PASS $*"; }
-fail() { log "FAIL $*"; failures=$((failures + 1)); }
+fail() {
+  log "FAIL $*"
+  failures=$((failures + 1))
+}
 cleanup() {
   if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
 }
@@ -85,7 +88,7 @@ g() { env -i HOME="$H" PATH="$PATH" GIT_CONFIG_NOSYSTEM=1 git -C "$CLONE" "$@"; 
 cp "$REPO/scripts/lib/event_log.sh" "$CLONE/scripts/lib/"
 cp "$REPO/scripts/prune_logs.sh" "$CLONE/scripts/"
 cp "$REPO/scripts/git-hooks/pre-push" "$CLONE/scripts/git-hooks/"
-cat > "$CLONE/scripts/check.sh" << EOF
+cat >"$CLONE/scripts/check.sh" <<EOF
 #!/usr/bin/env bash
 echo "\$*" >> "$WORK/check_args"
 [ ! -e FAIL ]
@@ -103,11 +106,11 @@ g remote add origin "$REMOTE"
 g push -q --no-verify origin main 2>/dev/null
 
 # pass: one new commit with one new file
-echo a > "$CLONE/a.txt"
+echo a >"$CLONE/a.txt"
 g add a.txt
 g commit -qm a
-: > "$WORK/check_args"
-if g push -q origin main > "$WORK/out" 2>&1 \
+: >"$WORK/check_args"
+if g push -q origin main >"$WORK/out" 2>&1 \
   && [ "$(git -C "$REMOTE" rev-parse main)" = "$(g rev-parse main)" ]; then
   if [ "$(cat "$WORK/check_args")" = "--changed a.txt" ]; then
     pass "hook pass: the push landed; check.sh got --changed a.txt"
@@ -123,7 +126,7 @@ before=$(git -C "$REMOTE" rev-parse main)
 touch "$CLONE/FAIL"
 g add FAIL
 g commit -qm fail
-if g push -q origin main > "$WORK/out" 2>&1; then
+if g push -q origin main >"$WORK/out" 2>&1; then
   fail "hook fail: the push went through"
 elif [ "$(git -C "$REMOTE" rev-parse main)" != "$before" ]; then
   fail "hook fail: the remote moved"
@@ -136,10 +139,10 @@ fi
 # committed: drop the FAIL commit, keep FAIL as an untracked file
 g reset -q --hard HEAD~1
 touch "$CLONE/FAIL"
-echo b > "$CLONE/b.txt"
+echo b >"$CLONE/b.txt"
 g add b.txt
 g commit -qm b
-if g push -q origin main > "$WORK/out" 2>&1; then
+if g push -q origin main >"$WORK/out" 2>&1; then
   pass "hook committed: an uncommitted FAIL did not stop a clean commit"
 else
   fail "hook committed: the push was stopped: $(cat "$WORK/out")"
@@ -154,8 +157,8 @@ else
 fi
 
 events=$(cat "$H"/.dotfiles/.logs/*_git_pre_push/events.log 2>/dev/null)
-if [ "$(grep -c 'checks passed' <<< "$events")" -eq 2 ] \
-  && [ "$(grep -c 'checks FAILED' <<< "$events")" -eq 1 ]; then
+if [ "$(grep -c 'checks passed' <<<"$events")" -eq 2 ] \
+  && [ "$(grep -c 'checks FAILED' <<<"$events")" -eq 1 ]; then
   pass "hook log: two passes and one failure noted"
 else
   fail "hook log: $events"

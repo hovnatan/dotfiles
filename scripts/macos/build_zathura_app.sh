@@ -46,7 +46,10 @@
 
 set -euo pipefail
 
-[ "$(uname)" = "Darwin" ] || { echo "build_zathura_app.sh: macOS only" >&2; exit 1; }
+[ "$(uname)" = "Darwin" ] || {
+  echo "build_zathura_app.sh: macOS only" >&2
+  exit 1
+}
 
 app="$HOME/Applications/Zathura.app"
 helper="$app/Contents/Helpers/Zathura.app"
@@ -105,7 +108,10 @@ trap 'rm -rf "$work"' EXIT
 #     --app-icon AppIcon --output-partial-info-plist /dev/null \
 #     --platform macosx --minimum-deployment-target 11.0
 # (actool also writes an AppIcon.icns there; delete it).
-[ -f "$icons/Assets.car" ] || { echo "build_zathura_app.sh: $icons/Assets.car missing; it is tracked in ~/.dotfiles: git checkout it" >&2; exit 1; }
+[ -f "$icons/Assets.car" ] || {
+  echo "build_zathura_app.sh: $icons/Assets.car missing; it is tracked in ~/.dotfiles: git checkout it" >&2
+  exit 1
+}
 
 # --- 2. the applet ------------------------------------------------------------
 
@@ -230,7 +236,10 @@ int main(int argc, char **argv) {
 }
 EOF
 command -v clang >/dev/null \
-  || { echo "build_zathura_app.sh: clang not found; xcode-select --install" >&2; exit 1; }
+  || {
+    echo "build_zathura_app.sh: clang not found; xcode-select --install" >&2
+    exit 1
+  }
 clang -O2 -Wall -Werror -o "$helper/Contents/MacOS/zathura" "$work/launcher.c"
 "$buddy" -c "Add :CFBundleExecutable string zathura" \
   -c "Add :CFBundleIdentifier string com.hovnatan.zathura.viewer" \
@@ -258,7 +267,10 @@ quiet_resign codesign --force --sign - "$app"
 # and fails with error -50.
 default_for=(com.adobe.pdf org.idpf.epub-container com.lizardtech.djvu)
 command -v duti >/dev/null \
-  || { echo "build_zathura_app.sh: duti not found; brew bundle --file=~/.dotfiles/Brewfile" >&2; exit 1; }
+  || {
+    echo "build_zathura_app.sh: duti not found; brew bundle --file=~/.dotfiles/Brewfile" >&2
+    exit 1
+  }
 for uti in "${default_for[@]}"; do
   duti -s com.hovnatan.zathura "$uti" all
 done

@@ -41,16 +41,16 @@ fi
 #   2026-09-30T14:07:07Z synthetic focus-out to %0 (claude) %2 (backend): no client attached
 sent=
 while IFS=$'\t' read -r tty pane_id session; do
-    ps -t "$tty" -o stat=,args= 2>/dev/null |
-        awk '$1 ~ /\+/ && $2 ~ /(^|\/)claude$/ { f = 1; exit }
+  ps -t "$tty" -o stat=,args= 2>/dev/null \
+    | awk '$1 ~ /\+/ && $2 ~ /(^|\/)claude$/ { f = 1; exit }
              END { exit !f }' || continue
-    tmux -S "$socket" send-keys -t "$pane_id" -H 1b 5b 4f 2>/dev/null || continue
-    sent="$sent $pane_id ($session)"
+  tmux -S "$socket" send-keys -t "$pane_id" -H 1b 5b 4f 2>/dev/null || continue
+  sent="$sent $pane_id ($session)"
 done < <(tmux -S "$socket" list-panes -a -f '#{==:#{session_attached},0}' \
-    -F '#{pane_tty}	#{pane_id}	#{session_name}' 2>/dev/null)
+  -F '#{pane_tty}	#{pane_id}	#{session_name}' 2>/dev/null)
 if [ -n "$sent" ]; then
-    # shellcheck source=scripts/lib/event_log.sh
-    . "${0%/*}/../../../scripts/lib/event_log.sh"
-    event_log_note tmux_hooks "synthetic focus-out to${sent}: no client attached"
+  # shellcheck source=scripts/lib/event_log.sh
+  . "${0%/*}/../../../scripts/lib/event_log.sh"
+  event_log_note tmux_hooks "synthetic focus-out to${sent}: no client attached"
 fi
 exit 0

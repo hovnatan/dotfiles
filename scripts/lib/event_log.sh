@@ -25,8 +25,8 @@ EVENT_LOG_ROOT="$HOME/.dotfiles/.logs"
 # _event_log_time <variable> <strftime format>: the UTC time now into the
 # variable. printf's %(...)T is a builtin from bash 4.2 on; 3.2 forks date.
 _event_log_time() {
-  if [ "${BASH_VERSINFO[0]}" -gt 4 ] ||
-    { [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -ge 2 ]; }; then
+  if [ "${BASH_VERSINFO[0]}" -gt 4 ] \
+    || { [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -ge 2 ]; }; then
     TZ=UTC printf -v "$1" "%($2)T" -1
   else
     printf -v "$1" '%s' "$(date -u "+$2")"
@@ -39,7 +39,7 @@ _event_log_time() {
 event_log_pruned() {
   local last=
   if [ -f "$EVENT_LOG_ROOT/.pruned" ]; then
-    IFS= read -r last < "$EVENT_LOG_ROOT/.pruned" || true
+    IFS= read -r last <"$EVENT_LOG_ROOT/.pruned" || true
   fi
   [ "$last" = "$1" ]
 }
@@ -95,13 +95,13 @@ event_log_note() {
   local name=$1
   shift
   event_log_daily "$name" --no-prune || return 1
-  log "$@" > /dev/null
+  log "$@" >/dev/null
 }
 
 # log <message>: a UTC-stamped line, to the log and to stdout.
 log() {
   local stamp
   _event_log_time stamp '%Y-%m-%dT%H:%M:%SZ'
-  printf '%s %s\n' "$stamp" "$*" >> "$EVENT_LOG_FILE"
+  printf '%s %s\n' "$stamp" "$*" >>"$EVENT_LOG_FILE"
   printf '%s %s\n' "$stamp" "$*"
 }

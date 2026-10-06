@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ -z $1 ]; then 
+if [ -z $1 ]; then
   tmux list-sessions
   exit 0
 fi

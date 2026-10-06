@@ -28,7 +28,10 @@
 set -uo pipefail
 
 for cmd in tmux python3 curl; do
-  command -v "$cmd" >/dev/null || { echo "ntfy_stop_test.sh: $cmd not on PATH" >&2; exit 1; }
+  command -v "$cmd" >/dev/null || {
+    echo "ntfy_stop_test.sh: $cmd not on PATH" >&2
+    exit 1
+  }
 done
 
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
@@ -50,7 +53,10 @@ DEBOUNCE=8
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 pass() { log "PASS $*"; }
-fail() { log "FAIL $*"; failures=$((failures + 1)); }
+fail() {
+  log "FAIL $*"
+  failures=$((failures + 1))
+}
 t() { tmux -S "$SOCK" "$@"; }
 
 cleanup() {
@@ -65,7 +71,7 @@ trap cleanup EXIT
 
 # --- fake ntfy: records every POST, answers 200 ------------------------------
 
-python3 - "$WORK/port" > "$WORK/listener.out" 2>&1 <<'PYEOF' &
+python3 - "$WORK/port" >"$WORK/listener.out" 2>&1 <<'PYEOF' &
 import http.server, sys
 class H(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
@@ -81,32 +87,35 @@ listener=$!
 # A cold python3 (first run on a Mac, a fresh CI runner) took over 2 s to
 # listen; without a port every push goes to "http://127.0.0.1:" and fails
 # as curl exit 7, which reads like a hook bug.
-for _ in $(seq 100); do [ -s "$WORK/port" ] && break; sleep 0.1; done
+for _ in $(seq 100); do
+  [ -s "$WORK/port" ] && break
+  sleep 0.1
+done
 if ! [ -s "$WORK/port" ]; then
   fail "fake ntfy listener wrote no port in 10 s: $(cat "$WORK/listener.out")"
   exit 1
 fi
 OK_URL="http://127.0.0.1:$(cat "$WORK/port")"
-BAD_URL="http://127.0.0.1:9"        # discard port: nothing listens -> curl exit 7
+BAD_URL="http://127.0.0.1:9" # discard port: nothing listens -> curl exit 7
 
 # --- throwaway HOME and tmux server ------------------------------------------
 
 mkdir -p "$H/.config/claude-ntfy"
-echo testtopic > "$H/.config/claude-ntfy/topic"
+echo testtopic >"$H/.config/claude-ntfy/topic"
 touch "$WORK/transcript"
 
 t -f /dev/null new-session -d -s keepalive 'sleep 1000'
 t set -g focus-events on
-new_session() {        # prints the session id without its "$"
+new_session() { # prints the session id without its "$"
   t new-session -d -s "$1" 'sleep 1000'
   t display -p -t "=$1:" '#{session_id}' | tr -d '$'
 }
 
 # hook <session id> <url> [--cancel]: one hook invocation, as Claude Code runs it
 hook() {
-  echo "{\"transcript_path\":\"$WORK/transcript\"}" |
-    env -u TMUX_PANE HOME="$H" TMUX="$SOCK,1,$1" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
-      CLAUDE_NTFY_URL="$2" bash "$HOOK" ${3:+"$3"} >> "$WORK/hook.out"
+  echo "{\"transcript_path\":\"$WORK/transcript\"}" \
+    | env -u TMUX_PANE HOME="$H" TMUX="$SOCK,1,$1" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
+      CLAUDE_NTFY_URL="$2" bash "$HOOK" ${3:+"$3"} >>"$WORK/hook.out"
 }
 
 # --- a focused client for the "watched" scenario -----------------------------
@@ -150,11 +159,15 @@ locks_left() {
 
 # --- the scenarios -----------------------------------------------------------
 
-sid_ok=$(new_session push-ok); sid_cancel=$(new_session cancelme); sid_fail=$(new_session failpush)
-sid_gone=$(new_session goes); sid_grows=$(new_session grows)
+sid_ok=$(new_session push-ok)
+sid_cancel=$(new_session cancelme)
+sid_fail=$(new_session failpush)
+sid_gone=$(new_session goes)
+sid_grows=$(new_session grows)
 log "scenarios armed (debounce ${DEBOUNCE}s); work dir $WORK"
 
-hook "$sid_ok" "$OK_URL"; hook "$sid_ok" "$OK_URL"
+hook "$sid_ok" "$OK_URL"
+hook "$sid_ok" "$OK_URL"
 hook "$sid_cancel" "$OK_URL"
 hook "$sid_fail" "$BAD_URL"
 hook "$sid_gone" "$OK_URL"
@@ -171,7 +184,11 @@ hook "$sid_grows" "$OK_URL"
 #   W+10  the last touch may still count -> same streak, not logged
 #   W+15  quiet, and past the window (or W+20, if W+10 re-armed it) -> push
 grew() { ntfy_log | grep -F -- "grows (\$$sid_grows)" | grep -qF "wait: transcript grew"; }
-( for _ in $(seq 60); do sleep 0.5; touch "$WORK/transcript"; grew && break; done ) &
+(for _ in $(seq 60); do
+  sleep 0.5
+  touch "$WORK/transcript"
+  grew && break
+done) &
 toucher=$!
 hook "$sid_watched" "$OK_URL"
 # The same client loses focus: the next Stop arms a waiter, whose line names

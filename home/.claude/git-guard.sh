@@ -13,7 +13,7 @@ payload=''
 IFS= read -r -d '' payload || true
 [[ $payload == *git* ]] || exit 0
 
-cmd=$(jq -r '.tool_input.command // empty' <<< "$payload" 2>/dev/null) || exit 0
+cmd=$(jq -r '.tool_input.command // empty' <<<"$payload" 2>/dev/null) || exit 0
 
 emit() {
   jq -cn --arg r "$1" \
@@ -31,14 +31,14 @@ while IFS= read -r seg; do
   # Classify each token rather than grepping for flag spellings, so
   # short-option clusters (-fu), +refspec forces, and :refspec deletes are
   # caught alongside the long flags.
-  read -ra toks <<< "$seg"
+  read -ra toks <<<"$seg"
   for tok in "${toks[@]}"; do
     case "$tok" in
-      --force|--force-with-lease|--force-with-lease=*|--mirror|--delete) emit "$push_msg" ;;
+      --force | --force-with-lease | --force-with-lease=* | --mirror | --delete) emit "$push_msg" ;;
       --*) ;;
       -*[fd]*) emit "$push_msg" ;;
-      +*|:*) emit "$push_msg" ;;
+      +* | :*) emit "$push_msg" ;;
     esac
   done
-done <<< "${cmd//[;&|]/$'\n'}"
+done <<<"${cmd//[;&|]/$'\n'}"
 exit 0

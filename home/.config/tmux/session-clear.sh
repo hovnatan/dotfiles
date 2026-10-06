@@ -42,7 +42,7 @@
 # Portability as ntfy-stop.sh: sed for the hook JSON, no tac, no xargs -r.
 set -u
 
-[ -n "${TMUX:-}" ] && [ -n "${TMUX_PANE:-}" ] || exit 0   # not a tmux-hosted session
+[ -n "${TMUX:-}" ] && [ -n "${TMUX_PANE:-}" ] || exit 0 # not a tmux-hosted session
 socket=${TMUX%%,*}
 # Only the claude socket (or the one a test names): its sessions are the
 # ones claude_tmux_run.sh names, and a "/" elsewhere is not a label.
@@ -85,8 +85,8 @@ color=""
 # shellcheck disable=SC2012
 while IFS= read -r f; do
   [ "$f" != "$transcript" ] || continue
-  IFS=$'\t' read -r ok c < <(tail -c 1048576 "$f" |
-    awk -v want="\"customTitle\":\"$title\"" '
+  IFS=$'\t' read -r ok c < <(tail -c 1048576 "$f" \
+    | awk -v want="\"customTitle\":\"$title\"" '
       /^\{"type":"custom-title"/ { ok = index($0, want) > 0 }
       /^\{"type":"agent-color"/  { c = $0; sub(/.*"agentColor":"/, "", c); sub(/".*/, "", c) }
       END { print ok "\t" c }')

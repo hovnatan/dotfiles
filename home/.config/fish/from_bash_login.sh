@@ -10,11 +10,11 @@
 #   `bash` typed inside fish        parent is fish            -> stays bash
 # If fish is missing, exec fails loudly and an interactive bash carries on.
 if [ -n "$BASH_VERSION" ] && [ -z "$BASH_EXECUTION_STRING" ] && [ -t 0 ]; then
-    case $- in
-        *i*)
-            if [ "$(ps -o comm= -p "$PPID")" != fish ]; then
-                exec fish --login
-            fi
-            ;;
-    esac
+  case $- in
+    *i*)
+      if [ "$(ps -o comm= -p "$PPID")" != fish ]; then
+        exec fish --login
+      fi
+      ;;
+  esac
 fi

@@ -1,0 +1,21 @@
+# Shell script style. shfmt reads it (scripts/check.sh's `shell` check runs
+# `shfmt -d`; fix with `git ls-files -z '*.sh' 'scripts/git-hooks/*' | xargs -0 shfmt -w`),
+# and editors with EditorConfig support (nvim's is built in) pick up the
+# indent. Chosen as the flags closest to the hand-written scripts:
+#   switch_case_indent  case items indented under `case`   (shfmt -ci)
+#   binary_next_line    `&&` / `||` / `|` start the next line (shfmt -bn)
+# shfmt ignores these if given any formatting flag, so call it without them.
+root = true
+
+[*.sh]
+indent_style = space
+indent_size = 2
+switch_case_indent = true
+binary_next_line = true
+
+# Git runs hooks by bare name, so they have no .sh.
+[scripts/git-hooks/*]
+indent_style = space
+indent_size = 2
+switch_case_indent = true
+binary_next_line = true

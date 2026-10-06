@@ -79,7 +79,10 @@ fi
 # shellcheck source=scripts/lib/event_log.sh
 . "$(dirname "$0")/../lib/event_log.sh"
 event_log_start build_dark_reader
-die() { log "ERROR $*" >&2; exit 1; }
+die() {
+  log "ERROR $*" >&2
+  exit 1
+}
 
 # logged <command...>: run it, each line of its output into the log, without
 # the colour codes Dark Reader's build writes even to a pipe. Its exit status

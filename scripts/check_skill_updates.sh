@@ -42,10 +42,14 @@ only=()
 for arg in "$@"; do
   case "$arg" in
     --apply) apply=1 ;;
-    -h|--help)
+    -h | --help)
       echo "usage: $0 [--apply [skill...]]" >&2
-      exit 0 ;;
-    -*) echo "ERROR: unknown option '$arg'" >&2; exit 2 ;;
+      exit 0
+      ;;
+    -*)
+      echo "ERROR: unknown option '$arg'" >&2
+      exit 2
+      ;;
     *) only+=("$arg") ;;
   esac
 done
@@ -55,7 +59,10 @@ if [ "$apply" -eq 0 ] && [ "${#only[@]}" -gt 0 ]; then
 fi
 for name in "${only[@]}"; do
   [ -f "$SKILLS_DIR/$name/.upstream" ] \
-    || { echo "ERROR: no vendored skill '$name' under $SKILLS_DIR" >&2; exit 2; }
+    || {
+      echo "ERROR: no vendored skill '$name' under $SKILLS_DIR" >&2
+      exit 2
+    }
 done
 
 # apply_update <name> <slug> <subdir> <branch> <sha>
@@ -72,28 +79,54 @@ apply_update() {
     && git -C "$work" remote add origin "https://github.com/${slug}.git" \
     && git -C "$work" fetch -q --depth 1 origin "$sha" \
     && git -C "$work" checkout -q FETCH_HEAD \
-    || { echo "  ERROR: could not fetch ${slug}@${sha}" >&2; rm -rf "$work"; return 1; }
+    || {
+      echo "  ERROR: could not fetch ${slug}@${sha}" >&2
+      rm -rf "$work"
+      return 1
+    }
 
   src="$work/${subdir}"
-  [ -d "$src" ] || { echo "  ERROR: ${subdir:-<repo root>} missing at ${sha}" >&2; rm -rf "$work"; return 1; }
+  [ -d "$src" ] || {
+    echo "  ERROR: ${subdir:-<repo root>} missing at ${sha}" >&2
+    rm -rf "$work"
+    return 1
+  }
 
   # Stage the new snapshot without the upstream .git (only meaningful when the
   # repo itself is the skill), then swap it into place with the pin rewritten.
-  staged=$(mktemp -d) || { rm -rf "$work"; return 1; }
+  staged=$(mktemp -d) || {
+    rm -rf "$work"
+    return 1
+  }
   cp -R "$src"/. "$staged"/ && rm -rf "$staged/.git" \
-    || { rm -rf "$work" "$staged"; return 1; }
+    || {
+      rm -rf "$work" "$staged"
+      return 1
+    }
   printf 'repo=https://github.com/%s\nsubdir=%s\nbranch=%s\ncommit=%s\n' \
-    "$slug" "$subdir" "$branch" "$sha" > "$staged/.upstream"
+    "$slug" "$subdir" "$branch" "$sha" >"$staged/.upstream"
   rm -rf "$dest" && mv "$staged" "$dest" \
-    || { echo "  ERROR: could not replace $dest" >&2; rm -rf "$work" "$staged"; return 1; }
+    || {
+      echo "  ERROR: could not replace $dest" >&2
+      rm -rf "$work" "$staged"
+      return 1
+    }
   rm -rf "$work"
   printf '  %sapplied: re-vendored at %s%s\n' "$G" "${sha:0:12}" "$N"
 }
 
 if [ -t 1 ]; then
-  R=$'\033[31m'; G=$'\033[32m'; Y=$'\033[33m'; B=$'\033[1m'; N=$'\033[0m'
+  R=$'\033[31m'
+  G=$'\033[32m'
+  Y=$'\033[33m'
+  B=$'\033[1m'
+  N=$'\033[0m'
 else
-  R=''; G=''; Y=''; B=''; N=''
+  R=''
+  G=''
+  Y=''
+  B=''
+  N=''
 fi
 
 # latest_commit <owner/repo> <branch> <subdir>
@@ -107,7 +140,7 @@ latest_commit() {
   if command -v gh >/dev/null 2>&1; then
     local out
     if out=$(gh api "repos/${slug}/commits?${query}" --jq "$jqx" 2>/dev/null) \
-       && [ -n "$out" ]; then
+      && [ -n "$out" ]; then
       printf '%s\n' "$out"
       return 0
     fi
@@ -142,12 +175,12 @@ for up in "$SKILLS_DIR"/*/.upstream; do
   repo='' subdir='' branch='' commit=''
   while IFS='=' read -r key val; do
     case "$key" in
-      repo)   repo=$val ;;
+      repo) repo=$val ;;
       subdir) subdir=$val ;;
       branch) branch=$val ;;
       commit) commit=$val ;;
     esac
-  done < "$up"
+  done <"$up"
   branch=${branch:-main}
   slug=$(printf '%s' "$repo" | sed -E 's#^https?://github\.com/##; s#\.git$##; s#/+$##')
 
@@ -158,7 +191,7 @@ for up in "$SKILLS_DIR"/*/.upstream; do
     printf '  %sstatus : could not reach upstream%s\n\n' "$Y" "$N"
     continue
   fi
-  IFS=$'\t' read -r lsha ldate lmsg <<< "$info"
+  IFS=$'\t' read -r lsha ldate lmsg <<<"$info"
 
   if [ "$lsha" = "$commit" ]; then
     printf '  latest : %s\n' "${lsha:0:12}"

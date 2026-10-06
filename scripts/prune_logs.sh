@@ -35,14 +35,20 @@ set -euo pipefail
 KEEP_DAYS=30
 root=$EVENT_LOG_ROOT
 
-[ -d "$root" ] || { echo "prune_logs.sh: $root missing" >&2; exit 1; }
+[ -d "$root" ] || {
+  echo "prune_logs.sh: $root missing" >&2
+  exit 1
+}
 today=$(date -u +%Y%m%d)
 case "${1:-}" in
   "") ! event_log_pruned "$today" || exit 0 ;;
   --force) ;;
-  *) echo "prune_logs.sh: unknown argument '$1': prune_logs.sh [--force]" >&2; exit 1 ;;
+  *)
+    echo "prune_logs.sh: unknown argument '$1': prune_logs.sh [--force]" >&2
+    exit 1
+    ;;
 esac
-printf '%s\n' "$today" > "$root/.pruned"
+printf '%s\n' "$today" >"$root/.pruned"
 cd "$root"
 
 # Every directory of the form event_log_start makes that is not the newest
@@ -74,7 +80,7 @@ while IFS= read -r d; do
   rm -r "./$d"
   log "removed $d"
   removed=$((removed + 1))
-done <<< "$older"
+done <<<"$older"
 
 if [ "$removed" -gt 0 ]; then
   log "removed $removed event log(s) last written over $KEEP_DAYS days ago"

@@ -7,7 +7,6 @@ set -euo pipefail
 #set -x CXXFLAGS $CFLAGS
 #set -x LDFLAGS "-flto"
 
-
 # #for intel distribution installation
 # # install miniconda
 # conda update conda
@@ -18,7 +17,7 @@ set -euo pipefail
 # conda activate idp
 # conda install conda install mkl-devel
 
-# #install gdal 
+# #install gdal
 # set -x PKG_CONFIG_PATH /home/hovnatan/miniconda3/envs/idp/lib/pkgconfig
 # set -x CPPFLAGS -I/home/hovnatan/miniconda3/envs/idp/include/
 # set -x CXXFLAGS -I/home/hovnatan/miniconda3/envs/idp/include/
@@ -26,7 +25,7 @@ set -euo pipefail
 # set -x LDFLAGS -L/home/hovnatan/miniconda3/envs/idp/lib/
 # set -x LD_LIBRARY_PATH /home/hovnatan/miniconda3/envs/idp/lib/
 # ./configure --prefix=/home/hovnatan/miniconda3/envs/idp/ --with-python=/home/hovnatan/miniconda3/envs/idp/bin/python3
-# #install opencv 
+# #install opencv
 # set -x CMAKE_PREFIX_PATH /home/hovnatan/miniconda3/envs/idp
 # cmake ...... -WITH_PROTOBUFF=OFF for opencv
 # cmake -DOPENCV_ENABLE_NONFREE=ON -DWITH_TBB=ON -DWITH_GDAL=ON -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/hovnatan/Downloads/opencv_contrib-4.0.0/modules/ -DPYTHON3_EXECUTABLE=/home/hovnatan/miniconda3/envs/idp/bin/python3 -DPYTHON3_LIBRARY=/home/hovnatan/miniconda3/envs/idp/lib/libpython3.so -DPYTHON3_PACKAGES_PATH=/home/hovnatan/miniconda3/envs/idp/lib/python3.6/site-packages/ -DCMAKE_INSTALL_PREFIX=/home/hovnatan/miniconda3/envs/idp/ -DWITH_PROTOBUF=OFF ..
@@ -82,5 +81,5 @@ mkdir build
 cd build
 
 # Make OpenCV
-cmake  -DWITH_TBB=ON -DWITH_GDAL=ON -DBUILD_TESTS=OFF \
--DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/"$(whoami)"/opencv_contrib/opencv_contrib-4.0.0/modules/ ..
+cmake -DWITH_TBB=ON -DWITH_GDAL=ON -DBUILD_TESTS=OFF \
+  -DBUILD_PERF_TESTS=OFF -DWITH_MATLAB=OFF -DOPENCV_EXTRA_MODULES_PATH=/home/"$(whoami)"/opencv_contrib/opencv_contrib-4.0.0/modules/ ..

@@ -36,7 +36,10 @@
 
 set -uo pipefail
 
-command -v python3 >/dev/null || { echo "prune_logs_test.sh: python3 not on PATH" >&2; exit 1; }
+command -v python3 >/dev/null || {
+  echo "prune_logs_test.sh: python3 not on PATH" >&2
+  exit 1
+}
 
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
 SCRIPT="$REPO/scripts/prune_logs.sh"
@@ -47,13 +50,16 @@ L="$H/.dotfiles/.logs"
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 pass() { log "PASS $*"; }
-fail() { log "FAIL $*"; failures=$((failures + 1)); }
+fail() {
+  log "FAIL $*"
+  failures=$((failures + 1))
+}
 cleanup() {
   if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
 }
 trap cleanup EXIT
 
-run() { env -i HOME="$H" PATH=/usr/bin:/bin "$SCRIPT" "$@" > "$WORK/out" 2>&1; }
+run() { env -i HOME="$H" PATH=/usr/bin:/bin "$SCRIPT" "$@" >"$WORK/out" 2>&1; }
 # age <days> <path>...: set the last write of each to that many days ago
 age() {
   python3 -c 'import os, sys, time
@@ -63,7 +69,7 @@ for p in sys.argv[2:]: os.utime(p, (t, t), follow_symlinks=False)' "$@"
 # event_log <directory> <days>: an event log last written that long ago
 event_log() {
   mkdir -p "$L/$1"
-  echo "2025-01-01T00:00:00Z something" > "$L/$1/events.log"
+  echo "2025-01-01T00:00:00Z something" >"$L/$1/events.log"
   age "$2" "$L/$1/events.log"
 }
 # What .logs holds, one name a line, without the prune's own stamp and log.
@@ -97,24 +103,24 @@ event_log 20250103_000000_old 40
 event_log 20250101_000000_young 5
 event_log 20250102_000000_young 0
 event_log 20250101_000000_record 40
-echo "what was found" > "$L/20250101_000000_record/README.md"
+echo "what was found" >"$L/20250101_000000_record/README.md"
 event_log 20250102_000000_record 40
 mkdir "$L/20250102_000000_record/sub"
 event_log 20250103_000000_record 0
 mkdir "$L/20250101_000000_empty"
 event_log 20250102_000000_empty 0
 mkdir "$L/20250101_000000_linked"
-echo "elsewhere" > "$WORK/elsewhere.log"
+echo "elsewhere" >"$WORK/elsewhere.log"
 ln -s "$WORK/elsewhere.log" "$L/20250101_000000_linked/events.log"
 age 40 "$WORK/elsewhere.log" "$L/20250101_000000_linked/events.log"
 event_log 20250102_000000_linked 0
 event_log notes 40
 event_log 2025_notes_b 40
-left | grep -v -E '^2025010[12]_000000_old$' > "$WORK/expected"
+left | grep -v -E '^2025010[12]_000000_old$' >"$WORK/expected"
 
 if run; then
-  if left > "$WORK/after" && diff "$WORK/expected" "$WORK/after" > "$WORK/diff"; then
-    pass "only the two old event logs that are not the newest went ($(wc -l < "$WORK/after" | tr -d ' ') kept)"
+  if left >"$WORK/after" && diff "$WORK/expected" "$WORK/after" >"$WORK/diff"; then
+    pass "only the two old event logs that are not the newest went ($(wc -l <"$WORK/after" | tr -d ' ') kept)"
   else
     fail "kept the wrong ones (< expected, > found): $(cat "$WORK/diff")"
   fi
@@ -149,7 +155,7 @@ else
   fail "--force: $(state)"
 fi
 rm -rf "$L"/*_prune_logs
-echo 20250101 > "$L/.pruned"
+echo 20250101 >"$L/.pruned"
 event_log 20250101_000000_old 40
 if run && [ ! -d "$L/20250101_000000_old" ]; then
   pass "a run on a day after the last prunes"
@@ -171,7 +177,7 @@ fi
 # What a logging script does, nothing more: start its log, write a line.
 start_log() {
   env -i HOME="$H" PATH=/usr/bin:/bin bash -c '. "$1"; shift; event_log_start "$@" && log "a line"' \
-    _ "$REPO/scripts/lib/event_log.sh" "$@" > "$WORK/out" 2>&1
+    _ "$REPO/scripts/lib/event_log.sh" "$@" >"$WORK/out" 2>&1
 }
 event_log 20250101_000000_old 40
 if start_log probe && [ -d "$L/20250101_000000_old" ] && grep -q ' a line$' "$L"/*_probe/events.log; then
@@ -179,7 +185,7 @@ if start_log probe && [ -d "$L/20250101_000000_old" ] && grep -q ' a line$' "$L"
 else
   fail "log start, pruned today: $(state)"
 fi
-echo 20250101 > "$L/.pruned"
+echo 20250101 >"$L/.pruned"
 if start_log probe --no-prune && [ -d "$L/20250101_000000_old" ]; then
   pass "log start: no prune with --no-prune"
 else

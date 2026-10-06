@@ -215,4 +215,5 @@ main() {
 # The pull replaces this very file mid-run. Bash reads a script as it goes,
 # so keep the call and the exit on one line: both are parsed before main
 # starts and nothing is read from the file afterwards.
-main "$@"; exit $?
+main "$@"
+exit $?

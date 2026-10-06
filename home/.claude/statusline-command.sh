@@ -82,8 +82,8 @@ eval "$(jq -r '
 # Anything that reaches $(( )) must be an integer: dash treats a non-integer
 # operand as a fatal error, not a wrong number, and a fatal error here draws
 # an empty line instead of a degraded one.
-case $now in ''|*[!0-9]*) cache_expires=na ;; esac
-case $cache_expires in ''|na) ;; *[!0-9]*) cache_expires=na ;; esac
+case $now in '' | *[!0-9]*) cache_expires=na ;; esac
+case $cache_expires in '' | na) ;; *[!0-9]*) cache_expires=na ;; esac
 
 # The model name is contracted to its first two letters plus the version, and
 # the 1M-context marker is glued straight on: "Opus 5 (1M context)" -> "Op5[1m]",
@@ -93,8 +93,8 @@ case $cache_expires in ''|na) ;; *[!0-9]*) cache_expires=na ;; esac
 # the "<word> <version>" shape is left alone rather than mangled. The marker is
 # rebuilt from the id, not the display name: Sonnet 5 and Fable 5.1 carry [1m]
 # in the id while their display names say nothing about it.
-model=$(printf '%s\n' "$model_name" |
-  sed -E -e 's/ \(1M context\)$//' -e 's/^(..)[^ ]* ([0-9].*)$/\1\2/')
+model=$(printf '%s\n' "$model_name" \
+  | sed -E -e 's/ \(1M context\)$//' -e 's/^(..)[^ ]* ([0-9].*)$/\1\2/')
 case "$model_id" in
   *"[1m]"*) model="${model}[1m]" ;;
 esac
@@ -118,12 +118,30 @@ esac
 eff=""
 if [ -n "$effort" ]; then
   case "$effort" in
-    low) ecolor=''; elabel='lo' ;;
-    medium) ecolor=''; elabel='md' ;;
-    high) ecolor='\033[1m'; elabel='hi' ;;
-    xhigh) ecolor='\033[1;4m'; elabel='xh' ;;
-    max) ecolor='\033[1;7m'; elabel='mx' ;;
-    *) ecolor=''; elabel="$effort" ;;
+    low)
+      ecolor=''
+      elabel='lo'
+      ;;
+    medium)
+      ecolor=''
+      elabel='md'
+      ;;
+    high)
+      ecolor='\033[1m'
+      elabel='hi'
+      ;;
+    xhigh)
+      ecolor='\033[1;4m'
+      elabel='xh'
+      ;;
+    max)
+      ecolor='\033[1;7m'
+      elabel='mx'
+      ;;
+    *)
+      ecolor=''
+      elabel="$effort"
+      ;;
   esac
   eff=" ${ecolor}${elabel}\033[0m"
 fi
@@ -346,12 +364,12 @@ if [ -z "$cache_expires" ]; then
       | select(.anchor != null)
       | (.anchor | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) + .ttl | floor'
     cache_expires=$(tail -c 2000000 "$transcript" 2>/dev/null | jq -rRn "$infer" 2>/dev/null)
-    if [ -z "$cache_expires" ] && [ $(( $(wc -c < "$transcript") )) -gt 2000000 ]; then
+    if [ -z "$cache_expires" ] && [ $(($(wc -c <"$transcript"))) -gt 2000000 ]; then
       cache_expires=$(jq -rRn "$infer" "$transcript" 2>/dev/null)
     fi
   fi
   case $cache_expires in
-    ''|*[!0-9]*) cache_expires=na ;;
+    '' | *[!0-9]*) cache_expires=na ;;
     *) cache_mark="~" ;;
   esac
 fi
@@ -361,7 +379,7 @@ if [ "$cache_expires" = na ]; then
   cache_mark=""
   pcolor=''
 else
-  cache_left=$(( cache_expires - now ))
+  cache_left=$((cache_expires - now))
   if [ "$cache_left" -le 0 ]; then
     cache_txt="cold"
     pcolor='\033[34m'
@@ -391,8 +409,8 @@ cache=" \033[2m|\033[0m ${pcolor}${cache_mark}${cache_txt}\033[0m"
 # convenient, never the red that Ctx / Cache use for "act now".
 installed_version=$(basename "$(readlink "$HOME/.local/bin/claude" 2>/dev/null)" 2>/dev/null)
 ver=""
-if [ -n "$running_version" ] && [ -n "$installed_version" ] &&
-   [ "$installed_version" != "$running_version" ]; then
+if [ -n "$running_version" ] && [ -n "$installed_version" ] \
+  && [ "$installed_version" != "$running_version" ]; then
   ver=" \033[2m|\033[0m \033[33mU\033[0m"
 fi
 

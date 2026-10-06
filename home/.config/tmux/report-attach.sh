@@ -72,7 +72,7 @@ if [ -n "$iterm2" ]; then
   report=$(fish -c "iterm2_report_host --tmux-attach=${where#over }")
   host=${report#*RemoteHost=}
   host=${host%%$'\a'*}
-  if ! printf '%s' "$report" > "$tty"; then
+  if ! printf '%s' "$report" >"$tty"; then
     note "iTerm2 $where, FAILED: cannot write to $tty"
     exit 1
   fi

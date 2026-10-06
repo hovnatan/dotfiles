@@ -60,7 +60,10 @@ need() {
   local tool
   for tool; do
     command -v "$tool" >/dev/null \
-      || { echo "$tool not on PATH (it comes from nix/flake.nix: run dotup)"; return 1; }
+      || {
+        echo "$tool not on PATH (it comes from nix/flake.nix: run dotup)"
+        return 1
+      }
   done
 }
 
@@ -118,7 +121,7 @@ test_covers() {
   local t=$1 p g
   shift
   local -a globs
-  read -ra globs <<< "$(test_meta "$t" covers)"
+  read -ra globs <<<"$(test_meta "$t" covers)"
   for p; do
     case "$p" in
       "${t%_test.sh}"_test.* | scripts/check.sh | .github/workflows/tests.yml | nix/flake.lock) return 0 ;;
@@ -133,7 +136,7 @@ test_covers() {
 
 # --- what to run --------------------------------------------------------------
 
-checks=()  # shell lua configs markdown nix test:<name> ...
+checks=() # shell lua configs markdown nix test:<name> ...
 add_all_tests() {
   local t
   for t in scripts/tests/*_test.sh; do checks+=("test:$(test_name "$t")"); done
