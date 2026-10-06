@@ -1,11 +1,11 @@
 -- Highlight every non-ASCII character (em dash, smart quote, NBSP, ...) on a
 -- red background, so stray typography stands out in files meant to be plain
 -- ASCII. File buffers only (buftype ""): pickers, the explorer and terminals
--- keep their icons clean, and a big file (snacks bigfile in plugins.lua
--- makes it "nowrite") is never scanned. On by default; plugins.lua maps the
--- ,ua toggle.
+-- keep their icons clean, and a big or minified file (filetype "bigfile",
+-- snacks bigfile in plugins.lua) is never scanned. On by default;
+-- plugins.lua maps the ,ua toggle.
 --
---   redraw --> on_win: enabled and buftype ""? --no--> skip the window
+--   redraw --> on_win: enabled, buftype "", not bigfile? --no--> skip window
 --                           | yes
 --              on_line, per visible line: each run of bytes >= 0x80
 --              (one UTF-8 char or several: an em dash is 3 bytes) gets an
@@ -23,7 +23,8 @@ local enabled = true
 
 vim.api.nvim_set_decoration_provider(ns, {
   on_win = function(_, _, buf)
-    return enabled and vim.bo[buf].buftype == ""
+    local bo = vim.bo[buf]
+    return enabled and bo.buftype == "" and bo.filetype ~= "bigfile"
   end,
   on_line = function(_, _, buf, row)
     local line = vim.api.nvim_buf_get_lines(buf, row, row + 1, true)[1]

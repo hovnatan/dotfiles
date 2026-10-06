@@ -160,18 +160,17 @@ snacks.setup({
   -- treesitter loads, and a notification says so. Everything set here is
   -- local to that buffer: the old hand-written guard set eventignore=all
   -- globally and never reset it, so one big file switched off every autocmd
-  -- for the rest of the session. nowrite keeps autosave (core/autocmd.lua)
-  -- off a buffer with no undo; snacks' default NoMatchParen is left out,
-  -- as it is global too.
+  -- for the rest of the session. Undo stays on and the file stays writable:
+  -- the guard's undolevels=-1 + nowrite pair (a 2019 Vim tip) bought little
+  -- speed, and with the line-length rule it made a 20 KB one-line JSON
+  -- unsaveable. Snacks' default NoMatchParen is left out, as it is global.
   bigfile = {
     enabled = true,
     size = 1024 * 1024,
     setup = function(ctx)
       local bo = vim.bo[ctx.buf]
       bo.swapfile = false
-      bo.undolevels = -1
       bo.bufhidden = "unload"
-      bo.buftype = "nowrite"
     end,
   },
 })
