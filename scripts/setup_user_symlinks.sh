@@ -52,7 +52,6 @@ fi
 EOT
 fi
 
-mkdir -p ~/.vimundo/
 rm -rf ~/.vimrc
 ln -s ~/.dotfiles/home/.vimrc ~/.vimrc
 
