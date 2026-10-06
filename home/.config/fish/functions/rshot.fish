@@ -31,7 +31,7 @@ function rshot --description 'Copy the clipboard image to a remote host; clipboa
     set -l tmp (mktemp -t rshot).png
     if not osascript -e 'on run argv' \
             -e 'set f to open for access (POSIX file (item 1 of argv)) with write permission' \
-            -e 'try' \
+            -e try \
             -e 'write (the clipboard as «class PNGf») to f' \
             -e 'on error' \
             -e 'close access f' \

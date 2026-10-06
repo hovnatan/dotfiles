@@ -69,8 +69,8 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     bind -M insert \cn down-or-prefix-search
     bind \cd forward-word-or-exit
     bind -M insert \cd forward-word-or-exit
-#    bind -M insert -m default jk backward-char force-repaint
-#    bind -m insert \e force-repaint
+    #    bind -M insert -m default jk backward-char force-repaint
+    #    bind -m insert \e force-repaint
 end
 
 set -g fish_key_bindings hybrid_bindings
