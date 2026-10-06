@@ -132,10 +132,23 @@ snacks.setup({
       -- disk (e.g. captured logs under a .gitignore'd dir), unlike the
       -- pickers above, which still skip them. I toggles ignored, H hidden.
       -- Inside the tree, - goes up a directory as vim-vinegar's did.
+      -- <CR> / l keep the cursor in the tree so several files open in a row;
+      -- snacks' confirm alone jumps into the file (<C-w>l gets there).
       explorer = {
         hidden = true,
         ignored = true,
-        win = { list = { keys = { ["-"] = "explorer_up" } } },
+        actions = {
+          confirm_stay = { action = { "confirm", "focus_list" }, desc = "Open, stay in tree" },
+        },
+        win = {
+          list = {
+            keys = {
+              ["-"] = "explorer_up",
+              ["<CR>"] = "confirm_stay",
+              ["l"] = "confirm_stay",
+            },
+          },
+        },
       },
     },
   },
@@ -171,7 +184,7 @@ snacks.toggle.option("background", { off = "light", on = "dark", name = "dark ba
 
 -- -: sidebar tree with the current file revealed (vim-vinegar's key, 2b52bdee).
 -- Pressing it outside the tree while it is open closes it; q closes it too.
---   l / <CR> open    h close dir    - / <BS> up    a add (dir/ for a dir)
+--   l / <CR> open, cursor stays    h close dir    - / <BS> up    a add (dir/ for a dir)
 --   r rename    d delete    c copy    m move    y / p yank and paste files
 vim.keymap.set("n", "-", function()
   snacks.explorer()
