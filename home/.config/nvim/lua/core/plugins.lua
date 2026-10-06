@@ -22,7 +22,7 @@ vim.pack.add({
   { src = "https://github.com/NeogitOrg/neogit", version = "master" },
   -- Last tag 2.0.0 trails main by 122 commits (2026-09-24), so follow main.
   { src = "https://github.com/ellisonleao/gruvbox.nvim", version = "main" },
-  -- Only its picker and explorer modules are used (setup below). Semver releases, main
+  -- Only its picker, explorer and bigfile modules are used (setup below). Semver releases, main
   -- only 11 commits past v2.31.0 (2026-09-27), so stay on 2.x like gitsigns.
   { src = "https://github.com/folke/snacks.nvim", version = vim.version.range("2") },
 }, {
@@ -103,9 +103,9 @@ require("neogit").setup({})
 -- ,gg opens the status tab (leader is ","); plain gg stays "first line".
 vim.keymap.set("n", "<leader>gg", "<cmd>Neogit<cr>", { desc = "Neogit status" })
 
--- snacks.nvim: only the picker and the explorer (a picker in disguise);
--- every other snacks module stays off. The <space> keys are the ones the old
--- telescope setup had (3456c4f4^):
+-- snacks.nvim: only the picker, the explorer (a picker in disguise) and
+-- bigfile; every other snacks module stays off. The <space> keys are the ones
+-- the old telescope setup had (3456c4f4^):
 --
 --   <space>f  smart: open buffers, then recent files, then all files (fd),
 --             frecency-ranked with a cwd bonus (was telescope smart_open)
@@ -155,6 +155,25 @@ snacks.setup({
   -- Also opens on `nvim <dir>` or :e <dir> (netrw itself is off,
   -- core/options.lua). Deletes go to the system trash.
   explorer = { enabled = true },
+  -- A file over 1 MB, or a minified one (lines over 1000 chars on average),
+  -- gets filetype "bigfile" instead of its own, so no ftplugin, syntax or
+  -- treesitter loads, and a notification says so. Everything set here is
+  -- local to that buffer: the old hand-written guard set eventignore=all
+  -- globally and never reset it, so one big file switched off every autocmd
+  -- for the rest of the session. nowrite keeps autosave (core/autocmd.lua)
+  -- off a buffer with no undo; snacks' default NoMatchParen is left out,
+  -- as it is global too.
+  bigfile = {
+    enabled = true,
+    size = 1024 * 1024,
+    setup = function(ctx)
+      local bo = vim.bo[ctx.buf]
+      bo.swapfile = false
+      bo.undolevels = -1
+      bo.bufhidden = "unload"
+      bo.buftype = "nowrite"
+    end,
+  },
 })
 vim.keymap.set("n", "<space>f", function()
   snacks.picker.smart()

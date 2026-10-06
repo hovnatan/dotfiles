@@ -10,10 +10,3 @@ function _G.safe_require(module)
   end
   return result
 end
-
-function _G.fsize(file)
-  local current = file:seek() -- get current position
-  local size = file:seek("end") -- get file size
-  file:seek("set", current) -- restore position
-  return size
-end
