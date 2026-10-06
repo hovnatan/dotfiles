@@ -193,13 +193,17 @@ end, { desc = "Grep word or selection" })
 -- state ("Enabled **wrap**"). Window options (wrap, list, numbers) and spell
 -- flip for the current window/buffer only, background for the whole session.
 --   ,uw wrap    ,us spell    ,ul line numbers    ,uL relative numbers
---   ,ui invisible chars (list)    ,ub light/dark background
+--   ,ui invisible chars (list)    ,ub light/dark background    ,ua non-ASCII
 snacks.toggle.option("wrap", { name = "wrap" }):map("<leader>uw")
 snacks.toggle.option("spell", { name = "spell" }):map("<leader>us")
 snacks.toggle.line_number():map("<leader>ul")
 snacks.toggle.option("relativenumber", { name = "relative number" }):map("<leader>uL")
 snacks.toggle.option("list", { name = "invisible chars" }):map("<leader>ui")
 snacks.toggle.option("background", { off = "light", on = "dark", name = "dark background" }):map("<leader>ub")
+
+-- ,ua: non-ASCII highlight, the feature itself is core/non_ascii.lua.
+local non_ascii = require("core.non_ascii")
+snacks.toggle.new({ name = "non-ASCII highlight", get = non_ascii.enabled, set = non_ascii.set }):map("<leader>ua")
 
 -- -: sidebar tree with the current file revealed (vim-vinegar's key, 2b52bdee).
 -- Pressing it outside the tree while it is open closes it; q closes it too.
