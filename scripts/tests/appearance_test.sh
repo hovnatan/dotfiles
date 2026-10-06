@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# check.sh covers: scripts/appearance.sh scripts/lib/* home/.tmux.conf home/.config/tmux/* home/.claude/themes/* home/.config/zathura/*
 #
 # appearance_test.sh -- end-to-end checks for scripts/appearance.sh, which
 # points Claude Code's theme and zathura's colours at light or dark. Runs the

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# check.sh covers: scripts/claude_tmux_run.sh scripts/lib/* home/.config/systemd/user/claude-tmux.service home/.profile.shared
+# check.sh runs-on: Linux
 #
 # claude_tmux_run_test.sh -- end-to-end checks for scripts/claude_tmux_run.sh
 # and the claude-tmux.service ExecStop line, on a throwaway tmux socket with a

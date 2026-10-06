@@ -58,6 +58,17 @@ a decision (IINA key bindings differing from the repo, a real directory where a
 skill link belongs) is reported as a warning and makes the run exit non-zero
 once the rest is done.
 
+## Checks before a push
+
+`scripts/check.sh` runs every check CI runs (shellcheck, stylua, fish/JSON/nvim
+config, markdownlint, the Nix flake, the tests in `scripts/tests/`); the CI
+workflows call it too. The installer sets `core.hooksPath` to
+`scripts/git-hooks`, whose `pre-push` runs `check.sh --changed` on each commit
+being pushed, in a throwaway worktree: lint always (a few seconds), the flake
+check when `nix/` changed, and the tests whose `# check.sh covers:` line names
+a changed path. A failure stops the push; `git push --no-verify` skips it once,
+and CI still runs everything. The script's header says how each piece is picked.
+
 ## Nix packages
 
 Command-line tools come from Nix, the same set at the same versions on

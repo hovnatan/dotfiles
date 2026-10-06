@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# check.sh covers: home/.claude/ntfy-stop.sh scripts/lib/*
 #
 # ntfy_stop_test.sh -- end-to-end checks for home/.claude/ntfy-stop.sh, the
 # Claude Code Stop / UserPromptSubmit hook that pushes to ntfy when a finished
