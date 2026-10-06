@@ -8,5 +8,5 @@ function fif
                 --bind "change:reload:$RG_PREFIX {q}" \
                 --preview-window="70%:wrap"
     ) &&
-    open "$file"
+        open "$file"
 end

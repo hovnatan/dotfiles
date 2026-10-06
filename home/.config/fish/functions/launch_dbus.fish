@@ -1,3 +1,3 @@
 function launch_dbus
-  export (dbus-launch)
+    export (dbus-launch)
 end
