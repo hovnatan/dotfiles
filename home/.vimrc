@@ -46,7 +46,14 @@ if stridx(&runtimepath, expand(vimDir)) == -1
   let &runtimepath.=','.vimDir
 endif
 
-let &undodir = expand(vimDir . '/undodir')
+" Undo history is XDG state, beside Nvim's stdpath('state')/undo but in its own
+" dir: the two undo file formats are not interchangeable. Vim, unlike Nvim, skips
+" writing undo files silently when 'undodir' is missing, so create it here.
+let s:state_home = empty($XDG_STATE_HOME) ? expand('~/.local/state') : $XDG_STATE_HOME
+let &undodir = s:state_home . '/vim/undo'
+if !isdirectory(&undodir)
+  call mkdir(&undodir, 'p')
+endif
 set undofile
 
 let &t_SI = "\e[6 q"

@@ -79,7 +79,6 @@ vim.opt.switchbuf = "usetab"
 vim.opt.listchars = "tab:▸\\ ,eol:¬"
 vim.opt.history = 200
 vim.opt.undofile = true
-vim.opt.undodir = vim.fn.expand("~/.vimundo")
 vim.opt.undolevels = 1000
 vim.opt.undoreload = 10000
 vim.opt.colorcolumn = "88"

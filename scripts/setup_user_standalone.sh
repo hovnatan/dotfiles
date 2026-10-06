@@ -11,7 +11,6 @@ curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.zshrc -o ~/.
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.tmux.conf -o ~/.tmux.conf
 
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.vimrc -o ~/.vimrc
-mkdir -p ~/.vim/undodir
 
 if ! grep -q '\.gitconfig_common' ~/.gitconfig; then
     cat <<EOT >> ~/.gitconfig
