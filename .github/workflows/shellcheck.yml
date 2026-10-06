@@ -1,7 +1,10 @@
 # Lint every tracked shell script at warning level, the bar set in commit
 # a53d141b and documented in .shellcheckrc (info/style notes stay advisory),
-# and reject a bare GNU `timeout`: scripts/check.sh's `shell` check, which
-# the pre-push hook runs too.
+# check its formatting with shfmt (style in .editorconfig), and reject a bare
+# GNU `timeout`: scripts/check.sh's `shell` check, which the pre-push hook
+# runs too. Both tools come from the pinned nixpkgs (nix/flake.lock), the
+# build `dotup` installs, since their output can shift between releases.
+# Fix a shfmt failure with:  git ls-files -z '*.sh' 'scripts/git-hooks/*' | xargs -0 shfmt -w
 name: shellcheck
 on:
   push:
@@ -12,5 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - run: shellcheck --version
-      - run: scripts/check.sh shell
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: shellcheck and shfmt
+        run: |
+          nix shell --inputs-from "path:$PWD/nix" nixpkgs#shellcheck nixpkgs#shfmt --command bash -c \
+            "shellcheck --version && shfmt --version && scripts/check.sh shell"

@@ -93,6 +93,11 @@ fi
 # holds for every push from this clone, whatever directory started it.
 git -C ~/.dotfiles config core.hooksPath scripts/git-hooks
 
+# `git blame` here skips the bulk reformatting commits listed in
+# .git-blame-ignore-revs (shfmt, fish_indent), so a line shows its last real
+# change.
+git -C ~/.dotfiles config blame.ignoreRevsFile .git-blame-ignore-revs
+
 mkdir -p ~/.config
 rm -rf ~/.config/htop
 ln -s ~/.dotfiles/home/.config/htop ~/.config/

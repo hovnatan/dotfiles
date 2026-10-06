@@ -1,0 +1,10 @@
+# Bulk reformatting commits that `git blame` should look through, to the
+# commit that last changed a line's content. GitHub's blame view reads this
+# file on its own; locally scripts/setup_user_symlinks.sh sets
+# blame.ignoreRevsFile in this clone's config.
+
+# style(shell): format every tracked shell script with shfmt
+28020a58719d4d8de0de3e46d600ed2489dc62d8
+
+# style(fish): format every tracked .fish file with fish_indent
+2370171b67f1c5d1ca38ce07c1e247e6aae0d8b9

@@ -60,7 +60,7 @@ once the rest is done.
 
 ## Checks before a push
 
-`scripts/check.sh` runs every check CI runs (shellcheck, stylua, fish/JSON/nvim
+`scripts/check.sh` runs every check CI runs (shellcheck, shfmt, stylua, fish/JSON/nvim
 config, markdownlint, the Nix flake, the tests in `scripts/tests/`); the CI
 workflows call it too. The installer sets `core.hooksPath` to
 `scripts/git-hooks`, whose `pre-push` runs `check.sh --changed` on each commit
