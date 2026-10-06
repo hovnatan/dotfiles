@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 #
 # check_configs.sh -- parse checks for the config formats no other CI job
-# covers (.github/workflows/configs.yml runs it). Run it before pushing a
-# change to fish, JSON or nvim config: dotup links these straight into every
-# machine, where a syntax error breaks the shell, Claude Code or nvim.
+# covers; scripts/check.sh runs it as its `configs` check, in CI
+# (.github/workflows/configs.yml) and before every push. dotup links these
+# straight into every machine, where a syntax error breaks the shell, Claude
+# Code or nvim.
 #
-#   1. fish   fish -n on every tracked .fish file
+#   1. fish   fish -n on every tracked .fish file, and fish_indent --check:
+#             the layout fish's own `funced` and `funcsave` write. Fix a
+#             failure with:  git ls-files -z '*.fish' | xargs -0 fish_indent -w
 #   2. json   every tracked .json parses; .devcontainer/ is exempt, as the
 #             devcontainer format is JSONC and its comments are deliberate
 #   3. nvim   home/.config/nvim starts clean from an empty data dir, as on a
@@ -14,14 +17,15 @@
 #             (a rewrite means the plugin specs and the lockfile disagree)
 #
 # Usage: scripts/check_configs.sh      (exit 0 = all passed)
-# Needs fish, nvim, git and python3 on PATH (all in nix/flake.nix).
+# Needs fish (with fish_indent), nvim, git and python3 on PATH (all in
+# nix/flake.nix).
 
 set -uo pipefail
 
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 cd "$REPO" || exit 1
 
-for tool in fish nvim git python3; do
+for tool in fish fish_indent nvim git python3; do
   command -v "$tool" >/dev/null \
     || { echo "check_configs.sh: $tool not on PATH (it comes from nix/flake.nix: run dotup)" >&2; exit 1; }
 done
@@ -38,8 +42,9 @@ n=0
 while IFS= read -r -d '' f; do
   n=$((n + 1))
   fish -n "$f" 2>"$tmp/err" || fail "fish: $f: $(head -n 3 "$tmp/err")"
+  fish_indent --check "$f" 2>/dev/null || fail "fish: $f is not fish_indent's layout (fish_indent -w $f)"
 done < <(git ls-files -z '*.fish')
-log "fish: $n files parsed"
+log "fish: $n files parsed and formatted"
 
 # --- 2. json ------------------------------------------------------------------
 

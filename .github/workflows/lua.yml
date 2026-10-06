@@ -1,6 +1,7 @@
 # Every tracked .lua file must match .stylua.toml. stylua comes from the
 # pinned nixpkgs (nix/flake.lock), the build `dotup` installs and nvim's
 # format-on-save runs, since stylua's output can shift between releases.
+# scripts/check.sh's `lua` check, which the pre-push hook runs too.
 # Fix a failure with:  git ls-files -z '*.lua' | xargs -0 stylua
 name: lua
 on:
@@ -19,4 +20,4 @@ jobs:
       - name: stylua --check
         run: |
           nix shell --inputs-from "path:$PWD/nix" nixpkgs#stylua --command bash -c \
-            "stylua --version && git ls-files -z '*.lua' | xargs -0 stylua --check"
+            "stylua --version && scripts/check.sh lua"

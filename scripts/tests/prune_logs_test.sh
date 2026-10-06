@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# check.sh covers: scripts/prune_logs.sh scripts/lib/*
 #
 # prune_logs_test.sh -- end-to-end checks for scripts/prune_logs.sh, which
 # removes old event logs from ~/.dotfiles/.logs. Runs the script for real on

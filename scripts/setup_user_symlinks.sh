@@ -89,6 +89,11 @@ if ! grep -qs 'config\.shared' ~/.gitconfig; then
 EOT
 fi
 
+# This repo's own git hooks (scripts/git-hooks/): pre-push runs
+# scripts/check.sh on what is being pushed. Set in the repo's config, so it
+# holds for every push from this clone, whatever directory started it.
+git -C ~/.dotfiles config core.hooksPath scripts/git-hooks
+
 mkdir -p ~/.config
 rm -rf ~/.config/htop
 ln -s ~/.dotfiles/home/.config/htop ~/.config/

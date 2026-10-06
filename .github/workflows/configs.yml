@@ -1,5 +1,6 @@
-# Parse checks for fish, JSON and the nvim config (scripts/check_configs.sh
-# says what each covers). fish and nvim come from the pinned nixpkgs
+# Parse checks for fish, JSON and the nvim config, plus fish's layout
+# (scripts/check_configs.sh says what each covers): scripts/check.sh's
+# `configs` check, which the pre-push hook runs too. fish and nvim come from the pinned nixpkgs
 # (nix/flake.lock), the builds dotup installs, so CI parses with the same
 # versions the machines run; git and python3 are the runner's.
 name: configs
@@ -16,7 +17,7 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - name: scripts/check_configs.sh
+      - name: scripts/check.sh configs
         run: |
           nix shell --inputs-from "path:$PWD/nix" nixpkgs#fish nixpkgs#neovim --command bash -c \
-            "fish --version && nvim --version | head -1 && scripts/check_configs.sh"
+            "fish --version && nvim --version | head -1 && scripts/check.sh configs"

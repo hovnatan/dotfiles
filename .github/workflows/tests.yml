@@ -1,20 +1,11 @@
 # Run the end-to-end tests in scripts/tests/ on both platforms the scripts
-# ship to (AGENTS.md: they must run on macOS and Linux). Each runner gets the
-# tools the tests drive from the pinned nixpkgs (nix/flake.lock), the same
-# builds `dotup` installs on the real machines:
-#
-#   ubuntu-latest   ntfy_stop_test.sh, appearance_test.sh,
-#                   prune_logs_test.sh, tmux_hooks_test.sh,
-#                   iterm2_bell_banners_test.sh, ssh_command_test.sh,
-#                   claude_tmux_run_test.sh (needs a
-#                   user systemd manager: lingering on)
-#                   apt_bundle_test.sh (in an ubuntu:24.04
-#                   container, on the runner's docker)
-#   macos-latest    ntfy_stop_test.sh, appearance_test.sh, prune_logs_test.sh,
-#                   tmux_hooks_test.sh, iterm2_bell_banners_test.sh,
-#                   ssh_command_test.sh
-#                   (claude_tmux_run_test.sh and apt_bundle_test.sh are
-#                   Linux only: the macOS runner has no docker)
+# ship to (AGENTS.md: they must run on macOS and Linux), through
+# scripts/check.sh: every *_test.sh, each a check of its own, so one failure
+# does not hide the tests after it. A test's `# check.sh runs-on:` line keeps
+# it to one OS: claude_tmux_run_test.sh needs a user systemd manager
+# (lingering, below) and apt_bundle_test.sh docker, which the macOS runner
+# lacks. Each runner gets the tools the tests drive from the pinned nixpkgs
+# (nix/flake.lock), the same builds `dotup` installs on the real machines.
 #
 # The tmux test links ~/.nix-profile into its throwaway HOME, so tmux has to
 # be in the default profile, not a `nix shell`: without it the server runs
@@ -57,13 +48,4 @@ jobs:
           echo "XDG_RUNTIME_DIR=$rt" >> "$GITHUB_ENV"
 
       - run: tmux -V; bash --version | head -1; python3 --version
-      - run: scripts/tests/ntfy_stop_test.sh
-      - run: scripts/tests/appearance_test.sh
-      - run: scripts/tests/prune_logs_test.sh
-      - run: scripts/tests/tmux_hooks_test.sh
-      - run: scripts/tests/iterm2_bell_banners_test.sh
-      - run: scripts/tests/ssh_command_test.sh
-      - run: scripts/tests/claude_tmux_run_test.sh
-        if: runner.os == 'Linux'
-      - run: scripts/tests/apt_bundle_test.sh
-        if: runner.os == 'Linux'
+      - run: scripts/check.sh tests

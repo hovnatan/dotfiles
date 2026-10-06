@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# check.sh covers: home/.hammerspoon/iterm2_bell_banners.lua home/.hammerspoon/clear_notifications.lua scripts/lib/*
 # Exercise the real Lua module with explicit AX events and task results;
 # no macOS UI is needed, so these races run in CI on Linux and macOS.
 set -euo pipefail

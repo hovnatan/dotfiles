@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# check.sh covers: home/.hammerspoon/ssh_command.lua scripts/lib/*
 # Exercise home/.hammerspoon/ssh_command.lua, the parser behind iTerm2's
 # Cmd-T in an ssh tab (iterm2_keys.lua). Pure Lua, so it runs in CI on
 # Linux and macOS.

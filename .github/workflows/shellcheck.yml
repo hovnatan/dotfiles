@@ -1,5 +1,7 @@
 # Lint every tracked shell script at warning level, the bar set in commit
-# a53d141b and documented in .shellcheckrc. Info/style notes stay advisory.
+# a53d141b and documented in .shellcheckrc (info/style notes stay advisory),
+# and reject a bare GNU `timeout`: scripts/check.sh's `shell` check, which
+# the pre-push hook runs too.
 name: shellcheck
 on:
   push:
@@ -11,18 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: shellcheck --version
-      - run: git ls-files '*.sh' | xargs shellcheck -S warning
-
-      # GNU-only commands shellcheck cannot see (AGENTS.md: scripts run on
-      # macOS too). `timeout` is coreutils; macOS has none, so a bare call
-      # exits 127 there. Flags an invocation with a duration (`timeout 30 ssh`)
-      # outside comments; a guarded use that stores it in a variable after
-      # `command -v timeout` (home/.claude/statusline-command.sh) passes.
-      - name: no bare GNU timeout
-        run: |
-          pat='(^|[;&|(`]|[[:space:]])timeout[[:space:]]+[0-9]'
-          if git ls-files -z '*.sh' | xargs -0 grep -nE "$pat" \
-               | grep -vE '^[^:]+:[0-9]+:[[:space:]]*#'; then
-            echo "::error::bare 'timeout' is GNU-only; macOS lacks it. Guard with 'command -v timeout' or drop it."
-            exit 1
-          fi
+      - run: scripts/check.sh shell

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# pre-push -- runs scripts/check.sh on each commit being pushed, so a push
+# that would turn CI red stops on this machine instead. Installed by
+# scripts/setup_user_symlinks.sh (core.hooksPath = scripts/git-hooks), so
+# it holds for every push from this clone: a terminal's, Neogit's, or an
+# agent's started from another project.
+#
+#   git push
+#     stdin, a line per ref:  <local ref> <local sha> <remote ref> <remote sha>
+#       -> paths: every file the commits no remote has yet touch
+#       -> a throwaway worktree at <local sha>, so what is checked is the
+#          commit being pushed, not a working tree with uncommitted edits
+#       -> <worktree>/scripts/check.sh --changed <paths>: that commit's own
+#          checks, picked for those paths (lint always, nix and tests as
+#          they apply; check.sh says which)
+#       -> any failure stops the whole push
+#
+# Skip it once with `git push --no-verify`; CI still runs every check.
+# Each push is noted in the day's event log (.logs/<day>_git_pre_push/).
+
+set -uo pipefail
+
+REPO=$(git rev-parse --show-toplevel) || exit 1
+. "$REPO/scripts/lib/event_log.sh"
+event_log_daily git_pre_push --no-prune || exit 1
+
+tmp=$(mktemp -d)
+cleanup() {
+  local wt
+  for wt in "$tmp"/wt-*; do
+    [ -d "$wt" ] && git worktree remove --force "$wt"
+  done
+  rm -rf "$tmp"
+}
+trap cleanup EXIT
+
+status=0
+while read -r lref lsha rref _; do
+  # A ref delete pushes no commit; a second ref at the same commit adds
+  # nothing to check.
+  [[ $lsha =~ ^0+$ ]] && continue
+  wt=$tmp/wt-$lsha
+  [ -d "$wt" ] && continue
+
+  paths=()
+  while IFS= read -r -d '' p; do
+    [ -n "$p" ] && paths+=("$p")
+  done < <(git log -z --no-renames --format= --name-only "$lsha" --not --remotes | sort -zu)
+  if [ ${#paths[@]} -eq 0 ]; then
+    log "$lref -> $rref ${lsha:0:12}: no commit new to the remotes, nothing to check"
+    continue
+  fi
+
+  log "$lref -> $rref ${lsha:0:12}: checking ${#paths[@]} changed path(s) in a worktree"
+  git worktree add --detach --quiet "$wt" "$lsha" || exit 1
+
+  # Run with git's hook environment cleared: an inherited GIT_DIR or
+  # GIT_INDEX_FILE would point check.sh's `git ls-files` at this clone's
+  # index instead of the pushed commit's.
+  # shellcheck disable=SC2046 # one variable name per word
+  if (cd "$wt" && unset $(git rev-parse --local-env-vars) && scripts/check.sh --changed "${paths[@]}"); then
+    log "${lsha:0:12}: checks passed"
+  else
+    log "${lsha:0:12}: checks FAILED - push stopped (fix, or skip once with git push --no-verify)"
+    status=1
+  fi
+done
+
+exit "$status"

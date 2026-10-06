@@ -25,22 +25,20 @@ It is kept short on purpose - every line here is paid on every session.
   or cask adopt, or apt install.
 - Changing `scripts/claude_tmux_run.sh`, the claude-tmux unit,
   `home/.claude/ntfy-stop.sh` or a tmux hook (`home/.config/tmux/`, the
-  `set-hook` lines): extend `scripts/tests/` with the new behaviour.
-  CI runs them on Linux and macOS (`.github/workflows/tests.yml`); locally
-  they are safe beside live sessions.
+  `set-hook` lines): extend `scripts/tests/` with the new behaviour. A new
+  test needs a `# check.sh covers:` line (format in `scripts/check.sh`); it
+  decides when the pre-push hook runs the test. Tests are safe beside live sessions.
 - This repo is public, commit messages included. Host names, IPs, tailnet
   names and internal documents go in the private repos (`~/.dotfiles-private`
   personal, `~/.hov-dotfiles-private` work; see CONTEXT.md) or in
   machine-local state (fish universal variables, `~/.ssh/local_config`);
   tracked files and commits use placeholders (`<host>`, `vm`). Removing one
   after a push means rewriting history and force-pushing.
-- Changed fish, JSON or nvim config: `scripts/check_configs.sh` before pushing
-  (CI runs it, `.github/workflows/configs.yml`). It does not format-check Lua;
-  for any `.lua` change also run `git ls-files -z '*.lua' | xargs -0 stylua --check`
-  (`.github/workflows/lua.yml`), which e.g. rejects `"...\"..."` for `'..."...'`.
-- Changed a `.md`: run the linter from the repo root before pushing (command and
-  `--fix` caveats in `.github/workflows/markdown.yml`, which CI runs). Vendored
-  skills are ignored in `.markdownlint-cli2.yaml`: add a skill there when vendoring it.
+- `scripts/check.sh` runs every check CI runs, and the `pre-push` hook runs it on
+  each pushed commit (`scripts/git-hooks/`, wired by the installer): when it stops a
+  push, fix what it names and push again. `scripts/check.sh --changed <paths>` checks
+  before committing. Vendored skills are ignored in `.markdownlint-cli2.yaml`:
+  add a skill there when vendoring it.
 - `home/.codex/config.toml` is linked as `~/.codex/config.toml`, and Codex and
   the ChatGPT app write machine-local state into it (model, app paths, MCP
   servers, `notify`), so it often shows as modified. Never stage or commit it
