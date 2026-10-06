@@ -93,27 +93,6 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   end,
 })
 
-vim.g.LargeFile = 1024 * 1024 * 1
-vim.api.nvim_create_autocmd("BufReadPre", {
-  pattern = "*",
-  callback = function(input)
-    local f = io.open(input.match)
-    local size = fsize(f)
-    f:close()
-    if size > vim.g.LargeFile then
-      vim.bo.bufhidden = "unload"
-      vim.bo.buftype = "nowrite"
-      vim.bo.undolevels = -1
-      vim.o.loadplugins = false
-      vim.o.lazyredraw = true
-      vim.o.swapfile = false
-      vim.o.eventignore = "all"
-      vim.o.hidden = false
-      vim.o.syntax = "off"
-      print("Large file")
-    end
-  end,
-})
 vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
   pattern = "*.gyp",
   callback = function()
