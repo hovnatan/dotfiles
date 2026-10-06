@@ -44,8 +44,14 @@ log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 # --- host: hand over to the container -------------------------------------------
 
 if [ "${1:-}" != --in-container ]; then
-  command -v docker > /dev/null || { echo "apt_bundle_test.sh: docker not on PATH" >&2; exit 1; }
-  docker info > /dev/null 2>&1 || { echo "apt_bundle_test.sh: no docker daemon answers (docker info); start it" >&2; exit 1; }
+  command -v docker >/dev/null || {
+    echo "apt_bundle_test.sh: docker not on PATH" >&2
+    exit 1
+  }
+  docker info >/dev/null 2>&1 || {
+    echo "apt_bundle_test.sh: no docker daemon answers (docker info); start it" >&2
+    exit 1
+  }
   log "running in ubuntu:24.04"
   exec docker run --rm -v "$REPO:/repo:ro" ubuntu:24.04 \
     bash /repo/scripts/tests/apt_bundle_test.sh --in-container
@@ -70,7 +76,7 @@ KEY=/etc/apt/keyrings/docker.asc
 # bundle <args>: apt_bundle.sh as the ubuntu user; output in $OUT, status in $rc
 bundle() {
   # shellcheck disable=SC2024  # $OUT is root's on purpose; only the script runs as ubuntu
-  sudo -H -u ubuntu "$BUNDLE" "$@" > "$OUT" 2>&1
+  sudo -H -u ubuntu "$BUNDLE" "$@" >"$OUT" 2>&1
   rc=$?
 }
 # expect <status> <name>: the last bundle exited with it
@@ -85,15 +91,18 @@ says_not() {
   if grep -qF -- "$1" "$OUT"; then fail "$2: output has '$1'"; else pass "$2"; fi
 }
 # aptfile <line>...: the copy's Aptfile becomes those lines
-aptfile() { printf '%s\n' "$@" > "$U/.dotfiles/apt/Aptfile"; }
+aptfile() { printf '%s\n' "$@" >"$U/.dotfiles/apt/Aptfile"; }
 
 # The image's own user gets passwordless sudo and a copy of the repo's apt/
 # and scripts/ where a clone would be.
 log "setup: sudo, ca-certificates, the ubuntu user, ~/.dotfiles"
 {
   apt-get update -q && apt-get install -y -q sudo ca-certificates
-} > "$OUT" 2>&1 || { fail "setup: apt-get install sudo ca-certificates"; exit 1; }
-echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu
+} >"$OUT" 2>&1 || {
+  fail "setup: apt-get install sudo ca-certificates"
+  exit 1
+}
+echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >/etc/sudoers.d/ubuntu
 mkdir -p "$U/.dotfiles"
 cp -r /repo/apt /repo/scripts "$U/.dotfiles/"
 chown -R ubuntu:ubuntu "$U/.dotfiles"
@@ -171,7 +180,7 @@ mv "$CA.aside" "$CA"
 
 # What the retired scripts/install_docker.sh left behind.
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu noble stable" \
-  > /etc/apt/sources.list.d/docker.list
+  >/etc/apt/sources.list.d/docker.list
 bundle check
 expect 1 "rival entry: check"
 says "/etc/apt/sources.list.d/docker.list lists https://download.docker.com/linux/ubuntu too" "rival entry: check names the file"
@@ -191,7 +200,7 @@ log "install --yes (the slow step: apt downloads docker-ce)"
 bundle install --yes
 expect 0 "install"
 says "apt-get install docker-ce" "install: says what it installs"
-if docker --version > /dev/null 2>&1; then pass "install: docker runs"; else fail "install: docker --version failed"; fi
+if docker --version >/dev/null 2>&1; then pass "install: docker runs"; else fail "install: docker --version failed"; fi
 
 cp "$SOURCES" "$OUT"
 says "Suites: noble" "install: .sources names the box's codename"
@@ -203,7 +212,7 @@ bundle check
 expect 0 "install: check afterwards"
 says "in step with" "install: check says in step"
 
-cat "$U"/.dotfiles/.logs/*_apt_bundle/events.log > "$OUT" 2>&1
+cat "$U"/.dotfiles/.logs/*_apt_bundle/events.log >"$OUT" 2>&1
 says "repo docker: wrote $SOURCES" "install: event log has the repo"
 says "apt-get install docker-ce" "install: event log has the install"
 
@@ -216,9 +225,12 @@ says_not "apt-get update" "again: no apt-get run"
 
 # --- drift ----------------------------------------------------------------------
 
-echo '# edited by hand' >> "$SOURCES"
-echo 'not a key' > "$KEY"
-apt-get remove -y -q docker-compose-plugin > "$OUT" 2>&1 || { fail "apt-get remove docker-compose-plugin"; exit 1; }
+echo '# edited by hand' >>"$SOURCES"
+echo 'not a key' >"$KEY"
+apt-get remove -y -q docker-compose-plugin >"$OUT" 2>&1 || {
+  fail "apt-get remove docker-compose-plugin"
+  exit 1
+}
 bundle check
 expect 1 "drift: check"
 says "$SOURCES differs from the Aptfile's entry" "drift: edited .sources reported"

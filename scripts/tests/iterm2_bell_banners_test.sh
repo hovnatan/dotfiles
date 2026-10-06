@@ -10,5 +10,8 @@ REPO=$(cd "$(dirname "$0")/../.." && pwd)
 EVENT_LOG_ROOT="$REPO/.logs"
 event_log_start iterm2_bell_banners_test --no-prune
 log "regression log: $EVENT_LOG_FILE"
-command -v lua >/dev/null || { log "ERROR: Lua is missing; it is in the Nix package set (nix/flake.nix): nix profile upgrade nix"; exit 1; }
+command -v lua >/dev/null || {
+  log "ERROR: Lua is missing; it is in the Nix package set (nix/flake.nix): nix profile upgrade nix"
+  exit 1
+}
 lua "$REPO/scripts/tests/iterm2_bell_banners_test.lua" "$REPO" "$EVENT_LOG_FILE"

@@ -11,7 +11,10 @@
 
 set -euo pipefail
 
-[ "$(uname)" = "Darwin" ] || { echo "macOS only"; exit 1; }
+[ "$(uname)" = "Darwin" ] || {
+  echo "macOS only"
+  exit 1
+}
 
 # Preview caches its prefs in-process and would overwrite ours on quit.
 if pgrep -xq Preview; then

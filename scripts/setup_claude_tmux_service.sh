@@ -14,7 +14,7 @@
 
 set -e
 
-if ! command -v sudo &> /dev/null; then
+if ! command -v sudo &>/dev/null; then
   SUDO=""
 else
   SUDO=sudo

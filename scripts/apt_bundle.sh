@@ -110,7 +110,7 @@ parse_aptfile() {
   local line words name n=0
   while IFS= read -r line || [ -n "$line" ]; do
     n=$((n + 1))
-    read -r -a words <<< "$line"
+    read -r -a words <<<"$line"
     if [ "${#words[@]}" -eq 0 ]; then continue; fi
     case ${words[0]} in
       '#'*) ;;
@@ -136,7 +136,7 @@ parse_aptfile() {
         ;;
       *) die "$aptfile:$n: unknown entry '${words[0]}' (an entry is 'repo ...' or 'apt <package>'): $line" ;;
     esac
-  done < "$aptfile"
+  done <"$aptfile"
 }
 
 # --- comparing the box with it ------------------------------------------------
@@ -146,7 +146,7 @@ parse_aptfile() {
 # architecture the box has enabled (i386 on amd64), which it would not have.
 render_sources() {
   local name=$1
-  cat << EOF
+  cat <<EOF
 # Written by ~/.dotfiles/scripts/apt_bundle.sh from apt/Aptfile: change that
 # and run \`apt_bundle.sh install\`, not this file.
 Types: deb
@@ -198,7 +198,7 @@ missing_packages() {
   local package status
   for package in "${packages[@]}"; do
     # dpkg-query fails on a name it has never seen, which is "not installed" too
-    status=$(dpkg-query -W -f='${db:Status-Status}' "$package" 2> /dev/null || true)
+    status=$(dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null || true)
     [ "$status" = installed ] || echo "$package"
   done
 }
@@ -257,7 +257,7 @@ install_all() {
 
   as_root=()
   if [ "$(id -u)" -ne 0 ]; then
-    command -v sudo > /dev/null || die "not root and no sudo on PATH: run as root, or install sudo"
+    command -v sudo >/dev/null || die "not root and no sudo on PATH: run as root, or install sudo"
     as_root=(sudo)
   fi
 
@@ -280,12 +280,12 @@ install_all() {
 
   # Also when only a package is missing: the box's lists may predate it.
   say "apt-get update"
-  "${as_root[@]}" apt-get update ||
-    die "apt-get update failed (its message above says why); the Aptfile's repositories are already in place under $sources_dir: fix the cause and rerun"
+  "${as_root[@]}" apt-get update \
+    || die "apt-get update failed (its message above says why); the Aptfile's repositories are already in place under $sources_dir: fix the cause and rerun"
   if [ "${#missing[@]}" -gt 0 ]; then
     say "apt-get install ${missing[*]}"
-    "${as_root[@]}" apt-get install "${apt_yes[@]}" -- "${missing[@]}" ||
-      die "apt-get install did not go through (declined at its prompt, or its error above); rerun when ready"
+    "${as_root[@]}" apt-get install "${apt_yes[@]}" -- "${missing[@]}" \
+      || die "apt-get install did not go through (declined at its prompt, or its error above); rerun when ready"
   fi
 
   # Look again rather than take apt-get's exit status for it: this is what

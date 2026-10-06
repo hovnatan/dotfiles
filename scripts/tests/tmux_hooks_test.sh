@@ -30,7 +30,10 @@
 set -uo pipefail
 
 for cmd in tmux python3; do
-  command -v "$cmd" >/dev/null || { echo "tmux_hooks_test.sh: $cmd not on PATH" >&2; exit 1; }
+  command -v "$cmd" >/dev/null || {
+    echo "tmux_hooks_test.sh: $cmd not on PATH" >&2
+    exit 1
+  }
 done
 
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
@@ -44,7 +47,10 @@ TMUX_BIN=$(command -v tmux)
 failures=0
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 pass() { log "PASS $*"; }
-fail() { log "FAIL $*"; failures=$((failures + 1)); }
+fail() {
+  log "FAIL $*"
+  failures=$((failures + 1))
+}
 cleanup() {
   [ -n "${client:-}" ] && kill "$client" 2>/dev/null
   [ -n "${bystander:-}" ] && kill "$bystander" 2>/dev/null
@@ -70,18 +76,21 @@ t() { env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin" TERM=xterm-25
 hooks_log() { cat "$H"/.dotfiles/.logs/*_tmux_hooks/events.log 2>/dev/null; }
 # wait_for <pattern>: until the log has a line matching it, 5 s at most
 wait_for() {
-  for _ in $(seq 50); do hooks_log | grep -q -E -- "$1" && return 0; sleep 0.1; done
+  for _ in $(seq 50); do
+    hooks_log | grep -q -E -- "$1" && return 0
+    sleep 0.1
+  done
   return 1
 }
 
 ln -s /bin/sleep "$WORK/claude"
 grep -E '^set-hook -g (client-(attached|detached|session-changed|focus-in|focus-out)|pane-title-changed)' \
-  "$REPO/home/.tmux.conf" > "$WORK/hooks.conf"
+  "$REPO/home/.tmux.conf" >"$WORK/hooks.conf"
 t -f /dev/null new-session -d -s a 'sleep 300'
 t new-session -d -s b "$WORK/claude 300"
 t set -g focus-events on
-if t source-file "$WORK/hooks.conf" 2> "$WORK/out"; then
-  pass "$("$TMUX_BIN" -V) takes the $(wc -l < "$WORK/hooks.conf" | tr -d ' ') hook lines of home/.tmux.conf"
+if t source-file "$WORK/hooks.conf" 2>"$WORK/out"; then
+  pass "$("$TMUX_BIN" -V) takes the $(wc -l <"$WORK/hooks.conf" | tr -d ' ') hook lines of home/.tmux.conf"
 else
   fail "hook lines refused: $(cat "$WORK/out")"
 fi
@@ -126,7 +135,10 @@ while True:
     except OSError: break
 PYEOF
 bystander=$!
-for _ in $(seq 50); do [ -n "$(t list-clients -t =b -F '#{client_tty}')" ] && break; sleep 0.1; done
+for _ in $(seq 50); do
+  [ -n "$(t list-clients -t =b -F '#{client_tty}')" ] && break
+  sleep 0.1
+done
 bystander_tty=$(t list-clients -t =b -F '#{client_tty}')
 
 wait_for ' focus-in [^ ]+ session=a$' || true
@@ -154,11 +166,15 @@ wait_for " session \\\$[0-9]+ renamed a -> renamed \\(pane title \"\\* $HOSTNAME
   && pass "and the session is renamed" || fail "sessions: $(t list-sessions -F '#{session_name}' | tr '\n' ' ')"
 
 # wait: without it bash prints the killed job, heredoc and all.
-kill "$client"; wait "$client" 2>/dev/null; client=
+kill "$client"
+wait "$client" 2>/dev/null
+client=
 wait_for " detached $client_tty session=b\$" && pass "the detach is logged, naming the client" || fail "no detached line: $(hooks_log)"
 # b keeps its bystander until now: only with it gone is the claude pane
 # without a client.
-kill "$bystander"; wait "$bystander" 2>/dev/null; bystander=
+kill "$bystander"
+wait "$bystander" 2>/dev/null
+bystander=
 wait_for ' synthetic focus-out to %[0-9]+ \(b\): no client attached$' \
   && pass "the focus-out sent to the clientless claude pane is logged" || fail "no synthetic focus-out line: $(hooks_log)"
 

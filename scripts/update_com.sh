@@ -4,12 +4,12 @@ set -e
 
 sudo echo "Starting upgrade"
 
-if type snap > /dev/null; then
+if type snap >/dev/null; then
   sudo snap refresh
   SNAPS_NOT_UPDATED=$(sudo snap refresh --list 2>&1)
   if [ "$SNAPS_NOT_UPDATED" != "All snaps up to date." ]; then
     echo "$SNAPS_NOT_UPDATED"
-    exit 1;
+    exit 1
   fi
 fi
 
@@ -17,7 +17,7 @@ sudo apt update
 sudo NEEDRESTART_MODE=a apt -y dist-upgrade
 sudo apt -y autoremove
 
-if type fwupdmgr > /dev/null; then
+if type fwupdmgr >/dev/null; then
   sudo fwupdmgr update
 fi
 
@@ -48,7 +48,7 @@ fi
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-if [ -f /var/run/reboot-required ]; then 
+if [ -f /var/run/reboot-required ]; then
   echo -e "$RED"
   echo 'System reboot required'
   echo -e "$NC"

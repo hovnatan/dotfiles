@@ -58,7 +58,7 @@ POLL_SECONDS=5
 STALE_SECONDS="${CLAUDE_NTFY_STALE_SECONDS:-1800}"
 TOPIC_FILE="$HOME/.config/claude-ntfy/topic"
 NTFY_URL="${CLAUDE_NTFY_URL:-https://ntfy.sh}"
-RUN_DIR="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}"   # Linux tmpfs, else macOS per-user tmp
+RUN_DIR="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}" # Linux tmpfs, else macOS per-user tmp
 
 # The repo's event log. Sourced by expansion, not dirname: this also runs on
 # the per-prompt cancel path, which forks nothing.
@@ -73,8 +73,8 @@ esac
 # (event_log_note: no fork on bash 4.2 and later once the day's directory
 # exists, nothing on stdout, no prune; the waiter prunes).
 note() {
-  event_log_note claude_ntfy "$@" ||
-    echo "ntfy-stop.sh: cannot log under $EVENT_LOG_ROOT" >&2
+  event_log_note claude_ntfy "$@" \
+    || echo "ntfy-stop.sh: cannot log under $EVENT_LOG_ROOT" >&2
 }
 
 # clients <socket> <session-id>: set $clients to what tmux knows of the
@@ -110,7 +110,7 @@ LIST
 # filter; the shell only tests whether any client matched.
 watched() {
   local now hit
-  now=${EPOCHSECONDS:-$(date +%s)}   # builtin on bash 5+; forks on macOS 3.2
+  now=${EPOCHSECONDS:-$(date +%s)} # builtin on bash 5+; forks on macOS 3.2
   hit=$(tmux -S "$1" list-clients -t "\$$2" \
     -f "#{&&:#{m:*focused*,#{client_flags}},#{e|<:$((now - STALE_SECONDS)),#{client_activity}}}" \
     -F w 2>/dev/null) || return 2
@@ -140,8 +140,8 @@ if [ "${1:-}" = --wait ]; then
       exit 0
     fi
   fi
-  echo $$ > "$lock/pid"
-  printf '%s\n' "$who" > "$lock/who"   # for --cancel's log line
+  echo $$ >"$lock/pid"
+  printf '%s\n' "$who" >"$lock/who" # for --cancel's log line
   trap 'rm -rf "$lock"' EXIT
 
   # Prune the old logs from here, off the hook's clock: it forks, and this
@@ -149,7 +149,7 @@ if [ "${1:-}" = --wait ]; then
   # below starts at once: a prune took 0.1 to 0.8 s, and its first poll is
   # timed from here. A push matters more than a tidy log directory, so a
   # prune that fails is noted and the watch goes on.
-  ( event_log_prune > /dev/null 2>&1 || note "$who" "log: prune_logs.sh failed" ) &
+  (event_log_prune >/dev/null 2>&1 || note "$who" "log: prune_logs.sh failed") &
 
   start=$SECONDS
   end=$((SECONDS + DEBOUNCE_SECONDS))
@@ -158,8 +158,14 @@ if [ "${1:-}" = --wait ]; then
     # Watched (0) -> the user saw it; gone (2) -> nothing to report on.
     watched "$socket" "$sid"
     case $? in
-      0) note "$who" "wait: seen after $((SECONDS - start))s, no push"; exit 0 ;;
-      2) note "$who" "wait: session gone, no push"; exit 0 ;;
+      0)
+        note "$who" "wait: seen after $((SECONDS - start))s, no push"
+        exit 0
+        ;;
+      2)
+        note "$who" "wait: session gone, no push"
+        exit 0
+        ;;
     esac
     # Transcript grew since this window started: a new turn superseded
     # the one we are advertising (a user message alone would have fired
@@ -167,7 +173,7 @@ if [ "${1:-}" = --wait ]; then
     # after a full DEBOUNCE_SECONDS of quiet. A long turn grows it at
     # every poll, so only the first poll of a growth streak is logged.
     if [ -n "$transcript" ] && [ "$transcript" -nt "$lock/pid" ]; then
-      echo $$ > "$lock/pid"
+      echo $$ >"$lock/pid"
       end=$((SECONDS + DEBOUNCE_SECONDS))
       [ "$growing" = 1 ] || note "$who" "wait: transcript grew, window restarted"
       growing=1
@@ -188,7 +194,7 @@ if [ "${1:-}" = --wait ]; then
     -H "Title: CC: $(hostname)-$session" \
     -H "Tags: speech_balloon" \
     -d "finished a turn ${DEBOUNCE_SECONDS}s ago and is still unwatched" \
-    "$NTFY_URL/$topic" > /dev/null
+    "$NTFY_URL/$topic" >/dev/null
   rc=$?
   clients "$socket" "$sid"
   if [ "$rc" -eq 0 ]; then
@@ -201,7 +207,7 @@ fi
 
 # --- cancel and hook modes both run inside the session's pane, with
 # $TMUX (socket-path,server-pid,session-id) identifying the session ---
-[ -n "${TMUX:-}" ] || exit 0            # not a tmux-hosted session
+[ -n "${TMUX:-}" ] || exit 0 # not a tmux-hosted session
 socket=${TMUX%%,*} sid=${TMUX##*,}
 
 # --- cancel mode (UserPromptSubmit hook): the user answered from some
@@ -211,10 +217,10 @@ socket=${TMUX%%,*} sid=${TMUX##*,}
 # builtins -- no forks. ---
 if [ "${1:-}" = --cancel ]; then
   lock_path "$socket" "$sid"
-  [ -d "$lock" ] || exit 0              # no waiter pending
+  [ -d "$lock" ] || exit 0 # no waiter pending
   pid="" who=""
-  IFS= read -r pid 2>/dev/null < "$lock/pid"
-  IFS= read -r who 2>/dev/null < "$lock/who"   # before the kill: its trap removes the lock
+  IFS= read -r pid 2>/dev/null <"$lock/pid"
+  IFS= read -r who 2>/dev/null <"$lock/who" # before the kill: its trap removes the lock
   [ -n "$pid" ] && kill "$pid" 2>/dev/null
   rm -rf "$lock"
   note "${who:-\$$sid}" "prompt: user replied, pending push cancelled (waiter ${pid:-?})"
@@ -222,10 +228,10 @@ if [ "${1:-}" = --cancel ]; then
 fi
 
 # --- hook mode: cheap checks, then fork the waiter and get out of the way ---
-IFS= read -r topic < "$TOPIC_FILE" 2>/dev/null
+IFS= read -r topic <"$TOPIC_FILE" 2>/dev/null
 [ -n "${topic:-}" ] || exit 0
 who="$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null) (\$$sid)"
-if watched "$socket" "$sid"; then       # user is looking right now -- no waiter
+if watched "$socket" "$sid"; then # user is looking right now -- no waiter
   note "$who" "stop: watched now, no push"
   exit 0
 fi
@@ -239,5 +245,5 @@ runner=$(command -v setsid || echo nohup)
 clients "$socket" "$sid"
 note "$who" "stop: unwatched, waiter armed (debounce ${DEBOUNCE_SECONDS}s; $clients)"
 "$runner" "$0" --wait "$socket" "$sid" "$topic" "$transcript" "$who" \
-  < /dev/null > /dev/null 2>&1 &
+  </dev/null >/dev/null 2>&1 &
 exit 0

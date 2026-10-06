@@ -40,7 +40,10 @@ PATH="$HOME/.nix-profile/bin:$PATH"
 # shellcheck source=scripts/lib/event_log.sh
 . "$(dirname "$0")/lib/event_log.sh"
 event_log_start appearance_sh
-die() { log "ERROR $*" >&2; exit 1; }
+die() {
+  log "ERROR $*" >&2
+  exit 1
+}
 
 # --- which appearance ---------------------------------------------------------
 
@@ -112,6 +115,6 @@ for name in $names; do
       *"boolean true"*) ;;
       *) die "$name refused '$line': $reply" ;;
     esac
-  done < "$HOME/.config/zathura/theme"
+  done <"$HOME/.config/zathura/theme"
   log "$name recoloured $mode"
 done

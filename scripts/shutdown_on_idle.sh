@@ -5,19 +5,17 @@
 threshold=0.4
 
 count=0
-while true
-do
+while true; do
   load=$(uptime | sed -e 's/.*load average: //g' | awk '{ print $3 }')
   res=$(echo $load'<'$threshold | bc -l)
-  if (( $res )); then
+  if (($res)); then
     echo "Idle minutes count = $count"
-    ((count+=1))
+    ((count += 1))
   else
     count=0
   fi
 
-  if (( count>10 ))
-  then
+  if ((count > 10)); then
     echo Shutting down
     # wait a little bit more before actually pulling the plug
     sleep 300

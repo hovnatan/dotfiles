@@ -37,8 +37,14 @@ usage() {
 remote_path=$1
 dest_dir=${2:-.}
 : "${NAS_SFTP_URL:?set NAS_SFTP_URL, e.g. sftp://user:dummy@host:port}"
-command -v lftp >/dev/null || { echo "lftp not found: brew install lftp" >&2; exit 1; }
-[ -d "$dest_dir" ] || { echo "dest_dir does not exist: $dest_dir" >&2; exit 1; }
+command -v lftp >/dev/null || {
+  echo "lftp not found: brew install lftp" >&2
+  exit 1
+}
+[ -d "$dest_dir" ] || {
+  echo "dest_dir does not exist: $dest_dir" >&2
+  exit 1
+}
 
 # ControlMaster must be off: with it, every segment would ride the one
 # multiplexed TCP connection from ~/.ssh/config and the whole point is lost.

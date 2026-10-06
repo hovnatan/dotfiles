@@ -61,15 +61,21 @@
 # about a minute.
 
 set -euo pipefail
-shopt -s extglob   # for the *([[:space:]]) trim in the extra-repos parser
+shopt -s extglob # for the *([[:space:]]) trim in the extra-repos parser
 
 CONF=${CLAUDE_WORKLOG_CONF:-$HOME/.config/claude-worklog}
 
-die() { echo "worklog_commits.sh: $*" >&2; exit 1; }
+die() {
+  echo "worklog_commits.sh: $*" >&2
+  exit 1
+}
 log() { printf '%s  %s\n' "$(date -u +%H:%M:%S)" "$*" >&2; }
 
 case "${1:-}" in
-  -h|--help|'') sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2 ;;
+  -h | --help | '')
+    sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//' >&2
+    exit 2
+    ;;
 esac
 [ $# -eq 2 ] || die "usage: worklog_commits.sh START END  (ISO 8601 with offset)"
 
@@ -93,14 +99,15 @@ OWNERS=$(grep -v -E '^[[:space:]]*(#|$)' "$CONF/github-owners")
 [ -n "$PATTERN" ] || die "$CONF/git-author-pattern is empty"
 [ -n "$OWNERS" ] || die "$CONF/github-owners is empty"
 # extra-repos is optional by design: a machine with nothing off GitHub has no file.
-EXTRA=$( [ -r "$CONF/extra-repos" ] && grep -v -E '^[[:space:]]*(#|$)' "$CONF/extra-repos" || true )
+EXTRA=$([ -r "$CONF/extra-repos" ] && grep -v -E '^[[:space:]]*(#|$)' "$CONF/extra-repos" || true)
 
 command -v gh >/dev/null 2>&1 || die "gh is not installed"
 gh auth status >/dev/null 2>&1 || die "gh is not authenticated -- run: gh auth login"
 
-export START END PATTERN   # read by the jq programs below through $ENV
+export START END PATTERN # read by the jq programs below through $ENV
 
-RAW=$(mktemp); OUT=$(mktemp)
+RAW=$(mktemp)
+OUT=$(mktemp)
 trap 'rm -f "$RAW" "$OUT"' EXIT
 
 # The name test: join author name and email into one string and regex-search
@@ -120,14 +127,15 @@ while IFS= read -r owner; do
   # or after the window opened, so pushedAt prunes the owner's repo list
   # (35 -> 9 on a typical day) before any per-branch call is made.
   repos=$(gh repo list "$owner" --limit 1000 --json nameWithOwner,pushedAt \
-            --jq '.[] | select(.pushedAt >= $ENV.START) | .nameWithOwner' | sort) \
+    --jq '.[] | select(.pushedAt >= $ENV.START) | .nameWithOwner' | sort) \
     || die "gh repo list $owner failed"
-  log "$owner: $(grep -c . <<< "$repos" || true) repos pushed since $START"
+  log "$owner: $(grep -c . <<<"$repos" || true) repos pushed since $START"
 
   while IFS= read -r repo; do
     [ -n "$repo" ] || continue
     if ! branches=$(gh api --paginate -X GET "repos/$repo/branches" -f per_page=100 --jq '.[].name'); then
-      log "$repo: branch listing failed, skipped"; continue
+      log "$repo: branch listing failed, skipped"
+      continue
     fi
 
     # One commits query per branch: since/until bound it to the window, the
@@ -138,13 +146,13 @@ while IFS= read -r owner; do
       [ -n "$branch" ] || continue
       n=$((n + 1))
       REPO=$repo BRANCH=$branch gh api --paginate -X GET "repos/$repo/commits" \
-          -f sha="$branch" -f since="$START" -f until="$END" -f per_page=100 \
-          --jq "$FILTER" >> "$RAW" \
+        -f sha="$branch" -f since="$START" -f until="$END" -f per_page=100 \
+        --jq "$FILTER" >>"$RAW" \
         || log "$repo@$branch: commit listing failed, skipped"
-    done <<< "$branches"
-    log "$repo: $n branches walked, $(wc -l < "$RAW") matches so far (with branch duplicates)"
-  done <<< "$repos"
-done <<< "$OWNERS"
+    done <<<"$branches"
+    log "$repo: $n branches walked, $(wc -l <"$RAW") matches so far (with branch duplicates)"
+  done <<<"$repos"
+done <<<"$OWNERS"
 
 # Second source: local clones from extra-repos, for repos GitHub does not
 # host or work never pushed. Each line is "<path> [<link>]"; the link fills
@@ -153,11 +161,13 @@ done <<< "$OWNERS"
 # first: a clone is only as fresh as its last fetch, and a stale one reports
 # old state that looks like today's. Remote URLs are never printed -- the
 # Overleaf one embeds a write token.
-US=$(printf '\x1f')   # field separator for git's output: a subject may hold tabs, never this
-LOCAL_PATHS=""        # "<name>\t<path>" per line, so the post-processor knows where to run git
+US=$(printf '\x1f') # field separator for git's output: a subject may hold tabs, never this
+LOCAL_PATHS=""      # "<name>\t<path>" per line, so the post-processor knows where to run git
 while IFS= read -r line; do
   [ -n "$line" ] || continue
-  path=${line%%[[:space:]]*}; link=${line#"$path"}; link=${link##*([[:space:]])}
+  path=${line%%[[:space:]]*}
+  link=${line#"$path"}
+  link=${link##*([[:space:]])}
   path=${path/#\~/$HOME}
   git -C "$path" rev-parse --git-dir >/dev/null 2>&1 \
     || die "extra-repos: $path is not a git checkout on this machine -- clone it or drop the line"
@@ -174,19 +184,20 @@ while IFS= read -r line; do
   # remote prefix is dropped from the name so `main` and `origin/main` fold.
   n=0
   while IFS= read -r ref; do
-    branch=${ref#refs/heads/}; branch=${branch#refs/remotes/*/}
+    branch=${ref#refs/heads/}
+    branch=${branch#refs/remotes/*/}
     n=$((n + 1))
     TZ=UTC git -C "$path" log "$ref" --since="$START" --until="$END" -i --author="$PATTERN" \
-        --date=format-local:%FT%TZ --abbrev=9 \
-        --format="%cd$US%ad$US%cn$US$name$US%h$US$branch$US%s$US$link" \
-      | awk -F "$US" -v OFS='\t' '{ gsub(/\t/, " ", $7); $1 = $1; print }' >> "$RAW"
+      --date=format-local:%FT%TZ --abbrev=9 \
+      --format="%cd$US%ad$US%cn$US$name$US%h$US$branch$US%s$US$link" \
+      | awk -F "$US" -v OFS='\t' '{ gsub(/\t/, " ", $7); $1 = $1; print }' >>"$RAW"
   done < <(git -C "$path" for-each-ref --format='%(refname)' refs/heads refs/remotes | grep -v '/HEAD$')
-  log "$name (local): $n branches walked, $(wc -l < "$RAW") matches so far (with branch duplicates)"
-done <<< "$EXTRA"
+  log "$name (local): $n branches walked, $(wc -l <"$RAW") matches so far (with branch duplicates)"
+done <<<"$EXTRA"
 
 # Post-process: fold duplicates, split work from relandings, fetch line
 # counts for the work commits, print both sections.
-LOCAL_PATHS="$LOCAL_PATHS" python3 - "$RAW" "$START" > "$OUT" <<'PY'
+LOCAL_PATHS="$LOCAL_PATHS" python3 - "$RAW" "$START" >"$OUT" <<'PY'
 import os, subprocess, sys
 from datetime import datetime, timedelta
 

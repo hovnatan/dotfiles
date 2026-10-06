@@ -24,7 +24,10 @@
 
 set -euo pipefail
 
-[ "$(uname)" = "Darwin" ] || { echo "dbus_session.sh: macOS only; Linux has a session bus" >&2; exit 1; }
+[ "$(uname)" = "Darwin" ] || {
+  echo "dbus_session.sh: macOS only; Linux has a session bus" >&2
+  exit 1
+}
 
 # shellcheck source=scripts/lib/event_log.sh
 . "$(dirname "$0")/../lib/event_log.sh"
@@ -34,9 +37,15 @@ event_log_start dbus_session --no-prune
 daemon="$HOME/.nix-profile/bin/dbus-daemon"
 conf="$HOME/.nix-profile/share/dbus-1/session.conf"
 bus="$HOME/.cache/bus"
-[ -x "$daemon" ] || { log "ERROR $daemon missing: apply the Nix package set (dotup), then re-run ~/.dotfiles/scripts/setup_user_symlinks.sh"; exit 1; }
-[ -f "$conf" ] || { log "ERROR $conf missing: the dbus package changed its layout; update dbus_session.sh"; exit 1; }
+[ -x "$daemon" ] || {
+  log "ERROR $daemon missing: apply the Nix package set (dotup), then re-run ~/.dotfiles/scripts/setup_user_symlinks.sh"
+  exit 1
+}
+[ -f "$conf" ] || {
+  log "ERROR $conf missing: the dbus package changed its layout; update dbus_session.sh"
+  exit 1
+}
 
 mkdir -p "$HOME/.cache"
 log "dbus-daemon on $bus"
-exec "$daemon" --nofork --config-file="$conf" --address="unix:path=$bus" >> "$EVENT_LOG_FILE" 2>&1
+exec "$daemon" --nofork --config-file="$conf" --address="unix:path=$bus" >>"$EVENT_LOG_FILE" 2>&1

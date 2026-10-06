@@ -26,7 +26,7 @@ ln -s ~/.dotfiles/home/.tmux.conf ~/.tmux.conf
 
 [ -L ~/.zshrc ] && rm -f ~/.zshrc
 if ! grep -qs '\.dotfiles/home/\.zshrc\.shared' ~/.zshrc; then
-cat <<EOT >> ~/.zshrc
+  cat <<EOT >>~/.zshrc
 if [[ -f "\$HOME/.dotfiles/home/.zshrc.shared" ]]; then
   source "\$HOME/.dotfiles/home/.zshrc.shared"
 fi
@@ -34,7 +34,7 @@ EOT
 fi
 
 if ! grep -qs '\.dotfiles/home/\.zprofile' ~/.zprofile; then
-cat <<EOT >> ~/.zprofile
+  cat <<EOT >>~/.zprofile
 if [[ -f "\$HOME/.dotfiles/home/.zprofile" ]]; then
   source "\$HOME/.dotfiles/home/.zprofile"
 fi
@@ -45,7 +45,7 @@ fi
 # every login shell: bash reads ~/.profile directly, zsh through .zprofile.
 # POSIX sh, since dash and sh read ~/.profile too.
 if ! grep -qs '\.dotfiles/home/\.profile\.shared' ~/.profile; then
-cat <<EOT >> ~/.profile
+  cat <<EOT >>~/.profile
 if [ -f "\$HOME/.dotfiles/home/.profile.shared" ]; then
   . "\$HOME/.dotfiles/home/.profile.shared"
 fi
@@ -66,7 +66,6 @@ ln -s ~/.dotfiles/home/.vimrc ~/.vimrc
 # rm -rf ~/.bashrc_local
 # ln -s ~/.dotfiles/home/.bashrc_local ~/.bashrc_local
 
-
 rm -rf ~/.config/git
 ln -s ~/.dotfiles/home/.config/git ~/.config/git
 
@@ -74,8 +73,8 @@ ln -s ~/.dotfiles/home/.config/git ~/.config/git
 # tracked config.shared via [include], and also receives `git config --global`
 # writes and tool injections (safe.directory, ...), keeping config.shared clean.
 if ! grep -qs 'config\.shared' ~/.gitconfig; then
-    echo -e "\033[33mAdd email to ~/.gitconfig\033[0m"
-    cat <<EOT >> ~/.gitconfig
+  echo -e "\033[33mAdd email to ~/.gitconfig\033[0m"
+  cat <<EOT >>~/.gitconfig
 [include]
   path = ~/.config/git/config.shared
 [user]
@@ -387,7 +386,10 @@ if [ "$(uname)" = "Darwin" ]; then
   elif ! launchctl print "gui/$(id -u)/$dbus_label" 2>/dev/null | grep -q 'state = running'; then
     launchctl bootout "gui/$(id -u)/$dbus_label" 2>/dev/null
     launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/"$dbus_label".plist
-    for _ in $(seq 50); do [ -S ~/.cache/bus ] && break; sleep 0.1; done
+    for _ in $(seq 50); do
+      [ -S ~/.cache/bus ] && break
+      sleep 0.1
+    done
     [ -S ~/.cache/bus ] || warn "the D-Bus session bus did not come up at ~/.cache/bus; see the newest ~/.dotfiles/.logs/*_dbus_session/events.log"
   fi
 

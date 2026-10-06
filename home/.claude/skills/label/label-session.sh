@@ -38,7 +38,11 @@ socket=${2:-${own%%,*}}
 pane=${3:-${TMUX_PANE:-}}
 
 notify() { [ -n "$socket" ] && [ -n "$pane" ] && tmux -S "$socket" display-message -t "$pane" "label: $1" 2>/dev/null; }
-fail() { notify "$1"; echo "label-session.sh: $1" >&2; exit "${2:-1}"; }
+fail() {
+  notify "$1"
+  echo "label-session.sh: $1" >&2
+  exit "${2:-1}"
+}
 
 [ -n "$task" ] || fail "usage: label-session.sh <task> [<socket> <pane>]" 2
 # The alphabet NAME_RE in claude_tmux_run.sh accepts for a task: what tmux
@@ -50,19 +54,19 @@ esac
 [ -n "$socket" ] && [ -n "$pane" ] || fail "not inside a tmux pane, and no socket and pane given"
 # Only the claude socket (or the one a test names): its sessions are the
 # ones named "<hostname>-<name>"; elsewhere the convention does not hold.
-[ "${socket##*/}" = "${CLAUDE_TMUX_SOCKET:-claude}" ] ||
-  fail "pane is on tmux socket '${socket##*/}', not the claude socket"
+[ "${socket##*/}" = "${CLAUDE_TMUX_SOCKET:-claude}" ] \
+  || fail "pane is on tmux socket '${socket##*/}', not the claude socket"
 
 read -r tty session < <(tmux -S "$socket" display-message -p -t "$pane" '#{pane_tty} #{session_name}' 2>/dev/null)
 [ -n "${tty:-}" ] || fail "no pane $pane on socket ${socket##*/}"
 # `-o args=` is argv[0] on both macOS and Linux; the basename match covers a
 # claude launched by path (the VS Code extension does); "+" in STAT is the
 # foreground process group, where send-keys lands.
-claude_pid=$(ps -t "$tty" -o stat=,pid=,args= 2>/dev/null |
-  awk '$1 ~ /\+/ && $3 ~ /(^|\/)claude$/ { print $2; exit }')
+claude_pid=$(ps -t "$tty" -o stat=,pid=,args= 2>/dev/null \
+  | awk '$1 ~ /\+/ && $3 ~ /(^|\/)claude$/ { print $2; exit }')
 [ -n "$claude_pid" ] || fail "no claude in the foreground of pane $pane"
-[ -z "${CLAUDE_PID:-}" ] || [ "$CLAUDE_PID" = "$claude_pid" ] ||
-  fail "claude $CLAUDE_PID is not the pane's foreground claude (nested session?)"
+[ -z "${CLAUDE_PID:-}" ] || [ "$CLAUDE_PID" = "$claude_pid" ] \
+  || fail "claude $CLAUDE_PID is not the pane's foreground claude (nested session?)"
 
 title="$(hostname)-${session%%/*}/$task"
 tmux -S "$socket" send-keys -t "$pane" -l "/rename $title" \; send-keys -t "$pane" Enter

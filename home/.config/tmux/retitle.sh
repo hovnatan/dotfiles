@@ -26,5 +26,5 @@ cur=$(tmux -S "$sock" show -gv set-titles-string 2>/dev/null) || exit 0
 [ -n "$cur" ] || exit 0
 case $cur in
   *' ') tmux -S "$sock" set -g set-titles-string "${cur% }" ;;
-  *)    tmux -S "$sock" set -g set-titles-string "$cur " ;;
+  *) tmux -S "$sock" set -g set-titles-string "$cur " ;;
 esac
