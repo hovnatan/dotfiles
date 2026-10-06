@@ -214,10 +214,12 @@ fi
 # Where each skill comes from (keep this the only place that says so):
 #   vendored  home/.claude/skills/<name>/, pinned by .upstream, drift reported
 #             by scripts/check_skill_updates.sh. Bump = re-copy + update commit=.
-#   plugin    mattpocock-skills@claude-plugins-official, enabled in
-#             home/.claude/settings.json; its skills resolve by bare name
-#             (/grill-me, /tdd, ...). Never copy them into ~/.claude/skills:
-#             a loose copy shadows the plugin and stops updating.
+#   plugin    mattpocock-skills@mattpocock, from the author's own marketplace
+#             (mattpocock/skills), both declared in home/.claude/settings.json;
+#             its skills resolve by bare name (/grill-me, /tdd, /retro, ...).
+#             Not @claude-plugins-official: that catalog's pin lagged upstream
+#             by weeks. Never copy them into ~/.claude/skills: a loose copy
+#             shadows the plugin and stops updating.
 # Gotcha: `npx skills add <repo> --skill=<name>` with a non-interactive flag
 # copies EVERY skill in the repo, not just <name>. Vendor by hand instead.
 mkdir -p ~/.claude/skills
