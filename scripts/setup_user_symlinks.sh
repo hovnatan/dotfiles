@@ -363,8 +363,11 @@ if [ "$(uname)" = "Darwin" ]; then
        IINA -> repo: cp '$iina_installed' '$iina_conf'"
   fi
 
-  mkdir -p ~/.colima/default
-  ln -sf ~/.dotfiles/home/.colima/default/colima.yaml ~/.colima/default/colima.yaml
+  # colima's config used to live in this repo (removed 2026-10-07, colima
+  # unused); drop the link left dangling rather than let colima trip on it.
+  if [ -L ~/.colima/default/colima.yaml ] && [ ! -e ~/.colima/default/colima.yaml ]; then
+    rm ~/.colima/default/colima.yaml
+  fi
 
   ln -sfn ~/.dotfiles/home/.hammerspoon ~/.hammerspoon
   # Machine-private Hammerspoon settings (Chrome profiles, work URLs) stay out
