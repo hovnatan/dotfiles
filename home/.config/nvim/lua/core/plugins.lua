@@ -20,6 +20,9 @@ vim.pack.add({
   -- Tags lag far behind (master was 221 commits past v3.0.0 on 2026-09-24),
   -- so follow the development branch, as upstream expects.
   { src = "https://github.com/NeogitOrg/neogit", version = "master" },
+  -- Neogit's diff viewer (see the neogit block below). No tags at all, and
+  -- main's last commit is 2024-06-13, so follow main.
+  { src = "https://github.com/sindrets/diffview.nvim", version = "main" },
   -- Last tag 2.0.0 trails main by 122 commits (2026-09-24), so follow main.
   { src = "https://github.com/ellisonleao/gruvbox.nvim", version = "main" },
   -- Only its picker, explorer and bigfile modules are used (setup below). Semver releases, main
@@ -97,9 +100,16 @@ require("gitsigns").setup({
 })
 
 -- neogit: Magit-style status buffer (:Neogit). s/u stage/unstage the file,
--- hunk or visual selection under the cursor; c commits. Side-by-side review
--- stays with `git dt` (home/.config/git/config.shared), so no diffview.
+-- hunk or visual selection under the cursor; c commits. Neogit finds
+-- diffview.nvim on its own, which turns on the diff popup's actions
+-- (d from status): r asks for a range, e.g. main...HEAD for a branch against
+-- its merge-base; h on a log commit diffs it to HEAD. Without diffview the
+-- popup only offers "paths". `git dt` (home/.config/git/config.shared) still
+-- does the same review from the shell; :DiffviewOpen main... works too.
 require("neogit").setup({})
+-- No icon plugin is installed, and with icons on diffview warns about the
+-- missing nvim-web-devicons each time a view opens.
+require("diffview").setup({ use_icons = false })
 -- ,gg opens the status tab (leader is ","); plain gg stays "first line".
 vim.keymap.set("n", "<leader>gg", "<cmd>Neogit<cr>", { desc = "Neogit status" })
 
