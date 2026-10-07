@@ -21,5 +21,6 @@ jobs:
             experimental-features = nix-command flakes
       - name: shellcheck and shfmt
         run: |
-          nix shell --inputs-from "path:$PWD/nix" nixpkgs#shellcheck nixpkgs#shfmt --command bash -c \
+          nix shell --inputs-from "path:$PWD/nix" nixpkgs#shellcheck nixpkgs#shfmt \
+            --command bash -c \
             "shellcheck --version && shfmt --version && scripts/check.sh shell"

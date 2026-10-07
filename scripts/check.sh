@@ -12,6 +12,8 @@
 #   configs    scripts/check_configs.sh: fish parse and        configs.yml
 #              layout, JSON, nvim startup
 #   markdown   markdownlint-cli2 on every tracked .md          markdown.yml
+#   yaml       yamlfmt -lint and yamllint --strict on every    yaml.yml
+#              tracked .yml/.yaml, actionlint on workflows
 #   nix        scripts/check_nix_flake.sh (nix.yml adds        nix.yml
 #              --build on Linux)
 #   tests      scripts/tests/*_test.sh, each a check of its    tests.yml
@@ -26,7 +28,8 @@
 #                                          one a line, and run none
 #
 # --changed picks:
-#   shell lua configs markdown   always: a few seconds over the whole repo
+#   shell lua configs            always: a few seconds over the whole repo
+#   markdown yaml
 #   nix                          a path under nix/, or check_nix_flake.sh
 #   test:<name>                  a path its `# check.sh covers:` line names,
 #                                or the test's own files; every test when
@@ -34,7 +37,7 @@
 #                                tools the tests drive) changed
 #
 #   e.g. --changed home/.config/tmux/retitle.sh README.md
-#        -> shell lua configs markdown test:appearance test:tmux_hooks
+#        -> shell lua configs markdown yaml test:appearance test:tmux_hooks
 #
 # Each test declares, near its top (bash patterns; `*` also spans `/`):
 #   # check.sh covers: scripts/prune_logs.sh scripts/lib/*
@@ -52,7 +55,7 @@ cd "$REPO" || exit 1
 
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 usage() {
-  echo "usage: $0 [shell|lua|configs|markdown|nix|tests ...] | --changed <path>..." >&2
+  echo "usage: $0 [shell|lua|configs|markdown|yaml|nix|tests ...] | --changed <path>..." >&2
   exit 2
 }
 
@@ -111,6 +114,21 @@ check_markdown() {
   markdownlint-cli2
 }
 
+# yaml_files: every tracked YAML file, NUL-separated.
+yaml_files() { git ls-files -z '*.yml' '*.yaml'; }
+
+# Fix a yamlfmt failure with:  git ls-files -z '*.yml' '*.yaml' | xargs -0 yamlfmt
+# yamlfmt owns the layout (.yamlfmt.yaml), yamllint the rest (.yamllint.yaml):
+# duplicate keys, line length. actionlint reads .github/workflows/ itself and
+# runs shellcheck on each `run:` block, skipping them silently when shellcheck
+# is missing, hence the need on it.
+check_yaml() {
+  need yamlfmt yamllint actionlint shellcheck || return 1
+  yaml_files | xargs -0 yamlfmt -lint || return 1
+  yaml_files | xargs -0 yamllint --strict || return 1
+  actionlint
+}
+
 check_nix() { scripts/check_nix_flake.sh; }
 
 # test_meta <test> <key>: the value of the test's `# check.sh <key>:` line.
@@ -142,7 +160,7 @@ test_covers() {
 
 # --- what to run --------------------------------------------------------------
 
-checks=() # shell lua configs markdown nix test:<name> ...
+checks=() # shell lua configs markdown yaml nix test:<name> ...
 add_all_tests() {
   local t
   for t in scripts/tests/*_test.sh; do checks+=("test:$(test_name "$t")"); done
@@ -156,7 +174,7 @@ fi
 
 if [ "${1:-}" = --changed ]; then
   shift
-  checks=(shell lua configs markdown)
+  checks=(shell lua configs markdown yaml)
   for p; do
     case "$p" in nix/* | scripts/check_nix_flake.sh)
       checks+=(nix)
@@ -171,12 +189,12 @@ if [ "${1:-}" = --changed ]; then
     fi
   done
 elif [ $# -eq 0 ]; then
-  checks=(shell lua configs markdown nix)
+  checks=(shell lua configs markdown yaml nix)
   add_all_tests
 else
   for c; do
     case "$c" in
-      shell | lua | configs | markdown | nix) checks+=("$c") ;;
+      shell | lua | configs | markdown | yaml | nix) checks+=("$c") ;;
       tests) add_all_tests ;;
       *) usage ;;
     esac

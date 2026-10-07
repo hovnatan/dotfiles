@@ -1,0 +1,29 @@
+# Every tracked .yml/.yaml must match .yamlfmt.yaml and pass yamllint under
+# .yamllint.yaml, and the workflows here must pass actionlint (expressions,
+# job references, shellcheck on each `run:` block): scripts/check.sh's
+# `yaml` check, which the pre-push hook runs too. The tools come from the
+# pinned nixpkgs (nix/flake.lock), the build `dotup` installs, since their
+# output and rules can shift between releases; shellcheck is listed because
+# actionlint skips the `run:` blocks without saying so when it is missing.
+# Fix a yamlfmt failure with:  git ls-files -z '*.yml' '*.yaml' | xargs -0 yamlfmt
+name: yaml
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: yamlfmt, yamllint and actionlint
+        run: |
+          nix shell --inputs-from "path:$PWD/nix" \
+            nixpkgs#yamlfmt nixpkgs#yamllint nixpkgs#actionlint nixpkgs#shellcheck \
+            --command bash -c \
+            "yamlfmt -version && yamllint --version && actionlint -version | head -1 \
+              && scripts/check.sh yaml"
