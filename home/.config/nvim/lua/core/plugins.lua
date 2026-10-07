@@ -134,9 +134,22 @@ snacks.setup({
       -- Inside the tree, - goes up a directory as vim-vinegar's did.
       -- <CR> / l keep the cursor in the tree so several files open in a row;
       -- snacks' confirm alone jumps into the file (<C-w>l gets there).
+      -- Width is a quarter of the screen, never under 60 columns
+      -- (snacks defaults to a fixed 40, which cut long filenames off): 300
+      -- cols -> 75, 100 cols -> 60. A function, because { width = 0.25,
+      -- min_width = 60 } loses min_width: the sidebar's wrapper box copies
+      -- only width/height (snacks/layout.lua M.new), so 100 cols gave 25.
+      -- <C-w>> widens it for the session, <A-m> maximizes it.
       explorer = {
         hidden = true,
         ignored = true,
+        layout = {
+          layout = {
+            width = function()
+              return math.max(60, math.floor(vim.o.columns * 0.25))
+            end,
+          },
+        },
         actions = {
           confirm_stay = { action = { "confirm", "focus_list" }, desc = "Open, stay in tree" },
         },
