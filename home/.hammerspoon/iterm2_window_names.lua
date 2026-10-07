@@ -36,7 +36,7 @@
 local M = {}
 
 local ITERM2 = "com.googlecode.iterm2"
-local SETTLE_SECONDS = 0.35
+local SETTLE_SECONDS = 0.25
 local SHOW_SECONDS = 2
 local FADE_SECONDS = 0.2
 local TEXT_SIZE = 28
