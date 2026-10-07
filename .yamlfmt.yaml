@@ -1,0 +1,12 @@
+# yamlfmt layout for this repo. scripts/check.sh's `yaml` check (CI's
+# .github/workflows/yaml.yml and the pre-push hook) runs `yamlfmt -lint` on
+# every tracked .yml/.yaml; yamllint (.yamllint.yaml) checks the rest.
+# Fix a failure with:  git ls-files -z '*.yml' '*.yaml' | xargs -0 yamlfmt
+#
+# yamlfmt is pinned by nix/flake.lock, since a release can change its output.
+
+formatter:
+  type: basic
+  # Blank lines between steps and sections carry meaning (a comment belongs
+  # to the block below it); the default deletes every one of them.
+  retain_line_breaks_single: true

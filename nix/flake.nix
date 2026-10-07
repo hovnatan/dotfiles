@@ -64,6 +64,10 @@
           # same versions (2026-09-23). The macOS entries came from the
           # Brewfile's formulae, their comments carried over.
           common = [
+            # actionlint -- GitHub Actions workflow linter (expressions, job
+            # references, shellcheck on `run:` blocks); CI checks
+            # (scripts/check.sh yaml, .github/workflows/yaml.yml) (2026-10-07)
+            pkgs.actionlint
             # ansible -- agentless configuration management over ssh
             # (ansible, ansible-playbook, ansible-galaxy); its Python and
             # modules come with it, so no pip install (2026-10-05)
@@ -211,6 +215,13 @@
             pkgs.vim
             # Internet file retriever
             pkgs.wget
+            # yamlfmt and yamllint -- YAML formatter (layout in .yamlfmt.yaml)
+            # and linter (rules in .yamllint.yaml); CI checks
+            # (scripts/check.sh yaml, .github/workflows/yaml.yml). Pinned here
+            # since yamlfmt's output and yamllint's rules shift between
+            # releases (2026-10-07)
+            pkgs.yamlfmt
+            pkgs.yamllint
           ];
 
           # Linux only. macOS ships its own zsh as the default shell.

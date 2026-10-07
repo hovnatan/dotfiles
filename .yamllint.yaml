@@ -1,0 +1,19 @@
+# yamllint rules for this repo. scripts/check.sh's `yaml` check (CI's
+# .github/workflows/yaml.yml and the pre-push hook) runs `yamllint --strict`
+# on every tracked .yml/.yaml, so warnings fail too. yamlfmt (.yamlfmt.yaml)
+# owns the layout; these rules catch what a formatter does not: duplicate
+# keys, bad indentation it was handed, overlong lines.
+extends: default
+
+rules:
+  # GitHub workflows and the tool configs here are single documents; a `---`
+  # on each would be noise.
+  document-start: disable
+  # GitHub's `on:` key is a YAML 1.1 boolean to yamllint; values stay checked
+  # (`yes` for true is still an error).
+  truthy:
+    check-keys: false
+  # The width markdownlint holds prose to (home/.config/markdownlint); 80
+  # cuts through every `nix shell --inputs-from ...` line in the workflows.
+  line-length:
+    max: 100

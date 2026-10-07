@@ -58,7 +58,7 @@ picks() {
   fi
 }
 
-lint="shell lua configs markdown"
+lint="shell lua configs markdown yaml"
 all_tests=$(for t in "$REPO"/scripts/tests/*_test.sh; do
   n=${t##*/}
   printf 'test:%s ' "${n%_test.sh}"
