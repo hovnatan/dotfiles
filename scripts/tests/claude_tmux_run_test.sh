@@ -28,6 +28,18 @@
 #   - the unit file's real ExecStop line, run with systemd's own PATH, kills
 #     the manager and only the manager (ec72546f regression)
 #   - a HOME with no transcripts yet does not crash the transcript reader
+#   - with the real home/.tmux.conf loaded (the claude server reads it), a
+#     session whose claude exited does not stay (remain-on-exit on would
+#     keep it, and the watcher would never restart the manager)
+#   - a second window the user opened in a session does not make status
+#     read it as dead (claude is searched across the session's panes), and
+#     status run from inside a session reports every other session's own
+#     pane (a bare =name target matched a window of the current session)
+#   - when `claude agents --json` fails, spawn, status and conversations
+#     stop with an error instead of acting on "nothing open" (a resume
+#     would double-open the conversation)
+#   - `stop <name>` kills exactly that session, never one whose name merely
+#     starts with <name> (tmux's bare targets prefix-match)
 #
 # Usage: scripts/tests/claude_tmux_run_test.sh   (exit 0 = all passed)
 # On failure the work dir (stub, profile, unit output) is kept and printed.
@@ -82,9 +94,14 @@ ln -s "$REPO" "$H/.dotfiles"
 # which never sets PartOf, and the scope checks below pass without testing.
 [ -e "$HOME/.nix-profile" ] && ln -s "$(readlink -f "$HOME/.nix-profile")" "$H/.nix-profile"
 cp "$(command -v sleep)" "$WORK/idle/claude"
+# With $WORK/agents_fail present, `agents --json` fails the way a broken
+# Claude Code update or daemon would.
 cat >"$H/.local/bin/claude" <<EOF
 #!/usr/bin/env bash
-[ "\${1:-}" = agents ] && { echo '[]'; exit 0; }
+if [ "\${1:-}" = agents ]; then
+  [ -e "$WORK/agents_fail" ] && { echo 'agents: daemon did not start' >&2; exit 1; }
+  echo '[]'; exit 0
+fi
 exec "$WORK/idle/claude" 100000
 EOF
 chmod +x "$H/.local/bin/claude"
@@ -95,6 +112,10 @@ if [ -f "$HOME/.dotfiles/home/.profile.shared" ]; then
   . "$HOME/.dotfiles/home/.profile.shared"
 fi
 EOF
+
+# The real tmux config, which the claude socket's server reads like any
+# other: its options decide whether a dead pane keeps its session.
+ln -s "$REPO/home/.tmux.conf" "$H/.tmux.conf"
 
 resolved=$(env -i HOME="$H" USER="$USER" PATH=/usr/bin:/bin "$LOGIN_SHELL" -lc 'command -v claude')
 if [ "$resolved" != "$H/.local/bin/claude" ]; then
@@ -130,6 +151,51 @@ if HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" CLAUDE_TMUX_A
 else
   fail "spawn ctb: $(cat "$WORK/spawn.out")"
 fi
+
+on_exit=$(t show -gv remain-on-exit 2>/dev/null)
+[ "$on_exit" = off ] && pass "remain-on-exit off with home/.tmux.conf loaded" \
+  || fail "remain-on-exit is '$on_exit' with home/.tmux.conf loaded"
+
+# --- a second window in a session: status still finds its claude ------------
+
+run() { HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" CLAUDE_TMUX_ALIVE_SECONDS=2 "$REPO/scripts/claude_tmux_run.sh" "$@"; }
+t new-window -t "=ctb:" sleep 100000 # current from now on, as prefix c makes it
+st=$(run status 2>&1)
+if grep -q '^== ctb \[claude pid' <<<"$st"; then pass "status finds claude in ctb behind a second window"; else
+  fail "status with a second window in ctb: $(grep '^== ctb' <<<"$st")"
+fi
+t kill-window -t "=ctb:{end}" # the window just opened (highest index)
+
+# Run from inside ctb, as the manager or a user in a pane does: tmux then
+# resolves a bare "=claude" window target to ctb's own window (named
+# "claude" after its process) before trying the session "claude".
+t rename-window -t =ctb:0 claude # what automatic-rename calls it, made certain
+inside="$(t display -p -t =ctb: '#{socket_path},#{pid},#{session_id}')"
+st=$(TMUX="${inside/\$/}" TMUX_PANE="$(t display -p -t =ctb: '#{pane_id}')" run status 2>&1)
+want=$(t list-panes -t =claude: -F '#{pane_pid}')
+if grep -q "^== claude \[claude pid $want\]" <<<"$st"; then pass "status from inside ctb reports the manager's own pane"; else
+  fail "status from inside ctb, manager pane $want: $(grep '^== claude' <<<"$st")"
+fi
+
+# --- claude agents --json failing: no command acts on "nothing open" --------
+
+# A conversation spawn would resume: its transcript, titled for this host.
+mkdir -p "$H/.claude/projects/-tmp"
+printf '%s\n' '{"type":"user","cwd":"/tmp","timestamp":"2026-01-01T00:00:00.000Z","message":{"content":"hi"}}' \
+  "{\"type\":\"custom-title\",\"customTitle\":\"$(hostname)-ctr\",\"sessionId\":\"0000-ctr\"}" \
+  >"$H/.claude/projects/-tmp/0000-ctr.jsonl"
+touch "$WORK/agents_fail"
+for cmd in "spawn ctr" status conversations; do
+  # shellcheck disable=SC2086 # cmd is two words on purpose
+  out=$(run $cmd 2>&1)
+  rc=$?
+  if [ "$rc" -ne 0 ] && grep -q 'agents --json' <<<"$out"; then pass "$cmd stops when agents --json fails"; else
+    fail "$cmd with agents --json failing: rc=$rc, $(head -c 200 <<<"$out")"
+  fi
+done
+t has-session -t =ctr 2>/dev/null && fail "spawn ctr resumed the conversation anyway"
+t kill-session -t =ctr 2>/dev/null
+rm -f "$WORK/agents_fail" "$H/.claude/projects/-tmp/0000-ctr.jsonl"
 
 # --- each pane: launcher, process, logging, environment ---------------------
 
@@ -200,6 +266,25 @@ if [ "$rc" -eq 0 ] && [ "$alive" = "ctb " ]; then
 else
   fail "ExecStop rc=$rc, sessions left: '${alive}'; output: $(tr '\n' ' ' <"$WORK/execstop.out")"
 fi
+
+# --- stop <name>: exact sessions only ---------------------------------------
+
+t new-session -d -s ctb2 sleep 100000
+out=$(run stop ct 2>&1)
+rc=$?
+alive=$(t list-sessions -F '#S' 2>/dev/null | sort | tr '\n' ' ')
+[ "$rc" -ne 0 ] && [ "$alive" = "ctb ctb2 " ] && pass "stop ct: refused ($out), ctb and ctb2 untouched" \
+  || fail "stop ct: rc=$rc ($out), sessions left: '$alive'"
+out=$(run stop ctb 2>&1)
+alive=$(t list-sessions -F '#S' 2>/dev/null | sort | tr '\n' ' ')
+[ "$alive" = "ctb2 " ] && pass "stop ctb: killed ctb only ($out)" || fail "stop ctb: sessions left: '$alive' ($out)"
+
+# --- a session ends when its process exits -----------------------------------
+
+kill "$(t list-panes -t =ctb2: -F '#{pane_pid}')"
+sleep 1
+t has-session -t =ctb2 2>/dev/null && fail "ctb2's process exited but the session remains (dead pane kept)" \
+  || pass "ctb2's process exited and its session went with it"
 
 log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"
 exit $((failures > 0))

@@ -228,7 +228,9 @@ if [ "${1:-}" = --cancel ]; then
 fi
 
 # --- hook mode: cheap checks, then fork the waiter and get out of the way ---
-IFS= read -r topic <"$TOPIC_FILE" 2>/dev/null
+# 2>/dev/null first: redirections apply left to right, so the other order
+# printed "No such file or directory" on every Stop of a topic-less box.
+IFS= read -r topic 2>/dev/null <"$TOPIC_FILE"
 [ -n "${topic:-}" ] || exit 0
 who="$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null) (\$$sid)"
 if watched "$socket" "$sid"; then # user is looking right now -- no waiter
