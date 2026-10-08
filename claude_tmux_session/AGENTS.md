@@ -105,8 +105,11 @@ conversation next to the one holding the work. If the listing shows a
 plausible owner under another name, say so and offer it rather than
 starting from nothing.
 
-To stop a session: `tmux -L claude kill-session -t <name>` -- a bare name
-prefix-matches its labeled form (`backend` finds `backend/asyncssh-advisory`);
+To stop a session: `~/.dotfiles/scripts/claude_tmux_run.sh stop <name>`.
+It finds the session under its bare name whatever label it carries
+(`backend` finds `backend/asyncssh-advisory`) and kills exactly that one.
+Never `tmux -L claude kill-session -t <name>`: a bare tmux target
+prefix-matches ANY session, so with `kbtest` gone it kills `kbtest3`.
 `status` prints the exact names. `capture-pane` does NOT accept the
 `=name` exact form ("can't find pane") -- resolve pane ids first with
 `tmux -L claude list-panes -a -F '#{session_name} #{pane_id}'`.
@@ -229,13 +232,25 @@ How:
 - `"exec-opts": ["native.cgroupdriver=cgroupfs"]` merged into
   /etc/docker/daemon.json, then restart docker (idle box only). Verify
   with `docker info --format '{{.CgroupDriver}}'`.
-- `apt-daily-upgrade.timer` disabled; a oneshot
-  /etc/systemd/system/apt-upgrade-on-boot.service (WantedBy
-  multi-user.target, Before=docker.service, TimeoutStartSec=15min, runs
-  `systemctl start apt-daily-upgrade.service`) enabled instead, plus a
-  docker.service drop-in (Wants= + After= that oneshot) so no container
-  can exist while the boot upgrade's daemon-reload fires. apt-daily.timer
-  (the download half) stays enabled.
+- `apt-daily-upgrade.timer` disabled;
+  `systemctl add-wants multi-user.target apt-daily-upgrade.service` so
+  apt's own unit runs at boot, plus a docker.service drop-in
+  (/etc/systemd/system/docker.service.d/wait-apt-upgrade.conf:
+  After=apt-daily-upgrade.service) so no container can exist while the
+  boot upgrade's daemon-reload fires. After= only, no Wants=: the upgrade
+  is a oneshot that does not stay active, so Wants= would rerun it on every
+  docker restart, with docker down until it finished. apt-daily.timer (the
+  download half) stays enabled.
+- No wrapper unit. Boxes set up before 2026-10-07 have
+  apt-upgrade-on-boot.service (a oneshot running `systemctl start
+  apt-daily-upgrade.service`) instead: migrate them (disable and delete it,
+  delete /etc/needrestart/conf.d/apt-upgrade-on-boot.conf if present, point
+  the docker drop-in at apt-daily-upgrade.service, add-wants as above).
+  That wrapper deadlocks for its 15 min timeout when an upgrade makes
+  needrestart restart it (its own process maps the upgraded libs, and the
+  restart waits on the upgrade that waits on needrestart), and exits early
+  (docker then starts mid-upgrade) when needrestart re-executes systemd.
+  needrestart already skips apt-daily-upgrade.service itself.
 - WALinuxAgent stays at its default self-update behavior (goal-state
   driven, Azure's schedule); do not disable it: the agent package ships
   from -updates, which unattended-upgrades' security-only origins never

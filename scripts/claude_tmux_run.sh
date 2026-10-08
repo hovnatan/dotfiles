@@ -11,7 +11,10 @@
 #
 #   claude_tmux_run.sh                 ExecStart: ensure the managed "claude"
 #                                      session (the manager) exists, then watch
-#   claude_tmux_run.sh stop            ExecStop: kill the managed session
+#   claude_tmux_run.sh stop [name]     kill the session hosting <name>
+#                                      (labeled or not; exact, never a
+#                                      prefix of another name); no name: the
+#                                      managed "claude" session (ExecStop)
 #   claude_tmux_run.sh spawn <name>[/<task>] [dir] [--dangerous]
 #                                      idempotently bring up an unmanaged
 #                                      session: resume its conversation where
@@ -78,6 +81,10 @@
 #
 # The watcher exits as soon as the managed session is missing; the unit's
 # Restart=always then reruns this script.
+#
+# A session can hold more than claude: the user may open a second window in
+# it. Whatever is current there, claude is found by searching the session's
+# panes (claude_pane), never by taking the active one.
 
 set -u
 
@@ -86,6 +93,19 @@ HOST=$(hostname)
 MANAGER_DIR="$HOME/.dotfiles/claude_tmux_session"
 ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}" # startup window spawn waits out
 NAME_RE='^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)?$'    # <name>[/<task>] spawn accepts
+
+# The passwd shell, not $SHELL: a spawn issued from another shell (fish, a
+# tool's bash) must still launch what the account logs in with. It has to
+# take `-lc <script> <$0> <args...>` like sh does; fish does not. Checked
+# up front, so no subcommand gets halfway before finding out.
+LOGIN_SHELL=$(getent passwd "$(id -un)" | cut -d: -f7)
+case "${LOGIN_SHELL##*/}" in
+  bash | zsh | sh | dash | ksh) ;;
+  *)
+    echo "claude_tmux_run.sh: login shell '${LOGIN_SHELL:-<none>}' cannot run 'sh -lc'-style commands; use bash or zsh as the login shell" >&2
+    exit 1
+    ;;
+esac
 
 # Every subcommand reads `claude agents --json` (live_agents) or launches
 # claude. Checked here because live_agents runs inside $(...), where a
@@ -252,20 +272,51 @@ resolve_conversation() {
 # agents --json`. env -u: sessions run with CLAUDE_CODE_DISABLE_AGENT_VIEW=1
 # (see launch) and a spawn issued from one inherits it, under which the
 # command prints a refusal and exits 0.
+# Fails (non-zero, with the reason on stderr) when the command fails or its
+# output is not a list of agents. Callers must stop then: an empty answer
+# would read as "nothing is open", and spawn would resume a conversation
+# another process holds -- the double-open its guard exists to prevent.
+# Each caller captures it in an assignment, `x=$(live_agents) || exit 1`,
+# since a failure inside a bare $(...) cannot stop the script.
 live_agents() {
-  env -u CLAUDE_CODE_DISABLE_AGENT_VIEW claude agents --json 2>/dev/null \
-    | python3 -c 'import json, sys
-for s in json.load(sys.stdin):
-    print(s.get("pid", ""), s.get("sessionId", ""), s.get("name", ""), sep="\t")'
+  local json
+  json=$(env -u CLAUDE_CODE_DISABLE_AGENT_VIEW claude agents --json) || {
+    echo "claude_tmux_run.sh: 'claude agents --json' failed; cannot tell which conversations are open" >&2
+    return 1
+  }
+  python3 -c 'import json, sys
+try:
+    agents = json.loads(sys.argv[1])
+    assert isinstance(agents, list) and all(isinstance(a, dict) for a in agents)
+except (ValueError, AssertionError):
+    sys.exit("claude_tmux_run.sh: claude agents --json printed no list of agents: " + sys.argv[1][:200])
+for s in agents:
+    print(s.get("pid", ""), s.get("sessionId", ""), s.get("name", ""), sep="\t")' "$json"
 }
 
 # agent_name <pid>, reading live_agents output: the current name of that
 # claude -- what /list-agents shows, /rename included -- or nothing.
 agent_name() { awk -F'\t' -v pid="$1" '$1 == pid { print $3 }'; }
 
-# pane_pid <tmux target>: pid of the process in the target's active pane --
-# the claude itself once it is up (see wait_alive) -- or nothing.
-pane_pid() { tmux -L "$SOCKET" list-panes -t "$1" -f '#{pane_active}' -F '#{pane_pid}' 2>/dev/null; }
+# claude_pane <session>: "<pane id> <pid> <cwd>" of the pane in that
+# session whose process is claude -- the one the session was created with,
+# once claude is up (see wait_alive) -- or nothing. Every window of the
+# session is searched, not just the active pane: with a second window the
+# user opened current, the active pane runs a shell, and a healthy session
+# would read as dead. The session is "=<name>" or a session id ("$3"); the
+# ":" appended makes tmux resolve it as a session: list-panes takes a
+# window target, and a bare "=claude" from inside tmux first matches a
+# window named "claude" in the CURRENT session (every claude pane's window
+# is named that), i.e. some other session's pane.
+claude_pane() {
+  local id pid cwd
+  while read -r id pid cwd; do
+    if [ "$(ps -o comm= -p "$pid" 2>/dev/null)" = claude ]; then
+      echo "$id $pid $cwd"
+      return
+    fi
+  done < <(tmux -L "$SOCKET" list-panes -s -t "$1:" -F '#{pane_id} #{pane_pid} #{pane_current_path}' 2>/dev/null)
+}
 
 # find_session <name>: the tmux session hosting a conversation under
 # <name>, whatever label it carries (<name> or <name>/<task>), or nothing.
@@ -275,7 +326,7 @@ find_session() {
 }
 
 # launch <session name> <dir> <claude args...>: detached pane running the
-# account's login shell (passwd) as a login shell, which execs claude with
+# account's login shell (LOGIN_SHELL, from passwd) as a login shell, which execs claude with
 # the given arguments and Remote Control on (claude.ai shows the session's
 # one name, the -n among the arguments).
 # Prints the new session's id: the handle that survives the rename the
@@ -285,19 +336,6 @@ find_session() {
 launch() {
   local name="$1" dir="$2"
   shift 2
-
-  # The passwd shell, not $SHELL: a spawn issued from another shell (fish,
-  # a tool's bash) must still launch what the account logs in with. It has
-  # to take `-lc <script> <$0> <args...>` like sh does; fish does not.
-  local shell
-  shell=$(getent passwd "$(id -un)" | cut -d: -f7)
-  case "${shell##*/}" in
-    bash | zsh | sh | dash | ksh) ;;
-    *)
-      echo "claude_tmux_run.sh: login shell '${shell:-<none>}' cannot run 'sh -lc'-style commands; use bash or zsh as the login shell" >&2
-      return 1
-      ;;
-  esac
 
   # Note: claude clamps its TUI to 256 colors under tmux ($TMUX set;
   # TERM/COLORTERM/FORCE_COLOR are ignored). Accepted as cosmetic --
@@ -332,7 +370,7 @@ launch() {
   fi
   "${scope[@]}" tmux -L "$SOCKET" new-session -d -P -F '#{session_id}' \
     -s "$name" -c "$dir" \
-    "$shell" -lc 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' "${shell##*/}" \
+    "$LOGIN_SHELL" -lc 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' "${LOGIN_SHELL##*/}" \
     "$@" --remote-control
 }
 
@@ -347,21 +385,34 @@ launch() {
 # has to hold at the end. By
 # id, because the session's name changes under it (see Naming).
 wait_alive() {
-  local sid="$1" i pid
+  local sid="$1" i
   for ((i = 0; i < ALIVE_SECONDS; i++)); do
     sleep 1
     tmux -L "$SOCKET" has-session -t "$sid" 2>/dev/null || return 1
   done
-  pid=$(pane_pid "$sid")
-  [ -n "$pid" ] && [ "$(ps -o comm= -p "$pid" 2>/dev/null)" = claude ]
+  [ -n "$(claude_pane "$sid")" ]
 }
 
 # "=$name" pins a tmux target to an exact name match.
 case "${1:-}" in
   stop)
-    s=$(find_session claude)
-    [ -z "$s" ] || tmux -L "$SOCKET" kill-session -t "=$s"
-    exit 0
+    # By find_session, then "=": a bare tmux target prefix-matches, so
+    # `kill-session -t bench` with no bench left kills bench2. Without a
+    # name (ExecStop) a missing manager is fine; a named session that is not
+    # there is reported.
+    name="${2:-claude}"
+    if [[ ! "$name" =~ $NAME_RE ]] || [[ "$name" == */* ]]; then
+      echo "usage: $0 stop [name]  (the bare session name: A-Za-z0-9_- only)" >&2
+      exit 1
+    fi
+    s=$(find_session "$name")
+    if [ -z "$s" ]; then
+      [ $# -lt 2 ] && exit 0
+      echo "no session $name on tmux socket $SOCKET" >&2
+      exit 1
+    fi
+    tmux -L "$SOCKET" kill-session -t "=$s" && echo "stopped session $s"
+    exit
     ;;
   spawn)
     spec="${2:-}"
@@ -389,12 +440,14 @@ case "${1:-}" in
       # One tmux session per name: a pinned task is only satisfied when the
       # live session holds that very conversation. Switching would kill work
       # in flight, which is the user's call, not this script's.
-      live=$(agent_name "$(pane_pid "=$existing")" <<<"$(live_agents)")
+      agents=$(live_agents) || exit 1
+      read -r _ pid _ < <(claude_pane "=$existing")
+      live=$(agent_name "${pid:-}" <<<"$agents")
       if [[ "$spec" != */* ]] || [ "$live" = "$conv" ]; then
         echo "session $existing already running${live:+ ($live)}"
         exit 0
       fi
-      echo "session $existing is running ${live:-an unknown conversation}, not $conv; stop it first (tmux -L $SOCKET kill-session -t $existing) or ask for it to finish" >&2
+      echo "session $existing is running ${live:-an unknown conversation}, not $conv; stop it first ($0 stop $name) or ask for it to finish" >&2
       exit 1
     fi
     {
@@ -411,7 +464,8 @@ case "${1:-}" in
       # claude process (a manual resume over SSH, a background agent, ...):
       # transcripts are not locked, so two processes resuming the same
       # conversation interleave their records into one corrupted history.
-      if live_agents | cut -f2 | grep -qxF -- "$id"; then
+      agents=$(live_agents) || exit 1
+      if cut -f2 <<<"$agents" | grep -qxF -- "$id"; then
         echo "conversation $conv ($id) is already open in another claude process; attach to that instead of spawning" >&2
         exit 1
       fi
@@ -449,10 +503,14 @@ case "${1:-}" in
       echo "no sessions on tmux socket $SOCKET"
       exit 0
     fi
-    agents=$(live_agents)
+    agents=$(live_agents) || exit 1
     for s in $names; do
-      read -r pane_id pane_pid pane_cwd < <(tmux -L "$SOCKET" list-panes -t "=$s" \
-        -f '#{pane_active}' -F '#{pane_id} #{pane_pid} #{pane_current_path}')
+      # The claude pane wherever it is; with none, the session's first pane
+      # (the one it was created with) shows what runs instead.
+      pane=$(claude_pane "=$s")
+      [ -n "$pane" ] || pane=$(tmux -L "$SOCKET" list-panes -s -t "=$s:" \
+        -F '#{pane_id} #{pane_pid} #{pane_current_path}' | head -1)
+      read -r pane_id pane_pid pane_cwd <<<"$pane"
       comm=$(ps -o comm= -p "$pane_pid" 2>/dev/null)
       args=$(ps -o args= -p "$pane_pid" 2>/dev/null)
       if [ "$comm" = claude ]; then
@@ -493,7 +551,8 @@ case "${1:-}" in
     # means open in a claude process right now -- the conversation, not its
     # tmux session, which hosts one of a name's many.
     filter="${2:-}"
-    live=$(live_agents | cut -f3)
+    live=$(live_agents) || exit 1
+    live=$(cut -f3 <<<"$live")
     printf '%-40s %-5s %-17s %s\n' NAME LIVE 'LAST ACTIVE' DIRECTORY
     transcripts tsv "" "$HOME"/.claude/projects/*/*.jsonl \
       | while IFS=$'\t' read -r ts _ title cwd _; do
