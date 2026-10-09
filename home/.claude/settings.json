@@ -129,7 +129,7 @@
       "effortLevel": "high"
     }
   },
-  "autoCompactWindow": 900000,
+  "autoCompactWindow": 400000,
   "dialogExpiry": "never",
   "tui": "default",
   "voice": {
