@@ -18,7 +18,7 @@
 #                                          host and path, which are never drawn plain
 #   green          branch                  matches that PS1; "*" marks dirty,
 #                                          "?" a dirty check that timed out
-#   yellow         gauge 50-80%            warm, but not now (Ctx)
+#   yellow         gauge 20-80%            warm, but not now (Ctx)
 #                  cache <=10m
 #                  "U" update pending
 #   red            gauge >=80%             act now -- nothing else, ever
@@ -31,7 +31,7 @@
 #   dim            | separators            the only dim element: values stay
 #                                          readable
 #   plain          clock                   dim was too faint to read at a
-#                  gauges under 50%        glance for either of these: gauges
+#                  gauges under 20%        glance for either of these: gauges
 #                  cache >10m, "na"        below their threshold, or an unset
 #                  "Ctx--"                 cache countdown or context gauge
 #
@@ -259,14 +259,14 @@ if [ -n "$agent_name" ]; then
   agent=" \033[1;35m@${agent_name}\033[0m"
 fi
 
-# Ctx colouring, the only caller left: plain until 50%, then yellow, then red
+# Ctx colouring, the only caller left: plain until 20%, then yellow, then red
 # at 80%, so a healthy line stays quiet (quiet meaning no hue at all, not a
 # dim one) and only a filling context draws the eye.
 # Takes a whole-number percentage, prints the SGR sequence.
 gauge_color() {
   if [ "$1" -ge 80 ]; then
     printf '\033[31m'
-  elif [ "$1" -ge 50 ]; then
+  elif [ "$1" -ge 20 ]; then
     printf '\033[33m'
   else
     printf ''
