@@ -32,7 +32,7 @@ local title = "nvim: %t%( %M%)"
 -- tab read like a local one. Host is the hostname up to its first dot; fish's
 -- fish_prompt_host override is a fish-only variable nvim cannot see. Inside
 -- tmux this only names the pane, since tmux's set-titles-string (with its own
--- host prefix) wins. Not in iTerm2, which shows the host itself; same test as
+-- host prefix) wins. Not in iTerm2, whose titles name no host; same test as
 -- fish's is_iterm2 (home/.config/fish/functions/is_iterm2.fish).
 local in_iterm2 = vim.env.LC_TERMINAL == "iTerm2"
   and (vim.env.TERM_PROGRAM == nil or vim.env.TERM_PROGRAM == "iTerm.app")

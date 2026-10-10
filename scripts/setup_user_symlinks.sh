@@ -501,12 +501,11 @@ if [ "$(uname)" = "Darwin" ]; then
   # even when there is only one tab). iTerm2 hides it by default, so the
   # terminal lost a row of height the moment a second tab opened.
   defaults write com.googlecode.iterm2 HideTab -bool false
-  # Long tab titles always lose their end, never their start, so the host tag
-  # that leads them ("(mbp) ~/.dotfiles", iterm2_report_host.fish) stays
-  # visible. Smart truncation (the default) cuts the start instead whenever a
-  # window's titles share it: six tabs titled "(mbp) START ... END" all read
-  # "...well past the tab width END". No setting always cuts the start, so a
-  # tag at the end would be lost whenever titles differ early.
+  # Long tab titles always lose their end, never their start, so a title
+  # reads from its beginning ("~/.dotfiles/...", "[backend/...]"). Smart
+  # truncation (the default) cuts the start instead whenever a window's
+  # titles share it: six tabs titled "START ... END" all read "...well past
+  # the tab width END".
   defaults write com.googlecode.iterm2 TabTitlesUseSmartTruncation -bool false
   # OSC 52 clipboard writes (remote tmux/nvim/Claude Code copying to the Mac
   # clipboard), allowed as Ghostty's clipboard-write = allow does; iTerm2

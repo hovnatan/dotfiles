@@ -2,11 +2,11 @@
 # tmux client-attached / client-session-changed hook (declared in
 # ~/.tmux.conf): report each attach to the client's terminal. The tab names
 # this machine while the last attach came in over ssh, as the shells' titles
-# do over ssh:
+# do over ssh; iTerm2 gets the host report instead and names no host:
 #
-#   ssh <host>, tmux attach, iTerm2  --> host_tag     --> "(<host>) [backend]"
+#   ssh <host>, tmux attach, iTerm2  --> RemoteHost   --> "[backend]"
 #   ssh <host>, tmux attach, other   --> @ssh=1       --> "(<host>) [backend]"
-#   local tmux attach, iTerm2        --> host_tag     --> "(<local>) [backend]"
+#   local tmux attach, iTerm2        --> RemoteHost   --> "[backend]"
 #   local tmux attach, other         --> @ssh unset   --> "[backend]"
 #
 # client-session-changed is the only one of the two hooks that
@@ -17,8 +17,8 @@
 # LC_TERMINAL and TERM_PROGRAM into it, or marks them removed
 # ("-SSH_CONNECTION") when the client has none.
 #
-# iTerm2 (same test as home/.config/fish/functions/is_iterm2.fish) prepends
-# the host itself from the reports iterm2_report_host.fish explains and
+# iTerm2 (same test as home/.config/fish/functions/is_iterm2.fish) tells
+# local from remote by the report iterm2_report_host.fish explains and
 # writes, but a program in a pane cannot reach it through tmux, and
 # `ssh -t <host> tmux attach` runs no prompt that would, so the hook has the
 # same function write them straight to the client's tty.
@@ -63,7 +63,7 @@ EOF
 iterm2=
 case $lc_terminal:$term_program in iTerm2: | iTerm2:iTerm.app) iterm2=1 ;; esac
 
-# The reports the prompt sends, from the same fish function so tab and
+# The report the prompt sends, from the same fish function so tab and
 # prompt agree. This process's environment is the tmux server's, so the
 # client's ssh state goes in as the flag.
 where=local

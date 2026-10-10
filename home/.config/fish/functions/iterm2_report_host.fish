@@ -1,11 +1,10 @@
-function iterm2_report_host --description 'Tell iTerm2 which machine this tab runs on (OSC 1337 RemoteHost, host_tag)'
-    # The one place that explains and writes the iTerm2 tab reports. Both
-    # are sticky until the next one, so they are sent on every prompt and on
-    # every tmux attach:
+function iterm2_report_host --description 'Tell iTerm2 which machine this tab runs on (OSC 1337 RemoteHost)'
+    # The one place that explains and writes the iTerm2 host report. It is
+    # sticky until the next one, so it is sent on every prompt and on every
+    # tmux attach:
     #
-    #   report                  over ssh              local
-    #   RemoteHost              <user>@<short host>   <user>@$hostname
-    #   SetUserVar host_tag     "(<short host>) "     "(<short host>) "
+    #   report        over ssh              local
+    #   RemoteHost    <user>@<short host>   <user>@$hostname
     #
     # Two callers:
     #
@@ -17,22 +16,19 @@ function iterm2_report_host --description 'Tell iTerm2 which machine this tab ru
     #       whose environment is not the client's, so it read the client's
     #       terminal and ssh state from tmux's session environment
     #
-    # host_tag is the title. The Dotfiles profile's Custom Tab Title
+    # Titles carry no host in iTerm2: the Dotfiles profile's Custom Tab Title
+    # and Custom Window Title
     # (home/Library/Application Support/iTerm2/DynamicProfiles/dotfiles.json)
-    # is "\(currentSession.user.host_tag?)\(currentSession.name)", so a tab
-    # reads "(mbp) ~/.dotfiles", and "(mbp) Claude Code" once a program
-    # retitles it: iTerm2 prepends the tag, so no retitle drops it. The short
-    # host is machine_name, the name the prompt shows. The tag goes first
-    # because only the end of a long title is ever cut
-    # (TabTitlesUseSmartTruncation off, scripts/setup_user_symlinks.sh);
-    # iTerm2 has no setting that always cuts the start.
+    # are the session name alone, "~/.dotfiles", and the shells, nvim and
+    # tmux leave their "(<host>) " prefix out there too, so an ssh tab reads
+    # like a local one and the prompt is what names the machine. The short
+    # host is machine_name, the name the prompt shows.
     #
-    # The window title (Dock menu, Window menu, Cmd+`) is a separate
-    # Custom Window Title with the same text, one scope up: a window
-    # expression reaches the session through currentTab, and a bare
-    # currentSession there renders as "". iTerm2 reads it when a window
-    # opens, so a profile change reaches only windows opened after it; a
-    # window restored from an arrangement keeps the title it was saved with.
+    # The window title (Dock menu, Window menu, Cmd+`) is reached one scope
+    # up, "\(currentTab.currentSession.name)": a bare currentSession in a
+    # window expression renders as "". iTerm2 reads it when a window opens,
+    # so a profile change reaches only windows opened after it; a window
+    # restored from an arrangement keeps the title it was saved with.
     #
     # RemoteHost is how iTerm2 tells local from remote, and it must be the real
     # hostname locally, never "": an empty host is a remote one named "", and
@@ -65,6 +61,5 @@ function iterm2_report_host --description 'Tell iTerm2 which machine this tab ru
     end
     set -l remote_host "$USER@$hostname"
     $over_ssh; and set remote_host "$USER@$name"
-    set -l host_tag (printf '(%s) ' $name | base64)
-    printf '\e]1337;RemoteHost=%s\a\e]1337;SetUserVar=host_tag=%s\a' $remote_host "$host_tag"
+    printf '\e]1337;RemoteHost=%s\a' $remote_host
 end

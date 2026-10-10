@@ -1,9 +1,9 @@
 -- Flash an iTerm2 window's title over it for a moment whenever that window
 -- gets focus (Cmd-`, a click, Cmd-Tab or AltTab back to iTerm2), so it is
 -- clear which window you landed in. The title is iTerm2's own: the Dotfiles
--- profile's Custom Window Title, e.g. "(mbp) ~/.dotfiles", or whatever
+-- profile's Custom Window Title, e.g. "~/.dotfiles", or whatever
 -- Window > Edit Window Title set for that one window, e.g. a prefix
--- "work (mbp) ...".
+-- "work ...".
 --
 --   app watcher --(iTerm2 launched / quit)--> attach / drop the AX observer
 --
@@ -46,7 +46,7 @@ local MIN_TEXT_WIDTH = 120 -- a window narrower than this gets a box wider than 
 
 -- Every focus event and overlay is logged (event_log.lua), to the file only, e.g.
 --   2026-10-07T14:52:10.012Z AXFocusedWindowChanged
---   2026-10-07T14:52:10.364Z window 81234: (mbp) ~/.dotfiles
+--   2026-10-07T14:52:10.364Z window 81234: ~/.dotfiles
 local log
 log, M.logDir = require("event_log").new("iterm2_window_names", { console = false })
 
