@@ -10,11 +10,12 @@
 #
 # How. tmux formats set-titles-string per client and writes the result when
 # it differs from the last write, so nudging the string between two
-# renderings that display the same -- "[cl]" and "[cl] " -- forces one write
-# to every client on the socket, whichever session's Claude ran this:
+# renderings that display the same -- "[backend]" and "[backend] " -- forces
+# one write to every client on the socket, whichever session's Claude ran
+# this:
 #
-#   set-titles-string "[#{=2:session_name}]"   -> client title "[cl]"
-#   set-titles-string "[#{=2:session_name}] "  -> client title "[cl] "
+#   set-titles-string "[#{session_name}]"   -> client title "[backend]"
+#   set-titles-string "[#{session_name}] "  -> client title "[backend] "
 #
 # Called from the Claude Code statusLine command in ~/.claude/settings.json,
 # which runs every 60s in every session (statusLine.refreshInterval), so a

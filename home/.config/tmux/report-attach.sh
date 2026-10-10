@@ -4,10 +4,10 @@
 # this machine while the last attach came in over ssh, as the shells' titles
 # do over ssh:
 #
-#   ssh <host>, tmux attach, iTerm2  --> host_tag     --> "(<host>) [cl]"
-#   ssh <host>, tmux attach, other   --> @ssh=1       --> "(<host>) [cl]"
-#   local tmux attach, iTerm2        --> host_tag     --> "(<local>) [cl]"
-#   local tmux attach, other         --> @ssh unset   --> "[cl]"
+#   ssh <host>, tmux attach, iTerm2  --> host_tag     --> "(<host>) [backend]"
+#   ssh <host>, tmux attach, other   --> @ssh=1       --> "(<host>) [backend]"
+#   local tmux attach, iTerm2        --> host_tag     --> "(<local>) [backend]"
+#   local tmux attach, other         --> @ssh unset   --> "[backend]"
 #
 # client-session-changed is the only one of the two hooks that
 # `tmux new-session` fires, so `ssh -t <host> tmux new` gets its report too.
