@@ -462,7 +462,11 @@ if [ "$(uname)" = "Darwin" ]; then
   #                                   OSC 133 itself, and iTerm2 reads both;
   #                                   its blue prompt-mark triangles are off,
   #                                   as Ghostty draws none
-  #   confirm-close-surface=false  -> never prompt on close or quit
+  #   confirm-close-surface=false  -> never prompt on closing a tab or
+  #                                   window, but do prompt on quit
+  #                                   (PromptOnQuit): Cmd-Q ends every job,
+  #                                   which session restoration (below)
+  #                                   would otherwise have kept running
   #   copy-on-select = clipboard   -> CopySelection
   #   macos-option-as-alt (unset)  -> both Option keys Esc+ (2): unset means
   #                                   Alt on U.S. layouts, so option-p is
@@ -479,7 +483,7 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string 45FCCF80-D41B-400A-A797-004E6F3CAD2A
   defaults write com.googlecode.iterm2 TabStyleWithAutomaticOption -int 5
   defaults write com.googlecode.iterm2 UseLionStyleFullscreen -bool true
-  defaults write com.googlecode.iterm2 PromptOnQuit -bool false
+  defaults write com.googlecode.iterm2 PromptOnQuit -bool true
   defaults write com.googlecode.iterm2 OnlyWhenMoreTabs -bool false
   defaults write com.googlecode.iterm2 CopySelection -bool true
   # 24-bit colours from programs in sRGB, like the profile colours (and
@@ -497,6 +501,28 @@ if [ "$(uname)" = "Darwin" ]; then
   # New tabs open right after the current one, as Ghostty's default
   # window-new-tab-position = current does; iTerm2 appends them at the end.
   defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
+  # Session restoration: each session's job runs in a long-lived iTerm server
+  # process, not as a child of the app, so an iTerm2 upgrade (the updater's
+  # relaunch) or a crash leaves the jobs - ssh connections included - running,
+  # and the relaunched app reattaches its windows and tabs to them. Cmd-Q and
+  # a reboot still end the jobs. It needs three settings:
+  #   RunJobsInServers           Advanced > session restoration (read at
+  #                              launch; covers sessions started after it)
+  #   OpenArrangementAtStartup / Startup = "Use system window restoration
+  #   OpenNoWindowsAtStartup     setting"
+  #   NSQuitAlwaysKeepsWindows   the macOS "Close windows when quitting an
+  #                              application" checkbox, unchecked - written to
+  #                              iTerm2's domain so only iTerm2 keeps its
+  #                              windows and every other app's quit is unchanged
+  defaults write com.googlecode.iterm2 RunJobsInServers -bool true
+  defaults write com.googlecode.iterm2 OpenArrangementAtStartup -bool false
+  defaults write com.googlecode.iterm2 OpenNoWindowsAtStartup -bool false
+  defaults write com.googlecode.iterm2 NSQuitAlwaysKeepsWindows -bool true
+  # Python API (Settings > General > Magic), read at launch: it can set a
+  # window's title template (Window.async_set_title), which AppleScript
+  # refuses ("Only user variables may be set"). iTerm2 still asks before
+  # each new script may connect; that check is left on.
+  defaults write com.googlecode.iterm2 EnableAPIServer -bool true
   # Tab bar shown for a one-tab window too (Appearance > Tabs > Show tab bar
   # even when there is only one tab). iTerm2 hides it by default, so the
   # terminal lost a row of height the moment a second tab opened.
