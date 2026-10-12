@@ -104,18 +104,29 @@ for _, case in ipairs(CASES) do
     end
     check(same, what, ok and table.concat(got, " | ") or tostring(got))
   else
-    check(not ok and tostring(got):find(want, 1, true) ~= nil, what,
-      ok and ("saved " .. table.concat(got, " | ")) or tostring(got))
+    check(
+      not ok and tostring(got):find(want, 1, true) ~= nil,
+      what,
+      ok and ("saved " .. table.concat(got, " | ")) or tostring(got)
+    )
   end
 end
 
 -- Windows from osascript: one per \28-separated chunk, template first.
 do
-  local text = "a \\(x)" .. "\29" .. record(1, "ssh", "ssh vm", "fish", "/")
-    .. "\28" .. "\29" .. record(1, "fish", "fish", "fish", "/tmp") .. record(1, "ssh", "ssh vm", "[main]", "/")
+  local text = "a \\(x)"
+    .. "\29"
+    .. record(1, "ssh", "ssh vm", "fish", "/")
+    .. "\28"
+    .. "\29"
+    .. record(1, "fish", "fish", "fish", "/tmp")
+    .. record(1, "ssh", "ssh vm", "[main]", "/")
   local ok, w = pcall(M.parse_windows, text)
-  check(ok and #w == 2 and w[1].template == "a \\(x)" and #w[1].tabs == 1
-    and w[2].template == "" and #w[2].tabs == 2, "two windows split from osascript", tostring(w))
+  check(
+    ok and #w == 2 and w[1].template == "a \\(x)" and #w[1].tabs == 1 and w[2].template == "" and #w[2].tabs == 2,
+    "two windows split from osascript",
+    tostring(w)
+  )
   local okBad, err = pcall(M.parse_windows, record(1, "ssh", "ssh vm", "fish", "/"))
   check(not okBad and tostring(err):find("no title separator", 1, true), "a window without its template", tostring(err))
 end
@@ -143,16 +154,19 @@ end
 for _, case in ipairs({
   { "a command before any window", "# c\nssh vm\nwindow: x\nssh vm\n", "before any" },
   { "a window with no tabs", "window: x\n\nwindow: y\nssh vm\n", "window 1 (line 1) has no tabs" },
-  { "no window at all", "# only comments\n", "no \"window:\" line" },
+  { "no window at all", "# only comments\n", 'no "window:" line' },
 }) do
   local ok, err = pcall(M.parse_file, case[2])
   check(not ok and tostring(err):find(case[3], 1, true), case[1], ok and "accepted" or tostring(err))
 end
 
 -- The lookup's remote command reads the same in a remote sh and fish.
-check(M.list_sessions_command("ssh vm")
-  == [[ssh vm 'tmux -L claude ls -F '\''claude #{session_name}'\''; tmux ls -F '\''default #{session_name}'\''' </dev/null 2>&1]],
-  "remote tmux ls command", M.list_sessions_command("ssh vm"))
+check(
+  M.list_sessions_command("ssh vm")
+    == [[ssh vm 'tmux -L claude ls -F '\''claude #{session_name}'\''; tmux ls -F '\''default #{session_name}'\''' </dev/null 2>&1]],
+  "remote tmux ls command",
+  M.list_sessions_command("ssh vm")
+)
 
 log("%d passed, %d failed", passed, failed)
 file:close()

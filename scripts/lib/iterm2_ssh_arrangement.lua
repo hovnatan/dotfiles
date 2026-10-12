@@ -117,13 +117,13 @@ function M.parse_file(text)
       windows[#windows + 1] = { template = template, lines = {}, at = n }
     elseif line ~= "" and not line:match("^#") then
       if #windows == 0 then
-        error(string.format("line %d is a command before any \"window:\" line: %s", n, line))
+        error(string.format('line %d is a command before any "window:" line: %s', n, line))
       end
       table.insert(windows[#windows].lines, line)
     end
   end
   if #windows == 0 then
-    error("no \"window:\" line")
+    error('no "window:" line')
   end
   for i, w in ipairs(windows) do
     if #w.lines == 0 then
@@ -242,13 +242,27 @@ function M.lines(plans, lookup)
       local found, raw = lookup(p.login)
       local sockets = found[p.session]
       if not sockets then
-        error(string.format(
-          "tab %d: tmux session %q is on no socket (%s) of `%s`; its tmux ls said:\n%s",
-          i, p.session, table.concat(SOCKETS, ", "), p.login, raw))
+        error(
+          string.format(
+            "tab %d: tmux session %q is on no socket (%s) of `%s`; its tmux ls said:\n%s",
+            i,
+            p.session,
+            table.concat(SOCKETS, ", "),
+            p.login,
+            raw
+          )
+        )
       end
       if #sockets > 1 then
-        error(string.format("tab %d: tmux session %q is on sockets %s of `%s`; rename one",
-          i, p.session, table.concat(sockets, " and "), p.login))
+        error(
+          string.format(
+            "tab %d: tmux session %q is on sockets %s of `%s`; rename one",
+            i,
+            p.session,
+            table.concat(sockets, " and "),
+            p.login
+          )
+        )
       end
       out[i] = M.attach_line(p.login, sockets[1], p.session)
     end
@@ -344,12 +358,16 @@ function run(argv) {
 }
 ]]
 
-
 if command == "save" then
   local ssh = assert(loadfile(repo .. "/home/.hammerspoon/ssh_command.lua"))()
   local which = windowPrefix and string.format("the window titled %q...", windowPrefix) or "every window"
-  local out = run("osascript -l JavaScript -e " .. M.sh_quote(READ_WINDOWS)
-    .. (windowPrefix and (" " .. M.sh_quote(windowPrefix)) or "") .. " 2>&1", "reading " .. which)
+  local out = run(
+    "osascript -l JavaScript -e "
+      .. M.sh_quote(READ_WINDOWS)
+      .. (windowPrefix and (" " .. M.sh_quote(windowPrefix)) or "")
+      .. " 2>&1",
+    "reading " .. which
+  )
   local ok, windows = pcall(M.parse_windows, (out:gsub("\n$", "")))
   if not ok then
     die(windows)
@@ -406,8 +424,14 @@ else
   local f = io.open(file)
   if not f then
     local saved = run("ls " .. M.sh_quote(dir) .. " 2>/dev/null || true", "listing " .. dir):gsub("%.txt\n", " ")
-    die(string.format("no arrangement %q: %s does not exist; saved ones: %s", name, file,
-      saved == "" and "(none)" or saved))
+    die(
+      string.format(
+        "no arrangement %q: %s does not exist; saved ones: %s",
+        name,
+        file,
+        saved == "" and "(none)" or saved
+      )
+    )
   end
   local text = f:read("a")
   f:close()
@@ -427,8 +451,10 @@ else
       args[i] = M.sh_quote(line)
       log("window %d tab %d: %s", wi, i, line)
     end
-    local session = run("osascript -l JavaScript -e " .. M.sh_quote(OPEN_WINDOW) .. " " .. table.concat(args, " "),
-      string.format("opening window %d in iTerm2", wi)):gsub("\n$", "")
+    local session = run(
+      "osascript -l JavaScript -e " .. M.sh_quote(OPEN_WINDOW) .. " " .. table.concat(args, " "),
+      string.format("opening window %d in iTerm2", wi)
+    ):gsub("\n$", "")
     log("window %d restored (session %s)", wi, session)
     if w.template ~= "" then
       titles[#titles + 1] = M.sh_quote(session) .. " " .. M.sh_quote(w.template)
@@ -437,9 +463,16 @@ else
   if #titles > 0 then
     log("setting %d window titles through the Python API (iTerm2 may ask to allow it)", #titles)
     -- uv reads the script's pinned iterm2 from its inline metadata.
-    io.stdout:write(run(string.format("uv run --quiet --script %s %s 2>&1",
-      M.sh_quote(repo .. "/scripts/lib/iterm2_set_window_titles.py"), table.concat(titles, " ")),
-      "setting window titles (Settings > General > Magic > Enable Python API must be on)"))
+    io.stdout:write(
+      run(
+        string.format(
+          "uv run --quiet --script %s %s 2>&1",
+          M.sh_quote(repo .. "/scripts/lib/iterm2_set_window_titles.py"),
+          table.concat(titles, " ")
+        ),
+        "setting window titles (Settings > General > Magic > Enable Python API must be on)"
+      )
+    )
   end
   log("restored %s: %d windows", name, #windows)
 end
