@@ -33,7 +33,9 @@ def log(msg: str) -> None:
 
 # The script imports iterm2 and names its classes in annotations.
 stub = types.ModuleType("iterm2")
-vars(stub).update({n: type(n, (), {}) for n in ("App", "Connection", "Window")})
+vars(stub).update(
+    {n: type(n, (), {}) for n in ("App", "Connection", "Session", "Window")},
+)
 sys.modules["iterm2"] = stub
 spec = importlib.util.spec_from_file_location(
     "iterm2_ssh_arrangement",
@@ -44,6 +46,7 @@ assert spec.loader
 arr = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(arr)
 Tab, Saved, ArrangementError = arr.Tab, arr.Saved, arr.ArrangementError
+arr.LOG.append(LOG)  # the script's own log() lines land in this run's log
 
 # What `tmux ls` on each socket of each host prints.
 HOSTS = {
@@ -114,10 +117,10 @@ def _() -> None:
         ],
     )
     assert got == [
-        "ssh -t vm tmux -L claude attach -t =ai-agent",
+        "LC_TMUX_ATTACH=claude:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH vm",
         "ssh vm",
-        "ssh -t vm tmux -L claude attach -t =api/docs",
-        "ssh -t -p 2222 user@box tmux attach -t =main",
+        "LC_TMUX_ATTACH=claude:api/docs ssh -o SendEnv=LC_TMUX_ATTACH vm",
+        "LC_TMUX_ATTACH=default:main ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 user@box",
     ], got
 
 
@@ -127,10 +130,23 @@ def _() -> None:
     assert got == ["cd '/Users/me/it\\'s here'"], got
 
 
-@case("-t already given is not doubled")
+@case("a tab restored by an earlier attach line saves one attach, not two")
 def _() -> None:
-    got = save([Tab(1, "ssh", "ssh -t vm", "[main]", "/")])
-    assert got == ["ssh -t vm tmux attach -t =main"], got
+    # iTerm2's commandLine is ssh's argv: the variable is in its
+    # environment, not on the line.
+    restored = "ssh -o SendEnv=LC_TMUX_ATTACH vm"
+    got = save([Tab(1, "ssh", restored, "[main]", "/")])
+    assert got == ["LC_TMUX_ATTACH=default:main ssh -o SendEnv=LC_TMUX_ATTACH vm"], got
+
+
+@case("attach_request reads back what attach_line wrote, and nothing else")
+def _() -> None:
+    for socket in arr.SOCKETS:
+        line = arr.attach_line("ssh -p 2222 vm", socket, "api/docs")
+        got = arr.attach_request(line)
+        assert got == (socket, "api/docs"), (line, got)
+    for line in ["ssh vm", "cd '/tmp'", "LC_TMUX_ATTACH=x:y ssh vm"]:
+        assert arr.attach_request(line) is None, line
 
 
 @case("a split tab is refused")
@@ -172,7 +188,7 @@ def _() -> None:
     windows = [
         Saved(
             "ai-agent \\(currentTab.currentSession.name)",
-            ["ssh -t vm tmux attach -t =x", "ssh vm"],
+            ["LC_TMUX_ATTACH=default:x ssh -o SendEnv=LC_TMUX_ATTACH vm", "ssh vm"],
         ),
         Saved("", ["cd '/tmp'"]),
     ]
@@ -256,6 +272,43 @@ def _() -> None:
     assert tabs[0].panes == 2, tabs
     error = error_of(lambda: arr.plan(tabs[0], 1))
     assert "2 panes" in error, error
+
+
+class TitledSession:
+    """An iTerm2 session whose name turns to `then` after `after` reads."""
+
+    def __init__(self, then: str, after: int) -> None:
+        """Read "fish" `after` times, then `then`."""
+        self.then, self.left = then, after
+
+    async def async_get_variable(self, var: str) -> str:
+        """Read the name, the only variable wait_attached asks."""
+        assert var == "name", var
+        self.left -= 1
+        return "fish" if self.left >= 0 else self.then
+
+
+@case("restore waits for each tmux tab to show its session")
+def _() -> None:
+    tabs = [
+        ("window 1 tab 1", "ai-agent", TitledSession("[ai-agent]", 3)),
+        ("window 1 tab 2", "api/docs", TitledSession("[api/docs] ", 0)),
+    ]
+    asyncio.run(arr.wait_attached(tabs, timeout=5, poll=0.01))
+
+
+@case("a tmux tab still a shell at the timeout fails the restore, by name")
+def _() -> None:
+    tabs = [
+        ("window 1 tab 1", "ai-agent", TitledSession("[ai-agent]", 0)),
+        ("window 2 tab 3", "api/docs", TitledSession("[api/docs]", 10**6)),
+    ]
+    error = error_of(
+        lambda: asyncio.run(arr.wait_attached(tabs, timeout=0.05, poll=0.01)),
+    )
+    assert "1 tmux tabs did not attach" in error, error
+    assert "window 2 tab 3: want [api/docs], title reads 'fish'" in error, error
+    assert "window 1 tab 1" not in error, error
 
 
 log(f"{passed} passed, {failed} failed")

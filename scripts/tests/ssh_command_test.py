@@ -45,6 +45,12 @@ CASES: list[tuple[str, str | None]] = [
     ("ssh -p 2222 user@vm ./deploy.sh", "ssh -p 2222 user@vm"),
     ("ssh vm sudo reboot", "ssh vm"),
     ("ssh -t vm tmux attach", "ssh -t vm"),
+    # So is the arrangement's attach, which is one in all but form.
+    ("ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 vm", "ssh -p 2222 vm"),
+    ("ssh -osendenv=LC_TMUX_ATTACH vm", "ssh vm"),
+    # Option names are read in any case, variable names are not.
+    ("ssh -o SendEnv=lc_tmux_attach vm", "ssh -o SendEnv=lc_tmux_attach vm"),
+    ("ssh -o SendEnv=LC_OTHER vm", "ssh -o SendEnv=LC_OTHER vm"),
     # rsync's and git's transport ssh: a shell, never their server command.
     ("ssh vm rsync --server -vlogDtpre.iLsfxCIvu . /data", "ssh vm"),
     # Forwards and no-shell options are dropped.

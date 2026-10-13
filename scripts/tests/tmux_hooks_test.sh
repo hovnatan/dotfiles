@@ -4,8 +4,8 @@
 # tmux_hooks_test.sh -- end-to-end checks for the tmux hooks' log: the hook
 # lines of home/.tmux.conf and the scripts they run, in a throwaway tmux
 # server and HOME, with a client in a pty that reports focus as a terminal
-# does. Needs tmux (3.6 or later, for the focus hooks) and python3; about
-# 15 s.
+# does. Needs tmux (3.6 or later, for the focus hooks), python3 and fish
+# (report-attach.sh's host report); about 15 s.
 #
 #   sessions   a: sleep           b: a stand-in "claude" (a link to sleep,
 #                                    which is all focus-out-unattached.sh
@@ -23,13 +23,16 @@
 #   a's pane title "* <host>-renamed"     -> session $N renamed a -> renamed
 #   client dies                           -> detached ... session=b
 #                                            synthetic focus-out to %N (b)
+#   an iTerm2-over-ssh attach to a tty    -> exit 1, the reason in the
+#   this user cannot write (report-          output tmux shows, FAILED ...
+#   attach.sh run as tmux runs a hook)       in the log
 #
 # The socket is named "claude": sync-session-name.sh acts on that one only.
 # Exit 0 = all passed; on failure the work dir is kept and printed.
 
 set -uo pipefail
 
-for cmd in tmux python3; do
+for cmd in tmux python3 fish; do
   command -v "$cmd" >/dev/null || {
     echo "tmux_hooks_test.sh: $cmd not on PATH" >&2
     exit 1
@@ -177,6 +180,39 @@ wait "$bystander" 2>/dev/null
 bystander=
 wait_for ' synthetic focus-out to %[0-9]+ \(b\): no client attached$' \
   && pass "the focus-out sent to the clientless claude pane is logged" || fail "no synthetic focus-out line: $(hooks_log)"
+
+# --- an attach report that cannot be written -----------------------------------------
+
+# An iTerm2 client over ssh on a tty this user cannot write, as a Tailscale
+# SSH pty that ran a remote command stays root's: a read-only file stands in
+# for it. run-shell is how tmux runs the hook, and shows only its stdout
+# with the "returned 1": that is where the reason has to be. The host
+# report comes from fish (iterm2_report_host), so the throwaway HOME gets
+# the repo's fish functions and the server's PATH fish's directory.
+mkdir -p "$H/.config/fish"
+ln -s "$REPO/home/.config/fish/functions" "$H/.config/fish/functions"
+t set-environment -g PATH "$(dirname "$TMUX_BIN"):/usr/bin:/bin:$(dirname "$(command -v fish)")"
+ro_tty="$WORK/ro_tty"
+: >"$ro_tty"
+chmod 444 "$ro_tty"
+[ "$(id -u)" != 0 ] || fail "running as root, which writes a read-only file: the next checks cannot fail"
+t set-environment -t b LC_TERMINAL iTerm2
+t set-environment -t b SSH_CONNECTION "192.0.2.1 50000 192.0.2.2 22"
+# The session id ("$1") quoted, as the hook line's #{q:session_id} does.
+out=$(t run-shell "$H/.dotfiles/home/.config/tmux/report-attach.sh $SOCK '$(t display -p -t b '#{session_id}')' ro $ro_tty attached" 2>&1)
+case $out in
+  *"cannot write the iTerm2 host report to $ro_tty. Likely a Tailscale SSH login"*"returned 1"*)
+    pass "an unwritable tty fails the hook, the reason shown with it"
+    ;;
+  *) fail "unwritable tty output: $out" ;;
+esac
+# Run directly, where stderr is not dropped: bash's own "Permission denied"
+# for the redirection would be noise beside the reason.
+err=$(env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin:$(dirname "$(command -v fish)")" \
+  "$H/.dotfiles/home/.config/tmux/report-attach.sh" "$SOCK" "$(t display -p -t b '#{session_id}')" ro "$ro_tty" attached 2>&1 >/dev/null)
+[ -z "$err" ] && pass "and nothing on stderr" || fail "stderr of the failing hook: $err"
+wait_for " attached $ro_tty session=b: iTerm2 over ssh, FAILED: cannot write to $ro_tty\$" \
+  && pass "the failure is logged, naming the tty" || fail "no FAILED line: $(hooks_log)"
 
 # --- the log as a whole ---------------------------------------------------------------
 

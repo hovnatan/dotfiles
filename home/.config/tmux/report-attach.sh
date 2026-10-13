@@ -33,7 +33,9 @@
 # (log-event.sh says where and why): the host report is one of the things
 # iTerm2 judges a change of host by, and a report that cannot be written
 # (the pty of a Tailscale SSH session that runs a command stays root's)
-# fails here, with the line to show for it.
+# fails here, with the line to show for it. A restored iTerm2 ssh
+# arrangement attaches through the login shell for that reason
+# (LC_TMUX_ATTACH, ~/.config/fish/functions/tmux_attach_requested.fish).
 #   2026-09-30T13:01:58Z attached /dev/pts/1 session=proj: iTerm2 over ssh, reported azureuser@vm
 #   2026-09-30T14:07:07Z session-changed /dev/pts/1 session=bench: iTerm2 over ssh, reported azureuser@vm
 #   2026-09-30T00:44:24Z attached /dev/pts/7 session=t: iTerm2 over ssh, FAILED: cannot write to /dev/pts/7
@@ -72,8 +74,15 @@ if [ -n "$iterm2" ]; then
   report=$(fish -c "iterm2_report_host --tmux-attach=${where#over }")
   host=${report#*RemoteHost=}
   host=${host%%$'\a'*}
-  if ! printf '%s' "$report" >"$tty"; then
+  # tmux shows a failed hook's stdout beside its "... returned 1", never its
+  # stderr, so the reason goes to stdout, and bash's own redirection error
+  # (to stderr: unseen anyway) is silenced with the braces.
+  if ! { printf '%s' "$report" >"$tty"; } 2>/dev/null; then
     note "iTerm2 $where, FAILED: cannot write to $tty"
+    echo "report-attach.sh: cannot write the iTerm2 host report to $tty." \
+      "Likely a Tailscale SSH login that ran a remote command, whose pty stays root's;" \
+      "attach through the login shell instead:" \
+      "LC_TMUX_ATTACH=<socket>:<session> ssh -o SendEnv=LC_TMUX_ATTACH <host>"
     exit 1
   fi
   note "iTerm2 $where, reported $host"

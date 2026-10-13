@@ -17,7 +17,8 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
       v  plan(): what each tab is
     ssh, title "[<session>]" -> remote tmux; which socket holds <session>
                                 is asked of the host (one ssh per host)
-                                -> ssh -t <login> tmux -L claude attach -t =<session>
+                                -> LC_TMUX_ATTACH=claude:<session> \
+                                     ssh -o SendEnv=LC_TMUX_ATTACH <login>
     ssh, any other title     -> ssh <login>
     anything else            -> cd '<path>' (a local tab; its program is
                                 not rerun)
@@ -32,6 +33,9 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
                  typed into the tab's shell (as Cmd-T does), so exiting ssh
                  leaves a local shell; its title template set and read back.
                  The first block's window ends up in front, as it was saved.
+                 Then each tmux tab is waited on until its title shows its
+                 session (wait_attached): a request the far side never acted
+                 on leaves a plain shell, which fails the restore by name.
 
 <login> is ssh_command.py's replay of the tab's ssh command line (Cmd-T's
 parser): the options and destination, never a remote command or forward.
@@ -39,11 +43,32 @@ The "[<session>]" title is ~/.tmux.conf's set-titles-string for an iTerm2
 client. A session lives on the default socket or on claude_tmux_run.sh's
 "claude" one, and the title does not say which, hence the lookup.
 
+The attach goes through the remote login shell, not a remote command: over
+Tailscale SSH a remote command gets a pty that stays root's, and the
+client-attached hook (home/.config/tmux/report-attach.sh) cannot write the
+iTerm2 host report to it. A plain login runs login(1), which hands the pty
+to the user; the login fish then attaches what LC_TMUX_ATTACH names
+(home/.config/fish/functions/tmux_attach_requested.fish):
+
+    ssh -t vm tmux -L claude attach -t =x                   pty root's,
+                                                            report fails
+    LC_TMUX_ATTACH=claude:x ssh -o SendEnv=LC_TMUX_ATTACH vm
+                                                            pty the user's,
+                                                            report lands
+
+SendEnv, not SetEnv: ssh keeps only the first SetEnv it reads, so one on
+the command line would drop the host's own from ~/.ssh/config, while
+SendEnv lines add up.
+
 Lines typed into a tab are for fish, the shell of the default profile.
 Imported without running (scripts/tests/iterm2_ssh_arrangement_test.py) it
 only defines its functions.
 """
 
+# A script beside its shell wrapper, no license header, as in scripts/tests.
+# ruff: noqa: CPY001
+
+import asyncio
 import re
 import subprocess
 import sys
@@ -58,7 +83,9 @@ import iterm2
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "home/.hammerspoon"))
 import ssh_command
 
-SOCKETS = ("claude", "default")
+SOCKETS = ("claude", "default")  # tmux_attach_requested.fish accepts these
+ATTACH_SEND = "-o SendEnv=LC_TMUX_ATTACH"
+ATTACH_TIMEOUT = 30.0  # s for every restored tmux tab to show its session
 DIR = Path.home() / ".local/state/iterm2_ssh_arrangements"
 USAGE = (
     "usage: iterm2_ssh_arrangement.sh save [<name> [<window title prefix>]]"
@@ -153,32 +180,39 @@ def tmux_session(title: str) -> str | None:
     return m[1] if m else None
 
 
-def with_tty(login: str) -> str:
-    """Return `login` with -t (a tty for tmux), unless it has one.
-
-    "ssh -p 2222 vm" -> "ssh -t -p 2222 vm"; "ssh -t vm" stays.
-    """
-    words = login.split()
-    if "-t" in words:
-        return login
-    return " ".join([words[0], "-t", *words[1:]])
-
-
 def tmux(socket: str) -> str:
     """Return the tmux command for `socket`: "tmux" or "tmux -L claude"."""
     return "tmux" if socket == "default" else f"tmux -L {socket}"
 
 
 def attach_line(login: str, socket: str, session: str) -> str:
-    """Return the line that reattaches `session` on `socket`.
+    """Return the line that reattaches `session` on `socket`, via the login shell.
 
-    ("ssh vm", "claude", "ai-agent") -> "ssh -t vm tmux -L claude attach -t =ai-agent"
-    "=" makes the target exact: "bench" must not attach "api/docs".
+    ("ssh -p 2222 vm", "claude", "ai-agent")
+        -> "LC_TMUX_ATTACH=claude:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 vm"
+    The value is "<socket>:<session>", split at the first ":" on the far
+    side; tmux allows no ":" in a session name. LC_ because the stock
+    AcceptEnv of sshd (LANG LC_*) passes only those; Tailscale SSH passed
+    it as is in a test on this tailnet.
     """
     if not ssh_command.plain(session):
         msg = f"tmux session {session!r} has characters needing quotes; rename it"
         raise ArrangementError(msg)
-    return f"{with_tty(login)} {tmux(socket)} attach -t ={session}"
+    first, *rest = login.split()
+    words = [f"LC_TMUX_ATTACH={socket}:{session}", first, ATTACH_SEND, *rest]
+    return " ".join(words)
+
+
+def attach_request(line: str) -> tuple[str, str] | None:
+    """Return the (socket, session) a saved line asks the far side to attach.
+
+    attach_line's output -> its socket and session; any other line -> None.
+    "LC_TMUX_ATTACH=claude:api/docs ssh -o SendEnv=LC_TMUX_ATTACH vm"
+        -> ("claude", "api/docs")
+    """
+    pattern = rf"LC_TMUX_ATTACH=([^:\s]+):(\S+) \S+ {re.escape(ATTACH_SEND)} .+"
+    m = re.fullmatch(pattern, line)
+    return (m[1], m[2]) if m else None
 
 
 def fish_quote(s: str) -> str:
@@ -414,6 +448,7 @@ async def restore(connection: iterm2.Connection, name: str) -> None:
     # key window when saved. Each title is read back, as a window left with
     # the wrong name is a failure, not a skip.
     opened = []
+    attaching: list[tuple[str, str, iterm2.Session]] = []
     for wi in reversed(range(len(windows))):
         w = windows[wi]
         window = await iterm2.Window.async_create(connection)
@@ -427,6 +462,10 @@ async def restore(connection: iterm2.Connection, name: str) -> None:
                 raise ArrangementError(msg)
             await tab.current_session.async_send_text(line + "\n")
             log(f"window {wi + 1} tab {i + 1}: {line}")
+            if request := attach_request(line):
+                attaching.append(
+                    (f"window {wi + 1} tab {i + 1}", request[1], tab.current_session),
+                )
         if w.template:
             await window.async_set_title(w.template)
             got = await window.async_get_variable("titleOverrideFormat")
@@ -439,7 +478,51 @@ async def restore(connection: iterm2.Connection, name: str) -> None:
         log(f"window {wi + 1} restored ({window.window_id}): {w.template!r}")
         opened.append(window)
     await opened[-1].async_activate()
+    await wait_attached(attaching)
     log(f"restored {name}: {len(windows)} windows")
+
+
+async def wait_attached(
+    tabs: list[tuple[str, str, iterm2.Session]],
+    timeout: float = ATTACH_TIMEOUT,
+    poll: float = 0.5,
+) -> None:
+    """Wait until each (label, session, iTerm2 session) shows "[<session>]".
+
+    The title is ~/.tmux.conf's set-titles-string for an iTerm2 client, so
+    it shows the session once the far side's login fish has exec'd tmux.
+    Still a shell's title at `timeout`: the request was dropped on the way
+    or not acted on, and the restore fails naming the tab, rather than
+    leaving a plain shell where a session was saved.
+    """
+    waiting = list(tabs)
+    log(f"waiting up to {timeout:g} s for {len(waiting)} tmux tabs to attach")
+    deadline = asyncio.get_running_loop().time() + timeout
+    titles: dict[str, str] = {}
+    while waiting:
+        for tab in list(waiting):
+            label, session, iterm_session = tab
+            titles[label] = await iterm_session.async_get_variable("name") or ""
+            if tmux_session(titles[label]) == session:
+                log(f"{label}: attached {session}")
+                waiting.remove(tab)
+        if waiting and asyncio.get_running_loop().time() >= deadline:
+            lines = [
+                f"  {label}: want [{session}], title reads {titles[label]!r}"
+                for label, session, _ in waiting
+            ]
+            msg = (
+                f"{len(waiting)} tmux tabs did not attach in {timeout:g} s:\n"
+                + "\n".join(lines)
+                + "\nOn the far side, the tmux_attach_requested event log"
+                " (~/.dotfiles/.logs/*_tmux_attach_requested/events.log) shows"
+                " each request received: none means LC_TMUX_ATTACH never arrived"
+                " (sshd AcceptEnv, or the host runs no fish with"
+                " tmux_attach_requested: dotup it); a line means tmux refused it."
+            )
+            raise ArrangementError(msg)
+        if waiting:
+            await asyncio.sleep(poll)
 
 
 def main() -> None:

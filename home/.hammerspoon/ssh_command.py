@@ -15,13 +15,15 @@ E.g.
     ssh -p 2222 user@vm ./deploy.sh -> ssh -p 2222 user@vm   (not run twice)
     ssh -N -L 8080:localhost:80 vm  -> ssh vm                (no second tunnel)
     ssh -t vm tmux attach           -> ssh -t vm             (a plain shell)
+    ssh -o SendEnv=LC_TMUX_ATTACH vm
+                                    -> ssh vm                (the same: no attach)
     ssh vm "tmux new -s main"       -> ssh vm                (a quote, but dropped)
     ssh -o "ProxyCommand x" vm      -> NotReplayableError: a kept word is quoted,
                                        not ours to re-parse
 """
 
 # Beside the Hammerspoon config, not in a package: imported by path.
-# ruff: noqa: INP001
+# ruff: noqa: INP001, CPY001
 
 import re
 
@@ -40,6 +42,12 @@ DROP = set("LRDWNfTnsGVQO")
 # boundaries or meaning the joined string has lost. Words of the remote
 # command are dropped unread, so they may hold anything.
 PLAIN = re.compile(r"[A-Za-z0-9@.,_:/=+-]+")
+
+# The -o that sends the login fish its tmux attach request (the saved
+# arrangements' attach line, tmux_attach_requested.fish): a remote command
+# in all but form, dropped like one. ssh reads option names in any case,
+# variable names as written.
+ATTACH = re.compile(r"(?i:sendenv)=LC_TMUX_ATTACH")
 
 
 class NotReplayableError(ValueError):
@@ -76,7 +84,7 @@ def option(words: list[str], i: int, out: list[str]) -> int:
             if not plain(arg):
                 msg = f"-{flag} argument {arg!r} is not plain"
                 raise NotReplayableError(msg)
-        if flag not in DROP:
+        if flag not in DROP and not (flag == "o" and ATTACH.fullmatch(arg)):
             out += [f"-{flag}", arg]
         break
     return i
