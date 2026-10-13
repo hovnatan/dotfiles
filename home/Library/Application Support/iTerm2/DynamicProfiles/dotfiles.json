@@ -30,7 +30,7 @@
       "BM Growl": true,
       "Send Terminal Generated Alerts": true,
       "Suppress Alerts in Active Session": true,
-      "Send Bell Alert": true,
+      "Send Bell Alert": false,
       "Send Session Ended Alert": false,
       "Option Key Sends": 2,
       "Right Option Key Sends": 2,
@@ -358,6 +358,15 @@
         "Blue Component": 0.698039,
         "Alpha Component": 1,
         "Color Space": "sRGB"
+      },
+      "Keyboard Map": {
+        "0x74-0x100000-0x11": {
+          "Action": 60,
+          "Text": "ssh_new_tab(session_id: id)",
+          "Version": 1,
+          "Keycode": 17,
+          "Modifiers": 1048576
+        }
       }
     }
   ]

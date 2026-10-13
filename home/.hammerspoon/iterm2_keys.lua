@@ -14,23 +14,15 @@
 --                                        no  --> Ctrl-D, unchanged (EOF)
 --     anything else --> unchanged
 --
---   key down, Command only
---     Cmd-T --> focus on a terminal view, its foreground job ssh, and the
---               login (`ssh <options> <destination>`) re-parsed safely?
---        no  --> the key, unchanged (iTerm2's own New Tab)
---        yes --> swallowed; right after, a new tab in that same window
---                types just that login into its local shell
---
 -- A key the tap leaves alone goes on as the real event; a rewritten one is
--- swallowed and replaced by a synthetic keystroke or an iTerm2 command.
+-- swallowed and replaced by a synthetic keystroke. (Cmd-T in an ssh tab is
+-- not here: iTerm2 binds it to a function of iterm2_api.py.)
 local M = {}
-
-local sshCommand = require("ssh_command")
 
 local ITERM2 = "com.googlecode.iterm2"
 local KEY = hs.keycodes.map
 
--- Each Ctrl-U / Ctrl-D / Cmd-T decision and every error is logged (event_log.lua),
+-- Each Ctrl-U / Ctrl-D decision and every error is logged (event_log.lua),
 -- to the file only: a line per keypress would crowd the Console. E.g.
 --   2026-09-29T20:10:02.114Z Ctrl-U: pass through (full-screen program, alt-screen check 18 ms)
 local log
@@ -169,102 +161,6 @@ local function scrolledBack(terminal)
   return enabled and bar:attributeValue("AXValue") < 1
 end
 
--- Cmd-T in an ssh tab: open the new tab on the same machine. The test is
--- the local foreground job (jobName, commandLine), the process iTerm2's own
--- pty sees, so it holds whatever runs on the far side (a remote tmux, a
--- nested ssh: that one reopens the first hop). Only the login is replayed,
--- `ssh <options> <destination>` from ssh_command.lua: a remote command
--- (`ssh vm ./deploy.sh`), a forward or -N never runs twice, and a command
--- line it cannot re-parse safely gets iTerm2's plain New Tab instead.
--- ControlMaster in ~/.ssh/config makes the second connection instant.
---
--- The new tab goes through the shell, not a tab "command", so exiting ssh
--- leaves a local shell, as if the command had been typed by hand. It uses
--- the default profile, as iTerm2's New Tab does.
---
--- Two steps, so Hammerspoon's main thread (the tap, every hotkey) never
--- waits on the tab:
---   in the callback  read window id, jobName, commandLine (~17ms, one
---                    Apple Event); ssh? swallow the key
---   own process      osascript creates the tab in the window with that id
---                    (~300ms) and types the command, both passed as argv,
---                    so the command needs no AppleScript quoting
--- Pinning the window id means the tab lands in the window the key was
--- pressed in even if focus moves in between.
-local CURRENT_JOB = [[
-tell application "iTerm2"
-  set w to current window
-  if w is missing value then return {}
-  tell current session of w
-    return {id of w, variable named "jobName", variable named "commandLine"}
-  end tell
-end tell
-]]
-
-local OPEN_TAB = [[
-on run argv
-  tell application "iTerm2"
-    tell (first window whose id is (item 1 of argv as integer)) to set t to (create tab with default profile)
-    tell current session of t to write text (item 2 of argv)
-  end tell
-end run
-]]
-
--- Running osascript tasks, held so none is garbage-collected mid-run.
-local openTasks = {}
-
-local function openSshTab(windowId, command)
-  local task
-  task = hs.task.new("/usr/bin/osascript", function(exitCode, _, stderr)
-    openTasks[task] = nil
-    if exitCode ~= 0 then
-      fail(string.format("osascript opening `%s` in window %d exited %d: %s", command, windowId, exitCode, stderr))
-    end
-    log("Cmd-T: opened `%s` in a new tab of window %d", command, windowId)
-  end, { "-e", OPEN_TAB, tostring(windowId), command })
-  openTasks[task] = true
-  task:start()
-end
-
--- Whether Cmd-T was taken: true once the ssh tab is on its way, false to let
--- iTerm2's New Tab run.
-local function sshNewTab()
-  -- Focus outside a terminal view (Settings, the composer, the find bar):
-  -- `current window` below would be the last terminal window, maybe one in
-  -- the background, so leave the key to iTerm2.
-  if not focusedTerminal() then
-    log("Cmd-T: pass through (focus not on a terminal view)")
-    return false
-  end
-  local result = iterm2(CURRENT_JOB, "reading iTerm2's current job")
-  -- No window (all closed): pass, so Cmd-T still opens one.
-  if #result == 0 then
-    log("Cmd-T: pass through (no iTerm2 window)")
-    return false
-  end
-  local windowId, job, command = table.unpack(result)
-  -- Both are set for every live session (a fresh tab reports its shell);
-  -- missing means iTerm2 renamed or dropped them, which would otherwise read
-  -- as "not ssh" and silently turn the feature off. The test is jobName, the
-  -- process name, so `/usr/bin/ssh vm` counts too.
-  if type(job) ~= "string" or type(command) ~= "string" then
-    fail("iTerm2 jobName / commandLine are " .. hs.inspect(result) .. ", not strings; see sshNewTab")
-  end
-  if job ~= "ssh" then
-    log("Cmd-T: pass through (foreground job %s)", job)
-    return false
-  end
-  -- The log gets the replay only, never the dropped remote command, which
-  -- may carry a secret (`ssh vm env TOKEN=... ./job`).
-  local replay, why = sshCommand.interactive(command)
-  if not replay then
-    log("Cmd-T: pass through (ssh command line not replayable: %s)", why)
-    return false
-  end
-  openSshTab(windowId, replay)
-  return true
-end
-
 -- What a press of Control plus keyCode does: a rewrite function, or nil to
 -- let the key through, and why (for the log). Checks run cheapest first
 -- (~0.3ms accessibility reads, then the ~17ms AppleScript), so a Ctrl-D at
@@ -295,21 +191,8 @@ end
 -- does nothing, and never overshoots into an EOF that closes the shell.
 local held = { keyCode = nil, action = nil }
 
--- Same for Cmd-T, by the first press's answer: a held Cmd-T in an ssh tab
--- opens one tab, not one per repeat; elsewhere iTerm2's own repeat runs.
--- Reset before each first press, so a check that raises leaves "not taken"
--- for its repeats rather than the previous press's answer.
-local cmdTTaken = false
-
 local function onKeyDown(event)
   local keyCode = event:getKeyCode()
-  if keyCode == KEY.t and event:getFlags():containExactly({ "cmd" }) then
-    if event:getProperty(AUTOREPEAT) == 0 then
-      cmdTTaken = false
-      cmdTTaken = sshNewTab()
-    end
-    return cmdTTaken
-  end
   if
     (keyCode ~= KEY.m and keyCode ~= KEY.u and keyCode ~= KEY.d) or not event:getFlags():containExactly({ "ctrl" })
   then

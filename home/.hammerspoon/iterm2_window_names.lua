@@ -28,8 +28,8 @@
 --
 -- Why not hs.window.filter: it was the first version, and after a
 -- Hammerspoon reload it stopped reporting windowFocused altogether while
--- the AX observer of iterm2_bell_banners.lua, the same mechanism as here,
--- kept seeing every focus change.
+-- an AX observer on iTerm2, the mechanism used here, kept seeing every
+-- focus change (the old bell banner module had one).
 --
 -- Focus within a window (tab or pane switch) is not a window focus, so it
 -- shows nothing: the tab bar already names the tab.

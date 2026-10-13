@@ -1,8 +1,6 @@
 -- alt+0 dismisses every notification banner on screen. macOS has no
--- shortcut for it, and iTerm2's bell banners pile up while background tabs
--- keep ringing once its alert style is Persistent (System Settings >
--- Notifications > iTerm2, a manual per-machine step; see the bell note in
--- scripts/setup_user_symlinks.sh).
+-- shortcut for it, and Persistent banners (the bell banners of
+-- iterm2_api.lua, for one) wait until dismissed.
 --
 -- Banners are elements of the NotificationCenter process that accessibility
 -- exposes with named actions, not buttons to click:
@@ -35,8 +33,7 @@ end
 -- bundle id: hs.application's lookup has returned nothing for the running
 -- process during a burst of hs CLI calls, so it stays off the common path;
 -- not hs.application.get() either, see chrome.lua for why its miss path
--- blocks Hammerspoon. Also used by iterm2_bell_banners.lua, as is
--- everything below.
+-- blocks Hammerspoon.
 local NC_TITLE = "Notification Center"
 local cachedPid
 
@@ -68,8 +65,7 @@ end
 -- nothing there the list is normally an empty table (checked on macOS 27: a
 -- windowless process's AXWindows, a leaf's AXChildren), so the plain nil is
 -- an empty list too. Only the message is a failure: a caller that took a
--- failed read for an empty list would act on a screen it never saw, and the
--- bell module used to drop its banners that way.
+-- failed read for an empty list would act on a screen it never saw.
 local function list(el, attribute, what)
   local value, err = el:attributeValue(attribute)
   if err ~= nil then
@@ -154,18 +150,6 @@ local function pass(n)
   end)
 end
 
--- Called once the first pass has pressed every banner on screen: the one
--- bulk dismissal there is, so a module tracking banners
--- (iterm2_bell_banners.lua) can forget them all without a scan of its own.
--- After the pass, not before: a pass that raises (a failed read, a banner
--- without its action) leaves banners on screen, and a tracker told
--- beforehand would have forgotten them for good.
-M.listeners = {}
-
-function M.onClearAll(fn)
-  table.insert(M.listeners, fn)
-end
-
 -- A second press while passes are still pending restarts them rather than
 -- running two chains that press the same banners twice.
 function M.clearAll()
@@ -173,9 +157,6 @@ function M.clearAll()
     M.timer:stop()
   end
   pass(1)
-  for _, fn in ipairs(M.listeners) do
-    fn()
-  end
 end
 
 hs.hotkey.bind({ "alt" }, "0", M.clearAll)

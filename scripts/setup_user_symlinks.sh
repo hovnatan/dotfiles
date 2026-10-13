@@ -478,7 +478,11 @@ if [ "$(uname)" = "Darwin" ]; then
   mkdir -p "$iterm_profiles"
   # iTerm2 reloads dynamic profiles when this folder changes, and an edit to
   # the linked file leaves the folder alone: re-running this ln -sf (dotup) is
-  # what makes a running iTerm2 pick the edit up.
+  # what makes a running iTerm2 pick the edit up. Its "Keyboard Map" binds
+  # Cmd-T ("0x74-0x100000-0x11": t, cmd, keycode 17) to action 60, Invoke
+  # Script Function ssh_new_tab(session_id: id) of
+  # home/.hammerspoon/iterm2_api.py; a profile binding beats the menu's
+  # New Tab on the same key.
   ln -sf ~/.dotfiles/"home/Library/Application Support/iTerm2/DynamicProfiles/dotfiles.json" "$iterm_profiles/"
   defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string 45FCCF80-D41B-400A-A797-004E6F3CAD2A
   defaults write com.googlecode.iterm2 TabStyleWithAutomaticOption -int 5
@@ -518,10 +522,22 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 OpenArrangementAtStartup -bool false
   defaults write com.googlecode.iterm2 OpenNoWindowsAtStartup -bool false
   defaults write com.googlecode.iterm2 NSQuitAlwaysKeepsWindows -bool true
+  # Two keys an earlier version of this script set to turn restoration off
+  # (2026-09-28 to 10-12), back to their defaults on a machine that ran it:
+  #   UseRestorableStateController false -> iTerm2 kept no restore store
+  #   ApplePersistenceIgnoreState true   -> macOS skipped iTerm2's saved
+  #                                         windows at launch
+  for key in UseRestorableStateController ApplePersistenceIgnoreState; do
+    if defaults read com.googlecode.iterm2 "$key" >/dev/null 2>&1; then
+      defaults delete com.googlecode.iterm2 "$key"
+    fi
+  done
   # Python API (Settings > General > Magic), read at launch: it can set a
   # window's title template (Window.async_set_title), which AppleScript
-  # refuses ("Only user variables may be set"). iTerm2 still asks before
-  # each new script may connect; that check is left on.
+  # refuses ("Only user variables may be set"); it tells which session
+  # rang a bell, and Cmd-T in an ssh tab calls a function of it
+  # (home/.hammerspoon/iterm2_api.py). iTerm2 still asks before each new
+  # script may connect; that check is left on.
   defaults write com.googlecode.iterm2 EnableAPIServer -bool true
   # Tab bar shown for a one-tab window too (Appearance > Tabs > Show tab bar
   # even when there is only one tab). iTerm2 hides it by default, so the
@@ -549,23 +565,16 @@ if [ "$(uname)" = "Darwin" ]; then
   # Bell -> dock bounce while iTerm2 is in the background, as Ghostty does.
   # The fish/zsh long-command hooks and Claude Code (preferredNotifChannel
   # terminal_bell) ring only the bell, no OSC notification of their own.
-  # The profile's Send Bell Alert turns a bell into a macOS notification
-  # instead, but Suppress Alerts in Active Session keeps it to other tabs:
   # macOS never bounces the dock for the frontmost app, so while iTerm2 is
-  # in front the banner is the only signal that a background tab rang. Manual step per machine:
-  # System Settings > Notifications > iTerm2 > Persistent, so a banner
-  # waits until dismissed (the style lives in an undocumented com.apple.ncprefs
-  # bitfield, not scripted here). A banner closes once its tab gets focus
-  # (home/.hammerspoon/iterm2_bell_banners.lua); alt+0 clears them all
-  # (home/.hammerspoon/clear_notifications.lua).
+  # in front a banner is the only signal that a background tab rang. The
+  # banners are Hammerspoon's (home/.hammerspoon/iterm2_api.lua,
+  # through the Python API above), one per tab that rang, closed once the tab
+  # is in view; the profile's own Send Bell Alert is off (dotfiles.json).
+  # Manual step per machine: System Settings > Notifications > Hammerspoon >
+  # Persistent, so a banner waits until its tab is seen (the style lives in
+  # an undocumented com.apple.ncprefs bitfield, not scripted here). alt+0
+  # clears them all (home/.hammerspoon/clear_notifications.lua).
   defaults write com.googlecode.iterm2 BounceOnInactiveBell -bool true
-  # Launch opens the default window arrangement (General > Startup > Open
-  # Default Window Arrangement). The arrangement itself is per machine,
-  # saved by hand: Window > Save Window Arrangement, then Settings >
-  # Arrangements > Set Default. It keeps each window as it was saved, the
-  # window title included, so re-save it after changing the profile's
-  # Custom Window Title (iterm2_report_host.fish).
-  defaults write com.googlecode.iterm2 OpenArrangementAtStartup -bool true
   # Tip of the Day, at most one a day after launch. Without the permission
   # key iTerm2 first asks whether to show tips at all; NoSyncTipsDisabled
   # turns them off outright. Tips already seen are kept in
@@ -599,38 +608,6 @@ if [ "$(uname)" = "Darwin" ]; then
   # tab and the title outlives the ssh session. true restores the pre-ssh
   # tab and window title silently instead of asking.
   defaults write com.googlecode.iterm2 NoSyncRestoreIconAndWindowNameOnHostChange -bool true
-  # No restore on relaunch or after a restart: a launch opens one fresh
-  # default window, as Ghostty does here. iTerm2 has two restore paths and
-  # both must go, or a restart with macOS's "Reopen windows when logging
-  # back in" ticked still brings back every tab with "Session Contents
-  # Restored" printed under its old scrollback:
-  #
-  #   quit / restart --> iTerm2's own SQLite store  --> restored at launch
-  #                      (UseRestorableStateController)  unconditionally
-  #                  --> macOS saved window state   --> restored unless
-  #                      (NSPersistentUIManager)         ignored per app
-  #
-  # Advanced settings are read from the capitalized key (UI name
-  # runJobsInServers -> key RunJobsInServers); a lowercase key is ignored.
-  # All four are read at launch:
-  #   RunJobsInServers false             -> shells no longer run in
-  #                                         iTermServer daemons that outlive
-  #                                         a quit and reattach on relaunch
-  #   UseRestorableStateController false -> no SQLite store; it saves on a
-  #                                         restart whatever the per-app
-  #                                         setting below says. iTerm2 also
-  #                                         mirrors this into
-  #                                         NoSyncIgnoreSystemWindowRestoration
-  #                                         at every launch
-  #   ApplePersistenceIgnoreState true   -> macOS skips iTerm2's saved window
-  #                                         state at launch, restart included
-  #   NSQuitAlwaysKeepsWindows false     -> per-app "Close windows when
-  #                                         quitting", so a plain quit saves
-  #                                         nothing either
-  defaults write com.googlecode.iterm2 RunJobsInServers -bool false
-  defaults write com.googlecode.iterm2 UseRestorableStateController -bool false
-  defaults write com.googlecode.iterm2 ApplePersistenceIgnoreState -bool true
-  defaults write com.googlecode.iterm2 NSQuitAlwaysKeepsWindows -bool false
   # Clicked links open in the system browser, as in Ghostty. Without a
   # plugin installed, iTerm2 3.6+ asks "Plugin Required ... download the
   # Browser Plugin" (Download / Use System Browser / Cancel) on every click.
