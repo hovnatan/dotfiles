@@ -12,10 +12,12 @@ so scripts/tests/ssh_command_test.py runs it in CI.
 
 E.g.
     ssh vm                          -> ssh vm
-    ssh -p 2222 user@vm ./deploy.sh -> ssh -p 2222 user@vm   (not run twice)
+    ssh "user@vm"                   -> ssh user@vm           (iTerm2's quotes off)
+    ssh -p 2222 "user@vm" ./deploy.sh
+                                    -> ssh -p 2222 user@vm   (not run twice)
     ssh -N -L 8080:localhost:80 vm  -> ssh vm                (no second tunnel)
     ssh -t vm tmux attach           -> ssh -t vm             (a plain shell)
-    ssh -o SendEnv=LC_TMUX_ATTACH vm
+    ssh -o "SendEnv=LC_TMUX_ATTACH" vm
                                     -> ssh vm                (the same: no attach)
     ssh vm "tmux new -s main"       -> ssh vm                (a quote, but dropped)
     ssh -o "ProxyCommand x" vm      -> NotReplayableError: a kept word is quoted,
@@ -37,11 +39,22 @@ TAKES_ARG = set("BbcDEeFIiJLlmOoPpQRSWw")
 DROP = set("LRDWNfTnsGVQO")
 
 # A word that fish reads back as exactly itself: no quotes, spaces, `$`,
-# `;`, globs, `~`, `%`. iTerm2 joins argv with spaces and double-quotes an
-# argument with a space, so a kept word outside this set is one whose real
+# `;`, globs, `~`, `%`. A kept word outside this set is one whose real
 # boundaries or meaning the joined string has lost. Words of the remote
 # command are dropped unread, so they may hold anything.
 PLAIN = re.compile(r"[A-Za-z0-9@.,_:/=+-]+")
+
+# iTerm2 (3.7.4, probed through its API with an argument per printable
+# ASCII character) joins argv with spaces, quoting an argument unless it is
+# all [A-Za-z0-9%,./:_-], with no escapes inside the quotes:
+#   holds one of !"$()\` -> '...'   a!b -> 'a!b'
+#   else                  -> "..."   user@vm -> "user@vm", a b -> "a b"
+# So a word "X" with no space or quote in X is the argument X itself, and is
+# read back as X. Any other quoted word (a piece of an argument with a space,
+# or a '...' one) is left as it is, for plain() to refuse.
+#   "user@vm" -> user@vm
+#   "a b"     -> the words `"a` and `b"`, left as they are: refused
+ITERM2_QUOTED = re.compile(r'"([^"\s]+)"')
 
 # The -o that sends the login fish its tmux attach request (the saved
 # arrangements' attach line, tmux_attach_requested.fish): a remote command
@@ -52,6 +65,12 @@ ATTACH = re.compile(r"(?i:sendenv)=LC_TMUX_ATTACH")
 
 class NotReplayableError(ValueError):
     """The command line cannot be replayed safely; the message says why."""
+
+
+def unquote(word: str) -> str:
+    """Return `word` without iTerm2's quotes, where they are unambiguous."""
+    m = ITERM2_QUOTED.fullmatch(word)
+    return m.group(1) if m else word
 
 
 def plain(word: str) -> bool:
@@ -92,7 +111,7 @@ def option(words: list[str], i: int, out: list[str]) -> int:
 
 def interactive(command_line: str) -> str:
     """Return the replay of `command_line`, or raise NotReplayableError."""
-    words = command_line.split()
+    words = [unquote(word) for word in command_line.split()]
     if not words or not plain(words[0]):
         msg = f"program {words[0] if words else None!r} is not plain"
         raise NotReplayableError(msg)

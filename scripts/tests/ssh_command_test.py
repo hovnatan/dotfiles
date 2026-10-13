@@ -36,6 +36,19 @@ spec.loader.exec_module(ssh)
 
 # commandLine -> expected replay; None where the replay must be refused.
 CASES: list[tuple[str, str | None]] = [
+    # iTerm2 quotes an argument holding @ = + and others (ssh_command.py,
+    # ITERM2_QUOTED): such a word is read back without the quotes.
+    ('ssh "user@vm"', "ssh user@vm"),
+    ('ssh -p 2222 "user@vm"', "ssh -p 2222 user@vm"),
+    ('ssh -o "SendEnv=LC_TMUX_ATTACH" vm', "ssh vm"),
+    ('ssh -o "ServerAliveInterval=30" "user@vm" uptime', "ssh -o ServerAliveInterval=30 user@vm"),
+    ('ssh "-oSendEnv=LC_TMUX_ATTACH" vm', "ssh vm"),
+    # but only where X in "X" holds no space or quote: an argument with a
+    # space, or a '...' one (an argument holding $ or a backslash), is
+    # still refused.
+    ('ssh -o "User=a b" vm', None),
+    ("ssh -i '$HOME/key' vm", None),
+    ('ssh "vm\'" ', None),
     # A plain login and its options stay as they are.
     ("ssh vm", "ssh vm"),
     ("ssh -p 2222 user@vm", "ssh -p 2222 user@vm"),
