@@ -448,7 +448,7 @@ if [ "$(uname)" = "Darwin" ]; then
   #                                   dropped: SF Mono Regular/Medium, Monaco
   #                                   12-15, JetBrains Mono, Monaspace Neon,
   #                                   Intel One Mono, Cascadia Code, Commit
-  #                                   Mono 400/450/500 (86b41fb5 has the 500
+  #                                   Mono 400/450/500 (de59c7a7 has the 500
   #                                   build)
   #   built-in Nerd Font icons     -> Non-ASCII font Symbols Nerd Font
   #                                   Mono (SymbolsNFM, Brewfile cask

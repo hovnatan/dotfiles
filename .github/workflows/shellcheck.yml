@@ -1,5 +1,5 @@
 # Lint every tracked shell script at warning level, the bar set in commit
-# a53d141b and documented in .shellcheckrc (info/style notes stay advisory),
+# d69d8463 and documented in .shellcheckrc (info/style notes stay advisory),
 # check its formatting with shfmt (style in .editorconfig), and reject a bare
 # GNU `timeout`: scripts/check.sh's `shell` check, which the pre-push hook
 # runs too. Both tools come from the pinned nixpkgs (nix/flake.lock), the

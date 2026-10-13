@@ -115,7 +115,7 @@ vim.keymap.set("n", "<leader>gg", "<cmd>Neogit<cr>", { desc = "Neogit status" })
 
 -- snacks.nvim: only the picker, the explorer (a picker in disguise) and
 -- bigfile; every other snacks module stays off. The <space> keys are the ones
--- the old telescope setup had (3456c4f4^):
+-- the old telescope setup had (99171ca5^):
 --
 --   <space>f  smart: open buffers, then recent files, then all files (fd),
 --             frecency-ranked with a cwd bonus (was telescope smart_open)
@@ -227,7 +227,7 @@ snacks.toggle.option("background", { off = "light", on = "dark", name = "dark ba
 local non_ascii = require("core.non_ascii")
 snacks.toggle.new({ name = "non-ASCII highlight", get = non_ascii.enabled, set = non_ascii.set }):map("<leader>ua")
 
--- -: sidebar tree with the current file revealed (vim-vinegar's key, 2b52bdee).
+-- -: sidebar tree with the current file revealed (vim-vinegar's key, c963f56f).
 -- Pressing it outside the tree while it is open closes it; q closes it too.
 --   l / <CR> open, cursor stays    h close dir    - / <BS> up    a add (dir/ for a dir)
 --   r rename    d delete    c copy    m move    y / p yank and paste files
