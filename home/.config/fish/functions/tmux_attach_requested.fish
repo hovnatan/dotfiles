@@ -44,6 +44,19 @@ function tmux_attach_requested --description 'Replace this login shell with the 
         return 1
     end
 
+    # Tell iTerm2 which host this is now, before tmux turns on mouse, focus
+    # and paste-bracketing modes. iTerm2 resets those on a host change, with
+    # a banner each ("Looks like mouse reporting was left on when an ssh
+    # session ended unexpectedly..."), so the change has to land while they
+    # are off, as a remote prompt's report does before a typed `tmux a`.
+    # The hook's report at attach then names the same host: no change.
+    #   report here:  local -> remote (modes off) ... attach: remote -> remote
+    #   no report:    attach: local -> remote, tmux's modes on -> banners
+    if not iterm2_report_host
+        __tmux_attach_requested_note "LC_TMUX_ATTACH='$want' refused: iterm2_report_host failed"
+        return 1
+    end
+
     set -l session (string replace -a %2F / -- $parts[2])
     set -l tmux tmux
     test $parts[1] = default; or set -a tmux -L $parts[1]

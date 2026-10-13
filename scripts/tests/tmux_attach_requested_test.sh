@@ -43,13 +43,15 @@ cat >"$work/bin/tmux" <<EOF
 #!/usr/bin/env bash
 printf '%s\n' "\$*" >"$work/argv"
 printf '%s\n' "\${LC_TMUX_ATTACH-unset}" >"$work/env"
+printf tmux-started
 EOF
 # The stub ssh: options up to the destination, a remote command refused (the
 # attach line must have none), and the login fish given only the variables
 # SendEnv named, less any whose value holds a "/", which Tailscale SSH drops.
+# LC_TERMINAL goes too, as macOS's ssh_config sends LC_*.
 cat >"$work/bin/ssh" <<EOF
 #!/usr/bin/env bash
-send=()
+send=(LC_TERMINAL)
 while [ \$# -gt 0 ]; do
   case \$1 in
     -o) [[ \$2 == SendEnv=* ]] && send+=("\${2#SendEnv=}"); shift 2 ;;
@@ -109,17 +111,35 @@ PY
   log "FAIL  attach_line gave no lines"
   exit 1
 }
+# From an iTerm2 tab: the host report goes out before tmux starts, while
+# tmux's mouse, focus and paste modes are still off; iTerm2 resets them,
+# with a banner each, on a host change that comes after.
 while read -r socket line; do
   rm -f "$work/argv" "$work/env"
   # stdout only: the throwaway HOME has no fisher, and plugins.fish says so.
-  out=$(env -u LC_TMUX_ATTACH PATH="$work/bin:$PATH" fish --no-config -c "$line" 2>"$work/err") || true
+  out=$(env -u LC_TMUX_ATTACH -u TERM_PROGRAM LC_TERMINAL=iTerm2 PATH="$work/bin:$PATH" \
+    fish --no-config -c "$line" 2>"$work/err") || true
   want="attach -t =api/docs"
   [ "$socket" = default ] || want="-L $socket $want"
   check "$socket: '$line' execs tmux $want" "$(recorded argv)" "$want"
   check "$socket: the request is erased before exec" "$(recorded env)" unset
-  check "$socket: the login shell is replaced, not left" "$out" ""
+  case $out in
+    $'\e]1337;RemoteHost='*@*$'\a'tmux-started)
+      log "ok    $socket: the host is reported, then tmux replaces the shell"
+      ;;
+    *)
+      log "FAIL  $socket: want the host report, then tmux, and nothing else: $(printf '%q' "$out")"
+      fails=$((fails + 1))
+      ;;
+  esac
   has "$socket: the exec is logged" "$(attach_log)" "LC_TMUX_ATTACH='$socket:api%2Fdocs' on"
 done <<<"$lines"
+
+# From another terminal: no report, as the prompt sends none there.
+first_line=$(head -1 <<<"$lines" | cut -d' ' -f2-)
+out=$(env -u LC_TMUX_ATTACH -u LC_TERMINAL PATH="$work/bin:$PATH" \
+  fish --no-config -c "$first_line" 2>"$work/err") || true
+check "not iTerm2: no host report, tmux replaces the shell" "$out" tmux-started
 
 # config.fish runs it for a login shell only: a fish started by hand with
 # the variable set does not attach.
