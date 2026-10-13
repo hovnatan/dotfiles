@@ -77,6 +77,9 @@ t() { tmux -L "$SOCK" "$@"; }
 cleanup() {
   systemctl --user stop "$UNIT" 2>/dev/null
   t kill-server 2>/dev/null
+  # tmux leaves its socket file behind when the server exits, so each run
+  # would add a dead /tmp/tmux-<uid>/cttest-<pid>. Same path rule as tmux's.
+  rm -f "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$SOCK"
   systemctl --user reset-failed "$UNIT" 2>/dev/null
   if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
 }
