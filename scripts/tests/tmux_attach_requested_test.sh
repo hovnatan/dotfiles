@@ -46,7 +46,7 @@ printf '%s\n' "\${LC_TMUX_ATTACH-unset}" >"$work/env"
 EOF
 # The stub ssh: options up to the destination, a remote command refused (the
 # attach line must have none), and the login fish given only the variables
-# SendEnv named.
+# SendEnv named, less any whose value holds a "/", which Tailscale SSH drops.
 cat >"$work/bin/ssh" <<EOF
 #!/usr/bin/env bash
 send=()
@@ -60,7 +60,9 @@ while [ \$# -gt 0 ]; do
 done
 [ \$# -eq 1 ] || { echo "stub ssh: a remote command: \${*:2}" >&2; exit 2; }
 fwd=()
-for v in "\${send[@]}"; do [ -n "\${!v+x}" ] && fwd+=("\$v=\${!v}"); done
+for v in "\${send[@]}"; do
+  [ -n "\${!v+x}" ] && [[ \${!v} != */* ]] && fwd+=("\$v=\${!v}")
+done
 exec env -i HOME="$work/home" PATH="$work/bin:$PATH" TERM=dumb \
   XDG_CONFIG_HOME="$work/remote/home/.config" "\${fwd[@]}" \
   fish --login -i -c 'echo shell-stayed' </dev/null
@@ -116,7 +118,7 @@ while read -r socket line; do
   check "$socket: '$line' execs tmux $want" "$(recorded argv)" "$want"
   check "$socket: the request is erased before exec" "$(recorded env)" unset
   check "$socket: the login shell is replaced, not left" "$out" ""
-  has "$socket: the exec is logged" "$(attach_log)" "LC_TMUX_ATTACH='$socket:api/docs' on"
+  has "$socket: the exec is logged" "$(attach_log)" "LC_TMUX_ATTACH='$socket:api%2Fdocs' on"
 done <<<"$lines"
 
 # config.fish runs it for a login shell only: a fish started by hand with

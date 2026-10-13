@@ -192,14 +192,20 @@ def attach_line(login: str, socket: str, session: str) -> str:
         -> "LC_TMUX_ATTACH=claude:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 vm"
     The value is "<socket>:<session>", split at the first ":" on the far
     side; tmux allows no ":" in a session name. LC_ because the stock
-    AcceptEnv of sshd (LANG LC_*) passes only those; Tailscale SSH passed
-    it as is in a test on this tailnet.
+    AcceptEnv of sshd (LANG LC_*) passes only those.
+
+    "/" goes as "%2F": Tailscale SSH (1.102) drops a variable whose value
+    holds a "/", so "claude:api/docs" never arrived, while every other
+    character a plain session name may hold passes. A plain name holds no
+    "%", so tmux_attach_requested.fish decodes it unambiguously:
+        "api/docs" -> "LC_TMUX_ATTACH=claude:api%2Fdocs ..."
     """
     if not ssh_command.plain(session):
         msg = f"tmux session {session!r} has characters needing quotes; rename it"
         raise ArrangementError(msg)
     first, *rest = login.split()
-    words = [f"LC_TMUX_ATTACH={socket}:{session}", first, ATTACH_SEND, *rest]
+    value = f"{socket}:{session.replace('/', '%2F')}"
+    words = [f"LC_TMUX_ATTACH={value}", first, ATTACH_SEND, *rest]
     return " ".join(words)
 
 
@@ -207,12 +213,12 @@ def attach_request(line: str) -> tuple[str, str] | None:
     """Return the (socket, session) a saved line asks the far side to attach.
 
     attach_line's output -> its socket and session; any other line -> None.
-    "LC_TMUX_ATTACH=claude:api/docs ssh -o SendEnv=LC_TMUX_ATTACH vm"
+    "LC_TMUX_ATTACH=claude:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm"
         -> ("claude", "api/docs")
     """
     pattern = rf"LC_TMUX_ATTACH=([^:\s]+):(\S+) \S+ {re.escape(ATTACH_SEND)} .+"
     m = re.fullmatch(pattern, line)
-    return (m[1], m[2]) if m else None
+    return (m[1], m[2].replace("%2F", "/")) if m else None
 
 
 def fish_quote(s: str) -> str:

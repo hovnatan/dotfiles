@@ -13,10 +13,11 @@ function tmux_attach_requested --description 'Replace this login shell with the 
     # (~/.config/tmux/report-attach.sh) cannot write the iTerm2 host report
     # to it. The value is <socket>:<session>; the socket is one of the
     # arrangement's SOCKETS, "default" for tmux's own; tmux allows no ":" in
-    # a session name, so the first ":" splits:
-    #   claude:api/docs -> tmux -L claude attach -t =api/docs
-    #   default:main     -> tmux attach -t =main
-    #   main, other:x    -> error, shell stays
+    # a session name, so the first ":" splits. A "/" in the session comes as
+    # "%2F": Tailscale SSH drops a variable whose value holds a "/".
+    #   claude:api%2Fdocs -> tmux -L claude attach -t =api/docs
+    #   default:main       -> tmux attach -t =main
+    #   main, other:x      -> error, shell stays
     # exec, as the remote command did: detaching ends the ssh, and a failed
     # attach (session gone) prints tmux's error and ends it too. Each request
     # and its outcome goes to the tmux_attach_requested event log
@@ -43,13 +44,14 @@ function tmux_attach_requested --description 'Replace this login shell with the 
         return 1
     end
 
+    set -l session (string replace -a %2F / -- $parts[2])
     set -l tmux tmux
     test $parts[1] = default; or set -a tmux -L $parts[1]
     # A request that cannot be logged is not run: the log is what tells a
     # restore that landed in a plain shell from one never received.
-    __tmux_attach_requested_note "LC_TMUX_ATTACH='$want' on $(tty): exec $tmux attach -t =$parts[2]"
+    __tmux_attach_requested_note "LC_TMUX_ATTACH='$want' on $(tty): exec $tmux attach -t =$session"
     or return 1
-    exec $tmux attach -t =$parts[2]
+    exec $tmux attach -t =$session
 end
 
 # __tmux_attach_requested_note <message>: one line in the event log, through

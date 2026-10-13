@@ -119,7 +119,7 @@ def _() -> None:
     assert got == [
         "LC_TMUX_ATTACH=claude:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH vm",
         "ssh vm",
-        "LC_TMUX_ATTACH=claude:api/docs ssh -o SendEnv=LC_TMUX_ATTACH vm",
+        "LC_TMUX_ATTACH=claude:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm",
         "LC_TMUX_ATTACH=default:main ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 user@box",
     ], got
 
