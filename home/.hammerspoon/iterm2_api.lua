@@ -144,6 +144,14 @@ local handlers = {
       log("bell in %s: its banner was dismissed, a new one", short(sid))
     end
     M.banners[sid] = BROKEN -- until the banner below is up
+
+    -- The icon on the left is always the sender's, Hammerspoon's: the
+    -- private setIdImage that would replace it shows nothing on macOS 27.
+    -- So iTerm2's icon goes on the right, as the banner's content image.
+    local icon = hs.image.imageFromAppBundle(ITERM2)
+    if not icon then
+      fail("no icon for " .. ITERM2 .. ": is iTerm2 still installed?")
+    end
     M.banners[sid] = hs.notify
       .new(function()
         log("banner clicked for %s", short(sid))
@@ -152,6 +160,7 @@ local handlers = {
         title = event.name .. " rang a bell",
         subTitle = event.window ~= "" and event.window or nil,
         informativeText = "Tab #" .. event.tab .. "; click to go there",
+        contentImage = icon,
         withdrawAfter = 0, -- 0: never on its own (the default is 5s)
         hasActionButton = false,
       })

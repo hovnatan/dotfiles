@@ -52,6 +52,11 @@ local function stubHs()
         return t
       end,
     },
+    image = {
+      imageFromAppBundle = function(bundleID)
+        return { icon = bundleID }
+      end,
+    },
     notify = {
       new = function(onClick, attrs)
         local n = { attrs = attrs, onClick = onClick }
@@ -201,6 +206,8 @@ test("a bell puts up a banner, seen and gone withdraw it", function()
   assert(world.timers[1].stopped, "ready did not stop the ready timeout")
   assert(world.up["fish:~ rang a bell"] and world.up["[bench] rang a bell"])
   assert(world.up["fish:~ rang a bell"].attrs.withdrawAfter == 0, "the banner would withdraw itself")
+  local image = world.up["fish:~ rang a bell"].attrs.contentImage
+  assert(image and image.icon == "com.googlecode.iterm2", "the banner has no iTerm2 icon")
   say(line({ event = "seen", session = "S1" }) .. line({ event = "gone", session = "S2" }))
   assert(next(world.up) == nil and next(m.banners) == nil)
 end)
