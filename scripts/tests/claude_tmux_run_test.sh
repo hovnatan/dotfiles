@@ -38,8 +38,14 @@
 #   - when `claude agents --json` fails, spawn, status and conversations
 #     stop with an error instead of acting on "nothing open" (a resume
 #     would double-open the conversation)
-#   - `stop <name>` kills exactly that session, never one whose name merely
-#     starts with <name> (tmux's bare targets prefix-match)
+#   - `stop <name>[/<task>]` kills exactly that session, never one whose
+#     name merely starts with <name> (tmux's bare targets prefix-match),
+#     nor a labeled <name>/<task> when given the bare <name>; a miss lists
+#     the labeled ones; a hand-set label outside NAME_RE is still stoppable;
+#     bare `stop` (ExecStop) finds a labeled manager, and fails rather than
+#     succeeds when tmux itself fails
+#   - spawn <name>/<task> starts in its own <name>/<task> session beside a
+#     live <name> (one live session per full name, label included)
 #
 # Usage: scripts/tests/claude_tmux_run_test.sh   (exit 0 = all passed)
 # On failure the work dir (stub, profile, unit output) is kept and printed.
@@ -244,7 +250,7 @@ done
 
 systemctl --user stop "$UNIT"
 sleep 1
-alive=$(t list-sessions -F '#S' 2>/dev/null | sort | tr '\n' ' ')
+alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
 [ "$alive" = "claude ctb " ] && pass "unit stop left both sessions alive" || fail "after unit stop, sessions: '${alive}'"
 
 # --- the unit file's ExecStop, under systemd's own environment --------------
@@ -259,13 +265,15 @@ stop_script=${stop_script//\$\{MAINPID\}/1}
   fail "could not parse ExecStop from the unit file: $stop_line"
   exit 1
 }
+# Under a label, as /label leaves it: ExecStop must still find it.
+t rename-session -t =claude claude/x
 systemd-run --user --quiet --wait --pipe \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" \
   /bin/sh -c "$stop_script" >"$WORK/execstop.out" 2>&1
 rc=$?
-alive=$(t list-sessions -F '#S' 2>/dev/null | sort | tr '\n' ' ')
+alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
 if [ "$rc" -eq 0 ] && [ "$alive" = "ctb " ]; then
-  pass "ExecStop killed only the manager"
+  pass "ExecStop killed only the manager (labeled claude/x)"
 else
   fail "ExecStop rc=$rc, sessions left: '${alive}'; output: $(tr '\n' ' ' <"$WORK/execstop.out")"
 fi
@@ -275,12 +283,66 @@ fi
 t new-session -d -s ctb2 sleep 100000
 out=$(run stop ct 2>&1)
 rc=$?
-alive=$(t list-sessions -F '#S' 2>/dev/null | sort | tr '\n' ' ')
+alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
 [ "$rc" -ne 0 ] && [ "$alive" = "ctb ctb2 " ] && pass "stop ct: refused ($out), ctb and ctb2 untouched" \
   || fail "stop ct: rc=$rc ($out), sessions left: '$alive'"
 out=$(run stop ctb 2>&1)
-alive=$(t list-sessions -F '#S' 2>/dev/null | sort | tr '\n' ' ')
+alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
 [ "$alive" = "ctb2 " ] && pass "stop ctb: killed ctb only ($out)" || fail "stop ctb: sessions left: '$alive' ($out)"
+
+# A labeled session is a different conversation: the bare name never reaches
+# it, only its full <name>/<task> does (`stop api` killed api/docs).
+t new-session -d -s ctb/task sleep 100000
+out=$(run stop ctb 2>&1)
+rc=$?
+alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+[ "$rc" -ne 0 ] && [ "$alive" = "ctb/task ctb2 " ] && grep -q 'under that name: ctb/task ' <<<"$out" && pass "stop ctb: refused ($out), ctb/task untouched" \
+  || fail "stop ctb with only ctb/task live: rc=$rc ($out), sessions left: '$alive'"
+out=$(run stop ctb/task 2>&1)
+rc=$?
+alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+[ "$rc" -eq 0 ] && [ "$alive" = "ctb2 " ] && pass "stop ctb/task: killed ctb/task only ($out)" \
+  || fail "stop ctb/task: sessions left: '$alive' ($out)"
+
+# A label set by hand (/rename, the /resume picker) may hold characters
+# outside NAME_RE; its session must still be stoppable by its full name.
+t new-session -d -s 'ctb/issue#42' sleep 100000
+out=$(run stop 'ctb/issue#42' 2>&1)
+rc=$?
+alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+[ "$rc" -eq 0 ] && [ "$alive" = "ctb2 " ] && pass "stop ctb/issue#42: killed it ($out)" \
+  || fail "stop ctb/issue#42: rc=$rc ($out), sessions left: '$alive'"
+
+# A name with a leading "-" is a name, not grep options.
+out=$(run stop -x 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && grep -q '^no session -x on' <<<"$out" && pass "stop -x: refused as a name ($out)" \
+  || fail "stop -x: rc=$rc ($out)"
+
+# tmux failing for any reason but "no server" is not "nothing to stop":
+# ExecStop would report success with the manager still up.
+mkdir -p "$WORK/badtmux"
+printf '#!/bin/sh\necho "protocol version mismatch (client 8, server 9)" >&2\nexit 1\n' >"$WORK/badtmux/tmux"
+chmod +x "$WORK/badtmux/tmux"
+out=$(HOME="$H" PATH="$WORK/badtmux:$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" \
+  "$REPO/scripts/claude_tmux_run.sh" stop 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && grep -q 'protocol version mismatch' <<<"$out" && pass "stop with tmux failing: refused ($out)" \
+  || fail "stop with tmux failing: rc=$rc ($out)"
+
+# One live session per FULL name: a labeled conversation starts in its own
+# session beside a live one under the same bare name, named after its title.
+mkdir -p "$H/.claude/projects/-tmp"
+printf '%s\n' '{"type":"user","cwd":"/tmp","timestamp":"2026-01-01T00:00:00.000Z","message":{"content":"hi"}}' \
+  "{\"type\":\"custom-title\",\"customTitle\":\"$(hostname)-ctb2/a\",\"sessionId\":\"0000-ctb2a\"}" \
+  >"$H/.claude/projects/-tmp/0000-ctb2a.jsonl"
+out=$(run spawn ctb2/a 2>&1)
+rc=$?
+alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+[ "$rc" -eq 0 ] && [ "$alive" = "ctb2 ctb2/a " ] && pass "spawn ctb2/a beside ctb2: started in its own session ($out)" \
+  || fail "spawn ctb2/a beside ctb2: rc=$rc ($out), sessions: '$alive'"
+t kill-session -t =ctb2/a
+rm -f "$H/.claude/projects/-tmp/0000-ctb2a.jsonl"
 
 # --- a session ends when its process exits -----------------------------------
 

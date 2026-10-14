@@ -11,10 +11,13 @@
 #
 #   claude_tmux_run.sh                 ExecStart: ensure the managed "claude"
 #                                      session (the manager) exists, then watch
-#   claude_tmux_run.sh stop [name]     kill the session hosting <name>
-#                                      (labeled or not; exact, never a
-#                                      prefix of another name); no name: the
-#                                      managed "claude" session (ExecStop)
+#   claude_tmux_run.sh stop [name[/task]]
+#                                      kill the session of exactly that name
+#                                      (never a prefix of another name, and a
+#                                      bare <name> never a labeled
+#                                      <name>/<task>); no name: the managed
+#                                      "claude" session, labeled or not
+#                                      (ExecStop)
 #   claude_tmux_run.sh spawn <name>[/<task>] [dir] [--dangerous]
 #                                      idempotently bring up an unmanaged
 #                                      session: resume its conversation where
@@ -47,13 +50,16 @@
 # ~/.dotfiles/home/.claude/skills/label/label-session.sh, or Ctrl+R
 # in the /resume picker for a finished one), which is what the picker, the prompt
 # bar and claude.ai show. The tmux session follows the conversation minus
-# the hostname: it is created under the bare <name>, and the
+# the hostname: it is created under that name (<name>, or <name>/<task>
+# for a labeled conversation), and the
 # pane-title-changed hook declared in ~/.tmux.conf
 # (~/.dotfiles/home/.config/tmux/sync-session-name.sh) renames it
 # <name>/<task> the moment claude announces its title, on every /rename
 # after, and back to <name> after a /clear -- so `tmux ls` and the status
-# bar show the label too, and this script finds a session by its bare
-# name (find_session; tmux targets without "=" prefix-match as well). The
+# bar show the label too. A full name, label included, is what has one
+# live session: spawn and stop act on the exact name (api/docs runs
+# beside api/login), and only the watcher looks the manager up by its bare
+# name (sessions_under; tmux targets without "=" prefix-match as well). The
 # label rides on the same record as the name, so spawn treats the bare
 # name as a prefix: "backend" resumes whichever of vm-backend and
 # vm-backend/<anything> was talked in last, and re-asserts THAT full
@@ -318,12 +324,30 @@ claude_pane() {
   done < <(tmux -L "$SOCKET" list-panes -s -t "$1:" -F '#{pane_id} #{pane_pid} #{pane_current_path}' 2>/dev/null)
 }
 
-# find_session <name>: the tmux session hosting a conversation under
-# <name>, whatever label it carries (<name> or <name>/<task>), or nothing.
-find_session() {
-  tmux -L "$SOCKET" list-sessions -F '#{session_name}' 2>/dev/null \
-    | grep -x -E -m 1 "$1(/.*)?"
+# sessions_under <name>: every tmux session hosting a conversation under
+# <name>, whatever label it carries (<name> or <name>/<task>), one per
+# line, sorted -- several when conversations of one name run side by side
+# (api, api/login, api/docs). Nothing when no server is running, the one
+# failure that means "none". Any other (a client too old to talk to the
+# server, ...) is reported and returns 1: read as "none", it would let
+# ExecStop report success with the manager still up. -e: NAME_RE allows a
+# leading "-", which grep would parse as an option.
+sessions_under() {
+  local out
+  if ! out=$(tmux -L "$SOCKET" list-sessions -F '#{session_name}' 2>&1); then
+    case "$out" in
+      "no server running on "* | "error connecting to "*"(No such file or directory)" | \
+        "error connecting to "*"(Connection refused)") return 0 ;;
+    esac
+    echo "claude_tmux_run.sh: tmux -L $SOCKET list-sessions failed: $out" >&2
+    return 1
+  fi
+  grep -x -E -e "$1(/.*)?" <<<"$out" | LC_ALL=C sort
+  return 0
 }
+
+# find_session <name>: the first of sessions_under <name>, or nothing.
+find_session() { sessions_under "$1" | head -n 1; }
 
 # launch <session name> <dir> <claude args...>: detached pane running the
 # account's login shell (LOGIN_SHELL, from passwd) as a login shell, which execs claude with
@@ -396,20 +420,31 @@ wait_alive() {
 # "=$name" pins a tmux target to an exact name match.
 case "${1:-}" in
   stop)
-    # By find_session, then "=": a bare tmux target prefix-matches, so
-    # `kill-session -t bench` with no bench left kills bench2. Without a
-    # name (ExecStop) a missing manager is fine; a named session that is not
-    # there is reported.
-    name="${2:-claude}"
-    if [[ ! "$name" =~ $NAME_RE ]] || [[ "$name" == */* ]]; then
-      echo "usage: $0 stop [name]  (the bare session name: A-Za-z0-9_- only)" >&2
-      exit 1
-    fi
-    s=$(find_session "$name")
-    if [ -z "$s" ]; then
-      [ $# -lt 2 ] && exit 0
-      echo "no session $name on tmux socket $SOCKET" >&2
-      exit 1
+    # Without a name (ExecStop): the manager, whatever label it carries, and
+    # a missing one is fine. With one: the session of exactly that name,
+    # killed by "=" -- a bare tmux target prefix-matches, so
+    # `kill-session -t api` with no api left kills api2 -- and a bare
+    # <name> never reaches a labeled <name>/<task>, which holds a different
+    # conversation: `stop api` beside api/login and api/docs
+    # kills api or nothing. A miss lists the labeled ones to pick from.
+    # Only the bare name is checked against NAME_RE: a label set by hand
+    # (/rename, the /resume picker) can hold any character but a space, and
+    # the session carrying it must still be stoppable by its full name.
+    if [ $# -lt 2 ]; then
+      s=$(sessions_under claude) || exit 1
+      s=${s%%$'\n'*}
+      [ -z "$s" ] && exit 0
+    else
+      s="$2"
+      if [[ ! "${s%%/*}" =~ $NAME_RE ]] || [[ "$s" == */ ]]; then
+        echo "usage: $0 stop [name[/task]]  (name: A-Za-z0-9_- only; task: as status prints it)" >&2
+        exit 1
+      fi
+      under=$(sessions_under "${s%%/*}") || exit 1
+      if ! grep -qxF -e "$s" <<<"$under"; then
+        echo "no session $s on tmux socket $SOCKET${under:+; under that name: ${under//$'\n'/ } (stop one by its full name)}" >&2
+        exit 1
+      fi
     fi
     tmux -L "$SOCKET" kill-session -t "=$s" && echo "stopped session $s"
     exit
@@ -435,26 +470,33 @@ case "${1:-}" in
       esac
     done
     conv="$HOST-$spec"
-    existing=$(find_session "$name")
-    if [ -n "$existing" ]; then
-      # One tmux session per name: a pinned task is only satisfied when the
-      # live session holds that very conversation. Switching would kill work
-      # in flight, which is the user's call, not this script's.
-      agents=$(live_agents) || exit 1
-      read -r _ pid _ < <(claude_pane "=$existing")
-      live=$(agent_name "${pid:-}" <<<"$agents")
-      if [[ "$spec" != */* ]] || [ "$live" = "$conv" ]; then
-        echo "session $existing already running${live:+ ($live)}"
-        exit 0
-      fi
-      echo "session $existing is running ${live:-an unknown conversation}, not $conv; stop it first ($0 stop $name) or ask for it to finish" >&2
-      exit 1
-    fi
     {
       read -r id
       read -r cwd
       read -r title
     } < <(resolve_conversation "$conv" "$HOME"/.claude/projects/*/*.jsonl)
+    # One live session per FULL name: api, api/login and api/docs are
+    # three names and run side by side; what cannot happen is a second
+    # session of one of them. The session a conversation runs in carries its
+    # title minus the hostname -- api/docs for <host>-api/docs, whichever
+    # spec found it -- and a new conversation the spec itself.
+    target=$spec
+    [ -n "$id" ] && target=${title#"$HOST-"}
+    under=$(sessions_under "$name") || exit 1
+    if grep -qxF -e "$target" <<<"$under"; then
+      # A pinned task is only satisfied when the live session holds that very
+      # conversation. Switching would kill work in flight, which is the
+      # user's call, not this script's.
+      agents=$(live_agents) || exit 1
+      read -r _ pid _ < <(claude_pane "=$target")
+      live=$(agent_name "${pid:-}" <<<"$agents")
+      if [[ "$spec" != */* ]] || [ "$live" = "$HOST-$target" ]; then
+        echo "session $target already running${live:+ ($live)}"
+        exit 0
+      fi
+      echo "session $target is running ${live:-an unknown conversation}, not $HOST-$target; stop it first ($0 stop $target) or ask for it to finish" >&2
+      exit 1
+    fi
     if [ -n "$id" ]; then
       if [ "$cwd" = - ]; then
         echo "conversation $conv ($id) records no working directory and neither does any transcript beside it; resume it by hand from the right directory" >&2
@@ -475,19 +517,19 @@ case "${1:-}" in
       # title, label included: a resume by id alone reverts the session's
       # display/peer name (what /list-agents shows) to an auto-generated
       # directory-based one.
-      sid=$(launch "$name" "$cwd" --resume "$id" -n "$title" "${mode[@]}") || exit 1
+      sid=$(launch "$target" "$cwd" --resume "$id" -n "$title" "${mode[@]}") || exit 1
       started="resumed conversation $id ($title) in $cwd (${mode[*]})"
     else
       if [ ! -d "$dir" ]; then
         echo "no conversation named $conv; pass an existing directory to start a new one in" >&2
         exit 1
       fi
-      sid=$(launch "$name" "$dir" -n "$conv" "${mode[@]}") || exit 1
+      sid=$(launch "$target" "$dir" -n "$conv" "${mode[@]}") || exit 1
       started="new conversation $conv in $dir (${mode[*]})"
     fi
     # Only now is the launch worth reporting: see wait_alive.
     if ! wait_alive "$sid"; then
-      echo "session $name: $started -- but it exited during startup; nothing is running" >&2
+      echo "session $target: $started -- but it exited during startup; nothing is running" >&2
       exit 1
     fi
     echo "session $(tmux -L "$SOCKET" display-message -p -t "$sid" '#{session_name}'): $started"

@@ -62,13 +62,20 @@ It is idempotent. `spawn <name>` resumes the conversation most recently
 talked in under `<hostname>-<name>`, labeled or not, in the directory that
 conversation belongs to; `spawn <name>/<task>` pins the conversation
 carrying that label (found with `history`, below) and refuses when the
-`<name>` session is live with a different one -- switching means killing
-work in flight, which is the user's call. When no such conversation exists
+`<name>/<task>` session is live with a different one -- switching means
+killing work in flight, which is the user's call. When no such conversation exists
 it starts a new one in `<dir>` -- required only in that case, so ask which
 directory if it was not said. Spawned sessions run in auto permission mode
 with Remote Control enabled. Append `--dangerous` only when the user
 explicitly asks for a session with permissions bypassed -- never choose it
 yourself.
+
+One LIVE session per FULL name, label included: `api`, `api/login` and
+`api/docs` are three names and run side by side, each in a session of its
+own name; a second session of one of them is what must not exist. Never
+launch a session by hand (`tmux new-session ... claude`); spawn starts a
+labeled conversation beside its siblings, and refuses when the session of
+that exact name is live with a different conversation.
 
 One name can own SEVERAL conversations: a `/clear` inside a session keeps
 the name while starting a fresh conversation beside the old one, and spawn
@@ -105,13 +112,16 @@ conversation next to the one holding the work. If the listing shows a
 plausible owner under another name, say so and offer it rather than
 starting from nothing.
 
-To stop a session: `~/.dotfiles/scripts/claude_tmux_run.sh stop <name>`.
-It finds the session under its bare name whatever label it carries
-(`backend` finds `backend/fix-login`) and kills exactly that one.
-Never `tmux -L claude kill-session -t <name>`: a bare tmux target
-prefix-matches ANY session, so with `api` gone it kills `api3`.
-`status` prints the exact names. `capture-pane` does NOT accept the
-`=name` exact form ("can't find pane") -- resolve pane ids first with
+To stop a session:
+`~/.dotfiles/scripts/claude_tmux_run.sh stop <name>[/<task>]`. It kills
+the session of exactly that name and nothing else: a labeled session holds
+a different conversation, so `stop backend` never reaches
+`backend/fix-login` -- pass the full name. When nothing matches it
+lists the labeled sessions under that name. Never
+`tmux -L claude kill-session -t <name>`: a bare tmux target prefix-matches
+ANY session, so with `api` gone it kills `api3`. `status` prints the
+exact names. `capture-pane` does NOT accept the `=name` exact form ("can't
+find pane") -- resolve pane ids first with
 `tmux -L claude list-panes -a -F '#{session_name} #{pane_id}'`.
 
 ## Reloading sessions after a Claude Code update
