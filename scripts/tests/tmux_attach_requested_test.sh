@@ -14,6 +14,12 @@
 # log it cannot write), each of which leaves the shell and runs no tmux.
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
+
+# Run from a tmux pane (any claude session, so every pre-push hook there),
+# the inherited TMUX made each case take the "inside tmux" refusal and fail
+# its own assertion. That refusal is tested on purpose below, with TMUX set
+# explicitly; everything else is about a shell outside tmux.
+unset TMUX TMUX_PANE
 . "$REPO/scripts/lib/event_log.sh"
 
 # Keep CI output in the checkout; an installed ~/.dotfiles is not required.
