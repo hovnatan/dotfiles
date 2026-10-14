@@ -20,7 +20,6 @@
 #                                          "?" a dirty check that timed out
 #   yellow         gauge 20-80%            warm, but not now (Ctx)
 #                  cache <=10m
-#                  "U" update pending
 #   red            gauge >=80%             act now -- nothing else, ever
 #                  cache <=2m              (Ctx)
 #   cyan           model
@@ -66,7 +65,6 @@ eval "$(jq -r '
   @sh "agent_name=\(s(.agent.name))",
   @sh "session_name=\(s(.session_name))",
   @sh "transcript=\(s(.transcript_path))",
-  @sh "running_version=\(s(.version))",
   @sh "now=\(now | floor)",
   # Clock with its zone, US daylight/standard pairs shortened to the generic
   # name: 12:55 ET on a Mac in New York (EDT or EST), 16:55 UTC on a VM.
@@ -404,24 +402,10 @@ else
 fi
 cache=" \033[2m|\033[0m ${pcolor}${cache_mark}${cache_txt}\033[0m"
 
-# A yellow "U" when a newer Claude Code is already installed and a restart
-# would pick it up. Running the installed version is the normal state and says
-# nothing worth the width; an unreadable symlink is not actionable either, so
-# both stay hidden. Its presence is the entire signal, so one glyph is enough
-# -- the version numbers themselves are one `claude --version` away. Yellow is
-# the hue whose meaning already fits: warm, but not now -- restart when
-# convenient, never the red that Ctx / Cache use for "act now".
-installed_version=$(basename "$(readlink "$HOME/.local/bin/claude" 2>/dev/null)" 2>/dev/null)
-ver=""
-if [ -n "$running_version" ] && [ -n "$installed_version" ] \
-  && [ "$installed_version" != "$running_version" ]; then
-  ver=" \033[2m|\033[0m \033[33mU\033[0m"
-fi
-
 # Wall clock, last and plain: the line is redrawn every 60s, so it is also the
 # proof the refresh is alive. Local time of the machine running this script
 # (jq's strflocaltime honours TZ) with its zone, so a remote session's clock
 # reads as its own: "12:55 ET" on the Mac, "16:55 UTC" on a UTC box.
 clk=" \033[2m|\033[0m ${clock}"
 
-printf '%b\033[1;94m%s\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b%b' "$sname" "$host:" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$ver" "$clk"
+printf '%b\033[1;94m%s\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b' "$sname" "$host:" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$clk"
