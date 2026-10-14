@@ -115,7 +115,7 @@ vim.keymap.set("n", "<leader>gg", "<cmd>Neogit<cr>", { desc = "Neogit status" })
 
 -- snacks.nvim: only the picker, the explorer (a picker in disguise) and
 -- bigfile; every other snacks module stays off. The <space> keys are the ones
--- the old telescope setup had (99171ca5^):
+-- the old telescope setup had (d9d3703e^):
 --
 --   <space>f  smart: open buffers, then recent files, then all files (fd),
 --             frecency-ranked with a cwd bonus (was telescope smart_open)

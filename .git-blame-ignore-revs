@@ -4,7 +4,7 @@
 # blame.ignoreRevsFile in this clone's config.
 
 # style(shell): format every tracked shell script with shfmt
-bd0dc8e647b6edff087ca464c567359a7a2ca9b6
+8e25049c7660ad6da98867a7cdc9d7e0a2c831f7
 
 # style(fish): format every tracked .fish file with fish_indent
-0791facc74b36394fa3a768b7271cc1ef798a81a
+0134d25a7a62866630858816c84835a52a99ab69

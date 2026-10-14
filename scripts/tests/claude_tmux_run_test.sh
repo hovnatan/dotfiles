@@ -26,7 +26,7 @@
 #   - the server sits in its own scope and panes are PartOf it, so stopping
 #     the unit leaves every session alive (tmux >= 3.7 PartOf regression)
 #   - the unit file's real ExecStop line, run with systemd's own PATH, kills
-#     the manager and only the manager (7b15fdad regression)
+#     the manager and only the manager (860dbdcc regression)
 #   - a HOME with no transcripts yet does not crash the transcript reader
 #   - with the real home/.tmux.conf loaded (the claude server reads it), a
 #     session whose claude exited does not stay (remain-on-exit on would
