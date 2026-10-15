@@ -19,6 +19,7 @@ E.g.
     ssh -t vm tmux attach           -> ssh -t vm             (a plain shell)
     ssh -o "SendEnv=LC_TMUX_ATTACH" vm
                                     -> ssh vm                (the same: no attach)
+    ssh -o SendEnv=LC_LOGIN_DIR vm  -> ssh vm                (nor the saved cd)
     ssh vm "tmux new -s main"       -> ssh vm                (a quote, but dropped)
     ssh -o "ProxyCommand x" vm      -> NotReplayableError: a kept word is quoted,
                                        not ours to re-parse
@@ -56,11 +57,12 @@ PLAIN = re.compile(r"[A-Za-z0-9@.,_:/=+-]+")
 #   "a b"     -> the words `"a` and `b"`, left as they are: refused
 ITERM2_QUOTED = re.compile(r'"([^"\s]+)"')
 
-# The -o that sends the login fish its tmux attach request (the saved
-# arrangements' attach line, tmux_attach_requested.fish): a remote command
-# in all but form, dropped like one. ssh reads option names in any case,
-# variable names as written.
-ATTACH = re.compile(r"(?i:sendenv)=LC_TMUX_ATTACH")
+# The -o that sends the login fish its tmux attach request or its directory
+# (the saved arrangements' lines, tmux_attach_requested.fish and
+# login_dir_requested.fish): a remote command in all but form, dropped like
+# one; the arrangement adds its own again when it saves the tab. ssh reads
+# option names in any case, variable names as written.
+SENT = re.compile(r"(?i:sendenv)=(?:LC_TMUX_ATTACH|LC_LOGIN_DIR)")
 
 
 class NotReplayableError(ValueError):
@@ -103,7 +105,7 @@ def option(words: list[str], i: int, out: list[str]) -> int:
             if not plain(arg):
                 msg = f"-{flag} argument {arg!r} is not plain"
                 raise NotReplayableError(msg)
-        if flag not in DROP and not (flag == "o" and ATTACH.fullmatch(arg)):
+        if flag not in DROP and not (flag == "o" and SENT.fullmatch(arg)):
             out += [f"-{flag}", arg]
         break
     return i

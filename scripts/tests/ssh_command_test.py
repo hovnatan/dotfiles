@@ -41,7 +41,10 @@ CASES: list[tuple[str, str | None]] = [
     ('ssh "user@vm"', "ssh user@vm"),
     ('ssh -p 2222 "user@vm"', "ssh -p 2222 user@vm"),
     ('ssh -o "SendEnv=LC_TMUX_ATTACH" vm', "ssh vm"),
-    ('ssh -o "ServerAliveInterval=30" "user@vm" uptime', "ssh -o ServerAliveInterval=30 user@vm"),
+    (
+        'ssh -o "ServerAliveInterval=30" "user@vm" uptime',
+        "ssh -o ServerAliveInterval=30 user@vm",
+    ),
     ('ssh "-oSendEnv=LC_TMUX_ATTACH" vm', "ssh vm"),
     # but only where X in "X" holds no space or quote: an argument with a
     # space, or a '...' one (an argument holding $ or a backslash), is
@@ -61,6 +64,9 @@ CASES: list[tuple[str, str | None]] = [
     # So is the arrangement's attach, which is one in all but form.
     ("ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 vm", "ssh -p 2222 vm"),
     ("ssh -osendenv=LC_TMUX_ATTACH vm", "ssh vm"),
+    # And the arrangement's directory, which it sends the same way.
+    ("ssh -o SendEnv=LC_LOGIN_DIR -p 2222 vm", "ssh -p 2222 vm"),
+    ('ssh -o "SendEnv=LC_LOGIN_DIR" vm', "ssh vm"),
     # Option names are read in any case, variable names are not.
     ("ssh -o SendEnv=lc_tmux_attach vm", "ssh -o SendEnv=lc_tmux_attach vm"),
     ("ssh -o SendEnv=LC_OTHER vm", "ssh -o SendEnv=LC_OTHER vm"),

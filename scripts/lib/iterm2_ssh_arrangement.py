@@ -12,14 +12,17 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
   save <name> <title prefix>    the one window whose title starts so
     iTerm2 (Python API) --> per window, the key window first: its title
                             template, and per tab: panes, jobName,
-                            commandLine, title, path (read_windows)
+                            commandLine, title, path, hostname (read_windows)
       |
       v  plan(): what each tab is
     ssh, title "[<session>]" -> remote tmux; which socket holds <session>
                                 is asked of the host (one ssh per host)
                                 -> LC_TMUX_ATTACH=claude:<session> \
                                      ssh -o SendEnv=LC_TMUX_ATTACH <login>
-    ssh, any other title     -> ssh <login>
+    ssh, any other title     -> the far side's directory, if it reported one
+                                -> LC_LOGIN_DIR=<dir, %-encoded> \
+                                     ssh -o SendEnv=LC_LOGIN_DIR <login>
+                                else -> ssh <login>
     anything else            -> cd '<path>' (a local tab; its program is
                                 not rerun)
       |
@@ -34,8 +37,9 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
                  leaves a local shell; its title template set and read back.
                  The first block's window ends up in front, as it was saved.
                  Then each tmux tab is waited on until its title shows its
-                 session (wait_attached): a request the far side never acted
-                 on leaves a plain shell, which fails the restore by name.
+                 session, and each directory tab until its path is that
+                 directory (wait_landed): a request the far side never acted
+                 on leaves a plain shell in ~, which fails the restore by name.
 
 <login> is ssh_command.py's replay of the tab's ssh command line (Cmd-T's
 parser): the options and destination, never a remote command or forward.
@@ -58,7 +62,26 @@ to the user; the login fish then attaches what LC_TMUX_ATTACH names
 
 SendEnv, not SetEnv: ssh keeps only the first SetEnv it reads, so one on
 the command line would drop the host's own from ~/.ssh/config, while
-SendEnv lines add up.
+SendEnv lines add up. A directory goes the same way, for the same reason,
+and the login fish cd's into what LC_LOGIN_DIR names
+(home/.config/fish/functions/login_dir_requested.fish). Both values are
+%-encoded alike (send_line), "/" too, and decoded alike on the far side
+(__ssh_arrangement_decode.fish).
+
+An ssh tab's path is the far side's directory only once the far side has
+said so: fish's prompt sends it (OSC 7) after iterm2_report_host has named
+the remote host. A far side that reports nothing (a host without these
+dotfiles) leaves the tab on the local host to iTerm2, its path the local
+one of ssh, so such a tab is saved as its login alone. The local host is
+told by the session the save runs in (ITERM_SESSION_ID): iTerm2 names this
+Mac "<LocalHostName>.local" in a session, which is neither gethostname()
+nor its own localhostName variable, so it is read, not guessed. Inside tmux
+that variable is the tab's that started the tmux session, maybe gone or
+since ssh'd elsewhere, so there the script refuses (local_host).
+
+A reported directory is still asked of the login's host before it is
+saved (one ssh per host, as for tmux): a tab that ssh'd on from there
+reports the next host's directory, and saving it would fail the restore.
 
 Lines typed into a tab are for fish, the shell of the default profile.
 Imported without running (scripts/tests/iterm2_ssh_arrangement_test.py) it
@@ -69,13 +92,16 @@ only defines its functions.
 # ruff: noqa: CPY001
 
 import asyncio
+import os
 import re
 import subprocess
 import sys
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import quote, unquote
 
 import iterm2
 
@@ -84,8 +110,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "home/.hammerspoon"
 import ssh_command
 
 SOCKETS = ("claude", "default")  # tmux_attach_requested.fish accepts these
-ATTACH_SEND = "-o SendEnv=LC_TMUX_ATTACH"
-ATTACH_TIMEOUT = 30.0  # s for every restored tmux tab to show its session
+LANDING_TIMEOUT = 30.0  # s for every restored tab to show its session or directory
 DIR = Path.home() / ".local/state/iterm2_ssh_arrangements"
 USAGE = (
     "usage: iterm2_ssh_arrangement.sh save [<name> [<window title prefix>]]"
@@ -93,6 +118,8 @@ USAGE = (
 )
 MAX_ARGS = 3  # save <name> <prefix>
 LOG: list[Path] = []  # the run's event log, set by main()
+# What read_windows asks of a tab's first pane, in Tab's field order.
+TAB_VARIABLES = ("jobName", "commandLine", "name", "path", "hostname")
 
 
 class ArrangementError(Exception):
@@ -108,19 +135,23 @@ class Tab:
     command_line: str
     title: str
     path: str
+    host: str  # iTerm2's hostname: the last one reported in the tab
 
 
 @dataclass
 class Plan:
     """What a tab is, before any remote lookup.
 
-    kind "tmux": login and session; "ssh": login; "local": line.
+    kind "tmux": login and session; "ssh": login, and the far side's
+    directory ("" where it reported none, which `note` says); "local": line.
     """
 
     kind: str
     login: str = ""
     session: str = ""
     line: str = ""
+    path: str = ""
+    note: str = ""
 
 
 @dataclass
@@ -203,10 +234,42 @@ def attach_line(login: str, socket: str, session: str) -> str:
     if not ssh_command.plain(session):
         msg = f"tmux session {session!r} has characters needing quotes; rename it"
         raise ArrangementError(msg)
+    return send_line(login, "LC_TMUX_ATTACH", f"{socket}:{session}")
+
+
+def dir_line(login: str, path: str) -> str:
+    """Return the line that logs in and lands in `path` on the far side.
+
+    ("ssh vm", "/home/me/it's here")
+        -> "LC_LOGIN_DIR=%2Fhome%2Fme%2Fit%27s%20here ssh -o SendEnv=LC_LOGIN_DIR vm"
+    """
+    return send_line(login, "LC_LOGIN_DIR", path)
+
+
+def send_line(login: str, variable: str, value: str) -> str:
+    """Return `login` sending `variable`=`value` to the far side's login shell.
+
+    ("ssh -p 2222 vm", "LC_X", "a/b c")
+        -> "LC_X=a%2Fb%20c ssh -o SendEnv=LC_X -p 2222 vm"
+    Every byte but [A-Za-z0-9_.~:-] is %-encoded: the "/" for Tailscale SSH
+    (attach_line), the rest so the value needs no quoting in fish. ":" stays,
+    so a tmux line reads as before ("claude:api%2Fdocs"). The far side
+    decodes it with `string unescape --style=url` (__ssh_arrangement_decode).
+    """
     first, *rest = login.split()
-    value = f"{socket}:{session.replace('/', '%2F')}"
-    words = [f"LC_TMUX_ATTACH={value}", first, ATTACH_SEND, *rest]
-    return " ".join(words)
+    words = [f"{variable}={quote(value, safe=':')}", first, f"-o SendEnv={variable}"]
+    return " ".join([*words, *rest])
+
+
+def sent_value(line: str, variable: str) -> str | None:
+    """Return the value send_line put in `line` for `variable`, decoded; else None.
+
+    ("LC_X=a%2Fb ssh -o SendEnv=LC_X vm", "LC_X") -> "a/b"
+    ("ssh vm", "LC_X") -> None
+    """
+    v = re.escape(variable)
+    m = re.fullmatch(rf"{v}=(\S+) \S+ -o SendEnv={v} .+", line)
+    return unquote(m[1]) if m else None
 
 
 def attach_request(line: str) -> tuple[str, str] | None:
@@ -216,9 +279,20 @@ def attach_request(line: str) -> tuple[str, str] | None:
     "LC_TMUX_ATTACH=claude:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm"
         -> ("claude", "api/docs")
     """
-    pattern = rf"LC_TMUX_ATTACH=([^:\s]+):(\S+) \S+ {re.escape(ATTACH_SEND)} .+"
-    m = re.fullmatch(pattern, line)
-    return (m[1], m[2].replace("%2F", "/")) if m else None
+    value = sent_value(line, "LC_TMUX_ATTACH")
+    if value is None:
+        return None
+    socket, _, session = value.partition(":")
+    return socket, session
+
+
+def dir_request(line: str) -> str | None:
+    """Return the directory a saved line asks the far side to land in.
+
+    dir_line's output -> its directory; any other line -> None.
+    "LC_LOGIN_DIR=%2Fhome%2Fme ssh -o SendEnv=LC_LOGIN_DIR vm" -> "/home/me"
+    """
+    return sent_value(line, "LC_LOGIN_DIR")
 
 
 def fish_quote(s: str) -> str:
@@ -226,8 +300,8 @@ def fish_quote(s: str) -> str:
     return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 
-def plan(tab: Tab, index: int) -> Plan:
-    """Return what tab number `index` is.
+def plan(tab: Tab, index: int, local_host: str) -> Plan:
+    """Return what tab number `index` is; `local_host` is iTerm2's name for this Mac.
 
     A split tab or an ssh line ssh_command.py will not re-parse is an error:
     saving it as something else would restore the wrong thing.
@@ -247,7 +321,27 @@ def plan(tab: Tab, index: int) -> Plan:
         raise ArrangementError(msg) from e
     if session := tmux_session(tab.title):
         return Plan("tmux", login=login, session=session)
-    return Plan("ssh", login=login)
+
+    # A plain ssh tab lands where its far side last reported being (module
+    # docstring); one still on the local host to iTerm2 reported nothing,
+    # and its path is ssh's local one.
+    #   host "vm", path "/home/me/d"   -> login and "/home/me/d"
+    #   host local, path "/Users/me"   -> login alone, and a note saying so
+    if tab.host == local_host:
+        note = (
+            f"tab {index}: its far side reported no host or directory"
+            f" (the tab's host {tab.host!r} is the local one); saved as the login"
+        )
+        return Plan("ssh", login=login, note=note)
+    if not tab.path.startswith("/"):
+        msg = f"tab {index}: iTerm2 reports directory {tab.path!r} on {tab.host!r}"
+        raise ArrangementError(msg)
+    # The host is asked one directory a line (dirs_argv), and the far side
+    # takes none with a newline either (__ssh_arrangement_decode.fish).
+    if "\n" in tab.path:
+        msg = f"tab {index}: directory {tab.path!r} on {tab.host!r} holds a newline"
+        raise ArrangementError(msg)
+    return Plan("ssh", login=login, path=tab.path)
 
 
 def parse_sessions(text: str) -> dict[str, list[str]]:
@@ -278,18 +372,56 @@ def list_sessions_argv(login: str) -> list[str]:
     return [*login.split(), remote]
 
 
+def dirs_argv(login: str) -> list[str]:
+    """Return the argv that tells which directories on stdin are on `login`'s host.
+
+    One directory a line in, "y" or "n" a line out, in order. The remote
+    command is one word for ssh, run by sh whatever the login shell: its
+    single quotes read the same in a remote sh and a remote fish.
+    """
+    script = (
+        'while IFS= read -r d; do if test -d "$d"; then echo y; else echo n; fi; done'
+    )
+    return [*login.split(), f"sh -c '{script}'"]
+
+
+def parse_dirs(text: str, paths: list[str]) -> dict[str, bool]:
+    r"""Return {path: is a directory} from dirs_argv's output for `paths`.
+
+    ("y\nn\n", ["/a", "/b"]) -> {"/a": True, "/b": False}. Anything but one
+    y or n per path (a login banner, an error) is an error, quoting it.
+    """
+    answers = text.splitlines()
+    if len(answers) != len(paths) or not set(answers) <= {"y", "n"}:
+        msg = f"want y or n for each of {len(paths)} directories, got:\n{text}"
+        raise ArrangementError(msg)
+    return {p: a == "y" for p, a in zip(paths, answers, strict=True)}
+
+
 Lookup = Callable[[str], tuple[dict[str, list[str]], str]]
+DirCheck = Callable[[str, str], bool]  # (login, path) -> a directory there
 
 
-def lines(plans: list[Plan], lookup: Lookup) -> list[str]:
-    """Return the saved lines; lookup(login) gives a host's sessions and raw output."""
+def lines(plans: list[Plan], lookup: Lookup, has_dir: DirCheck) -> list[str]:
+    """Return the saved lines.
+
+    lookup(login) gives a host's tmux sessions and raw output; has_dir(login,
+    path) whether the directory a tab reported is one on its login's host.
+    """
     out = []
     for i, p in enumerate(plans, 1):
         if p.kind == "local":
             out.append(p.line)
             continue
         if p.kind == "ssh":
-            out.append(p.login)
+            if p.path and not has_dir(p.login, p.path):
+                msg = (
+                    f"tab {i}: its far side reports directory {p.path!r}, which is"
+                    f" none on `{p.login}`: the tab ssh'd on from there, or the"
+                    " directory is gone; cd elsewhere or close the tab"
+                )
+                raise ArrangementError(msg)
+            out.append(dir_line(p.login, p.path) if p.path else p.login)
             continue
         found, raw = lookup(p.login)
         sockets = found.get(p.session, [])
@@ -360,21 +492,50 @@ async def read_windows(
             # behind a maximized one, and such a tab would pass as one pane.
             panes = t.all_sessions
             s = panes[0]
-            facts = [
-                await s.async_get_variable(v)
-                for v in ("jobName", "commandLine", "name", "path")
-            ]
+            facts = [await s.async_get_variable(v) for v in TAB_VARIABLES]
             # Every one is set for a live session: None means iTerm2 renamed
             # or dropped the variable.
             if not all(isinstance(f, str) for f in facts):
                 msg = (
-                    f"iTerm2 reported {facts} for jobName, commandLine, name, path"
+                    f"iTerm2 reported {facts} for {', '.join(TAB_VARIABLES)}"
                     f" of {s.session_id}"
                 )
                 raise ArrangementError(msg)
             tabs.append(Tab(len(panes), *facts))
         out.append((template, tabs))
     return out
+
+
+async def local_host(app: iterm2.App) -> str:
+    """Return iTerm2's name for this Mac: the host of the session the save runs in.
+
+    That session runs this script, so it is local by construction
+    (module docstring: the name is read, not guessed).
+    """
+    if "TMUX" in os.environ:
+        msg = (
+            "run from inside tmux: a tmux pane's ITERM_SESSION_ID is that of the"
+            " tab that started its tmux session, not this one; run the script"
+            " from a plain iTerm2 tab, whose host tells a remote directory from"
+            " a local one"
+        )
+        raise ArrangementError(msg)
+    if "ITERM_SESSION_ID" not in os.environ:
+        msg = (
+            "ITERM_SESSION_ID is unset: run the script from an iTerm2 tab, whose"
+            " host tells a remote directory from a local one"
+        )
+        raise ArrangementError(msg)
+    sid = os.environ["ITERM_SESSION_ID"]
+    session = app.get_session_by_id(sid.partition(":")[2])
+    if session is None:
+        msg = f"ITERM_SESSION_ID {sid!r} names no session of this iTerm2"
+        raise ArrangementError(msg)
+    host = await session.async_get_variable("hostname")
+    if not isinstance(host, str) or not host:
+        msg = f"iTerm2 reported hostname {host!r} for this session ({sid})"
+        raise ArrangementError(msg)
+    return host
 
 
 def remote_lookup() -> Lookup:
@@ -403,26 +564,76 @@ def remote_lookup() -> Lookup:
     return lookup
 
 
+def remote_dirs(plans: list[Plan]) -> DirCheck:
+    """Return a check asking each host once whether its tabs' directories are there."""
+    wanted: dict[str, list[str]] = {}
+    for p in plans:
+        if p.kind == "ssh" and p.path and p.path not in wanted.setdefault(p.login, []):
+            wanted[p.login].append(p.path)
+
+    found: dict[tuple[str, str], bool] = {}
+    for login, paths in wanted.items():
+        log(f"asking `{login}` whether its tabs' {len(paths)} directories are there")
+        done = subprocess.run(  # noqa: S603 - argv from a plain-word login
+            dirs_argv(login),
+            input="".join(f"{path}\n" for path in paths),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if done.returncode != 0:
+            msg = (
+                f"`{login}` failed to check directories (exit {done.returncode}):"
+                f"\n{done.stdout}{done.stderr}"
+            )
+            raise ArrangementError(msg)
+        try:
+            answers = parse_dirs(done.stdout, paths)
+        except ArrangementError as e:
+            msg = f"`{login}`: {e}"
+            raise ArrangementError(msg) from e
+        found.update({(login, path): ok for path, ok in answers.items()})
+    return lambda login, path: found[login, path]
+
+
+@contextmanager
+def naming(wi: int, template: str) -> Iterator[None]:
+    """Prefix an ArrangementError raised inside with window `wi` and its template."""
+    try:
+        yield
+    except ArrangementError as e:
+        msg = f"window {wi} (title template {template!r}): {e}"
+        raise ArrangementError(msg) from e
+
+
 async def save(app: iterm2.App, name: str, prefix: str | None) -> None:
     """Save every window (or the one titled `prefix`...) as arrangement `name`."""
     windows = await read_windows(app, prefix)
+    local = await local_host(app)
     which = f"the window titled {prefix!r}..." if prefix else "every window"
-    log(f"save {name}: {len(windows)} windows ({which})")
+    log(f"save {name}: {len(windows)} windows ({which}); local host {local!r}")
 
     # Any tab that cannot be saved fails the whole save, naming its window:
     # a file missing a window would restore less than was there, silently.
+    # Every tab is planned before any host is asked, so each host is asked
+    # about all its tabs' directories in one ssh.
+    plans_of = []
+    for wi, (template, tabs) in enumerate(windows, 1):
+        with naming(wi, template):
+            plans_of.append([plan(t, i, local) for i, t in enumerate(tabs, 1)])
+    has_dir = remote_dirs([p for plans in plans_of for p in plans])
     lookup = remote_lookup()
     saved = []
-    for wi, (template, tabs) in enumerate(windows, 1):
-        try:
-            got = lines([plan(t, i) for i, t in enumerate(tabs, 1)], lookup)
-        except ArrangementError as e:
-            msg = f"window {wi} (title template {template!r}): {e}"
-            raise ArrangementError(msg) from e
+    for wi, ((template, _), plans) in enumerate(zip(windows, plans_of, strict=True), 1):
+        with naming(wi, template):
+            got = lines(plans, lookup, has_dir)
         saved.append(Saved(template, got))
         log(f"window {wi}: {len(got)} tabs, title template {template!r}")
         for i, line in enumerate(got, 1):
             log(f"  tab {i}: {line}")
+        for p in plans:
+            if p.note:
+                log(f"  note: {p.note}")
 
     # Written beside its final name and renamed into place, so a failed save
     # never leaves half a file where a good one was.
@@ -434,7 +645,7 @@ async def save(app: iterm2.App, name: str, prefix: str | None) -> None:
     log(f"saved {file}")
 
 
-async def restore(connection: iterm2.Connection, name: str) -> None:
+async def restore(connection: iterm2.Connection, app: iterm2.App, name: str) -> None:
     """Open a new window per saved one, the first saved one in front."""
     file = DIR / f"{name}.txt"
     if not file.exists():
@@ -450,11 +661,17 @@ async def restore(connection: iterm2.Connection, name: str) -> None:
         msg = f"{file}: {e}"
         raise ArrangementError(msg) from e
 
+    # A directory tab has landed only off the local host (dir_landing), so
+    # the local host is read for those, and only for those: a restore of
+    # tmux tabs alone still runs from inside tmux.
+    has_dirs = any(dir_request(line) is not None for w in windows for line in w.lines)
+    local = await local_host(app) if has_dirs else None
+
     # Last window first, the first one activated at the end: it was the
     # key window when saved. Each title is read back, as a window left with
     # the wrong name is a failure, not a skip.
     opened = []
-    attaching: list[tuple[str, str, iterm2.Session]] = []
+    landing: list[Landing] = []
     for wi in reversed(range(len(windows))):
         w = windows[wi]
         window = await iterm2.Window.async_create(connection)
@@ -467,11 +684,10 @@ async def restore(connection: iterm2.Connection, name: str) -> None:
                 msg = f"iTerm2 made no tab {i + 1} in window {wi + 1}"
                 raise ArrangementError(msg)
             await tab.current_session.async_send_text(line + "\n")
-            log(f"window {wi + 1} tab {i + 1}: {line}")
-            if request := attach_request(line):
-                attaching.append(
-                    (f"window {wi + 1} tab {i + 1}", request[1], tab.current_session),
-                )
+            label = f"window {wi + 1} tab {i + 1}"
+            log(f"{label}: {line}")
+            if lands := landing_of(label, line, tab.current_session, local):
+                landing.append(lands)
         if w.template:
             await window.async_set_title(w.template)
             got = await window.async_get_variable("titleOverrideFormat")
@@ -484,47 +700,114 @@ async def restore(connection: iterm2.Connection, name: str) -> None:
         log(f"window {wi + 1} restored ({window.window_id}): {w.template!r}")
         opened.append(window)
     await opened[-1].async_activate()
-    await wait_attached(attaching)
+    await wait_landed(landing)
     log(f"restored {name}: {len(windows)} windows")
 
 
-async def wait_attached(
-    tabs: list[tuple[str, str, iterm2.Session]],
-    timeout: float = ATTACH_TIMEOUT,
+Reach = Callable[[iterm2.Session], Awaitable[tuple[bool, str]]]
+
+
+@dataclass
+class Landing:
+    """A restored tab, and how to tell it reached what was saved.
+
+    reach(session) -> (landed, what the tab shows now, said for the error).
+    """
+
+    label: str  # "window 1 tab 2"
+    want: str  # what it must come to show, as the error says it
+    session: iterm2.Session
+    reach: Reach
+
+
+def tmux_landing(label: str, name: str, session: iterm2.Session) -> Landing:
+    """Return the landing of a tab that attaches tmux session `name`.
+
+    Landed once its title shows the session: "[api/docs] " for "api/docs"
+    (~/.tmux.conf's set-titles-string for an iTerm2 client).
+    """
+
+    async def reach(s: iterm2.Session) -> tuple[bool, str]:
+        title = await s.async_get_variable("name")
+        landed = isinstance(title, str) and tmux_session(title) == name
+        return landed, f"title reads {title!r}"
+
+    return Landing(label, f"[{name}]", session, reach)
+
+
+def dir_landing(label: str, path: str, local: str, session: iterm2.Session) -> Landing:
+    """Return the landing of a tab that logs in to land in `path`.
+
+    Landed once it is in `path` on a host other than `local`, both as the far
+    side's prompt reports them (OSC 7, iterm2_report_host). The host too: the
+    tab starts local, maybe in the very path (Mac-to-Mac ssh, /Users/me),
+    which would count as landed before ssh had even connected.
+    """
+
+    async def reach(s: iterm2.Session) -> tuple[bool, str]:
+        got = await s.async_get_variable("path")
+        host = await s.async_get_variable("hostname")
+        return got == path and host != local, f"path reads {got!r} on host {host!r}"
+
+    return Landing(label, f"directory {path!r} off host {local!r}", session, reach)
+
+
+def landing_of(
+    label: str,
+    line: str,
+    session: iterm2.Session,
+    local: str | None,
+) -> Landing | None:
+    """Return what the tab typed `line` must come to show; None for a plain line.
+
+    `local` is the local host, read whenever the file holds a directory line.
+    """
+    if request := attach_request(line):
+        return tmux_landing(label, request[1], session)
+    if (where := dir_request(line)) is not None:
+        if local is None:
+            msg = f"{label}: a directory line, but no local host was read: {line}"
+            raise ArrangementError(msg)
+        return dir_landing(label, where, local, session)
+    return None
+
+
+async def wait_landed(
+    tabs: list[Landing],
+    timeout: float = LANDING_TIMEOUT,
     poll: float = 0.5,
 ) -> None:
-    """Wait until each (label, session, iTerm2 session) shows "[<session>]".
+    """Wait until each restored tab shows its tmux session or its directory.
 
-    The title is ~/.tmux.conf's set-titles-string for an iTerm2 client, so
-    it shows the session once the far side's login fish has exec'd tmux.
-    Still a shell's title at `timeout`: the request was dropped on the way
-    or not acted on, and the restore fails naming the tab, rather than
-    leaving a plain shell where a session was saved.
+    The title shows the session once the far side's login fish has exec'd
+    tmux; the path shows the directory once it has cd'd there and drawn a
+    prompt. Neither at `timeout`: the request was dropped on the way or not
+    acted on, and the restore fails naming the tab, rather than leaving a
+    plain shell in ~ where a session or a directory was saved.
     """
     waiting = list(tabs)
-    log(f"waiting up to {timeout:g} s for {len(waiting)} tmux tabs to attach")
+    log(f"waiting up to {timeout:g} s for {len(waiting)} tabs to land")
     deadline = asyncio.get_running_loop().time() + timeout
-    titles: dict[str, str] = {}
+    seen: dict[str, str] = {}
     while waiting:
         for tab in list(waiting):
-            label, session, iterm_session = tab
-            titles[label] = await iterm_session.async_get_variable("name") or ""
-            if tmux_session(titles[label]) == session:
-                log(f"{label}: attached {session}")
+            landed, seen[tab.label] = await tab.reach(tab.session)
+            if landed:
+                log(f"{tab.label}: landed, {seen[tab.label]}")
                 waiting.remove(tab)
         if waiting and asyncio.get_running_loop().time() >= deadline:
-            lines = [
-                f"  {label}: want [{session}], title reads {titles[label]!r}"
-                for label, session, _ in waiting
-            ]
             msg = (
-                f"{len(waiting)} tmux tabs did not attach in {timeout:g} s:\n"
-                + "\n".join(lines)
-                + "\nOn the far side, the tmux_attach_requested event log"
-                " (~/.dotfiles/.logs/*_tmux_attach_requested/events.log) shows"
-                " each request received: none means LC_TMUX_ATTACH never arrived"
-                " (sshd AcceptEnv, or the host runs no fish with"
-                " tmux_attach_requested: dotup it); a line means tmux refused it."
+                f"{len(waiting)} tabs did not land in {timeout:g} s:\n"
+                + "\n".join(
+                    f"  {tab.label}: want {tab.want}, {seen[tab.label]}"
+                    for tab in waiting
+                )
+                + "\nOn the far side, the tmux_attach_requested and"
+                " login_dir_requested event logs"
+                " (~/.dotfiles/.logs/*_<name>/events.log) show each request"
+                " received: none means LC_TMUX_ATTACH or LC_LOGIN_DIR never"
+                " arrived (sshd AcceptEnv, or the host runs no fish with those"
+                " functions: dotup it); a line says what was refused."
             )
             raise ArrangementError(msg)
         if waiting:
@@ -560,7 +843,7 @@ def main() -> None:
         if command == "save":
             await save(app, name, prefix)
         else:
-            await restore(connection, name)
+            await restore(connection, app, name)
 
     async def run(connection: iterm2.Connection) -> None:
         try:

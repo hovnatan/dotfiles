@@ -13,11 +13,12 @@ function tmux_attach_requested --description 'Replace this login shell with the 
     # (~/.config/tmux/report-attach.sh) cannot write the iTerm2 host report
     # to it. The value is <socket>:<session>; the socket is one of the
     # arrangement's SOCKETS, "default" for tmux's own; tmux allows no ":" in
-    # a session name, so the first ":" splits. A "/" in the session comes as
-    # "%2F": Tailscale SSH drops a variable whose value holds a "/".
+    # a session name, so the first ":" splits. The value comes %-encoded, a
+    # "/" as "%2F" (Tailscale SSH drops a variable whose value holds a "/"),
+    # and is decoded first (__ssh_arrangement_decode).
     #   claude:api%2Fdocs -> tmux -L claude attach -t =api/docs
     #   default:main       -> tmux attach -t =main
-    #   main, other:x      -> error, shell stays
+    #   main, other:x, a/b -> error, shell stays
     # exec, as the remote command did: detaching ends the ssh, and a failed
     # attach (session gone) prints tmux's error and ends it too. Each request
     # and its outcome goes to the tmux_attach_requested event log
@@ -29,8 +30,10 @@ function tmux_attach_requested --description 'Replace this login shell with the 
     set -l want $LC_TMUX_ATTACH
     set -e LC_TMUX_ATTACH
 
+    set -l decoded (__ssh_arrangement_decode tmux_attach_requested LC_TMUX_ATTACH $want)
+    or return 1
     set -l why
-    set -l parts (string split -m 1 : -- $want)
+    set -l parts (string split -m 1 : -- "$decoded")
     if set -q TMUX
         set why "reached a shell inside tmux ($TMUX); not nesting a client"
     else if test (count $parts) -ne 2; or test -z "$parts[2]"
@@ -39,7 +42,7 @@ function tmux_attach_requested --description 'Replace this login shell with the 
         set why "socket '$parts[1]' is neither claude nor default"
     end
     if test -n "$why"
-        __tmux_attach_requested_note "LC_TMUX_ATTACH='$want' refused: $why"
+        __ssh_arrangement_note tmux_attach_requested "LC_TMUX_ATTACH='$want' refused: $why"
         echo "tmux_attach_requested: LC_TMUX_ATTACH is '$want'; $why" >&2
         return 1
     end
@@ -53,28 +56,16 @@ function tmux_attach_requested --description 'Replace this login shell with the 
     #   report here:  local -> remote (modes off) ... attach: remote -> remote
     #   no report:    attach: local -> remote, tmux's modes on -> banners
     if not iterm2_report_host
-        __tmux_attach_requested_note "LC_TMUX_ATTACH='$want' refused: iterm2_report_host failed"
+        __ssh_arrangement_note tmux_attach_requested "LC_TMUX_ATTACH='$want' refused: iterm2_report_host failed"
         return 1
     end
 
-    set -l session (string replace -a %2F / -- $parts[2])
+    set -l session $parts[2]
     set -l tmux tmux
     test $parts[1] = default; or set -a tmux -L $parts[1]
     # A request that cannot be logged is not run: the log is what tells a
     # restore that landed in a plain shell from one never received.
-    __tmux_attach_requested_note "LC_TMUX_ATTACH='$want' on $(tty): exec $tmux attach -t =$session"
+    __ssh_arrangement_note tmux_attach_requested "LC_TMUX_ATTACH='$want' on $(tty): exec $tmux attach -t =$session"
     or return 1
     exec $tmux attach -t =$session
-end
-
-# __tmux_attach_requested_note <message>: one line in the event log, through
-# the repo's scripts/lib/event_log.sh, found from this file's real path
-# (~/.config/fish is a link into the checkout). Fails, saying so, when the
-# line could not be written.
-function __tmux_attach_requested_note
-    set -l lib (path resolve (path dirname (functions --details tmux_attach_requested))/../../../../scripts/lib/event_log.sh)
-    bash -c '. "$1" && shift && event_log_note tmux_attach_requested "$*"' _ $lib $argv
-    and return 0
-    echo "tmux_attach_requested: could not write the event log through $lib" >&2
-    return 1
 end

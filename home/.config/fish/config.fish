@@ -110,10 +110,13 @@ if status --is-interactive
     set -u fish_command_timer_export_only_string 1
     set -u fish_command_timer_time_format '%b %d %T'
 
-    # An ssh login sent to reattach a tmux session (a restored iTerm2 ssh
-    # arrangement): become that tmux client. Last, so PATH and the rest are
-    # set as for any login; login only, so a fish started by hand never
-    # takes it.
-    status is-login; and tmux_attach_requested
+    # An ssh login from a restored iTerm2 ssh arrangement: land in the
+    # directory its tab was in, or become the tmux client it was (a saved
+    # tab asks for one or the other). Last, so PATH and the rest are set as
+    # for any login; login only, so a fish started by hand never takes it.
+    if status is-login
+        login_dir_requested
+        tmux_attach_requested
+    end
 
 end
