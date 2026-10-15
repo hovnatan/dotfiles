@@ -242,7 +242,7 @@ python3 - "$TMUX_BIN" "$SOCKDIR/tmux" "$H" >"$WORK/client.out" 2>&1 <<'PYEOF'
 import os, pty, select, subprocess, sys, time
 tmux, sock, home = sys.argv[1:]
 links = {home + "/.claude/themes/gruvbox.json": "gruvbox-%s.json", home + "/.config/zathura/theme": "gruvbox-%s"}
-dim = {"light": "bg=#ebebeb", "dark": "bg=#0e1115"}
+dim = {"light": "bg=#ebdbb2", "dark": "bg=#1d2021"}
 pid, fd = pty.fork()
 if pid == 0:
     env = {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"}
