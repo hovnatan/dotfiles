@@ -24,9 +24,10 @@
 #   windows      each window gets each `set` line of the theme, in order
 #   refused      a window answering false fails the run
 #   theme file   a line that is not a `set` fails the run
-#   tmux         the two hooks of home/.tmux.conf, in a throwaway server: a
+#   tmux         the four hooks of home/.tmux.conf, in a throwaway server: a
 #                client in a pty reports its theme as a terminal does
-#                (CSI ? 997 ; 2 n = light, ; 1 n = dark), the links follow
+#                (CSI ? 997 ; 2 n = light, ; 1 n = dark), the links and the
+#                inactive panes' background (window-style) follow
 #
 # Exit 0 = all passed; on failure the work dir is kept and printed.
 
@@ -213,9 +214,9 @@ sed -i.bak '$d' "$H/.config/zathura/gruvbox-dark" # the map line from above
 rm "$H/bin/zathura"
 mkdir -p "$H/.dotfiles"
 ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
-grep -E '^set-hook -g client-(dark|light)-theme ' "$REPO/home/.tmux.conf" >"$WORK/hooks.conf"
-if [ "$(wc -l <"$WORK/hooks.conf")" -eq 2 ]; then
-  pass "tmux: home/.tmux.conf has the two hooks"
+grep -E '^set-hook -g client-(dark|light)-theme(\[[0-9]+\])? ' "$REPO/home/.tmux.conf" >"$WORK/hooks.conf"
+if [ "$(wc -l <"$WORK/hooks.conf")" -eq 4 ]; then
+  pass "tmux: home/.tmux.conf has the four hooks"
 else
   fail "tmux: hooks in home/.tmux.conf: $(cat "$WORK/hooks.conf")"
 fi
@@ -228,11 +229,13 @@ else
 fi
 
 # A client in a pty, reporting light, then dark, then light; after each it
-# waits for both links and prints "<mode> ok" or what it found instead.
+# waits for both links and the inactive panes' background (window-style),
+# and prints "<mode> ok" or what it found instead.
 python3 - "$TMUX_BIN" "$SOCKDIR/tmux" "$H" >"$WORK/client.out" 2>&1 <<'PYEOF'
-import os, pty, select, sys, time
+import os, pty, select, subprocess, sys, time
 tmux, sock, home = sys.argv[1:]
 links = {home + "/.claude/themes/gruvbox.json": "gruvbox-%s.json", home + "/.config/zathura/theme": "gruvbox-%s"}
+dim = {"light": "bg=#ebebeb", "dark": "bg=#0e1115"}
 pid, fd = pty.fork()
 if pid == 0:
     env = {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"}
@@ -248,17 +251,23 @@ def drain(seconds):
 def found():
     return {l: (os.readlink(l) if os.path.islink(l) else None) for l in links}
 
+def style():
+    return subprocess.run([tmux, "-S", sock, "show-options", "-gwv", "window-style"],
+                          capture_output=True, text=True, env={"HOME": home, "PATH": "/usr/bin:/bin"}).stdout.strip()
+
 drain(1)
 for mode, report in (("light", b"\x1b[?997;2n"), ("dark", b"\x1b[?997;1n"), ("light", b"\x1b[?997;2n")):
     os.write(fd, report)
     end = time.time() + 5
-    while time.time() < end and any(found()[l] != links[l] % mode for l in links):
+    while time.time() < end and (any(found()[l] != links[l] % mode for l in links) or style() != dim[mode]):
         drain(0.1)
     wrong = {l: t for l, t in found().items() if t != links[l] % mode}
+    if style() != dim[mode]:
+        wrong["window-style"] = style()
     print(mode, "ok" if not wrong else "not followed: %s" % wrong, flush=True)
 PYEOF
 if [ "$(tr '\n' ' ' <"$WORK/client.out")" = "light ok dark ok light ok " ]; then
-  pass "tmux: the links follow the client's theme, light, dark, light"
+  pass "tmux: the links and the dimmed panes follow the client's theme, light, dark, light"
 else
   fail "tmux: $(cat "$WORK/client.out")"
 fi
