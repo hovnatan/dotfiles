@@ -49,7 +49,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.dotfiles/home/.claude/git-guard.sh"
+            "command": "~/.dotfiles/home/.claude/git-guard.sh",
+            "timeout": 5,
+            "onFailure": "block"
           }
         ]
       }
