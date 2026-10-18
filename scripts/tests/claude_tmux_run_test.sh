@@ -25,7 +25,9 @@
 #     and carry the profile environment (EDITOR, MAKEFLAGS, WORDLIST, ...)
 #     with the throwaway ~/.local/bin first on PATH
 #   - the server sits in its own scope and panes are PartOf it, so stopping
-#     the unit leaves every session alive (tmux >= 3.7 PartOf regression)
+#     the unit leaves every session alive (tmux >= 3.7 PartOf regression),
+#     and nothing of the watcher's behind in the unit's cgroup (its sleep
+#     outlived it, a "left-over process" on every restart)
 #   - the unit file's real ExecStop line, run with systemd's own PATH, kills
 #     the manager and only the manager (860dbdcc regression)
 #   - a HOME with no transcripts yet does not crash the transcript reader
@@ -283,7 +285,14 @@ for s in claude ctb; do
     || fail "$s: pane PartOf '${partof:-nothing}', expected '${want:-nothing}' (tmux $server_version)"
 done
 
+cgroup=$(systemctl --user show "$UNIT" -p ControlGroup --value)
 systemctl --user stop "$UNIT"
+# KillMode=process signals only the watcher, so a child it leaves running
+# (the loop's sleep) stays in the unit's cgroup -- systemd then logs "left-over
+# process" on every restart. Read at once: such a child ends within 5 s.
+left=$(cat "/sys/fs/cgroup$cgroup/cgroup.procs" 2>/dev/null | tr '\n' ' ')
+[ -z "$left" ] && pass "unit stop left nothing in the unit's cgroup" \
+  || fail "unit stop left in $cgroup: $left($(ps -o comm= -p "${left%% *}"))"
 sleep 1
 alive=$(sessions)
 [ "$alive" = "claude ctb " ] && pass "unit stop left both sessions alive" || fail "after unit stop, sessions: '${alive}'"

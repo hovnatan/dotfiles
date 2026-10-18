@@ -761,7 +761,16 @@ case "${1:-}" in
       fi
     fi
     # The managed session under whatever label its conversation carries.
-    while [ -n "$(find_session claude)" ]; do sleep 5; done
+    # KillMode=process signals only this shell, so a foreground sleep would
+    # outlive it in the unit's cgroup ("left-over process" on the next
+    # start); waited on in the background, the TERM trap can take it along.
+    nap=""
+    trap 'kill "$nap" 2>/dev/null; exit 0' TERM
+    while [ -n "$(find_session claude)" ]; do
+      sleep 5 &
+      nap=$!
+      wait "$nap"
+    done
     exit 0
     ;;
   *)
