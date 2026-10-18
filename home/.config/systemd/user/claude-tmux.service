@@ -12,7 +12,7 @@ Type=simple
 
 # The one managed session is "claude", started in
 # ~/.dotfiles/claude_tmux_session; the AGENTS.md there documents how that
-# session spawns and resumes the other, unmanaged Claude Code sessions
+# session starts and resumes the other, unmanaged Claude Code sessions
 # (conversations named "<hostname>-<tmux name>") on this server.
 
 # The sessions run on a dedicated socket (tmux -L claude), not the default
@@ -33,7 +33,9 @@ Type=simple
 # SHELL and stamps it into every pane, so $SHELL-reading programs there see
 # the passwd shell; new windows are fish regardless -- tmux.conf hardcodes
 # `default-command fish`.
-ExecStart=/bin/sh -c 'exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh"'
+# A change to this file reaches a running systemd only through
+# `systemctl --user daemon-reload` (scripts/update.sh runs it).
+ExecStart=/bin/sh -c 'exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh serve"'
 # ExecStop runs on EVERY deactivation, including the self-exit restart
 # cycles the watcher relies on (systemd.service: "the stop operation is
 # always performed ... even if the processes in the service terminated on

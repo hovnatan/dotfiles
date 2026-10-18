@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# The tmux + Claude Code machinery behind claude-tmux.service, and the spawn
-# helper its manager session uses. All sessions live on the dedicated
+# The tmux + Claude Code machinery behind claude-tmux.service, and the new
+# and load helpers its manager session uses. All sessions live on the dedicated
 # "claude" tmux socket; the Claude Code conversation behind tmux session
 # <name> is named "<hostname>-<name>": a session has ONE name -- the
 # prompt bar, /list-agents, the /resume picker and claude.ai all show it,
@@ -9,8 +9,9 @@
 # lists every machine's sessions, hence the hostname. The name is passed
 # with -n on every launch, resumes included.
 #
-#   claude_tmux_run.sh                 ExecStart: ensure the managed "claude"
-#                                      session (the manager) exists, then watch
+#   claude_tmux_run.sh serve           ExecStart: ensure the managed "claude"
+#                                      session (the manager) exists, then watch;
+#                                      blocks while it lives, never run by hand
 #   claude_tmux_run.sh stop [name[/task]]
 #                                      kill the session of exactly that name
 #                                      (never a prefix of another name, and a
@@ -18,23 +19,32 @@
 #                                      <name>/<task>); no name: the managed
 #                                      "claude" session, labeled or not
 #                                      (ExecStop)
-#   claude_tmux_run.sh spawn <name>[/<task>] [dir] [--dangerous]
+#   claude_tmux_run.sh new <name>[/<task>] <dir> [--dangerous]
+#                                      start an unmanaged session on a FRESH
+#                                      conversation in <dir>, whatever the
+#                                      name already owns; refuses when the
+#                                      session of that exact name is live, or
+#                                      when <task> already labels a
+#                                      conversation (load that one instead)
+#   claude_tmux_run.sh load <name>[/<task>] | --id <id> [--dangerous]
 #                                      idempotently bring up an unmanaged
-#                                      session: resume its conversation where
-#                                      it belongs, or start a new one in
-#                                      <dir>. <name> alone resumes the
-#                                      conversation most recently talked in
-#                                      under that name, labeled or not;
-#                                      <name>/<task> pins the one carrying
-#                                      that label. Auto permission mode unless
-#                                      --dangerous (bypass) is given. Reports
-#                                      success only once the session has
+#                                      session on an EXISTING conversation,
+#                                      resumed where it belongs: <name> alone
+#                                      the one most recently talked in under
+#                                      that name, labeled or not;
+#                                      <name>/<task> the one carrying that
+#                                      label (refused when several do);
+#                                      --id one picked from history. Refuses
+#                                      when there is none.
+#                                      Both: auto permission mode unless
+#                                      --dangerous (bypass) is given; success
+#                                      is reported only once the session has
 #                                      survived startup (see wait_alive).
 #   claude_tmux_run.sh status [lines]  every session on the socket: whether
 #                                      claude is really running in it, which
 #                                      conversation, and the tail of its pane
 #   claude_tmux_run.sh conversations [pattern]
-#                                      every conversation spawn could resume
+#                                      every conversation load could resume
 #                                      on this host, with the directory it
 #                                      belongs to -- what to consult before
 #                                      starting a NEW one
@@ -57,21 +67,23 @@
 # <name>/<task> the moment claude announces its title, on every /rename
 # after, and back to <name> after a /clear -- so `tmux ls` and the status
 # bar show the label too. A full name, label included, is what has one
-# live session: spawn and stop act on the exact name (api/docs runs
+# live session: new, load and stop act on the exact name (api/docs runs
 # beside api/login), and only the watcher looks the manager up by its bare
 # name (sessions_under; tmux targets without "=" prefix-match as well). The
-# label rides on the same record as the name, so spawn treats the bare
+# label rides on the same record as the name, so load treats the bare
 # name as a prefix: "backend" resumes whichever of vm-backend and
 # vm-backend/<anything> was talked in last, and re-asserts THAT full
-# title with -n, since a resume by id alone would reset it. A /clear
+# title with -n, since a resume by id alone would reset it. That is also
+# why starting a conversation is a command of its own: with backend/x
+# talked in last, no form of load reaches a fresh vm-backend. A /clear
 # carries the label into the fresh conversation, where it is wrong;
 # ~/.dotfiles/home/.config/tmux/session-clear.sh strips it. The names and
-# labels spawn accepts share one alphabet, NAME_RE: what tmux keeps
+# labels new and load accept share one alphabet, NAME_RE: what tmux keeps
 # verbatim (it rewrites "." and ":" to "_"). Both hooks act only on
 # sessions of this socket, where every conversation is named this way.
 #
 # The manager runs in ~/.dotfiles/claude_tmux_session with permissions
-# bypassed; the AGENTS.md there tells it when to call spawn. Spawned
+# bypassed; the AGENTS.md there tells it when to call new and load. Those
 # sessions are unmanaged: nothing recreates one that exits, and a service
 # stop leaves them alone.
 #
@@ -97,10 +109,10 @@ set -u
 SOCKET="${CLAUDE_TMUX_SOCKET:-claude}" # overridable so tests don't touch the live server
 HOST=$(hostname)
 MANAGER_DIR="$HOME/.dotfiles/claude_tmux_session"
-ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}" # startup window spawn waits out
-NAME_RE='^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)?$'    # <name>[/<task>] spawn accepts
+ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}" # startup window new/load wait out
+NAME_RE='^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)?$'    # <name>[/<task>] new/load accept
 
-# The passwd shell, not $SHELL: a spawn issued from another shell (fish, a
+# The passwd shell, not $SHELL: a launch issued from another shell (fish, a
 # tool's bash) must still launch what the account logs in with. It has to
 # take `-lc <script> <$0> <args...>` like sh does; fish does not. Checked
 # up front, so no subcommand gets halfway before finding out.
@@ -115,7 +127,7 @@ esac
 
 # Every subcommand reads `claude agents --json` (live_agents) or launches
 # claude. Checked here because live_agents runs inside $(...), where a
-# failure cannot stop the script: without claude, spawn's already-open
+# failure cannot stop the script: without claude, load's already-open
 # guard sees no live conversations and would double-open one. The usual
 # cause is a non-login shell (a bare `ssh host cmd`): ~/.local/bin is only
 # on the login PATH.
@@ -137,7 +149,7 @@ fi
 # first, by last message, not file mtime: labeling an old conversation
 # from the /resume picker rewrites its transcript without anyone talking
 # in it, and by mtime that old conversation would be the one the next
-# spawn resumes. A conversation with no message yet (just cleared) falls
+# load resumes. A conversation with no message yet (just cleared) falls
 # back to its mtime. Modes:
 #   tsv      one line per match: <last talked, ISO UTC>\t<session id>\t<title>\t<cwd>\t<path>
 #            (no field is ever empty -- bash's tab-separated read would
@@ -145,6 +157,13 @@ fi
 #   history  the listing behind the history subcommand, one row per
 #            conversation -- files sharing their first user message (a
 #            resume into a second transcript) fold onto the newest
+#   resolve  the conversation to resume for the name: three lines (id, cwd,
+#            title) of the newest match, or nothing; fails when a label is
+#            carried by several conversations (folded as for history), as
+#            no one of them is the one asked for
+#   resolve-id  the same three lines for the conversation holding that
+#            session id (the key in place of a name), resolved to its newest
+#            transcript, or nothing
 # ~/.dotfiles/home/.config/tmux/session-clear.sh reads the same records in
 # awk (portable, no python) -- change both together.
 transcripts() {
@@ -152,7 +171,8 @@ transcripts() {
 import json, os, sys
 from datetime import datetime, timezone
 
-mode, conv, paths = sys.argv[1], sys.argv[2], sys.argv[3:]
+mode, key, paths = sys.argv[1], sys.argv[2], sys.argv[3:]
+conv = "" if mode == "resolve-id" else key   # the title filter; an id selects every titled one
 # A directory with no transcripts yet (a fresh machine) leaves the caller's
 # *.jsonl glob unexpanded; that literal pattern means "no conversations".
 paths = [p for p in paths if not p.endswith("/*.jsonl")]
@@ -219,7 +239,7 @@ for path in paths:
         for line in fh:
             if cwd is None:
                 cwd = quoted(line, "cwd")
-                if cwd is not None and mode != "history":
+                if cwd is not None and mode == "tsv":
                     break
             if '"type":"user"' not in line:
                 continue
@@ -241,19 +261,36 @@ if mode == "tsv":
         print(r["ts"], r["id"], r["title"], r["cwd"], r["path"], sep="\t")
     sys.exit()
 
-folded = {}
-for r in rows:
-    key = r["uuid"] or r["id"]
-    if key in folded:
-        folded[key].setdefault("also", []).append(r["id"])
-    else:
-        folded[key] = r
+def fold(rows):
+    """One row per conversation, newest first, each carrying the ids of the
+    older transcripts folded onto it in "also"."""
+    folded = {}
+    for r in rows:
+        k = r["uuid"] or r["id"]
+        if k in folded:
+            folded[k].setdefault("also", []).append(r["id"])
+        else:
+            folded[k] = r
+    return list(folded.values())
+
+if mode in ("resolve", "resolve-id"):
+    if mode == "resolve-id":
+        rows = [r for r in fold(rows) if key == r["id"] or key in r.get("also", [])]
+    elif "/" in conv:
+        carriers = fold([r for r in rows if r["title"] == conv])
+        if len(carriers) > 1:
+            sys.exit(f"claude_tmux_run.sh: {conv} labels {len(carriers)} conversations ("
+                     + ", ".join(r["id"] for r in carriers)
+                     + "); pick one with load --id <id> (history tells them apart), and relabel the others")
+    if rows:
+        print(rows[0]["id"], rows[0]["cwd"], rows[0]["title"], sep="\n")
+    sys.exit()
 
 def size(n):
     return f"{n/1e6:.1f}M" if n >= 1e6 else f"{n/1e3:.0f}K"
 
 print(f"{'LAST ACTIVE':<17}{'SIZE':>6}  {'ID':<36}  TASK")
-for r in folded.values():
+for r in fold(rows):
     when = datetime.fromisoformat(r["ts"]).astimezone()
     task = r["title"][len(conv) + 1:] if r["title"] != conv else "-"
     print(f"{when:%Y-%m-%d %H:%M} {size(r['size']):>6}  {r['id']}  {task}")
@@ -264,23 +301,28 @@ for r in folded.values():
 PYEOF
 }
 
-# resolve_conversation <conversation name> <files...>: the session id, cwd
-# and full title (three lines) of the conversation to resume for the name
-# -- the newest match of transcripts -- or nothing.
-resolve_conversation() {
-  local conv="$1"
-  shift
-  transcripts tsv "$conv" "$@" | awk -F'\t' 'NR == 1 { print $2; print $4; print $3 }'
+# find_conversation resolve|resolve-id <name or id> <files...>: sets id,
+# cwd and title of the conversation to resume (see transcripts), all empty
+# when there is none. Exits on a failure -- a label several conversations
+# carry -- which inside a bare $(...) could not stop the script.
+find_conversation() {
+  local found
+  found=$(transcripts "$@") || exit 1
+  {
+    read -r id
+    read -r cwd
+    read -r title
+  } <<<"$found"
 }
 
 # live_agents: every claude process on the machine, tmux-hosted or not, as
 # "<pid>\t<session id>\t<current name>" lines -- the one reader of `claude
 # agents --json`. env -u: sessions run with CLAUDE_CODE_DISABLE_AGENT_VIEW=1
-# (see launch) and a spawn issued from one inherits it, under which the
+# (see launch) and a load issued from one inherits it, under which the
 # command prints a refusal and exits 0.
 # Fails (non-zero, with the reason on stderr) when the command fails or its
 # output is not a list of agents. Callers must stop then: an empty answer
-# would read as "nothing is open", and spawn would resume a conversation
+# would read as "nothing is open", and load would resume a conversation
 # another process holds -- the double-open its guard exists to prevent.
 # Each caller captures it in an assignment, `x=$(live_agents) || exit 1`,
 # since a failure inside a bare $(...) cannot stop the script.
@@ -303,6 +345,8 @@ for s in agents:
 # agent_name <pid>, reading live_agents output: the current name of that
 # claude -- what /list-agents shows, /rename included -- or nothing.
 agent_name() { awk -F'\t' -v pid="$1" '$1 == pid { print $3 }'; }
+# agent_id <pid>, likewise: the session id that claude has open.
+agent_id() { awk -F'\t' -v pid="$1" '$1 == pid { print $2 }'; }
 
 # claude_pane <session>: "<pane id> <pid> <cwd>" of the pane in that
 # session whose process is claude -- the one the session was created with,
@@ -417,6 +461,64 @@ wait_alive() {
   [ -n "$(claude_pane "$sid")" ]
 }
 
+# parse_args <usage> <count> <args...>: the arguments new and load share.
+# Sets mode (claude's permission flags: auto, or bypass for --dangerous) and
+# rest (the others, exactly <count> of them -- a directory given to load
+# would be ignored for the conversation's own, a second one to new half
+# lost); a mismatch prints <usage> and exits.
+parse_args() {
+  local usage=$1 want=$2 a
+  # An array, so `--permission-mode auto` stays two arguments without an
+  # unquoted expansion.
+  mode=(--permission-mode auto)
+  rest=()
+  for a in "${@:3}"; do
+    case "$a" in
+      --dangerous) mode=(--dangerously-skip-permissions) ;;
+      *) rest+=("$a") ;;
+    esac
+  done
+  if [ "${#rest[@]}" -ne "$want" ]; then
+    echo "$usage" >&2
+    exit 1
+  fi
+}
+
+# start_session <session name> <dir> <what> <claude args...>: launch, wait
+# out the startup window, and report "session <name>: <what>" once claude
+# survived it -- only then is the launch worth reporting (see wait_alive).
+# Fails, saying so, when it did not.
+start_session() {
+  local target=$1 dir=$2 what=$3 sid
+  shift 3
+  sid=$(launch "$target" "$dir" "$@") || return 1
+  if ! wait_alive "$sid"; then
+    echo "session $target: $what -- but it exited during startup; nothing is running" >&2
+    return 1
+  fi
+  echo "session $(tmux -L "$SOCKET" display-message -p -t "$sid" '#{session_name}'): $what"
+}
+
+# resume_session <session name> <dir> <claude args...>: resume the
+# conversation find_conversation found (id, title) through start_session.
+# Refuses one already open in another claude process (a manual resume over
+# SSH, a background agent, ...): transcripts are not locked, so two
+# processes resuming the same conversation interleave their records into
+# one corrupted history. By id, not by name (a non-id --resume argument
+# opens the picker); -n re-asserts the full title, label included: a resume
+# by id alone reverts the session's display/peer name (what /list-agents
+# shows) to an auto-generated directory-based one.
+resume_session() {
+  local target=$1 dir=$2 agents
+  shift 2
+  agents=$(live_agents) || return 1
+  if cut -f2 <<<"$agents" | grep -qxF -- "$id"; then
+    echo "conversation $title ($id) is already open in another claude process; attach to that instead of loading it" >&2
+    return 1
+  fi
+  start_session "$target" "$dir" "resumed conversation $id ($title) in $dir ($*)" --resume "$id" -n "$title" "$@"
+}
+
 # "=$name" pins a tmux target to an exact name match.
 case "${1:-}" in
   stop)
@@ -449,96 +551,113 @@ case "${1:-}" in
     tmux -L "$SOCKET" kill-session -t "=$s" && echo "stopped session $s"
     exit
     ;;
-  spawn)
-    spec="${2:-}"
-    # <name>[/<task>]: with the hostname, the conversation title; the task
-    # pins one labeled conversation (see Naming above).
+  new)
+    # A FRESH conversation, whatever the name owns already (see Naming for
+    # why this is not load's job). The cheap refusals come first: the
+    # transcript scan reads every transcript's head and tail.
+    usage="usage: $0 new <name>[/<task>] <dir> [--dangerous]  (name and task: A-Za-z0-9_- only)"
+    parse_args "$usage" 2 "${@:2}"
+    spec=${rest[0]} dir=${rest[1]}
+    conv="$HOST-$spec"
     if [[ ! "$spec" =~ $NAME_RE ]]; then
-      echo "usage: $0 spawn <name>[/<task>] [dir] [--dangerous]  (name and task: A-Za-z0-9_- only)" >&2
+      echo "$usage" >&2
       exit 1
     fi
-    name=${spec%%/*}
-    # An array, so `--permission-mode auto` stays two arguments without an
-    # unquoted expansion.
-    mode=(--permission-mode auto)
-    dir=""
-    shift 2
-    for a in "$@"; do
-      case "$a" in
-        --dangerous) mode=(--dangerously-skip-permissions) ;;
-        *) dir="$a" ;;
-      esac
-    done
-    conv="$HOST-$spec"
-    {
-      read -r id
-      read -r cwd
-      read -r title
-    } < <(resolve_conversation "$conv" "$HOME"/.claude/projects/*/*.jsonl)
+    if [ ! -d "$dir" ]; then
+      echo "new: '$dir' is not a directory; pass an existing one to start the conversation in" >&2
+      exit 1
+    fi
+    # One live session per full name (see load); the live one holds some
+    # other conversation by definition.
+    under=$(sessions_under "${spec%%/*}") || exit 1
+    if grep -qxF -e "$spec" <<<"$under"; then
+      echo "new: session $spec is already running; stop it first ($0 stop $spec), load it, or pick another name or label" >&2
+      exit 1
+    fi
+    # A bare name owns many conversations (one per /clear), but a label pins
+    # ONE: a second carrier would make `load <name>/<task>` refuse both.
+    if [[ "$spec" == */* ]]; then
+      find_conversation resolve "$conv" "$HOME"/.claude/projects/*/*.jsonl
+      if [ -n "$id" ]; then
+        echo "new: conversation $title ($id) already carries that label; load it ($0 load $spec) or pick another label" >&2
+        exit 1
+      fi
+    fi
+    start_session "$spec" "$dir" "new conversation $conv in $dir (${mode[*]})" -n "$conv" "${mode[@]}"
+    exit
+    ;;
+  load)
+    # By <name>[/<task>], or by --id: the way to an unlabeled conversation
+    # that is no longer the newest under its name, with the guards below.
+    usage="usage: $0 load <name>[/<task>] | --id <id> [--dangerous]  (resumes in the conversation's own directory; ids: $0 history <name>)"
+    spec=""
+    if [ "${2:-}" = --id ]; then
+      parse_args "$usage" 1 "${@:3}"
+      find_conversation resolve-id "${rest[0]}" "$HOME"/.claude/projects/*/*.jsonl
+      if [ -z "$id" ]; then
+        echo "load: no titled conversation has id ${rest[0]} ($0 history <name> lists them)" >&2
+        exit 1
+      fi
+    else
+      parse_args "$usage" 1 "${@:2}"
+      spec=${rest[0]}
+      if [[ ! "$spec" =~ $NAME_RE ]]; then
+        echo "$usage" >&2
+        exit 1
+      fi
+      find_conversation resolve "$HOST-$spec" "$HOME"/.claude/projects/*/*.jsonl
+      if [ -z "$id" ]; then
+        echo "load: no conversation named $HOST-$spec; $0 new $spec <dir> starts one ($0 conversations lists what exists)" >&2
+        exit 1
+      fi
+    fi
+    # The session a conversation runs in carries its title minus the
+    # hostname -- api/docs for <host>-api/docs, whichever spec found it. An
+    # id can reach a conversation titled otherwise (by hand), which names no
+    # session.
+    target=${title#"$HOST-"}
+    if [ "$target" = "$title" ] || [[ ! "$target" =~ $NAME_RE ]]; then
+      echo "load: conversation $id is titled '$title', which names no session ($HOST-<name>[/<task>]); rename it from the /resume picker (Ctrl+R) first" >&2
+      exit 1
+    fi
+
     # One live session per FULL name: api, api/login and api/docs are
     # three names and run side by side; what cannot happen is a second
-    # session of one of them. The session a conversation runs in carries its
-    # title minus the hostname -- api/docs for <host>-api/docs, whichever
-    # spec found it -- and a new conversation the spec itself.
-    target=$spec
-    [ -n "$id" ] && target=${title#"$HOST-"}
-    under=$(sessions_under "$name") || exit 1
+    # session of one of them. Already up is success when the live session
+    # holds what was asked for -- any conversation of a bare name, the
+    # labeled one, the very id; switching it would kill work in flight,
+    # which is the user's call, not this script's.
+    under=$(sessions_under "${target%%/*}") || exit 1
     if grep -qxF -e "$target" <<<"$under"; then
-      # A pinned task is only satisfied when the live session holds that very
-      # conversation. Switching would kill work in flight, which is the
-      # user's call, not this script's.
       agents=$(live_agents) || exit 1
       read -r _ pid _ < <(claude_pane "=$target")
       live=$(agent_name "${pid:-}" <<<"$agents")
-      if [[ "$spec" != */* ]] || [ "$live" = "$HOST-$target" ]; then
+      if [ -n "$spec" ] && [[ "$spec" != */* ]]; then
+        ok=1
+      elif [ -n "$spec" ]; then
+        ok=$([ "$live" = "$title" ] && echo 1)
+      else
+        ok=$([ "$(agent_id "${pid:-}" <<<"$agents")" = "$id" ] && echo 1)
+      fi
+      if [ -n "$ok" ]; then
         echo "session $target already running${live:+ ($live)}"
         exit 0
       fi
-      echo "session $target is running ${live:-an unknown conversation}, not $HOST-$target; stop it first ($0 stop $target) or ask for it to finish" >&2
+      echo "session $target is running ${live:-an unknown conversation}, not $title ($id); stop it first ($0 stop $target) or ask for it to finish" >&2
       exit 1
     fi
-    if [ -n "$id" ]; then
-      if [ "$cwd" = - ]; then
-        echo "conversation $conv ($id) records no working directory and neither does any transcript beside it; resume it by hand from the right directory" >&2
-        exit 1
-      fi
-      # Refuse to resume a conversation that is already open in some other
-      # claude process (a manual resume over SSH, a background agent, ...):
-      # transcripts are not locked, so two processes resuming the same
-      # conversation interleave their records into one corrupted history.
-      agents=$(live_agents) || exit 1
-      if cut -f2 <<<"$agents" | grep -qxF -- "$id"; then
-        echo "conversation $conv ($id) is already open in another claude process; attach to that instead of spawning" >&2
-        exit 1
-      fi
-      # Resume by id, not by name (a non-id --resume argument opens the
-      # picker), in the conversation's own directory (conversations only
-      # resume from the directory they belong to). -n re-asserts the full
-      # title, label included: a resume by id alone reverts the session's
-      # display/peer name (what /list-agents shows) to an auto-generated
-      # directory-based one.
-      sid=$(launch "$target" "$cwd" --resume "$id" -n "$title" "${mode[@]}") || exit 1
-      started="resumed conversation $id ($title) in $cwd (${mode[*]})"
-    else
-      if [ ! -d "$dir" ]; then
-        echo "no conversation named $conv; pass an existing directory to start a new one in" >&2
-        exit 1
-      fi
-      sid=$(launch "$target" "$dir" -n "$conv" "${mode[@]}") || exit 1
-      started="new conversation $conv in $dir (${mode[*]})"
-    fi
-    # Only now is the launch worth reporting: see wait_alive.
-    if ! wait_alive "$sid"; then
-      echo "session $target: $started -- but it exited during startup; nothing is running" >&2
+
+    if [ "$cwd" = - ]; then
+      echo "conversation $title ($id) records no working directory and neither does any transcript beside it; resume it by hand from the right directory" >&2
       exit 1
     fi
-    echo "session $(tmux -L "$SOCKET" display-message -p -t "$sid" '#{session_name}'): $started"
-    exit 0
+    resume_session "$target" "$cwd" "${mode[@]}"
+    exit
     ;;
   status)
     # Whether each session is really running claude, which conversation it
     # holds, and where its pane got to -- the three things worth knowing after
-    # a spawn or a reboot, in one command.
+    # a new, a load or a reboot, in one command.
     lines="${2:-6}"
     names=$(tmux -L "$SOCKET" list-sessions -F '#{session_name}' 2>/dev/null | sort)
     if [ -z "$names" ]; then
@@ -577,11 +696,11 @@ case "${1:-}" in
     exit 0
     ;;
   conversations)
-    # Every conversation spawn could resume here, newest activity per name.
+    # Every conversation load could resume here, newest activity per name.
     # A session name says nothing about the directory its conversation lives
     # in -- work on a subfolder is usually done from a session rooted higher
     # up -- so the only way to tell whether some existing session already
-    # owns a piece of work is to look at this list. Spawning a name nobody
+    # owns a piece of work is to look at this list. `new` under a name nobody
     # used before always succeeds, silently starting an empty second
     # conversation beside the one that has the history.
     # Conversations with no custom title are auto-named; one without this
@@ -613,7 +732,7 @@ case "${1:-}" in
     # Every conversation under one name, newest first, with its task label
     # and opening prompt: what tells apart the pile a reused name accumulates
     # (each /clear leaves another), and where to pick the id or label that
-    # `spawn <name>/<task>` or `claude --resume <id> -n <title>` needs.
+    # `load <name>/<task>` or `load --id <id>` needs.
     name="${2:-}"
     if [ -z "$name" ]; then
       echo "usage: $0 history <name>" >&2
@@ -622,23 +741,36 @@ case "${1:-}" in
     transcripts history "$HOST-$name" "$HOME"/.claude/projects/*/*.jsonl
     exit 0
     ;;
+  serve)
+    # ExecStart. An explicit subcommand, so no mistyped or bare call reaches
+    # a loop that blocks forever. Being one case arm, it is parsed whole --
+    # the exit included -- before it runs: the watcher never reads this file
+    # again, so an edit to it mid-run cannot feed it half a new script.
+    if [ $# -ne 1 ]; then
+      echo "usage: $0 serve  (claude-tmux.service's ExecStart; takes no arguments)" >&2
+      exit 1
+    fi
+    if [ -z "$(find_session claude)" ]; then
+      find_conversation resolve "$HOST-claude" \
+        "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl
+      if [ -n "$id" ]; then
+        resume_session claude "$MANAGER_DIR" --dangerously-skip-permissions || exit 1
+      else
+        start_session claude "$MANAGER_DIR" "new conversation $HOST-claude in $MANAGER_DIR" \
+          -n "$HOST-claude" --dangerously-skip-permissions || exit 1
+      fi
+    fi
+    # The managed session under whatever label its conversation carries.
+    while [ -n "$(find_session claude)" ]; do sleep 5; done
+    exit 0
+    ;;
+  *)
+    {
+      echo "usage: $0 serve|new|load|stop|status|conversations|history ...  (got '${1:-}'; the header of $0 lists each one's arguments)"
+      # The unit ran this bare before serve existed, and systemd keeps a
+      # unit as it last read it.
+      [ -n "${1:-}" ] || echo "  claude-tmux.service runs '$0 serve'; a unit calling it bare was loaded before that: systemctl --user daemon-reload && systemctl --user restart claude-tmux"
+    } >&2
+    exit 1
+    ;;
 esac
-
-if [ -z "$(find_session claude)" ]; then
-  {
-    read -r id
-    read -r _
-    read -r title
-  } < <(resolve_conversation "$HOST-claude" \
-    "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl)
-  if [ -n "$id" ]; then
-    launch claude "$MANAGER_DIR" --resume "$id" -n "$title" --dangerously-skip-permissions >/dev/null || exit 1
-    echo "resuming manager conversation $id ($title)"
-  else
-    launch claude "$MANAGER_DIR" -n "$HOST-claude" --dangerously-skip-permissions >/dev/null || exit 1
-    echo "no manager conversation yet, starting a new one"
-  fi
-fi
-
-# The managed session under whatever label its conversation carries.
-while [ -n "$(find_session claude)" ]; do sleep 5; done

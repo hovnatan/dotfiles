@@ -3,10 +3,10 @@
 # check.sh runs-on: Linux
 #
 # claude_tmux_run_test.sh -- end-to-end checks for scripts/claude_tmux_run.sh
-# and the claude-tmux.service ExecStop line, on a throwaway tmux socket with a
+# and the claude-tmux.service Exec lines, on a throwaway tmux socket with a
 # throwaway HOME and a stub claude. Never touches the live "claude" socket,
 # the real service, or any real conversation. Linux only: it needs a user
-# systemd manager (transient units, scopes) and tmux. Takes about 5 s.
+# systemd manager (transient units, scopes) and tmux. Takes about 10 s.
 #
 #   throwaway HOME: .profile       the installer's hook -> home/.profile.shared
 #                   .dotfiles  ->  this repo
@@ -14,12 +14,13 @@
 #                                       an idle process whose comm is "claude"
 #
 #   transient unit (like claude-tmux.service, KillMode=process)
-#     $SHELL -lc claude_tmux_run.sh --> server in tmux-server-<socket>.scope
+#     the unit file's ExecStart -----> server in tmux-server-<socket>.scope
 #                                         +- "claude" pane (the manager)
-#   claude_tmux_run.sh spawn ctb ------->  +- "ctb" pane
+#   claude_tmux_run.sh new ctb /tmp ---->  +- "ctb" pane
 #
 # Checks, each printed as PASS/FAIL with a timestamp:
-#   - the manager comes up from the service-like unit; spawn succeeds
+#   - the manager comes up from the unit file's real ExecStart line (serve);
+#     new succeeds
 #   - panes start as `<passwd shell> -lc`, run claude, have no pipe-pane log,
 #     and carry the profile environment (EDITOR, MAKEFLAGS, WORDLIST, ...)
 #     with the throwaway ~/.local/bin first on PATH
@@ -35,7 +36,7 @@
 #     read it as dead (claude is searched across the session's panes), and
 #     status run from inside a session reports every other session's own
 #     pane (a bare =name target matched a window of the current session)
-#   - when `claude agents --json` fails, spawn, status and conversations
+#   - when `claude agents --json` fails, load, status and conversations
 #     stop with an error instead of acting on "nothing open" (a resume
 #     would double-open the conversation)
 #   - `stop <name>[/<task>]` kills exactly that session, never one whose
@@ -44,8 +45,18 @@
 #     the labeled ones; a hand-set label outside NAME_RE is still stoppable;
 #     bare `stop` (ExecStop) finds a labeled manager, and fails rather than
 #     succeeds when tmux itself fails
-#   - spawn <name>/<task> starts in its own <name>/<task> session beside a
-#     live <name> (one live session per full name, label included)
+#   - load <name>/<task> resumes by id in its own <name>/<task> session
+#     beside a live <name> (one live session per full name, label included)
+#   - new under a used bare name starts a fresh conversation in the given
+#     directory (no --resume); new refuses a
+#     live session of that name and a label some conversation carries;
+#     load refuses a name with no conversation and any directory; no
+#     subcommand and an unknown one (the retired spawn) fail at once
+#     instead of reaching the watch loop, which would block forever
+#   - load <name>/<task> refuses a label two conversations carry, but not
+#     one conversation resumed into two transcripts; load --id resumes the
+#     conversation holding that id at its newest transcript, and refuses an
+#     id nothing holds
 #
 # Usage: scripts/tests/claude_tmux_run_test.sh   (exit 0 = all passed)
 # On failure the work dir (stub, profile, unit output) is kept and printed.
@@ -78,6 +89,32 @@ fail() {
   failures=$((failures + 1))
 }
 t() { tmux -L "$SOCK" "$@"; }
+# Every session on the test socket, sorted, space-separated: "ctb ctb2 ".
+sessions() { t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' '; }
+start_of() { t display -p -t "=$1:" '#{pane_start_command}' 2>/dev/null; }
+# transcript <title> <id> [<first prompt uuid> <day>]: a conversation in
+# /tmp, titled for this host -- one load would resume -- talked in on
+# 2026-01-<day> (default 01). Transcripts sharing a uuid are one
+# conversation resumed into a second file; without one, each stands alone.
+transcript() {
+  mkdir -p "$H/.claude/projects/-tmp"
+  printf '%s\n' "{\"type\":\"user\",\"cwd\":\"/tmp\",\"uuid\":\"${3:-$2}\",\"timestamp\":\"2026-01-${4:-01}T00:00:00.000Z\",\"message\":{\"content\":\"hi\"}}" \
+    "{\"type\":\"custom-title\",\"customTitle\":\"$(hostname)-$1\",\"sessionId\":\"$2\"}" \
+    >"$H/.claude/projects/-tmp/$2.jsonl"
+}
+# unit_line <key>: the unit file's <key>= line as the script /bin/sh -c
+# runs, with systemd's %h filled in (HOME) -- the real line, so a test of
+# it is a test of what systemd runs.
+unit_line() {
+  local line
+  line=$(sed -n "s/^$1=//p" "$REPO/home/.config/systemd/user/claude-tmux.service")
+  line=$(sed -n "s/^\/bin\/sh -c '\(.*\)'\$/\1/p" <<<"$line")
+  [ -n "$line" ] || {
+    fail "could not parse $1 from the unit file"
+    exit 1
+  }
+  echo "${line//%h/$H}"
+}
 
 # Tear down everything this run created, whatever state it stopped in.
 cleanup() {
@@ -140,11 +177,12 @@ out=$(HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" \
   "$REPO/scripts/claude_tmux_run.sh" history nobody 2>&1)
 if grep -q Traceback <<<"$out"; then fail "history on a HOME without transcripts: traceback"; else pass "history on a HOME without transcripts"; fi
 
-# --- manager from a service-like unit, then a spawn -------------------------
+# --- manager from a service-like unit, then a new ---------------------------
 
+start_script=$(unit_line ExecStart) || exit 1
 systemd-run --user --quiet --unit="$UNIT" -p KillMode=process \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" -E CLAUDE_TMUX_ALIVE_SECONDS=2 \
-  /bin/sh -c 'exec "$SHELL" -lc "$HOME/.dotfiles/scripts/claude_tmux_run.sh"'
+  /bin/sh -c "$start_script"
 for _ in $(seq 40); do
   t has-session -t claude 2>/dev/null && break
   sleep 0.25
@@ -155,10 +193,10 @@ if t has-session -t claude 2>/dev/null; then pass "manager session up from the u
 fi
 
 if HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" CLAUDE_TMUX_ALIVE_SECONDS=2 \
-  "$REPO/scripts/claude_tmux_run.sh" spawn ctb /tmp >"$WORK/spawn.out" 2>&1; then
-  pass "spawn ctb: $(cat "$WORK/spawn.out")"
+  "$REPO/scripts/claude_tmux_run.sh" new ctb /tmp >"$WORK/new.out" 2>&1; then
+  pass "new ctb: $(cat "$WORK/new.out")"
 else
-  fail "spawn ctb: $(cat "$WORK/spawn.out")"
+  fail "new ctb: $(cat "$WORK/new.out")"
 fi
 
 on_exit=$(t show -gv remain-on-exit 2>/dev/null)
@@ -188,13 +226,10 @@ fi
 
 # --- claude agents --json failing: no command acts on "nothing open" --------
 
-# A conversation spawn would resume: its transcript, titled for this host.
-mkdir -p "$H/.claude/projects/-tmp"
-printf '%s\n' '{"type":"user","cwd":"/tmp","timestamp":"2026-01-01T00:00:00.000Z","message":{"content":"hi"}}' \
-  "{\"type\":\"custom-title\",\"customTitle\":\"$(hostname)-ctr\",\"sessionId\":\"0000-ctr\"}" \
-  >"$H/.claude/projects/-tmp/0000-ctr.jsonl"
+# A conversation load would resume: its transcript, titled for this host.
+transcript ctr 0000-ctr
 touch "$WORK/agents_fail"
-for cmd in "spawn ctr" status conversations; do
+for cmd in "load ctr" status conversations; do
   # shellcheck disable=SC2086 # cmd is two words on purpose
   out=$(run $cmd 2>&1)
   rc=$?
@@ -202,7 +237,7 @@ for cmd in "spawn ctr" status conversations; do
     fail "$cmd with agents --json failing: rc=$rc, $(head -c 200 <<<"$out")"
   fi
 done
-t has-session -t =ctr 2>/dev/null && fail "spawn ctr resumed the conversation anyway"
+t has-session -t =ctr 2>/dev/null && fail "load ctr resumed the conversation anyway"
 t kill-session -t =ctr 2>/dev/null
 rm -f "$WORK/agents_fail" "$H/.claude/projects/-tmp/0000-ctr.jsonl"
 
@@ -214,7 +249,7 @@ for s in claude ctb; do
     fail "$s: no pane"
     continue
   }
-  start=$(t display -p -t "=$s:" '#{pane_start_command}')
+  start=$(start_of "$s")
   case "$start" in
     "$LOGIN_SHELL -lc "*) pass "$s: starts as '$LOGIN_SHELL -lc'" ;;
     *) fail "$s: start command is '$start'" ;;
@@ -250,28 +285,21 @@ done
 
 systemctl --user stop "$UNIT"
 sleep 1
-alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+alive=$(sessions)
 [ "$alive" = "claude ctb " ] && pass "unit stop left both sessions alive" || fail "after unit stop, sessions: '${alive}'"
 
 # --- the unit file's ExecStop, under systemd's own environment --------------
 
-# The real line, with systemd's specifiers filled in: %h is HOME, and a set
-# ${MAINPID} marks a real stop request (not a restart cycle).
-stop_line=$(sed -n 's/^ExecStop=//p' "$REPO/home/.config/systemd/user/claude-tmux.service")
-stop_script=$(sed -n "s/^\/bin\/sh -c '\(.*\)'\$/\1/p" <<<"$stop_line")
-stop_script=${stop_script//%h/$H}
+# A set ${MAINPID} marks a real stop request (not a restart cycle).
+stop_script=$(unit_line ExecStop) || exit 1
 stop_script=${stop_script//\$\{MAINPID\}/1}
-[ -n "$stop_script" ] || {
-  fail "could not parse ExecStop from the unit file: $stop_line"
-  exit 1
-}
 # Under a label, as /label leaves it: ExecStop must still find it.
 t rename-session -t =claude claude/x
 systemd-run --user --quiet --wait --pipe \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" \
   /bin/sh -c "$stop_script" >"$WORK/execstop.out" 2>&1
 rc=$?
-alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+alive=$(sessions)
 if [ "$rc" -eq 0 ] && [ "$alive" = "ctb " ]; then
   pass "ExecStop killed only the manager (labeled claude/x)"
 else
@@ -283,11 +311,11 @@ fi
 t new-session -d -s ctb2 sleep 100000
 out=$(run stop ct 2>&1)
 rc=$?
-alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+alive=$(sessions)
 [ "$rc" -ne 0 ] && [ "$alive" = "ctb ctb2 " ] && pass "stop ct: refused ($out), ctb and ctb2 untouched" \
   || fail "stop ct: rc=$rc ($out), sessions left: '$alive'"
 out=$(run stop ctb 2>&1)
-alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+alive=$(sessions)
 [ "$alive" = "ctb2 " ] && pass "stop ctb: killed ctb only ($out)" || fail "stop ctb: sessions left: '$alive' ($out)"
 
 # A labeled session is a different conversation: the bare name never reaches
@@ -295,12 +323,12 @@ alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
 t new-session -d -s ctb/task sleep 100000
 out=$(run stop ctb 2>&1)
 rc=$?
-alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+alive=$(sessions)
 [ "$rc" -ne 0 ] && [ "$alive" = "ctb/task ctb2 " ] && grep -q 'under that name: ctb/task ' <<<"$out" && pass "stop ctb: refused ($out), ctb/task untouched" \
   || fail "stop ctb with only ctb/task live: rc=$rc ($out), sessions left: '$alive'"
 out=$(run stop ctb/task 2>&1)
 rc=$?
-alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+alive=$(sessions)
 [ "$rc" -eq 0 ] && [ "$alive" = "ctb2 " ] && pass "stop ctb/task: killed ctb/task only ($out)" \
   || fail "stop ctb/task: sessions left: '$alive' ($out)"
 
@@ -309,7 +337,7 @@ alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
 t new-session -d -s 'ctb/issue#42' sleep 100000
 out=$(run stop 'ctb/issue#42' 2>&1)
 rc=$?
-alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
+alive=$(sessions)
 [ "$rc" -eq 0 ] && [ "$alive" = "ctb2 " ] && pass "stop ctb/issue#42: killed it ($out)" \
   || fail "stop ctb/issue#42: rc=$rc ($out), sessions left: '$alive'"
 
@@ -331,18 +359,119 @@ rc=$?
   || fail "stop with tmux failing: rc=$rc ($out)"
 
 # One live session per FULL name: a labeled conversation starts in its own
-# session beside a live one under the same bare name, named after its title.
-mkdir -p "$H/.claude/projects/-tmp"
-printf '%s\n' '{"type":"user","cwd":"/tmp","timestamp":"2026-01-01T00:00:00.000Z","message":{"content":"hi"}}' \
-  "{\"type\":\"custom-title\",\"customTitle\":\"$(hostname)-ctb2/a\",\"sessionId\":\"0000-ctb2a\"}" \
-  >"$H/.claude/projects/-tmp/0000-ctb2a.jsonl"
-out=$(run spawn ctb2/a 2>&1)
+# session beside a live one under the same bare name, named after its title,
+# resuming the conversation by id.
+transcript ctb2/a 0000-ctb2a
+out=$(run load ctb2/a 2>&1)
 rc=$?
-alive=$(t list-sessions -F '#S' 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')
-[ "$rc" -eq 0 ] && [ "$alive" = "ctb2 ctb2/a " ] && pass "spawn ctb2/a beside ctb2: started in its own session ($out)" \
-  || fail "spawn ctb2/a beside ctb2: rc=$rc ($out), sessions: '$alive'"
+alive=$(sessions)
+start=$(start_of ctb2/a)
+[ "$rc" -eq 0 ] && [ "$alive" = "ctb2 ctb2/a " ] && [[ "$start" == *"--resume 0000-ctb2a "* ]] \
+  && pass "load ctb2/a beside ctb2: resumed 0000-ctb2a in its own session ($out)" \
+  || fail "load ctb2/a beside ctb2: rc=$rc ($out), sessions: '$alive', start '$start'"
 t kill-session -t =ctb2/a
 rm -f "$H/.claude/projects/-tmp/0000-ctb2a.jsonl"
+
+# --- new and load: a fresh conversation vs an existing one -----------------
+
+# A used bare name: new must start FRESH, in the directory given -- the
+# reason it exists, since a bare spawn reattached to the newest conversation
+# under the name and no form of it could start an unlabeled one.
+transcript ctn 0000-ctn
+mkdir -p "$WORK/fresh"
+out=$(run new ctn "$WORK/fresh" 2>&1)
+rc=$?
+start=$(start_of ctn)
+where=$(t display -p -t =ctn: '#{pane_current_path}' 2>/dev/null)
+if [ "$rc" -eq 0 ] && [[ "$start" != *--resume* ]] && [[ "$start" == *"-n $(hostname)-ctn "* ]] && [ "$where" = "$WORK/fresh" ]; then
+  pass "new ctn beside an existing ctn conversation: fresh, in its directory ($out)"
+else
+  fail "new ctn: rc=$rc ($out), start '$start', cwd '$where'"
+fi
+
+# The session of that name is live: new refuses rather than start a second
+# one; load accepts it as already up (any conversation, for a bare name).
+out=$(run new ctn /tmp 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && grep -q 'already running' <<<"$out" && [ "$(sessions)" = "ctb2 ctn " ] \
+  && pass "new ctn with ctn live: refused ($out)" || fail "new ctn with ctn live: rc=$rc ($out), sessions '$(sessions)'"
+out=$(run load ctn 2>&1)
+rc=$?
+[ "$rc" -eq 0 ] && grep -q 'already running' <<<"$out" && pass "load ctn with ctn live: already running ($out)" \
+  || fail "load ctn with ctn live: rc=$rc ($out)"
+
+t kill-session -t =ctn
+
+# A label pins one conversation: new refuses to start a second carrier.
+transcript ctn/x 0000-ctnx
+out=$(run new ctn/x /tmp 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && grep -q 'already carries that label' <<<"$out" && ! t has-session -t =ctn/x 2>/dev/null \
+  && pass "new ctn/x with the label taken: refused ($out)" || fail "new ctn/x with the label taken: rc=$rc ($out)"
+
+# Arguments each command cannot use are errors, not silently dropped.
+for args in "load ctnone" "load ctn /tmp" "new ctn" "new ctn /tmp /var" "new ctnone $WORK/missing"; do
+  # shellcheck disable=SC2086 # args is several words on purpose
+  out=$(run $args 2>&1)
+  rc=$?
+  [ "$rc" -ne 0 ] && [ "$(sessions)" = "ctb2 " ] && pass "$args: refused ($(head -c 120 <<<"$out"))" \
+    || fail "$args: rc=$rc ($out), sessions '$(sessions)'"
+done
+
+# No subcommand, and any unknown one (the retired spawn included), fails at
+# once: only serve may reach the watch loop, which blocks while the manager
+# lives. A watchdog kills a regression after 10 s rather than timeout(1),
+# which macOS lacks (check.sh lints it).
+for args in "" "spawn ctn /tmp"; do
+  # shellcheck disable=SC2086 # args is several words, or none, on purpose
+  run $args >"$WORK/bare.out" 2>&1 &
+  bg=$!
+  (
+    sleep 10
+    kill "$bg" 2>/dev/null
+  ) &
+  dog=$!
+  wait "$bg"
+  rc=$?
+  kill "$dog" 2>/dev/null
+  wait "$dog" 2>/dev/null
+  out=$(cat "$WORK/bare.out")
+  [ "$rc" -eq 1 ] && grep -q '^usage:' <<<"$out" && pass "'$args': refused at once ($(head -c 120 <<<"$out"))" \
+    || fail "'$args': rc=$rc (143: killed by the watchdog, i.e. in the watch loop) ($out)"
+done
+grep -q 'daemon-reload' "$WORK/bare.out" && fail "spawn: the bare-call daemon-reload hint shows for a subcommand" \
+  || pass "spawn: no daemon-reload hint (that is for a bare call)"
+
+# Two conversations carrying one label: load cannot tell which is meant and
+# says so, naming both. One conversation resumed into a second transcript
+# (same first prompt) is still one: new sees the label as taken, not
+# ambiguous.
+transcript ctn/x 0000-ctnx2
+out=$(run load ctn/x 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && grep -q '0000-ctnx[,)]' <<<"$out" && grep -q '0000-ctnx2[,)]' <<<"$out" && ! t has-session -t =ctn/x 2>/dev/null \
+  && pass "load ctn/x carried twice: refused ($out)" || fail "load ctn/x carried twice: rc=$rc ($out)"
+transcript ctn/y 0000-ctny1 u-ctny 01
+transcript ctn/y 0000-ctny2 u-ctny 02
+out=$(run new ctn/y /tmp 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && grep -q '(0000-ctny2) already carries that label' <<<"$out" \
+  && pass "new ctn/y over one conversation in two transcripts: label taken, not ambiguous ($out)" \
+  || fail "new ctn/y over one conversation in two transcripts: rc=$rc ($out)"
+
+# load --id: an older transcript's id reaches its conversation, resumed at
+# the newest one; an id nothing holds is refused.
+out=$(run load --id 0000-ctny1 2>&1)
+rc=$?
+start=$(start_of ctn/y)
+[ "$rc" -eq 0 ] && [[ "$start" == *"--resume 0000-ctny2 "* ]] && pass "load --id 0000-ctny1: resumed 0000-ctny2 ($out)" \
+  || fail "load --id 0000-ctny1: rc=$rc ($out), start '$start'"
+t kill-session -t =ctn/y 2>/dev/null
+out=$(run load --id 0000-nothing 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && grep -q 'no titled conversation has id 0000-nothing' <<<"$out" && pass "load --id 0000-nothing: refused ($out)" \
+  || fail "load --id 0000-nothing: rc=$rc ($out)"
+rm -f "$H/.claude/projects/-tmp/"0000-ctn*.jsonl
 
 # --- a session ends when its process exits -----------------------------------
 

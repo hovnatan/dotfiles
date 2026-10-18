@@ -52,50 +52,66 @@ sessions on this machine.
 
 ## Bringing up a session
 
-When asked to bring up / resume a session `<name>` (e.g. "backend"), run:
+Two commands bring a session up. To resume an existing conversation
+(e.g. "bring up backend"):
 
 ```bash
-~/.dotfiles/scripts/claude_tmux_run.sh spawn <name>[/<task>] [dir]
+~/.dotfiles/scripts/claude_tmux_run.sh load <name>[/<task>]
 ```
 
-It is idempotent. `spawn <name>` resumes the conversation most recently
+It is idempotent. `load <name>` resumes the conversation most recently
 talked in under `<hostname>-<name>`, labeled or not, in the directory that
-conversation belongs to; `spawn <name>/<task>` pins the conversation
+conversation belongs to; `load <name>/<task>` pins the conversation
 carrying that label (found with `history`, below) and refuses when the
 `<name>/<task>` session is live with a different one -- switching means
-killing work in flight, which is the user's call. When no such conversation exists
-it starts a new one in `<dir>` -- required only in that case, so ask which
-directory if it was not said. Spawned sessions run in auto permission mode
-with Remote Control enabled. Append `--dangerous` only when the user
-explicitly asks for a session with permissions bypassed -- never choose it
-yourself.
+killing work in flight, which is the user's call. With no such
+conversation it refuses and points at `new`.
+
+To start a fresh conversation (e.g. "a new backend session"):
+
+```bash
+~/.dotfiles/scripts/claude_tmux_run.sh new <name>[/<task>] <dir>
+```
+
+It always starts fresh, whatever the name already owns -- `new backend`
+beside a live `backend/fix-login` gives an unlabeled `backend` --
+and refuses when the session of that exact name is live, or when the
+label already belongs to a conversation (load that one). `<dir>` is
+required; ask which directory if it was not said and no earlier
+conversation of the name shows it (`history`). Both run sessions in auto
+permission mode with Remote Control enabled. Append `--dangerous` only
+when the user explicitly asks for a session with permissions bypassed --
+never choose it yourself.
 
 One LIVE session per FULL name, label included: `api`, `api/login` and
 `api/docs` are three names and run side by side, each in a session of its
 own name; a second session of one of them is what must not exist. Never
-launch a session by hand (`tmux new-session ... claude`); spawn starts a
-labeled conversation beside its siblings, and refuses when the session of
-that exact name is live with a different conversation.
+launch a session by hand (`tmux new-session ... claude`); `new` and `load`
+start one beside its siblings and refuse a second session of an exact
+name.
 
-One name can own SEVERAL conversations: a `/clear` inside a session keeps
-the name while starting a fresh conversation beside the old one, and spawn
-resumes whichever was talked in last (by last message, not file time: a
-picker rename touches a file without anyone talking in it). A resumed id
-that differs from the one resumed earlier that day is therefore normal
-(`/clear`, or a new conversation started under a used name), not a bug --
-but say so when it happens, since the user may have wanted the older
-thread. To see them all, newest first, each with its label and opening
+One name can own SEVERAL conversations: a `/clear` inside a session, or
+a `new` under a used name, starts a fresh conversation beside the old
+one, and `load` resumes whichever was talked in last (by last message,
+not file time: a picker rename touches a file without anyone talking in
+it). A resumed id that differs from the one resumed earlier that day is
+therefore normal, not a bug -- but say so when it happens, since the user
+may have wanted the older thread. An unlabeled conversation that is not
+the newest under its name is reached only by `load --id`, so label work
+once its task is clear. To see them all, newest first, each with its label and opening
 prompt:
 
 ```bash
 ~/.dotfiles/scripts/claude_tmux_run.sh history <name>
 ```
 
-Resuming a specific older one is `spawn <name>/<task>` when it is labeled,
-else `claude --resume <id> -n <its full title>` from that conversation's
-own directory -- the same form `launch()` uses, and the `-n` matters: a
-bare `--resume <id>` reverts the peer name, and a bare name drops the
-label.
+Resuming a specific older one is `load <name>/<task>` when it is labeled,
+else `load --id <id>` with an id from `history` (any of a conversation's
+ids: a resume continues it in a new transcript, and the newest is
+resumed). When two conversations carry one label, `load <name>/<task>`
+refuses and lists both ids: load the right one with `--id`, and relabel
+the other. Never resume by hand with `claude --resume`: that skips the
+double-open guard and the session naming.
 
 Before starting a NEW conversation, list what already exists:
 
@@ -106,7 +122,7 @@ Before starting a NEW conversation, list what already exists:
 A session name says nothing about the directory behind it -- work on a
 subfolder is usually done from a session rooted higher up, so the history
 for `proj/sub/tool` lives in `alpha`, rooted at
-`~/work`. Spawning a name nobody used before always succeeds,
+`~/work`. `new` under a name nobody used before always succeeds,
 so a name that merely sounds right silently creates an empty second
 conversation next to the one holding the work. If the listing shows a
 plausible owner under another name, say so and offer it rather than
@@ -126,9 +142,9 @@ find pane") -- resolve pane ids first with
 
 ## Reloading sessions after a Claude Code update
 
-There is no restart subcommand: kill the session, then spawn it again. The
+There is no restart subcommand: kill the session, then `load` it again. The
 resumed conversation id is unchanged by this (a resume writes into a NEW
-transcript file, so the id from `spawn` can differ from the one you saw
+transcript file, so the id from `load` can differ from the one you saw
 before -- see above).
 
 Reload only IDLE sessions. A reload buys a fresh binary; it is never worth
@@ -183,10 +199,13 @@ instead.
   them.
 - This manager session cannot reload itself. Tell the user to run
   `systemctl --user restart claude-tmux`; systemd recreates the session and
-  resumes this conversation.
+  resumes this conversation. A pulled change to the unit file needs
+  `systemctl --user daemon-reload` first (`dotup` runs it); until then a
+  restart runs the unit as systemd last read it.
 
-Never run `claude_tmux_run.sh` with no arguments -- that is the systemd
-entrypoint, which blocks forever in a watch loop -- and never `pkill -f` on
+Never run `claude_tmux_run.sh serve` -- that is the systemd entrypoint,
+which blocks forever in a watch loop (a bare call only prints the usage)
+-- and never `pkill -f` on
 its name, because the pattern matches the service's own process. Read the
 script when you need its usage. (Killing the service is survivable: its
 ExecStop only kills the manager session when MAINPID is still set, so a
@@ -307,13 +326,13 @@ script re-enables it; on a new GPU box enable it along with the guard.
 
 - Do not kill or restart sessions you were not asked to touch, and do not
   kill the tmux server (it hosts all of them).
-- Permissions bypass is reserved for this manager session and for spawns
-  the user explicitly requested with it (`--dangerous`).
+- Permissions bypass is reserved for this manager session and for
+  sessions the user explicitly requested with it (`--dangerous`).
 - Never use background agents in this flow. Every session is an interactive
-  Claude Code process in a tmux window, spawned by `claude_tmux_run.sh`.
+  Claude Code process in a tmux window, started by `claude_tmux_run.sh`.
   Do not run `claude --bg`, do not dispatch work from the `claude agents`
   view, and do not leave a daemon running: a background agent holds the
-  conversation's transcript open, so the next spawn of that name is refused
+  conversation's transcript open, so the next load of that name is refused
   ("already open in another claude process"), and the daemon respawns a
   worker you kill with a signal, under a new pid. Note that merely opening
   `claude agents` starts a transient daemon -- if you open it (it is the
@@ -326,7 +345,7 @@ script re-enables it; on a new GPU box enable it along with the guard.
   them -- including the left arrow that opens the agent strip, which
   otherwise starts a daemon and leaves a background session behind on every
   press. The variable is inherited by anything a session runs, and under it
-  `claude agents --json` prints a refusal and exits 0, so the spawn guard
+  `claude agents --json` prints a refusal and exits 0, so the load guard
   calls it via `env -u CLAUDE_CODE_DISABLE_AGENT_VIEW` -- keep that wrapper,
   or the guard goes blind and double-opens a conversation.
 - A turn can resume long after the previous one, on a machine that rebooted

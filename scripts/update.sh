@@ -197,6 +197,15 @@ main() {
   local status=0
   bash ~/.dotfiles/scripts/setup_user_symlinks.sh || status=$?
 
+  # systemd runs a unit as it last read it: a pulled change to an installed
+  # claude-tmux.service (opt-in, scripts/setup_claude_tmux_service.sh) would
+  # otherwise wait for a manual reload, and its next restart cycle would run
+  # the old ExecStart against the new script. Cheap and idempotent.
+  if [ "$(uname)" = Linux ] && [ -e ~/.config/systemd/user/claude-tmux.service ]; then
+    echo "--- systemctl --user daemon-reload (claude-tmux.service is installed)"
+    systemctl --user daemon-reload || status=1
+  fi
+
   if [ "$(uname)" = "Darwin" ]; then
     brew_drift || status=1
   elif is_ubuntu; then
@@ -209,6 +218,8 @@ main() {
   echo "  tmux:        tmux source-file ~/.tmux.conf"
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
+  [ -e ~/.config/systemd/user/claude-tmux.service ] \
+    && echo "  claude-tmux: systemctl --user restart claude-tmux (the manager; other sessions: reload them from it)"
   return "$status"
 }
 
