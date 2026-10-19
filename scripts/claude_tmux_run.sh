@@ -40,6 +40,18 @@
 #                                      --dangerous (bypass) is given; success
 #                                      is reported only once the session has
 #                                      survived startup (see wait_alive).
+#   claude_tmux_run.sh restart [--check|--force] <name>[/<task>]
+#                                      restart claude IN PLACE in the session
+#                                      of exactly that name: same tmux
+#                                      session and pane (attached clients stay
+#                                      put), same conversation resumed with
+#                                      the launch's permission mode -- a fresh
+#                                      binary after an update. Refuses a
+#                                      busy session (a turn or background
+#                                      shells) unless --force; --check only
+#                                      checks, printing that work. prefix C-r in
+#                                      ~/.tmux.conf runs it on the session in
+#                                      view.
 #   claude_tmux_run.sh status [lines]  every session on the socket: whether
 #                                      claude is really running in it, which
 #                                      conversation, and the tail of its pane
@@ -111,6 +123,9 @@ HOST=$(hostname)
 MANAGER_DIR="$HOME/.dotfiles/claude_tmux_session"
 ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}" # startup window new/load wait out
 NAME_RE='^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)?$'    # <name>[/<task>] new/load accept
+# How long restart lets claude shut down after TERM before KILL: past its own
+# failsafe, which exits it within max(5 s, SessionEnd hook timeout + 5 s).
+EXIT_SECONDS="${CLAUDE_TMUX_EXIT_SECONDS:-30}"
 
 # The passwd shell, not $SHELL: a launch issued from another shell (fish, a
 # tool's bash) must still launch what the account logs in with. It has to
@@ -139,7 +154,9 @@ fi
 # transcripts <mode> <conversation name> <files...>: the one reader of
 # Claude Code's transcript format. A conversation lives under
 # ~/.claude/projects/<its cwd with every character outside [A-Za-z0-9]
-# replaced by "-"> as a jsonl file: its LAST
+# replaced by "-"; past 200 characters, cut there plus a hash (2.1.303)> as
+# <session id>.jsonl -- so a lookup by id globs every project directory
+# rather than building the name (serve's MANAGER_DIR is short): its LAST
 # {"type":"custom-title","customTitle":...,"sessionId":...} record is its
 # name (renames append), the last record with a "timestamp" is when it was
 # last talked in, and its head carries the cwd and the first prompt. Only
@@ -316,7 +333,8 @@ find_conversation() {
 }
 
 # live_agents: every claude process on the machine, tmux-hosted or not, as
-# "<pid>\t<session id>\t<current name>" lines -- the one reader of `claude
+# "<pid>\t<session id>\t<current name>\t<status>" lines (status: idle, or
+# busy while a turn runs) -- the one reader of `claude
 # agents --json`. env -u: sessions run with CLAUDE_CODE_DISABLE_AGENT_VIEW=1
 # (see launch) and a load issued from one inherits it, under which the
 # command prints a refusal and exits 0.
@@ -332,6 +350,9 @@ live_agents() {
     echo "claude_tmux_run.sh: 'claude agents --json' failed; cannot tell which conversations are open" >&2
     return 1
   }
+  # Every key is required: each agent carries all four (2.1.303; one never
+  # named gets an auto name), and a missing one is a changed format, which
+  # read as "" would pass for "no such agent" or "not idle".
   python3 -c 'import json, sys
 try:
     agents = json.loads(sys.argv[1])
@@ -339,7 +360,10 @@ try:
 except (ValueError, AssertionError):
     sys.exit("claude_tmux_run.sh: claude agents --json printed no list of agents: " + sys.argv[1][:200])
 for s in agents:
-    print(s.get("pid", ""), s.get("sessionId", ""), s.get("name", ""), sep="\t")' "$json"
+    missing = [k for k in ("pid", "sessionId", "name", "status") if k not in s]
+    if missing:
+        sys.exit(f"claude_tmux_run.sh: claude agents --json has an agent without {missing} (format changed?): {s}")
+    print(s["pid"], s["sessionId"], s["name"], s["status"], sep="\t")' "$json"
 }
 
 # agent_name <pid>, reading live_agents output: the current name of that
@@ -347,6 +371,8 @@ for s in agents:
 agent_name() { awk -F'\t' -v pid="$1" '$1 == pid { print $3 }'; }
 # agent_id <pid>, likewise: the session id that claude has open.
 agent_id() { awk -F'\t' -v pid="$1" '$1 == pid { print $2 }'; }
+# agent_status <pid>, likewise: idle, or busy while a turn runs.
+agent_status() { awk -F'\t' -v pid="$1" '$1 == pid { print $4 }'; }
 
 # claude_pane <session>: "<pane id> <pid> <cwd>" of the pane in that
 # session whose process is claude -- the one the session was created with,
@@ -393,11 +419,64 @@ sessions_under() {
 # find_session <name>: the first of sessions_under <name>, or nothing.
 find_session() { sessions_under "$1" | head -n 1; }
 
+# exact_session <subcommand> <name>[/<task>]: exits, saying why, unless the
+# session of exactly that name is live -- the check stop and restart act
+# behind, so a bare <name> never reaches a labeled <name>/<task>, which
+# holds a different conversation, and a miss lists the labeled ones to
+# pick from. Only the bare name is checked against NAME_RE: a label set by
+# hand (/rename, the /resume picker) can hold any character but a space,
+# and the session carrying it must still be reachable by its full name.
+exact_session() {
+  local cmd=$1 s=$2 under
+  if [[ ! "${s%%/*}" =~ $NAME_RE ]] || [[ "$s" == */ ]]; then
+    echo "usage: $0 $cmd <name>[/<task>]  (name: A-Za-z0-9_- only; task: as status prints it)" >&2
+    exit 1
+  fi
+  under=$(sessions_under "${s%%/*}") || exit 1
+  if ! grep -qxF -e "$s" <<<"$under"; then
+    echo "no session $s on tmux socket $SOCKET${under:+; under that name: ${under//$'\n'/ } ($cmd one by its full name)}" >&2
+    exit 1
+  fi
+}
+
+# tmux_quote <args...>: the arguments as one tmux command-line string that
+# tmux's parser splits back into exactly them -- for a command tmux runs
+# later from a string (a hook). Single quotes take everything literally;
+# an argument holding one goes in double quotes, where \, " and $ are
+# escaped. 'a b' "it's" '#{x}' come back as a b, it's, #{x}.
+tmux_quote() {
+  local a out=""
+  for a in "$@"; do
+    if [[ "$a" != *"'"* ]]; then
+      out+=" '$a'"
+    else
+      a=${a//\\/\\\\} a=${a//\"/\\\"} a=${a//\$/\\\$}
+      out+=" \"$a\""
+    fi
+  done
+  printf '%s' "${out# }"
+}
+
+# bg_shells <claude pid>: the shells that claude still tracks, one
+# "<pid> <command>" line each. Its Bash tool runs every command as a child
+#   bash -c source ~/.claude/shell-snapshots/<s>.sh ... && eval '<command>' < /dev/null ...
+# so with no turn running, such a child is a background task or a Monitor;
+# its MCP servers and helpers (hunspell) are children too, but not of that
+# form. Killing claude ends these with no completion record.
+bg_shells() {
+  ps -A -o ppid=,pid=,args= | awk -v p="$1" '$1 == p && /\.claude\/shell-snapshots\// { $1 = ""; print }' \
+    | sed -e "s/^ *\([0-9]*\) .* && eval '\(.*\)' < \/dev\/null .*/\1 \2/" -e "s/'\"'\"'/'/g"
+}
+
+# The command every claude pane runs, its claude arguments appended (see
+# launch, and restart, which respawns a pane with it).
+PANE_CMD=("$LOGIN_SHELL" -lc 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' "${LOGIN_SHELL##*/}")
+
 # launch <session name> <dir> <claude args...>: detached pane running the
 # account's login shell (LOGIN_SHELL, from passwd) as a login shell, which execs claude with
 # the given arguments and Remote Control on (claude.ai shows the session's
 # one name, the -n among the arguments).
-# Prints the new session's id: the handle that survives the rename the
+# Prints the new pane's id: the handle that survives the rename the
 # pane-title hook applies once claude announces its title (see Naming).
 # tmux hands a multi-word command to the pane as argv, untouched, so the
 # arguments need no quoting; -c's first operand is the shell's $0, the rest $@.
@@ -436,29 +515,55 @@ launch() {
       --unit="tmux-server-$SOCKET"
       --description="tmux server for the $SOCKET socket (claude_tmux_run.sh)")
   fi
-  "${scope[@]}" tmux -L "$SOCKET" new-session -d -P -F '#{session_id}' \
-    -s "$name" -c "$dir" \
-    "$LOGIN_SHELL" -lc 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' "${LOGIN_SHELL##*/}" \
-    "$@" --remote-control
+  "${scope[@]}" tmux -L "$SOCKET" new-session -d -P -F '#{pane_id}' \
+    -s "$name" -c "$dir" "${PANE_CMD[@]}" "$@" --remote-control
 }
 
-# wait_alive <session id>: true once the session has stayed up for the
-# whole startup window with claude running in it. new-session returns as
-# soon as it forks, so without this a caller reports success for a claude
-# that exits immediately -- a rejected flag, a refused resume -- leaving no
-# session behind at all, and the printed "resumed ..." is a lie. The pane
-# runs the login shell with -lc, which execs claude as its last command, so
-# once claude is up the pane's own process is claude; before that it is
-# still the shell reading its profile, which is why the process check only
-# has to hold at the end. By
-# id, because the session's name changes under it (see Naming).
+# pane_proc <pane>: "<pane_dead> <pane_pid>" of that pane; fails once the
+# pane is gone (its process exited and nothing kept it).
+pane_proc() { tmux -L "$SOCKET" display-message -p -t "$1" '#{pane_dead} #{pane_pid}' 2>/dev/null; }
+
+# wait_alive <pane id>: whether claude came up in that pane and survived
+# the startup window. new-session and respawn-pane return as soon as they
+# fork, so without this a caller reports success for a claude that exits
+# at once -- a rejected flag, a refused resume -- and the printed
+# "resumed ..." is a lie. Two phases, as the pane runs the login shell
+# with -lc, which reads the profile and then execs claude:
+#
+#   shell (profile) --exec--> claude --ALIVE_SECONDS--> up       return 0
+#        |   still the shell after 60 s (a stuck profile)        return 2
+#        +--------------------+--- pane dead or gone             return 1
+#
+# The shell phase is waited out however long it takes up to that bound: a
+# slow profile on a loaded box is not a failed start. By pane id, which
+# survives the session's renames (see Naming).
 wait_alive() {
-  local sid="$1" i
+  local pane=$1 i state
+  for ((i = 0; ; i++)); do
+    state=$(pane_proc "$pane") && [ "${state% *}" = 0 ] || return 1
+    [ "$(ps -o comm= -p "${state#* }" 2>/dev/null)" = claude ] && break
+    [ "$i" -lt 240 ] || return 2
+    sleep 0.25
+  done
   for ((i = 0; i < ALIVE_SECONDS; i++)); do
     sleep 1
-    tmux -L "$SOCKET" has-session -t "$sid" 2>/dev/null || return 1
+    state=$(pane_proc "$pane") && [ "${state% *}" = 0 ] || return 1
   done
-  [ -n "$(claude_pane "$sid")" ]
+  [ "$(ps -o comm= -p "${state#* }" 2>/dev/null)" = claude ]
+}
+
+# started <pane id> <what>: wait_alive's verdict as one line, "session
+# <name>: <what>" on stdout when claude is up, the failure on stderr
+# (status 1) otherwise.
+started() {
+  local pane=$1 what=$2 rc=0
+  wait_alive "$pane" || rc=$?
+  case $rc in
+    0) echo "session $(tmux -L "$SOCKET" display-message -p -t "$pane" '#{session_name}'): $what" ;;
+    2) echo "pane $pane: $what -- but its login shell has not started claude after 60 s; see what it is stuck on (tmux -L $SOCKET capture-pane -p -t $pane)" >&2 ;;
+    *) echo "pane $pane: $what -- but claude exited during startup; nothing is running there" >&2 ;;
+  esac
+  [ "$rc" -eq 0 ]
 }
 
 # parse_args <usage> <count> <args...>: the arguments new and load share.
@@ -485,18 +590,14 @@ parse_args() {
 }
 
 # start_session <session name> <dir> <what> <claude args...>: launch, wait
-# out the startup window, and report "session <name>: <what>" once claude
-# survived it -- only then is the launch worth reporting (see wait_alive).
-# Fails, saying so, when it did not.
+# out the startup, and report "session <name>: <what>" once claude survived
+# it -- only then is the launch worth reporting (see wait_alive). Fails,
+# saying so, when it did not.
 start_session() {
-  local target=$1 dir=$2 what=$3 sid
+  local target=$1 dir=$2 what=$3 pane
   shift 3
-  sid=$(launch "$target" "$dir" "$@") || return 1
-  if ! wait_alive "$sid"; then
-    echo "session $target: $what -- but it exited during startup; nothing is running" >&2
-    return 1
-  fi
-  echo "session $(tmux -L "$SOCKET" display-message -p -t "$sid" '#{session_name}'): $what"
+  pane=$(launch "$target" "$dir" "$@") || return 1
+  started "$pane" "$what"
 }
 
 # resume_session <session name> <dir> <claude args...>: resume the
@@ -528,25 +629,14 @@ case "${1:-}" in
     # `kill-session -t api` with no api left kills api2 -- and a bare
     # <name> never reaches a labeled <name>/<task>, which holds a different
     # conversation: `stop api` beside api/login and api/docs
-    # kills api or nothing. A miss lists the labeled ones to pick from.
-    # Only the bare name is checked against NAME_RE: a label set by hand
-    # (/rename, the /resume picker) can hold any character but a space, and
-    # the session carrying it must still be stoppable by its full name.
+    # kills api or nothing (exact_session).
     if [ $# -lt 2 ]; then
       s=$(sessions_under claude) || exit 1
       s=${s%%$'\n'*}
       [ -z "$s" ] && exit 0
     else
       s="$2"
-      if [[ ! "${s%%/*}" =~ $NAME_RE ]] || [[ "$s" == */ ]]; then
-        echo "usage: $0 stop [name[/task]]  (name: A-Za-z0-9_- only; task: as status prints it)" >&2
-        exit 1
-      fi
-      under=$(sessions_under "${s%%/*}") || exit 1
-      if ! grep -qxF -e "$s" <<<"$under"; then
-        echo "no session $s on tmux socket $SOCKET${under:+; under that name: ${under//$'\n'/ } (stop one by its full name)}" >&2
-        exit 1
-      fi
+      exact_session stop "$s"
     fi
     tmux -L "$SOCKET" kill-session -t "=$s" && echo "stopped session $s"
     exit
@@ -653,6 +743,168 @@ case "${1:-}" in
     fi
     resume_session "$target" "$cwd" "${mode[@]}"
     exit
+    ;;
+  restart)
+    # A fresh claude in the same pane, on the same conversation: what a
+    # Claude Code update needs. stop + load does it too, but destroys the
+    # session, so every client attached to it detaches (or jumps to another
+    # session) and has to be pointed back. Here the pane survives, and tmux
+    # itself does the respawn, from a pane-died hook armed before the kill:
+    #
+    #   checks   all before the kill; a refusal leaves claude running
+    #   arm      this pane only: remain-on-exit on, pane-died hook
+    #   TERM --> claude exits, however long its shutdown takes
+    #            hook (tmux): respawn-pane PANE_CMD --resume <id> -n <title>
+    #            <mode>, then unset the hook and remain-on-exit
+    #   wait     for the respawn; a claude still up after EXIT_SECONDS gets KILL
+    #   report   wait_alive on the new claude
+    #
+    # The respawn and the disarm are one command list the server runs, so
+    # once TERM is sent the restart completes and the pane ends up as before
+    # whatever happens to this script: interrupted (Esc on the manager's
+    # Bash call), killed, or timed out waiting on a slow shutdown.
+    #
+    # Refused unless --force: work a restart would kill -- a turn, or a
+    # background shell claude tracks (bg_shells) -- read just before
+    # arming. agents --json cannot tell the two apart: it reports "busy"
+    # for as long as a background shell runs, the turn long over (2.1.303),
+    # but the pane shows which, so the call is the user's. --check runs
+    # every check, kills nothing, and prints that work as one line instead
+    # of refusing over it: what prefix C-r puts in its prompt
+    # (~/.dotfiles/home/.config/tmux/restart-claude.sh) before a forced
+    # restart. Always refused: a conversation also open in another process
+    # (two writers corrupt one transcript), and a pane not launched here,
+    # whose start command names no permission mode to keep (auto, or bypass
+    # for --dangerous).
+    # The directory is the conversation's own, from its transcript
+    # (find_conversation), not claude's cwd, which EnterWorktree moves.
+    usage="usage: $0 restart [--check|--force] <name>[/<task>]  (the exact session name, as status prints it)"
+    check="" force="" operands=()
+    for a in "${@:2}"; do
+      case "$a" in
+        --check) check=1 ;;
+        --force) force=1 ;;
+        *) operands+=("$a") ;;
+      esac
+    done
+    if [ "${#operands[@]}" -ne 1 ]; then
+      echo "$usage" >&2
+      exit 1
+    fi
+    s=${operands[0]}
+    exact_session restart "$s"
+    read -r pane pid _ < <(claude_pane "=$s")
+    if [ -z "${pane:-}" ]; then
+      echo "restart: no claude running in session $s; $0 stop $s, then $0 load $s" >&2
+      exit 1
+    fi
+
+    # The conversation that claude has open, and how its pane was launched.
+    agents=$(live_agents) || exit 1
+    live_id=$(agent_id "$pid" <<<"$agents")
+    live_title=$(agent_name "$pid" <<<"$agents")
+    if [ -z "$live_id" ]; then
+      echo "restart: claude $pid in session $s is not among 'claude agents --json'; cannot tell which conversation to resume" >&2
+      exit 1
+    fi
+    if awk -F'\t' -v pid="$pid" -v id="$live_id" '$2 == id && $1 != pid { f = 1 } END { exit !f }' <<<"$agents"; then
+      echo "restart: conversation $live_title ($live_id) is also open in another claude process; close that one first" >&2
+      exit 1
+    fi
+    start=$(tmux -L "$SOCKET" display-message -p -t "$pane" '#{pane_start_command}') || exit 1
+    case " $start " in
+      *" --dangerously-skip-permissions "*) mode=(--dangerously-skip-permissions) ;;
+      *" --permission-mode auto "*) mode=(--permission-mode auto) ;;
+      *)
+        echo "restart: session $s was not started by $0 (its pane runs: $start); restart it by hand" >&2
+        exit 1
+        ;;
+    esac
+    find_conversation resolve-id "$live_id" "$HOME"/.claude/projects/*/*.jsonl
+    if [ -z "$id" ] || [ "$cwd" = - ]; then
+      echo "restart: no titled transcript with a directory holds conversation $live_id (claude $pid in session $s); left running" >&2
+      exit 1
+    fi
+
+    # idle_check: what a restart would kill, as one line in "work" --
+    #   busy: a turn, or 1 background shell(s): sleep 900
+    # -- empty when claude is idle with no shells. Refused unless --force;
+    # --check prints it. Asked after the slow transcript lookup, so that
+    # little can start between it and the arming (a remote-control message
+    # could start a turn).
+    idle_check() {
+      local state shells
+      agents=$(live_agents) || exit 1
+      state=$(agent_status "$pid" <<<"$agents")
+      shells=$(bg_shells "$pid")
+      work=""
+      [ "$state" = idle ] || work="$state: a turn"
+      if [ -n "$shells" ]; then
+        work+="${work:+, or }$(wc -l <<<"$shells" | tr -d ' ') background shell(s): $(cut -d' ' -f2- <<<"$shells" | paste -sd ';' -)"
+      fi
+      if [ -n "$check" ]; then
+        [ -z "$work" ] || echo "$work"
+      elif [ -n "$work" ] && [ -z "$force" ]; then
+        echo "restart: session $s is not idle ($work), which a restart kills; wait for it (Esc ends a turn), or --force" >&2
+        exit 1
+      fi
+    }
+    idle_check
+    [ -z "$check" ] || exit 0
+
+    # From here on every step is logged, the log's path printed first.
+    . "$(dirname "$0")/lib/event_log.sh"
+    event_log_start claude_tmux_restart || exit 1
+    echo "log: $EVENT_LOG_FILE"
+    say() { log "$s: $*"; }
+    die() {
+      log "$s: FAILED $*" >&2
+      exit 1
+    }
+    say "claude $pid, conversation $live_id ($live_title), dir $cwd, ${mode[*]}${work:+; forced over $work}"
+
+    # Arm. Until TERM goes out a signal disarms, so an interrupted restart
+    # leaves no hook behind to resume a claude that exits later on its own.
+    disarm() {
+      tmux -L "$SOCKET" set-hook -p -u -t "$pane" pane-died
+      tmux -L "$SOCKET" set-option -p -u -t "$pane" remain-on-exit
+    }
+    trap 'disarm; die "interrupted before the kill; claude $pid left running"' INT TERM HUP
+    hook="respawn-pane -t $pane -c $(tmux_quote "$cwd") $(tmux_quote "${PANE_CMD[@]}" \
+      --resume "$live_id" -n "$live_title" "${mode[@]}" --remote-control)"
+    hook+=" ; set-hook -p -u -t $pane pane-died ; set-option -p -u -t $pane remain-on-exit"
+    if ! tmux -L "$SOCKET" set-option -p -t "$pane" remain-on-exit on \
+      || ! tmux -L "$SOCKET" set-hook -p -t "$pane" pane-died "$hook"; then
+      disarm 2>/dev/null
+      die "could not arm pane $pane (gone?); claude $pid left running"
+    fi
+    say "armed pane $pane: tmux resumes the conversation when claude $pid exits"
+    kill -TERM "$pid" || say "TERM to claude $pid failed: it already exited, which fires the hook as well"
+    trap - INT TERM HUP
+    say "sent TERM to claude $pid"
+
+    # respawned: wait until the pane runs something other than <pid>.
+    respawned() {
+      local i
+      for ((i = 0; i < $2 * 4; i++)); do
+        state=$(pane_proc "$pane") || die "pane $pane is gone; $0 load $s brings the conversation back"
+        [ "${state#* }" != "$1" ] && return 0
+        sleep 0.25
+      done
+      return 1
+    }
+    if ! respawned "$pid" "$EXIT_SECONDS"; then
+      say "claude $pid still up $EXIT_SECONDS s after TERM; sending KILL"
+      kill -KILL "$pid"
+      respawned "$pid" 5 || die "claude $pid survived KILL; the armed hook resumes the conversation once it exits"
+    fi
+    say "respawned: pane $pane runs pid ${state#* }; waiting for claude"
+    if msg=$(started "$pane" "restarted conversation $live_id ($live_title) in $cwd (${mode[*]})" 2>&1); then
+      log "$msg" # "session <name>: ...", the name already in it
+    else
+      die "$msg; $0 load $s brings it back"
+    fi
+    exit 0
     ;;
   status)
     # Whether each session is really running claude, which conversation it
@@ -775,7 +1027,7 @@ case "${1:-}" in
     ;;
   *)
     {
-      echo "usage: $0 serve|new|load|stop|status|conversations|history ...  (got '${1:-}'; the header of $0 lists each one's arguments)"
+      echo "usage: $0 serve|new|load|restart|stop|status|conversations|history ...  (got '${1:-}'; the header of $0 lists each one's arguments)"
       # The unit ran this bare before serve existed, and systemd keeps a
       # unit as it last read it.
       [ -n "${1:-}" ] || echo "  claude-tmux.service runs '$0 serve'; a unit calling it bare was loaded before that: systemctl --user daemon-reload && systemctl --user restart claude-tmux"

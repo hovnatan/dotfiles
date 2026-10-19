@@ -142,10 +142,20 @@ find pane") -- resolve pane ids first with
 
 ## Reloading sessions after a Claude Code update
 
-There is no restart subcommand: kill the session, then `load` it again. The
-resumed conversation id is unchanged by this (a resume writes into a NEW
-transcript file, so the id from `load` can differ from the one you saw
-before -- see above).
+Reload with `~/.dotfiles/scripts/claude_tmux_run.sh restart <name>[/<task>]`
+(the exact name, as `status` prints it). It ends the old claude and resumes
+the same conversation in the same tmux pane, with the permission mode the
+session was launched with, so attached clients stay where they are. The
+user does the same from tmux with `prefix C-r` on the session in view.
+The conversation is unchanged, though a resume writes into a NEW transcript
+file, so its id can differ from the one you saw before (see above). Each
+restart logs its steps under `~/.dotfiles/.logs/<UTC>_claude_tmux_restart/`.
+
+`restart` refuses a BUSY session and leaves it running: a turn, or a
+background shell claude still tracks, which `claude agents` also reports
+as busy, the turn long over. `--check` prints that work without
+restarting; `--force` restarts over it -- only on the user's say, after
+reading the pane. `prefix C-r` puts the same work in its y/n prompt.
 
 Reload only IDLE sessions. A reload buys a fresh binary; it is never worth
 killing work in flight, and "reload all sessions" does not authorise that.
@@ -164,8 +174,10 @@ Capture every target's pane first and leave a session alone when it shows:
   Grep the session's transcript for how it was launched before believing an
   env stamp.
 
-Reload the idle ones, then name the ones you skipped and why, and offer to
-come back for them once they go quiet.
+`restart` finds both itself (a tracked shell is a child of claude's pid);
+the list says what the pane shows when it refuses. Reload the idle ones,
+then name the ones you skipped and why, and offer to come back for them
+once they go quiet.
 
 Which build each session actually runs:
 
@@ -197,7 +209,9 @@ instead.
   `home/.claude/settings.json`) and the session's cwd returns to its
   launch directory. Report both so the user can restore
   them.
-- This manager session cannot reload itself. Tell the user to run
+- This manager session cannot reload itself: it is in a turn whenever it
+  runs anything, so `restart claude` refuses. Tell the user to press
+  `prefix C-r` in its pane once it is idle, or run
   `systemctl --user restart claude-tmux`; systemd recreates the session and
   resumes this conversation. A pulled change to the unit file needs
   `systemctl --user daemon-reload` first (`dotup` runs it); until then a
