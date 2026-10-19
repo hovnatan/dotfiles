@@ -24,7 +24,9 @@
 # - Agent shells have no tty, so a cask that needs sudo (pkg installers,
 #   /usr/local/bin symlinks: docker-desktop, little-snitch, tunnelblick, zoom,
 #   ...) fails there - and a failed `--adopt` rolls back by deleting the
-#   adopted app (Docker.app was lost this way on 2026-09-22). Adopt one cask
+#   adopted app (Docker.app was lost this way on 2026-09-22). Adopting a
+#   hand-installed app whose group is staff, not admin, also needs sudo:
+#   brew runs `sudo chgrp -hR admin` on it (Transmit.app, 2026-10-19). Adopt one cask
 #   first; hand anything needing sudo (casks, `mas uninstall`) to the user
 #   (see "Password prompts" in the global CLAUDE.md).
 # - `brew uninstall` autoremoves orphaned dependencies (removing one CLI took
@@ -77,6 +79,8 @@ cask "superwhisper"
 cask "tailscale-app"
 cask "temurin"
 cask "tor-browser"
+# transmit -- Panic's SFTP/S3/WebDAV file transfer client (2026-10-19)
+cask "transmit"
 cask "tunnelblick"
 # virtualbox -- local VMs; pkg installer, so install needs sudo (2026-10-05)
 cask "virtualbox"
