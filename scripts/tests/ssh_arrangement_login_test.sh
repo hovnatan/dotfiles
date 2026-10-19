@@ -240,7 +240,7 @@ has "an unwritable log: says so" "$out" "could not write the event log"
 
 # The save's directory check (dirs_argv), its remote word run by a login
 # shell of either kind: one y or n per directory on stdin.
-word=$(arrangement 'print(arr.dirs_argv("ssh vm")[-1])')
+word=$(arrangement 'print(arr.dirs_argv("ssh vm", unattended=False)[-1])')
 for shell in sh fish; do
   out=$(printf '%s\n' "$far/it's here" "$far/none" "$far/x;\$y/\`z\`/~" | "$shell" -c "$word")
   check "the directory check under $shell" "$out" $'y\nn\ny'

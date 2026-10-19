@@ -9,6 +9,11 @@
 #   iterm2_ssh_arrangement.sh save <name> <prefix>    the one window whose
 #                                                     title starts with <prefix>
 #   iterm2_ssh_arrangement.sh restore [<name>]        a new window per saved one
+#   iterm2_ssh_arrangement.sh snapshot                every window as
+#                                                     auto-<UTC time>, keeping
+#                                                     the newest 144 (a day at
+#                                                     one per 10 minutes); Hammerspoon
+#                                                     runs it every 10 minutes
 #
 # Saved to ~/.local/state/iterm2_ssh_arrangements/<name>.txt, a block of
 # commands per window: machine-local, since it names hosts.
@@ -25,7 +30,12 @@ command -v uv >/dev/null || {
   exit 1
 }
 
-event_log_start iterm2_ssh_arrangement
+# A snapshot runs 144 times a day: one log directory a day, not a run.
+if [ "${1:-}" = snapshot ]; then
+  event_log_daily iterm2_ssh_snapshot
+else
+  event_log_start iterm2_ssh_arrangement
+fi
 echo "log: $EVENT_LOG_FILE"
 # uv reads the script's pinned iterm2 from its inline metadata.
 exec uv run --quiet --script "$REPO/scripts/lib/iterm2_ssh_arrangement.py" "$EVENT_LOG_FILE" "$@"

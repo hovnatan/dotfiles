@@ -10,6 +10,10 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
 
   save [<name>]                 every window (<name> defaults to "all")
   save <name> <title prefix>    the one window whose title starts so
+  snapshot                      every window, as "auto-<UTC YYYYMMDD_HHMMSS>",
+                                then all but the newest 144 (a day) removed;
+                                run every 10 minutes by Hammerspoon
+                                (home/.hammerspoon/iterm2_snapshots.lua)
     iTerm2 (Python API) --> per window, the key window first: its title
                             template, and per tab: panes, jobName,
                             commandLine, title, path, hostname (read_windows)
@@ -77,7 +81,8 @@ told by the session the save runs in (ITERM_SESSION_ID): iTerm2 names this
 Mac "<LocalHostName>.local" in a session, which is neither gethostname()
 nor its own localhostName variable, so it is read, not guessed. Inside tmux
 that variable is the tab's that started the tmux session, maybe gone or
-since ssh'd elsewhere, so there the script refuses (local_host).
+since ssh'd elsewhere, so there the script refuses (local_host). A snapshot
+runs in no tab, and reads the names off the local tabs instead (local_hosts).
 
 A reported directory is still asked of the login's host before it is
 saved (one ssh per host, as for tmux): a tab that ssh'd on from there
@@ -112,9 +117,15 @@ import ssh_command
 SOCKETS = ("claude", "default")  # tmux_attach_requested.fish accepts these
 LANDING_TIMEOUT = 30.0  # s for every restored tab to show its session or directory
 DIR = Path.home() / ".local/state/iterm2_ssh_arrangements"
+SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
+# A day of them at Hammerspoon's one per 10 minutes (iterm2_snapshots.lua).
+SNAPSHOT_KEEP = 144
+# What a snapshot's ssh may not do: ask for anything (no tty to answer on)
+# or wait out a host that is down for the TCP timeout.
+UNATTENDED_SSH = ("-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
 USAGE = (
     "usage: iterm2_ssh_arrangement.sh save [<name> [<window title prefix>]]"
-    " | restore [<name>]"
+    " | restore [<name>] | snapshot"
 )
 MAX_ARGS = 3  # save <name> <prefix>
 LOG: list[Path] = []  # the run's event log, set by main()
@@ -300,8 +311,8 @@ def fish_quote(s: str) -> str:
     return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 
-def plan(tab: Tab, index: int, local_host: str) -> Plan:
-    """Return what tab number `index` is; `local_host` is iTerm2's name for this Mac.
+def plan(tab: Tab, index: int, local_hosts: frozenset[str]) -> Plan:
+    """Return what tab number `index` is; `local_hosts` are iTerm2's names for this Mac.
 
     A split tab or an ssh line ssh_command.py will not re-parse is an error:
     saving it as something else would restore the wrong thing.
@@ -327,7 +338,7 @@ def plan(tab: Tab, index: int, local_host: str) -> Plan:
     # and its path is ssh's local one.
     #   host "vm", path "/home/me/d"   -> login and "/home/me/d"
     #   host local, path "/Users/me"   -> login alone, and a note saying so
-    if tab.host == local_host:
+    if tab.host in local_hosts:
         note = (
             f"tab {index}: its far side reported no host or directory"
             f" (the tab's host {tab.host!r} is the local one); saved as the login"
@@ -360,7 +371,18 @@ def parse_sessions(text: str) -> dict[str, list[str]]:
     return found
 
 
-def list_sessions_argv(login: str) -> list[str]:
+def ssh_argv(login: str, remote: str, *, unattended: bool) -> list[str]:
+    """Return the argv running `remote` over `login`, UNATTENDED_SSH first if so.
+
+    ("ssh -p 2222 vm", "ls", unattended=True)
+        -> ["ssh", "-o", "BatchMode=yes", ..., "-p", "2222", "vm", "ls"]
+    First, since ssh keeps the first value it reads for an option.
+    """
+    first, *rest = login.split()
+    return [first, *(UNATTENDED_SSH if unattended else ()), *rest, remote]
+
+
+def list_sessions_argv(login: str, *, unattended: bool) -> list[str]:
     """Return the argv that lists every socket's sessions on the host of `login`.
 
     The remote command is one word for ssh; its single quotes read the same
@@ -369,10 +391,10 @@ def list_sessions_argv(login: str) -> list[str]:
     remote = "; ".join(
         f"{tmux(socket)} ls -F '{socket} #{{session_name}}'" for socket in SOCKETS
     )
-    return [*login.split(), remote]
+    return ssh_argv(login, remote, unattended=unattended)
 
 
-def dirs_argv(login: str) -> list[str]:
+def dirs_argv(login: str, *, unattended: bool) -> list[str]:
     """Return the argv that tells which directories on stdin are on `login`'s host.
 
     One directory a line in, "y" or "n" a line out, in order. The remote
@@ -382,7 +404,7 @@ def dirs_argv(login: str) -> list[str]:
     script = (
         'while IFS= read -r d; do if test -d "$d"; then echo y; else echo n; fi; done'
     )
-    return [*login.split(), f"sh -c '{script}'"]
+    return ssh_argv(login, f"sh -c '{script}'", unattended=unattended)
 
 
 def parse_dirs(text: str, paths: list[str]) -> dict[str, bool]:
@@ -538,7 +560,78 @@ async def local_host(app: iterm2.App) -> str:
     return host
 
 
-def remote_lookup() -> Lookup:
+async def local_hosts(
+    app: iterm2.App,
+    windows: list[tuple[str, list[Tab]]],
+) -> frozenset[str]:
+    """Return iTerm2's names for this Mac, for a snapshot, which runs in no tab.
+
+    Read, not guessed, as local_host does, from the tabs whose foreground
+    job is not ssh, which run here, plus iTerm2's own localhostName. iTerm2
+    names one Mac both ways at once:
+
+        fish tabs        hostname "<LocalHostName>.local" (most)
+                                  "<hostname>"            (some)
+        localhostName    "<hostname>"
+
+    A tab on another host behind a job other than ssh (mosh, docker exec)
+    would pass its host off as local: an ssh tab to that host is then saved
+    as its login alone, with a note in the log.
+    """
+    names = {t.host for _, tabs in windows for t in tabs if t.job != "ssh"}
+    own = await app.async_get_variable("localhostName")
+    if not isinstance(own, str) or not own:
+        msg = f"iTerm2 reported localhostName {own!r}"
+        raise ArrangementError(msg)
+    return frozenset({*names, own})
+
+
+def snapshot_name(now: datetime) -> str:
+    """Return the name of a snapshot taken at `now`: "auto-20261019_143000"."""
+    return f"{SNAPSHOT_PREFIX}{now:%Y%m%d_%H%M%S}"
+
+
+def stale_snapshots(names: list[str]) -> list[str]:
+    """Return the snapshots among `names` past the newest SNAPSHOT_KEEP of them.
+
+    Kept by count, not age: a day without snapshots (iTerm2 quit over a
+    weekend) must not cost the last ones from before it, the very ones a
+    restore wants. Ordered by the time in the name, not the file's mtime,
+    which a hand edit moves. A name of no other shape under the prefix is a
+    file this script did not write: an error, not something to delete or skip.
+    """
+    taken = []
+    for name in names:
+        if not name.startswith(SNAPSHOT_PREFIX):
+            continue
+        stamp = name.removeprefix(SNAPSHOT_PREFIX)
+        try:
+            when = datetime.strptime(stamp, "%Y%m%d_%H%M%S").replace(tzinfo=UTC)
+        except ValueError as e:
+            msg = (
+                f"arrangement {name!r} has the snapshot prefix but no"
+                f" YYYYMMDD_HHMMSS time after it; rename or remove {DIR / name}.txt"
+            )
+            raise ArrangementError(msg) from e
+        taken.append((when, name))
+    return [name for _, name in sorted(taken, reverse=True)[SNAPSHOT_KEEP:]]
+
+
+async def snapshot(app: iterm2.App) -> None:
+    """Save every window as a new snapshot, then drop all but the newest SNAPSHOT_KEEP.
+
+    Old ones go only after a save went through: while saves fail, the last
+    good snapshots are kept, however old.
+    """
+    await save(app, snapshot_name(datetime.now(UTC)), None, snapshot=True)
+    names = [p.stem for p in DIR.glob(f"{SNAPSHOT_PREFIX}*.txt")]
+    stale = stale_snapshots(names)
+    for name in stale:
+        (DIR / f"{name}.txt").unlink()
+    log(f"removed {len(stale)} snapshots past the newest {SNAPSHOT_KEEP}")
+
+
+def remote_lookup(*, unattended: bool) -> Lookup:
     """Return a lookup asking each host once which tmux sockets hold which sessions."""
     cache: dict[str, tuple[dict[str, list[str]], str]] = {}
 
@@ -548,7 +641,7 @@ def remote_lookup() -> Lookup:
             # tmux ls exits 1 for a socket with no server, an empty socket,
             # so only ssh's own failure (255) is one.
             done = subprocess.run(  # noqa: S603 - argv from a plain-word login
-                list_sessions_argv(login),
+                list_sessions_argv(login, unattended=unattended),
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -564,7 +657,7 @@ def remote_lookup() -> Lookup:
     return lookup
 
 
-def remote_dirs(plans: list[Plan]) -> DirCheck:
+def remote_dirs(plans: list[Plan], *, unattended: bool) -> DirCheck:
     """Return a check asking each host once whether its tabs' directories are there."""
     wanted: dict[str, list[str]] = {}
     for p in plans:
@@ -575,7 +668,7 @@ def remote_dirs(plans: list[Plan]) -> DirCheck:
     for login, paths in wanted.items():
         log(f"asking `{login}` whether its tabs' {len(paths)} directories are there")
         done = subprocess.run(  # noqa: S603 - argv from a plain-word login
-            dirs_argv(login),
+            dirs_argv(login, unattended=unattended),
             input="".join(f"{path}\n" for path in paths),
             capture_output=True,
             text=True,
@@ -606,12 +699,23 @@ def naming(wi: int, template: str) -> Iterator[None]:
         raise ArrangementError(msg) from e
 
 
-async def save(app: iterm2.App, name: str, prefix: str | None) -> None:
+async def save(
+    app: iterm2.App,
+    name: str,
+    prefix: str | None,
+    *,
+    snapshot: bool = False,
+) -> None:
     """Save every window (or the one titled `prefix`...) as arrangement `name`."""
     windows = await read_windows(app, prefix)
-    local = await local_host(app)
+    # A save run by hand reads the local host off its own tab; a snapshot
+    # has no tab of its own and reads it off the windows (local_hosts).
+    if snapshot:
+        local = await local_hosts(app, windows)
+    else:
+        local = frozenset({await local_host(app)})
     which = f"the window titled {prefix!r}..." if prefix else "every window"
-    log(f"save {name}: {len(windows)} windows ({which}); local host {local!r}")
+    log(f"save {name}: {len(windows)} windows ({which}); local hosts {sorted(local)}")
 
     # Any tab that cannot be saved fails the whole save, naming its window:
     # a file missing a window would restore less than was there, silently.
@@ -621,8 +725,9 @@ async def save(app: iterm2.App, name: str, prefix: str | None) -> None:
     for wi, (template, tabs) in enumerate(windows, 1):
         with naming(wi, template):
             plans_of.append([plan(t, i, local) for i, t in enumerate(tabs, 1)])
-    has_dir = remote_dirs([p for plans in plans_of for p in plans])
-    lookup = remote_lookup()
+    all_plans = [p for plans in plans_of for p in plans]
+    has_dir = remote_dirs(all_plans, unattended=snapshot)
+    lookup = remote_lookup(unattended=snapshot)
     saved = []
     for wi, ((template, _), plans) in enumerate(zip(windows, plans_of, strict=True), 1):
         with naming(wi, template):
@@ -821,14 +926,20 @@ def main() -> None:
     command, name, prefix = [*args, None, None, None][:3]
     name = name or "all"
     if (
-        command not in ("save", "restore")
+        command not in ("save", "restore", "snapshot")
         or len(args) > MAX_ARGS
         or (command == "restore" and prefix)
+        or (command == "snapshot" and len(args) > 1)
     ):
         log(f"ERROR: {USAGE}")
         sys.exit(1)
     if not re.fullmatch(r"[\w.-]+", name, re.ASCII):
         log(f"ERROR: name {name!r}: use letters, digits, '.', '_', '-'")
+        sys.exit(1)
+    # Snapshots are pruned by this prefix: a save under it would be pruned,
+    # or, not named by a time, stop every snapshot's pruning.
+    if command == "save" and name.startswith(SNAPSHOT_PREFIX):
+        log(f"ERROR: name {name!r}: {SNAPSHOT_PREFIX!r} is for snapshots alone")
         sys.exit(1)
 
     # An ArrangementError is a finding about the windows or the file, said
@@ -842,6 +953,8 @@ def main() -> None:
             raise ArrangementError(msg)
         if command == "save":
             await save(app, name, prefix)
+        elif command == "snapshot":
+            await snapshot(app)
         else:
             await restore(connection, app, name)
 

@@ -81,7 +81,7 @@ def has_dir(login: str, path: str) -> bool:
 
 def save(tabs: list[Tab]) -> list[str]:
     """Return the lines saving `tabs` gives."""
-    plans = [arr.plan(t, i, LOCAL) for i, t in enumerate(tabs, 1)]
+    plans = [arr.plan(t, i, frozenset({LOCAL})) for i, t in enumerate(tabs, 1)]
     return arr.lines(plans, lookup, has_dir)
 
 
@@ -146,7 +146,7 @@ def _() -> None:
     # Its host is still the local one, and its path is ssh's local directory.
     tab = Tab(1, "ssh", "ssh vm", "fish:~/.dotfiles", "/Users/me/.dotfiles", LOCAL)
     assert save([tab]) == ["ssh vm"]
-    p = arr.plan(tab, 3, LOCAL)
+    p = arr.plan(tab, 3, frozenset({LOCAL}))
     assert "tab 3: its far side reported no host or directory" in p.note, p
 
 
@@ -183,7 +183,7 @@ def _() -> None:
 
 @case("the directory check: one word for ssh, run by sh, y or n per directory")
 def _() -> None:
-    argv = arr.dirs_argv("ssh -p 2222 vm")
+    argv = arr.dirs_argv("ssh -p 2222 vm", unattended=False)
     assert argv[:4] == ["ssh", "-p", "2222", "vm"], argv
     # The remote word, run here by sh as a remote login shell would run it.
     paths = [str(REPO), "/no/such/dir", f"{REPO}/it's a $dir"]
@@ -308,7 +308,7 @@ def _() -> None:
 
 @case("the remote tmux ls: one word for ssh, quoted for a remote sh or fish")
 def _() -> None:
-    got = arr.list_sessions_argv("ssh -p 2222 vm")
+    got = arr.list_sessions_argv("ssh -p 2222 vm", unattended=False)
     assert got == [
         "ssh",
         "-p",
@@ -369,7 +369,7 @@ def _() -> None:
     app.windows = [FakeWindow(FakeTab([a], [b]))]
     [(_, tabs)] = asyncio.run(arr.read_windows(app, None))
     assert tabs[0].panes == 2, tabs
-    error = error_of(lambda: arr.plan(tabs[0], 1, LOCAL))
+    error = error_of(lambda: arr.plan(tabs[0], 1, frozenset({LOCAL})))
     assert "2 panes" in error, error
 
 
@@ -508,6 +508,75 @@ def _() -> None:
         for k in ("TMUX", "ITERM_SESSION_ID"):
             os.environ.pop(k, None)
         os.environ.update(saved)
+
+
+class HostApp:
+    """An iTerm2 app whose own localhostName is `own`."""
+
+    def __init__(self, own: object) -> None:
+        """Answer localhostName with `own`."""
+        self.own = own
+
+    async def async_get_variable(self, name: str) -> object:
+        """Return localhostName; any other variable is a test bug."""
+        assert name == "localhostName", name
+        return self.own
+
+
+@case("a snapshot's local hosts: those of the tabs not in ssh, and localhostName")
+def _() -> None:
+    windows = [
+        (
+            "w",
+            [
+                Tab(1, "fish", "fish", "fish", "/Users/me", LOCAL),
+                Tab(1, "nvim", "nvim", "nvim", "/Users/me", "Mac"),
+                Tab(1, "ssh", "ssh vm", "fish", "/home/me", "vm"),
+            ],
+        ),
+    ]
+    got = asyncio.run(arr.local_hosts(HostApp("Mac"), windows))
+    assert got == {LOCAL, "Mac"}, got
+    # Every tab in ssh: iTerm2's own name is all there is to go by.
+    got = asyncio.run(arr.local_hosts(HostApp("Mac"), [("w", windows[0][1][2:])]))
+    assert got == {"Mac"}, got
+    error = error_of(lambda: asyncio.run(arr.local_hosts(HostApp(None), windows)))
+    assert "localhostName None" in error, error
+
+
+@case("an ssh tab whose far side said nothing is local by any of the local names")
+def _() -> None:
+    tab = Tab(1, "ssh", "ssh vm", "fish:~", "/Users/me", "Mac")
+    p = arr.plan(tab, 1, frozenset({LOCAL, "Mac"}))
+    assert (p.login, p.path) == ("ssh vm", ""), p
+    assert "saved as the login" in p.note, p
+
+
+@case("snapshots: named by their UTC time, all but the newest SNAPSHOT_KEEP dropped")
+def _() -> None:
+    now = datetime(2026, 10, 19, 14, 30, 0, tzinfo=UTC)
+    assert arr.snapshot_name(now) == "auto-20261019_143000"
+    # Three days old and all of them kept: a gap (iTerm2 quit over a
+    # weekend) costs no snapshot from before it.
+    keep = [
+        f"auto-202610{16 + i // 144:02}_{i % 144 // 6:02}{i % 6 * 10:02}00"
+        for i in range(arr.SNAPSHOT_KEEP + 2)
+    ]
+    names = ["all", *reversed(keep)]  # "all", a save by hand, is never dropped
+    got = sorted(arr.stale_snapshots(names))
+    assert got == keep[:2], got
+    assert arr.stale_snapshots(keep[2:]) == []
+    error = error_of(lambda: arr.stale_snapshots(["auto-mine"]))
+    assert "'auto-mine' has the snapshot prefix" in error, error
+
+
+@case("a snapshot's ssh asks for nothing and gives up on a host that is down")
+def _() -> None:
+    got = arr.list_sessions_argv("ssh -p 2222 vm", unattended=True)
+    want = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "-p", "2222", "vm"]
+    assert got[:-1] == want, got
+    got = arr.dirs_argv("ssh vm", unattended=True)
+    assert got[:-1] == ["ssh", *arr.UNATTENDED_SSH, "vm"], got
 
 
 log(f"{passed} passed, {failed} failed")
