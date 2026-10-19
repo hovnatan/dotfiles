@@ -159,7 +159,8 @@ ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
 #                            anything naming an internal document or host
 #
 # Each mirrors $HOME under home/, like this repo; every home/.config/<dir>
-# in either is linked whole into ~/.config.
+# in either is linked whole into ~/.config, and in the work repo every other
+# file is linked to its own path (link_private_files).
 link_private_config() {
   local repo=$1 d target
   mkdir -p ~/.config
@@ -173,6 +174,24 @@ link_private_config() {
     fi
     ln -sfn "${d%/}" "$target"
   done
+}
+
+# Files elsewhere under home/ are linked one by one to the same path under
+# $HOME, creating parent directories, e.g. a project's .claude settings:
+#   <repo>/home/<dir>/.claude/settings.local.json -> ~/<dir>/.claude/settings.local.json
+# A real file in the way is reported, never replaced: it may hold changes
+# made since the copy in the repo.
+link_private_files() {
+  local repo=$1 f target
+  while IFS= read -r -d '' f; do
+    target=~/"${f#"$repo"/home/}"
+    if [ -e "$target" ] && [ ! -L "$target" ]; then
+      warn "$target is a real file; merge it into $f, delete it and re-run"
+      continue
+    fi
+    mkdir -p "$(dirname "$target")"
+    ln -sfn "$f" "$target"
+  done < <(find "$repo"/home -path "$repo/home/.config" -prune -o -type f -print0)
 }
 
 # Until 2026-09-28 the work repo was cloned at ~/.dotfiles-private. Left
@@ -212,6 +231,7 @@ fi
 
 if [ -d ~/.hov-dotfiles-private/home ]; then
   link_private_config ~/.hov-dotfiles-private
+  link_private_files ~/.hov-dotfiles-private
 else
   echo "$HOME/.hov-dotfiles-private not cloned - no work log routine"
 fi
