@@ -404,13 +404,16 @@ rc=$?
 
 # prefix C-r, typed into an attached client: the prompt names the shell,
 # y restarts, the verdict reaches the message line. And the helper refuses
-# a socket that is not claude's.
+# a socket that is not claude's. The client's TERM is its own, as a real
+# terminal's would be: CI has none, and tmux attach then exits at once
+# ("open terminal failed").
 python3 - "$(t display -p '#{socket_path}')" "$WORK/client.out" <<'EOF' &
 import os, pty, select, sys, time
 sock, log = sys.argv[1], sys.argv[2]
 pid, fd = pty.fork()
 if pid == 0:
-    os.execvp("tmux", ["tmux", "-S", sock, "attach", "-t", "=ctb"])
+    os.execvpe("tmux", ["tmux", "-S", sock, "attach", "-t", "=ctb"],
+               dict(os.environ, TERM="xterm-256color"))
 import fcntl, struct, termios
 fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 200, 0, 0))
 keys = [(1.5, b"\x01"), (2, b"\x12"), (4, b"y")]   # C-a C-r, then y on the prompt
@@ -433,6 +436,7 @@ for _ in $(seq 60); do
   sleep 0.25
 done
 client=$(t list-clients -F '#{client_name}' | head -1)
+[ -n "$client" ] || fail "C-r client never attached: $(tr -d '\033' <"$WORK/client.out" | tail -c 300)"
 CLAUDE_TMUX_SOCKET=other HOME="$H" "$REPO/home/.config/tmux/restart-claude.sh" ask "$(t display -p '#{socket_path}')" ctb "$client"
 sleep 1
 # A prompt the client leaves without answering: nothing may wait on it.
