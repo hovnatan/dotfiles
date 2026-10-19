@@ -525,6 +525,12 @@ if [ "$(uname)" = "Darwin" ]; then
   # New tabs open right after the current one, as Ghostty's default
   # window-new-tab-position = current does; iTerm2 appends them at the end.
   defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
+  # Keep mouse reporting on when the session's host changes, without asking:
+  # a tmux attach sends a host report (home/.config/tmux/report-attach.sh),
+  # and ssh in and out changes host, so iTerm2 kept offering "Looks like mouse reporting was left on ... Turn
+  # it off?" on a tmux pane that wants the mouse. false is that banner's Never
+  # (true is Always turn off; unset asks).
+  defaults write com.googlecode.iterm2 NoSyncTurnOffMouseReportingOnHostChange -bool false
   # Session restoration: each session's job runs in a long-lived iTerm server
   # process, not as a child of the app, so an iTerm2 upgrade (the updater's
   # relaunch) or a crash leaves the jobs - ssh connections included - running,
