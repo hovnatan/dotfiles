@@ -40,6 +40,10 @@ local function stubHs()
       end,
     },
     timer = {
+      -- The test's clock: moved by hand (world.now).
+      secondsSinceEpoch = function()
+        return world.now
+      end,
       doAfter = function(seconds, fn)
         local t = {
           seconds = seconds,
@@ -116,7 +120,7 @@ local function stubHs()
 end
 
 local function load(itermRunning)
-  world = { alerts = {}, timers = {}, tasks = {}, up = {}, json = {}, itermAtLoad = itermRunning }
+  world = { alerts = {}, timers = {}, tasks = {}, up = {}, json = {}, itermAtLoad = itermRunning, now = 0 }
   package.loaded.event_log = {
     new = function()
       return log, repo .. "/.logs/test"
@@ -456,6 +460,110 @@ test("an empty screen is no banner; a failed read at any level raises", function
   raises("child list could not be read", function()
     realNotifications({ axElement({}) }).banners()
   end)
+end)
+
+-- The switcher's two calls (iterm2_switcher.lua).
+local function windowsLine(current)
+  return line({ event = "windows", current = current, windows = {} })
+end
+
+test("listWindows asks a ready script and hands the reply to its caller", function()
+  local m = load(true)
+  say(line({ event = "ready", sessions = 1 }))
+  local got
+  m.listWindows(1, function(event)
+    got = event.current
+  end)
+  assert(world.tasks[1].input[1] == "list\n", world.tasks[1].input[1])
+  local limit = lastTimer()
+  assert(limit.seconds == 1, limit.seconds)
+  say(windowsLine("S1"))
+  assert(got == "S1", tostring(got))
+  assert(limit.stopped, "the reply did not stop its time limit")
+  assert(#world.alerts == 0, world.alerts[1])
+end)
+
+test("one list at a time: a second while one is unanswered raises, after the reply it is asked", function()
+  local m = load(true)
+  say(line({ event = "ready", sessions = 1 }))
+  m.listWindows(1, function() end)
+  world.now = 0.4
+  raises("has not answered the last window list, asked 0.4s ago", function()
+    m.listWindows(1, function() end)
+  end)
+  assert(#world.tasks[1].input == 1, "the second list was sent")
+  say(windowsLine("S1"))
+  m.listWindows(1, function() end)
+  assert(#world.tasks[1].input == 2, "the list after the reply was not sent")
+end)
+
+test("a list past its time alerts; its late reply is dropped, then the next is asked", function()
+  local m = load(true)
+  say(line({ event = "ready", sessions = 1 }))
+  local called = false
+  m.listWindows(1, function()
+    called = true
+  end)
+  raises("did not list the windows within 1s", lastTimer().fn)
+  raises("has not answered the last window list", function()
+    m.listWindows(1, function() end)
+  end)
+  world.now = 3
+  say(windowsLine("S1"))
+  assert(not called, "a late reply reached its caller")
+  assert(#world.alerts == 2, "the late reply alerted: " .. tostring(world.alerts[3]))
+  m.listWindows(1, function() end)
+  assert(#world.tasks[1].input == 2, "the list after the late reply was not sent")
+end)
+
+test("a caller's error is logged, not alerted again", function()
+  local m = load(true)
+  say(line({ event = "ready", sessions = 1 }))
+  m.listWindows(1, function()
+    error("the switcher's own")
+  end)
+  say(windowsLine("S1"))
+  assert(#world.alerts == 0, world.alerts[1])
+end)
+
+test("activateWindow asks the script to bring that window to front", function()
+  local m = load(true)
+  say(line({ event = "ready", sessions = 1 }))
+  m.activateWindow("pty-W1")
+  assert(world.tasks[1].input[1] == "window pty-W1\n")
+end)
+
+test("with no script running, asking raises; before ready, a list raises, a click is sent", function()
+  local idle = load(false)
+  raises("iterm2_api.py is not running", function()
+    idle.listWindows(1, function() end)
+  end)
+  raises("iterm2_api.py is not running", function()
+    idle.activate("S1")
+  end)
+  local m = load(true)
+  raises("still connecting", function()
+    m.listWindows(1, function() end)
+  end)
+  m.activate("S1")
+  assert(#world.tasks[1].input == 1 and world.tasks[1].input[1] == "activate S1\n", world.tasks[1].input[1])
+end)
+
+test("a window list nobody asked for alerts; a new run drops the list asked of the last", function()
+  local m = load(true)
+  say(line({ event = "ready", sessions = 1 }) .. windowsLine("S1"))
+  assert(#world.alerts == 1 and world.alerts[1]:find("nobody asked for", 1, true), world.alerts[1])
+  local called = false
+  m.listWindows(1, function()
+    called = true
+  end)
+  local limit = lastTimer()
+  quit()
+  assert(limit.stopped, "the quit run's list kept its time limit")
+  launched()
+  say(line({ event = "ready", sessions = 1 }) .. windowsLine("S1"))
+  assert(not called, "the new run's reply went to the old run's caller")
+  assert(#world.alerts == 2 and world.alerts[2]:find("nobody asked for", 1, true), world.alerts[2])
 end)
 
 scenario = "summary"

@@ -1,12 +1,14 @@
 -- Runs iterm2_api.py, the script on iTerm2's Python API, for as long as
--- iTerm2 runs, and shows its bell banners. The script serves two things:
+-- iTerm2 runs, and shows its bell banners. The script serves three things:
 --
---   bells   a banner for each bell in an iTerm2 tab you are not looking
---           at, closed by itself once that tab is in view; clicking it
---           brings the tab to front. Shown here.
---   Cmd-T   in an ssh tab, a new tab on the same machine. iTerm2 calls the
---           script directly (the Dotfiles profile binds Cmd-T to its
---           ssh_new_tab); nothing of it passes through this module.
+--   bells     a banner for each bell in an iTerm2 tab you are not looking
+--             at, closed by itself once that tab is in view; clicking it
+--             brings the tab to front. Shown here.
+--   Cmd-T     in an ssh tab, a new tab on the same machine. iTerm2 calls
+--             the script directly (the Dotfiles profile binds Cmd-T to its
+--             ssh_new_tab); nothing of it passes through this module.
+--   switcher  every window, and bringing one to front, for
+--             iterm2_switcher.lua: M.listWindows and M.activateWindow.
 --
 -- iTerm2's own bell banners ("Session <name> #<n> just rang a bell!") stay
 -- off (the Dotfiles profile's Send Bell Alert, dotfiles.json): they never
@@ -19,14 +21,18 @@
 --   this module   bell  -> hs.notify banner, unless the session's is still up
 --                 seen  -> withdrawn (the tab came into view)
 --                 gone  -> withdrawn (the session ended)
+--                 windows -> the M.listWindows callback waiting, if any
 --                            ^
---                            | stdin: "activate <session id>"
+--                            | stdin: "activate <session id>", "list",
+--                            |        "window <window id>"
 --   banner clicked ----------+
+--   M.listWindows / M.activateWindow (the switcher) ---+
 --
 -- The script runs while iTerm2 does: started at load and at each iTerm2
 -- launch, it ends when iTerm2 quits (its connection drops) or when
--- Hammerspoon reloads (its stdin closes). Without it bells go unannounced
--- and Cmd-T does nothing, so any other end raises with the script's last
+-- Hammerspoon reloads (its stdin closes). Without it bells go unannounced,
+-- Cmd-T does nothing and the switcher cannot open, so any other end raises
+-- with the script's last
 -- words and starts it again, up to MAX_RESTARTS times in RESTART_WINDOW;
 -- past that, and for a script that never says it is ready, it stays off
 -- until Hammerspoon reloads or iTerm2 relaunches:
@@ -125,11 +131,23 @@ local function isUp(banner)
   return false
 end
 
+-- The window list asked and not yet answered (listWindows), if any:
+--   { callback = fn, asked = <seconds>, timer = <its time limit>, late = bool }
+-- Dropped when answered, and with the run that was asked: a new run never
+-- saw the question.
+local function forgetListing()
+  if M.listing then
+    M.listing.timer:stop()
+    M.listing = nil
+  end
+end
+
 -- What each event does. The script sends every bell of a tab not in view;
 -- a session keeps one banner, and a new one only once that was dismissed.
 local handlers = {
   ready = function(event)
     M.readyTimer:stop()
+    M.ready = true
     log("iterm2_api.py ready, watching %d session(s)", event.sessions)
   end,
   bell = function(event)
@@ -155,7 +173,7 @@ local handlers = {
     M.banners[sid] = hs.notify
       .new(function()
         log("banner clicked for %s", short(sid))
-        M.task:setInput("activate " .. sid .. "\n")
+        M.activate(sid)
       end, {
         title = event.name .. " rang a bell",
         subTitle = event.window ~= "" and event.window or nil,
@@ -172,6 +190,28 @@ local handlers = {
   end,
   gone = function(event)
     withdraw(event.session, "its session ended")
+  end,
+  -- The reply to listWindows' "list"; one past its time was alerted then,
+  -- and goes nowhere. The caller's errors are its own to alert (see
+  -- listWindows): one raised here would be alerted again by feed() as a
+  -- failure of this module, with the whole list in it.
+  windows = function(event)
+    local listing = M.listing
+    if not listing then
+      fail("iterm2_api.py sent a window list nobody asked for")
+    end
+    forgetListing()
+    local took = hs.timer.secondsSinceEpoch() - listing.asked
+    if listing.late then
+      log("window list: %d window(s), %.1fs after asking: dropped", #event.windows, took)
+      return
+    end
+    log("window list: %d window(s) in %.0f ms", #event.windows, took * 1000)
+    local ok, err = pcall(listing.callback, event)
+    if not ok then
+      log("the window list's caller raised: %s", tostring(err))
+      print("iterm2_api: the window list's caller raised: " .. tostring(err))
+    end
   end,
 }
 
@@ -234,7 +274,9 @@ local function onExit(task, code, out, err)
   feed("out", out, true)
   feed("err", err, true)
   M.task = nil
+  M.ready = false
   M.readyTimer:stop()
+  forgetListing()
   log("iterm2_api.py exited %d", code)
   withdrawAll("iterm2_api.py exited")
   M.exitTimer = hs.timer.doAfter(EXIT_GRACE, function()
@@ -258,7 +300,7 @@ function restart(why)
   if #recent >= MAX_RESTARTS then
     fail(
       string.format(
-        "%s, %d times in %ds: not started again (bell banners and Cmd-T stay off"
+        "%s, %d times in %ds: not started again (bell banners, Cmd-T and the switcher stay off"
           .. " until Hammerspoon reloads); its log: %s",
         why,
         #recent + 1,
@@ -279,6 +321,8 @@ function start()
     M.exitTimer:stop()
   end
   buffers.out, buffers.err = "", ""
+  M.ready = false
+  forgetListing()
   local task
   task = hs.task.new(UV, function(code, out, err)
     onExit(task, code, out, err)
@@ -304,7 +348,7 @@ function start()
       fail(
         string.format(
           "iterm2_api.py not ready after %ds (is iTerm2's Python API on, its prompt"
-            .. " answered?); bell banners and Cmd-T stay off until Hammerspoon"
+            .. " answered?); bell banners, Cmd-T and the switcher stay off until Hammerspoon"
             .. " reloads; its log: %s",
           READY_TIMEOUT,
           M.logDir
@@ -313,6 +357,66 @@ function start()
     end
   end)
   log("started iterm2_api.py (pid %d)", task:pid())
+end
+
+-- What other modules ask of the script (iterm2_switcher.lua). One asked
+-- before its "ready" waits in its stdin and is read once it connects.
+local function send(command)
+  if not M.task then
+    fail("iterm2_api.py is not running (bell banners and Cmd-T are off too); its log: " .. M.logDir)
+  end
+  M.task:setInput(command .. "\n")
+end
+
+-- Bring session `sid` to front: its tab, its window, iTerm2.
+function M.activate(sid)
+  send("activate " .. sid)
+end
+
+-- Bring window `wid` (an id from listWindows) to front, and iTerm2.
+function M.activateWindow(wid)
+  send("window " .. wid)
+end
+
+-- Every window, handed to `callback` as the script's "windows" event
+-- (iterm2_api.py list_windows) once it replies, e.g.
+--   { current = "<id>", windows = { { window = "<id>", title = "~/.dotfiles", number = 6, tabs = 3 } } }
+-- `callback` must alert its own errors: one it raises is only logged.
+--
+-- Asked only of a script that is ready, one at a time, and answered within
+-- `seconds` or alerted and dropped. So a click never queues a question
+-- behind a script still connecting (up to READY_TIMEOUT after an iTerm2
+-- launch) or stuck, nor pops the picker up long after it:
+--
+--   listWindows --not ready, or a list still unanswered--> raise
+--        | "list"
+--        v
+--   asked --reply--> callback
+--     | `seconds` pass
+--     v
+--   late: raise --reply--> logged, dropped; the next one can be asked
+--
+-- A script that ends first answers none: the next run starts with none.
+function M.listWindows(seconds, callback)
+  if M.task and not M.ready then
+    fail("iterm2_api.py is still connecting to iTerm2 (just launched?): try again in a moment")
+  end
+  if M.listing then
+    fail(
+      string.format(
+        "iterm2_api.py has not answered the last window list, asked %.1fs ago; its log: %s",
+        hs.timer.secondsSinceEpoch() - M.listing.asked,
+        M.logDir
+      )
+    )
+  end
+  send("list")
+  local listing = { callback = callback, asked = hs.timer.secondsSinceEpoch() }
+  listing.timer = hs.timer.doAfter(seconds, function()
+    listing.late = true
+    fail(string.format("iterm2_api.py did not list the windows within %gs; its log: %s", seconds, M.logDir))
+  end)
+  M.listing = listing
 end
 
 -- iTerm2's launches and quits. `itermRunning` is what the exit check reads;
@@ -337,7 +441,9 @@ M.watcher = hs.application.watcher.new(function(_, eventType, app)
     if M.task then
       local task = M.task
       M.task = nil
+      M.ready = false
       M.readyTimer:stop()
+      forgetListing()
       task:terminate()
       withdrawAll("iTerm2 quit")
     end

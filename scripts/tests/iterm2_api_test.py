@@ -142,17 +142,29 @@ class Tab:
 class Window:
     """A window of tabs, one of them selected."""
 
+    opened = 0  # windows made so far, for each one's number
+
     def __init__(self, title: str, *tabs: Tab) -> None:
         """Make a window titled `title`, its first tab selected."""
         self.window_id = f"pty-{title}"
         self.title = title
+        Window.opened += 1
+        self.number = Window.opened
         self.tabs = list(tabs)
         self.current_tab = tabs[0]
 
-    async def async_get_variable(self, var: str) -> str:
-        """Read a variable; only "titleOverride" is asked of a window."""
-        assert var == "titleOverride", var
-        return self.title
+    async def async_get_variable(self, var: str) -> str | int:
+        """Read a variable: "titleOverride" or "number" is asked of a window."""
+        assert var in {"titleOverride", "number"}, var
+        self.on_read()
+        return self.title if var == "titleOverride" else self.number
+
+    on_read: Callable[[], None] = staticmethod(lambda: None)  # runs during the read
+    activated: bool = False
+
+    async def async_activate(self) -> None:
+        """Give the window focus and order it front."""
+        self.activated = True
 
     async def async_create_tab(self) -> Tab:
         """Open a tab at the end, with a fresh local shell, as iTerm2 does."""
@@ -168,6 +180,15 @@ class App:
         """Make an app of `windows`, the first one key and iTerm2 active."""
         self.windows = list(windows)
         self.current_window: Window | None = windows[0]
+        self.app_active = True
+
+    def get_window_by_id(self, wid: str) -> Window | None:
+        """Find a window by its id."""
+        return next((w for w in self.windows if w.window_id == wid), None)
+
+    async def async_activate(self, *, raise_all_windows: bool) -> None:
+        """Bring iTerm2 to front."""
+        assert not raise_all_windows, "every window would come forward"
         self.app_active = True
 
     def get_session_by_id(self, sid: str) -> Session | None:
@@ -497,6 +518,110 @@ def _() -> None:
     except TypeError:
         raised = True
     assert raised, "a missing jobName was taken for a local tab"
+
+
+@case("list: every window in order, its id, title, number, tabs; the key one current")
+def _() -> None:
+    app, _, dots, bench = world()
+    got = events(lambda: api.list_windows(app, api.Recency(app)))
+    assert got == [
+        {
+            "event": "windows",
+            "current": "pty-dots",
+            "windows": [
+                {
+                    "window": "pty-dots",
+                    "title": "dots",
+                    "number": dots.number,
+                    "tabs": 2,
+                },
+                {
+                    "window": "pty-bench",
+                    "title": "bench",
+                    "number": bench.number,
+                    "tabs": 1,
+                },
+            ],
+        },
+    ], got
+
+
+@case("list: the most recently focused first; never focused, in opening order")
+def _() -> None:
+    app, s, dots, bench = world()
+    logs, misc = Window("logs", Tab(s["a"])), Window("misc", Tab(s["b"]))
+    app.windows += [logs, misc]
+    recency = api.Recency(app)  # dots is key at the start
+
+    def visit(window: Window) -> None:
+        """Make `window` key, as a focus change reports it."""
+        app.current_window = window
+        recency.focused()
+
+    def order() -> list[str]:
+        """List the windows; their titles in the order sent."""
+        (got,) = events(lambda: api.list_windows(app, recency))
+        return [w["title"] for w in got["windows"]]
+
+    assert order() == ["dots", "bench", "logs", "misc"], order()
+    visit(misc)
+    visit(bench)
+    assert order() == ["bench", "misc", "dots", "logs"], order()
+    visit(dots)
+    assert order() == ["dots", "bench", "misc", "logs"], order()
+
+    # A focus change within the key window (a tab, a pane) leaves the order.
+    recency.focused()
+    assert order() == ["dots", "bench", "misc", "logs"], order()
+
+
+def vanish() -> None:
+    """Fail a read as the API does for a window that has closed."""
+    error = "WINDOW_NOT_FOUND"
+    raise RPCException(error)
+
+
+@case("list: a window closing while read is left out, the rest kept; no key window")
+def _() -> None:
+    app, _, dots, _ = world()
+    dots.on_read = vanish
+    app.current_window = None
+    (got,) = events(lambda: api.list_windows(app, api.Recency(app)))
+    assert got["current"] is None, got
+    assert [w["title"] for w in got["windows"]] == ["bench"], got
+
+
+@case("list: any other error reading a title raises")
+def _() -> None:
+    app, _, _, bench = world()
+
+    def broken() -> None:
+        error = "SOMETHING_ELSE"
+        raise RPCException(error)
+
+    bench.on_read = broken
+    raised = False
+    try:
+        events(lambda: api.list_windows(app, api.Recency(app)))
+    except RPCException:
+        raised = True
+    assert raised, "an unknown API error was taken for a closed window"
+
+
+@case("window <id>: that window and iTerm2 come to front; a gone one, nothing")
+def _() -> None:
+    app, _, dots, bench = world()
+
+    def came_forward(wid: str) -> bool:
+        """Send `window <wid>` with iTerm2 in the back; whether it came to front."""
+        app.app_active = False
+        events(lambda: api.activate_window(app, wid))
+        return app.app_active
+
+    assert came_forward("pty-bench")
+    assert bench.activated
+    assert not dots.activated
+    assert not came_forward("pty-gone"), "iTerm2 came forward for a window that is gone"
 
 
 log(f"{passed} passed, {failed} failed")

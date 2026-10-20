@@ -2,10 +2,12 @@
 # requires-python = ">=3.11"
 # dependencies = ["iterm2==2.25"]
 # ///
-"""What runs on iTerm2's Python API while iTerm2 runs: bell banners and Cmd-T.
+# A personal dotfiles script, no copyright header (as iterm2_api_test.py).
+# ruff: noqa: CPY001
+"""On iTerm2's Python API while iTerm2 runs: bell banners, Cmd-T, the switcher.
 
 Run by iterm2_api.lua (hs.task, `uv run --script`) for as long as iTerm2
-runs, one connection for both jobs:
+runs, one connection for all three:
 
     iTerm2 (Python API)                          this script
       bellCount of a session rises  -------->  on screen? (tab selected in the
@@ -30,8 +32,12 @@ runs, one connection for both jobs:
       {"event": "bell", "session": "<id>", "name": "fish:~", "tab": 2,
        "window": "~/.dotfiles"}
       {"event": "seen", "session": "<id>"}     also "gone"
+      {"event": "windows", "current": "<id>", "windows": [...]}  for "list"
     stdin, one command per line, from Hammerspoon:
       activate <id>      a banner was clicked: bring that session to front
+      list               the switcher (iterm2_switcher.lua) opens: every window,
+                         the most recently focused first
+      window <id>        a window picked in the switcher: bring it to front
 
 Bells: pending is "rang since its tab was last in view". Every bell of a
 pending session is sent: whether its banner is still up, or was dismissed by
@@ -225,12 +231,46 @@ async def watch_session(
         log(f"{short(session_id)} went away while watched ({e})")
 
 
-async def watch_focus(connection: iterm2.Connection, bells: Bells) -> None:
-    """Close banners as their tabs come into view."""
+class Recency:
+    """Which windows had focus most lately, for the switcher's order.
+
+    A count per window id, raised to the next number each time the window
+    is key at a focus change (and at start), e.g. after visiting dots,
+    bench, dots: {dots: 3, bench: 2}. Only since this script started: a
+    window not key since then has no count, and sorts after those that do,
+    in iTerm2's own order (its windows' opening order, oldest first).
+    """
+
+    def __init__(self, app: iterm2.App) -> None:
+        """Track `app`'s key window, starting with the one key now."""
+        self.app = app
+        self.counts: dict[str, int] = {}
+        self.clock = 0
+        self.focused()
+
+    def focused(self) -> None:
+        """After a focus change: the key window is the most recent."""
+        window = self.app.current_window
+        if window is not None:
+            self.clock += 1
+            self.counts[window.window_id] = self.clock
+
+    def order(self, windows: list[iterm2.Window]) -> list[iterm2.Window]:
+        """Sort `windows` most recent first; the stable sort keeps the rest in order."""
+        return sorted(windows, key=lambda w: -self.counts.get(w.window_id, -1))
+
+
+async def watch_focus(
+    connection: iterm2.Connection,
+    bells: Bells,
+    recency: Recency,
+) -> None:
+    """Close banners as their tabs come into view; note which window had focus."""
     async with iterm2.FocusMonitor(connection) as mon:
         while True:
             await mon.async_get_next_update()
             bells.focus_changed()
+            recency.focused()
 
 
 async def watch_sessions(
@@ -461,10 +501,104 @@ async def register(
             return
 
 
+# --- the switcher ------------------------------------------------------------
+
+
+async def bring_forward(
+    app: iterm2.App,
+    what: str,
+    activating: Awaitable[None],
+) -> None:
+    """Await `activating` (a session's or window's), then bring iTerm2 forward.
+
+    The switcher's picks and the banner clicks (activate, below) both end here.
+
+    iTerm2 itself last: activating the session or window only orders it
+    front within iTerm2, which may be behind another app. One that closed
+    since it was looked up raises a gone error, which is no failure: it is
+    logged under `what`, and iTerm2 stays where it is.
+    """
+    try:
+        await activating
+    except Exception as e:
+        if not is_gone(e):
+            raise
+        log(f"{what}: went away ({e})")
+        return
+    await app.async_activate(raise_all_windows=False)
+    log(f"{what}: brought to front")
+
+
+async def list_windows(app: iterm2.App, recency: Recency) -> None:
+    """Send every window, for Hammerspoon's switcher.
+
+    One "windows" event, the most recently focused first (Recency), e.g.
+      {"event": "windows", "current": "<id>", "windows": [
+        {"window": "<id>", "title": "~/.dotfiles", "number": 6, "tabs": 3}]}
+    "current" is the key window's id, or None with no window. "number" is
+    the window's own, the N of Cmd-Opt-N: what names a window with no
+    title, as it does not change with the order. The variables are read at
+    once, not one after another: the package keeps the layout current, but
+    each is a round trip. A window that closes while read is left out: it
+    is gone.
+    """
+    windows = recency.order(list(app.windows))
+    reads = await asyncio.gather(
+        *(
+            w.async_get_variable(var)
+            for w in windows
+            for var in ("titleOverride", "number")
+        ),
+        return_exceptions=True,
+    )
+    listed = []
+    for i, window in enumerate(windows):
+        title, number = reads[2 * i : 2 * i + 2]
+        error = next((r for r in (title, number) if isinstance(r, BaseException)), None)
+        if error is not None:
+            if not isinstance(error, Exception) or not is_gone(error):
+                raise error
+            log(f"list: window {window.window_id} went away while read ({error})")
+            continue
+        listed.append(
+            {
+                "window": window.window_id,
+                "title": title,
+                "number": number,
+                "tabs": len(window.tabs),
+            },
+        )
+    key = app.current_window
+    log(f"list: {len(listed)} window(s)")
+    emit("windows", current=key.window_id if key else None, windows=listed)
+
+
+async def activate_window(app: iterm2.App, wid: str) -> None:
+    """Bring window `wid` to front, and iTerm2 with it."""
+    window = app.get_window_by_id(wid)
+    if window is None:
+        log(f"window {wid}: gone")
+        return
+    await bring_forward(app, f"window {wid}", window.async_activate())
+
+
 # --- the script ----------------------------------------------------------------
 
 
-async def read_commands(bells: Bells) -> None:
+async def activate(app: iterm2.App, sid: str) -> None:
+    """Bring session `sid` to front: its tab, its window, iTerm2."""
+    session = app.get_session_by_id(sid)
+    if session is None:
+        log(f"activate {short(sid)}: session gone")
+        return
+    await bring_forward(
+        app,
+        f"activate {short(sid)}",
+        session.async_activate(select_tab=True, order_window_front=True),
+    )
+
+
+async def read_commands(bells: Bells, recency: Recency) -> None:
     """Commands from Hammerspoon on stdin, until it closes."""
     loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader()
@@ -473,23 +607,16 @@ async def read_commands(bells: Bells) -> None:
         sys.stdin,
     )
     while line := (await reader.readline()).decode():
-        verb, _, sid = line.strip().partition(" ")
-        if verb != "activate" or not sid:
+        verb, _, arg = line.strip().partition(" ")
+        if verb == "activate" and arg:
+            await activate(bells.app, arg)
+        elif verb == "window" and arg:
+            await activate_window(bells.app, arg)
+        elif verb == "list" and not arg:
+            await list_windows(bells.app, recency)
+        else:
             msg = f"unknown command from Hammerspoon: {line!r}"
             raise ValueError(msg)
-        session = bells.app.get_session_by_id(sid)
-        if session is None:
-            log(f"activate {short(sid)}: session gone")
-            continue
-        try:
-            await session.async_activate(select_tab=True, order_window_front=True)
-        except Exception as e:
-            if not is_gone(e):
-                raise
-            log(f"activate {short(sid)}: session went away ({e})")
-            continue
-        await bells.app.async_activate(raise_all_windows=False)
-        log(f"activate {short(sid)}: brought to front")
     log("stdin closed (Hammerspoon reloaded or quit): exiting")
 
 
@@ -500,6 +627,7 @@ async def main(connection: iterm2.Connection) -> None:
         msg = "iTerm2's Python API returned no app"
         raise RuntimeError(msg)
     bells = Bells(app)
+    recency = Recency(app)
     failed: asyncio.Future[None] = asyncio.get_running_loop().create_future()
 
     # The package reads the connection in a task of its own, and when iTerm2
@@ -519,9 +647,9 @@ async def main(connection: iterm2.Connection) -> None:
     # `failed`). Exceptions propagate, and the package turns them into a
     # traceback and exit 1.
     workers = [
-        asyncio.create_task(read_commands(bells)),
+        asyncio.create_task(read_commands(bells, recency)),
         asyncio.create_task(closed()),
-        asyncio.create_task(watch_focus(connection, bells)),
+        asyncio.create_task(watch_focus(connection, bells, recency)),
         asyncio.create_task(watch_sessions(connection, bells, failed)),
         failed,
     ]

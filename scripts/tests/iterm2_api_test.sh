@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/iterm2_api.lua home/.hammerspoon/iterm2_api.py home/.hammerspoon/ssh_command.py home/.hammerspoon/clear_notifications.lua scripts/tests/iterm2_api_test.py scripts/lib/*
+# check.sh covers: home/.hammerspoon/iterm2_api.lua home/.hammerspoon/iterm2_api.py home/.hammerspoon/ssh_command.py home/.hammerspoon/clear_notifications.lua scripts/tests/iterm2_api_test.py scripts/tests/iterm2_api_test.lua scripts/lib/*
 # iterm2_api.py and the Hammerspoon module that runs it, in two halves, each
 # against doubles, so no macOS UI, iTerm2 or uv is needed and both run in CI
 # on Linux and macOS:
 #   iterm2_api_test.py   which bells get a banner and when it closes; what
-#                        Cmd-T opens
-#   iterm2_api_test.lua  the Hammerspoon side: events in, banners and the
-#                        script's lifecycle out
+#                        Cmd-T opens; the switcher's window list and order
+#   iterm2_api_test.lua  the Hammerspoon side: events in, banners, window
+#                        lists and the script's lifecycle out
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
 . "$REPO/scripts/lib/event_log.sh"
