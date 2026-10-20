@@ -85,14 +85,9 @@ M.restarts = {} -- os.time() of each restart within RESTART_WINDOW
 local log
 log, M.logDir = require("event_log").new("iterm2_api")
 
--- Raises its message as is (level 0, no position), and keeps it, so a
--- caller catching errors can tell one already alerted from any other.
-local function fail(msg)
-  log("ERROR %s", msg)
-  M.lastFailure = "iterm2_api: " .. msg
-  hs.alert.show(M.lastFailure, 4)
-  error(M.lastFailure, 0)
-end
+-- fail() alerts and raises; guarded() alerts what no fail() did (failure.lua).
+local failure = require("failure")
+local fail, guarded = failure.new("iterm2_api", log)
 
 local function short(id)
   return id:sub(1, 8)
@@ -192,9 +187,8 @@ local handlers = {
     withdraw(event.session, "its session ended")
   end,
   -- The reply to listWindows' "list"; one past its time was alerted then,
-  -- and goes nowhere. The caller's errors are its own to alert (see
-  -- listWindows): one raised here would be alerted again by feed() as a
-  -- failure of this module, with the whole list in it.
+  -- and goes nowhere. The caller runs guarded, not left to feed(): its
+  -- error is the caller's, not this line's, and needs no list in it.
   windows = function(event)
     local listing = M.listing
     if not listing then
@@ -207,11 +201,7 @@ local handlers = {
       return
     end
     log("window list: %d window(s) in %.0f ms", #event.windows, took * 1000)
-    local ok, err = pcall(listing.callback, event)
-    if not ok then
-      log("the window list's caller raised: %s", tostring(err))
-      print("iterm2_api: the window list's caller raised: " .. tostring(err))
-    end
+    guarded(listing.callback, event)
   end,
 }
 
@@ -251,7 +241,7 @@ local function feed(stream, chunk, final)
   for line in text:gmatch("([^\n]*)\n") do
     if stream == "out" then
       local ok, err = pcall(onLine, line)
-      if not ok and err ~= M.lastFailure then
+      if not ok and not failure.alerted(err) then
         ok, err = pcall(fail, string.format("handling %s failed: %s", line, tostring(err)))
       end
       if not ok then
@@ -381,7 +371,8 @@ end
 -- Every window, handed to `callback` as the script's "windows" event
 -- (iterm2_api.py list_windows) once it replies, e.g.
 --   { current = "<id>", windows = { { window = "<id>", title = "~/.dotfiles", number = 6, tabs = 3 } } }
--- `callback` must alert its own errors: one it raises is only logged.
+-- An error `callback` raises is alerted once (failure.lua): as the caller's
+-- own if it alerted it, else as an unexpected error here.
 --
 -- Asked only of a script that is ready, one at a time, and answered within
 -- `seconds` or alerted and dropped. So a click never queues a question

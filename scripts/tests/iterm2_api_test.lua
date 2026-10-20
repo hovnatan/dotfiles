@@ -9,6 +9,8 @@
 -- the real hs.task stops streaming after one does. Then the real clear_notifications.lua against
 -- stub accessibility elements.
 local repo = assert(arg[1], "pass the repo path")
+-- The module's own requires that are not stubbed (failure.lua) load as is.
+package.path = repo .. "/home/.hammerspoon/?.lua;" .. package.path
 local file = assert(io.open(assert(arg[2], "pass the event log path"), "a"))
 file:setvbuf("line")
 local scenario = "setup"
@@ -121,6 +123,7 @@ end
 
 local function load(itermRunning)
   world = { alerts = {}, timers = {}, tasks = {}, up = {}, json = {}, itermAtLoad = itermRunning, now = 0 }
+  package.loaded.failure = nil -- each case starts with no failure on record
   package.loaded.event_log = {
     new = function()
       return log, repo .. "/.logs/test"
@@ -365,6 +368,7 @@ test("a failed start alerts without raising at load; the next launch retries", f
     -- load() with the start failing.
     local ok = pcall(function()
       world = { alerts = {}, timers = {}, tasks = {}, up = {}, json = {}, itermAtLoad = true, startFails = true }
+      package.loaded.failure = nil
       package.loaded.event_log = {
         new = function()
           return log, repo .. "/.logs/test"
@@ -516,14 +520,23 @@ test("a list past its time alerts; its late reply is dropped, then the next is a
   assert(#world.tasks[1].input == 2, "the list after the late reply was not sent")
 end)
 
-test("a caller's error is logged, not alerted again", function()
+test("a caller's error is alerted once: not again if it alerted it, else as unexpected", function()
   local m = load(true)
   say(line({ event = "ready", sessions = 1 }))
+  local callerFail = require("failure").new("iterm2_switcher", log)
   m.listWindows(1, function()
-    error("the switcher's own")
+    callerFail("no screen at (700, 500)")
   end)
   say(windowsLine("S1"))
-  assert(#world.alerts == 0, world.alerts[1])
+  assert(#world.alerts == 1 and world.alerts[1] == "iterm2_switcher: no screen at (700, 500)", world.alerts[1])
+
+  m.listWindows(1, function()
+    error("a bug in the switcher")
+  end)
+  say(line({ event = "windows", session = "2", current = "S1", windows = {} }))
+  assert(#world.alerts == 2, "the unexpected error was not alerted once: " .. #world.alerts)
+  assert(world.alerts[2]:find("iterm2_api: unexpected error: .*a bug in the switcher"), world.alerts[2])
+  assert(not world.alerts[2]:find("windows", 1, true), "the alert holds the list's line: " .. world.alerts[2])
 end)
 
 test("activateWindow asks the script to bring that window to front", function()

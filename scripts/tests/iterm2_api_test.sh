@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/iterm2_api.lua home/.hammerspoon/iterm2_api.py home/.hammerspoon/ssh_command.py home/.hammerspoon/clear_notifications.lua scripts/tests/iterm2_api_test.py scripts/tests/iterm2_api_test.lua scripts/lib/*
+# check.sh covers: home/.hammerspoon/iterm2_api.lua home/.hammerspoon/failure.lua home/.hammerspoon/iterm2_api.py home/.hammerspoon/ssh_command.py home/.hammerspoon/clear_notifications.lua scripts/tests/iterm2_api_test.py scripts/tests/iterm2_api_test.lua scripts/lib/*
 # iterm2_api.py and the Hammerspoon module that runs it, in two halves, each
 # against doubles, so no macOS UI, iTerm2 or uv is needed and both run in CI
 # on Linux and macOS:

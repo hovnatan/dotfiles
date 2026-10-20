@@ -1,0 +1,167 @@
+<!doctype html>
+<!--
+  The page of picker.lua: a list of rows, one selected, no filter field.
+  Loaded once, hidden between openings; each opening calls render().
+
+    picker.lua --render({rows, selected, theme, sizes})--> this page
+    this page  --postMessage({action: "pick", id} | {action: "cancel"})--> picker.lua
+
+  Keys: Up/Down (also Ctrl-P/Ctrl-N, Tab/Shift-Tab) move, Return picks,
+  Esc cancels. The mouse selects on hover and picks on click.
+
+  Titles come from the terminal (a program sets its window's title), so
+  they are only ever set as text (textContent), never parsed as HTML.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --bg: #282828;
+        --selected: #504945;
+        --mark: #d79921;
+        --fg: #ebdbb2;
+        --sub: #a89984;
+        --row: 56px;
+        --pad: 6px;
+        --title: 18px;
+        --detail: 14px;
+      }
+      :root.light {
+        --bg: #fbf1c7;
+        --selected: #d5c4a1;
+        --mark: #b57614;
+        --fg: #3c3836;
+        --sub: #7c6f64;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+        cursor: default;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #list {
+        box-sizing: border-box;
+        height: 100%;
+        padding: var(--pad);
+        border-radius: 10px;
+        background: var(--bg);
+        overflow-y: auto;
+        font-family: -apple-system, sans-serif;
+      }
+      .row {
+        box-sizing: border-box;
+        height: var(--row);
+        padding: 0 12px;
+        border-left: 3px solid transparent;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .row.selected {
+        background: var(--selected);
+        border-left-color: var(--mark);
+      }
+      .title,
+      .detail {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .title {
+        color: var(--fg);
+        font-size: var(--title);
+      }
+      .detail {
+        color: var(--sub);
+        font-size: var(--detail);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="list"></div>
+    <script>
+      const list = document.getElementById("list");
+      let rows = [];
+      let selected = 0;
+
+      function send(message) {
+        window.webkit.messageHandlers.picker.postMessage(message);
+      }
+
+      function select(i) {
+        if (rows.length === 0) return;
+        selected = (i + rows.length) % rows.length;
+        list.querySelectorAll(".row").forEach((el, j) => {
+          el.classList.toggle("selected", j === selected);
+        });
+        list.children[selected].scrollIntoView({ block: "nearest" });
+      }
+
+      // Called by picker.lua at each opening, e.g.
+      //   render({rows: [{id: "w1", title: "~/.dotfiles", detail: "3 tabs"}],
+      //           selected: 0, light: false,
+      //           sizes: {row: 56, pad: 6, title: 18, detail: 14}})
+      // `selected` is 0-based here, picker.lua's is 1-based.
+      function render(data) {
+        document.documentElement.classList.toggle("light", data.light);
+        for (const [name, px] of Object.entries(data.sizes)) {
+          document.documentElement.style.setProperty("--" + name, px + "px");
+        }
+        rows = data.rows;
+        list.replaceChildren(
+          ...rows.map((row, i) => {
+            const el = document.createElement("div");
+            el.className = "row";
+            const title = document.createElement("div");
+            title.className = "title";
+            title.textContent = row.title;
+            const detail = document.createElement("div");
+            detail.className = "detail";
+            detail.textContent = row.detail;
+            el.append(title, detail);
+            el.addEventListener("mousemove", () => {
+              if (i !== selected) select(i);
+            });
+            el.addEventListener("click", () => send({ action: "pick", id: row.id }));
+            return el;
+          }),
+        );
+        select(data.selected);
+        return rows.length;
+      }
+
+      // Ctrl-P/N as in a shell's history; Tab as in a dialog.
+      const moves = {
+        ArrowUp: -1,
+        ArrowDown: 1,
+        "ctrl+p": -1,
+        "ctrl+n": 1,
+        Tab: 1,
+        "shift+Tab": -1,
+      };
+
+      document.addEventListener("keydown", (e) => {
+        // With its modifiers first ("shift+Tab"), then bare (Shift-Down moves
+        // as Down does).
+        const key = (e.ctrlKey ? "ctrl+" : "") + (e.shiftKey ? "shift+" : "") + e.key;
+        const move = moves[key] ?? moves[e.key];
+        if (move !== undefined) {
+          select(selected + move);
+        } else if (e.key === "Enter" && rows.length > 0) {
+          send({ action: "pick", id: rows[selected].id });
+        } else if (e.key === "Escape") {
+          send({ action: "cancel" });
+        } else {
+          return;
+        }
+        e.preventDefault();
+      });
+    </script>
+  </body>
+</html>

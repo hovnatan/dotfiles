@@ -31,6 +31,19 @@
 -- an AX observer on iTerm2, the mechanism used here, kept seeing every
 -- focus change (the old bell banner module had one).
 --
+-- A switch to a window on another Space from outside iTerm2 (the middle
+-- click switcher, iterm2_switcher.lua) activates iTerm2 on the window it
+-- was on, and the window picked takes focus only after the Space slide:
+-- 375 ms later in the 2026-10-20 logs, past SETTLE_SECONDS, so the old
+-- window's name showed first. The switcher calls M.switching() before it
+-- asks for the switch, and until the focus has left that window (or
+-- SWITCH_SECONDS pass) it is shown nothing of:
+--
+--   M.switching() --> remember iTerm2's focused window, the one left
+--   settled: the focused window is the one left, within SWITCH_SECONDS?
+--        yes --> nothing; the next focus event settles again
+--        no  --> shown as ever, and the one left forgotten
+--
 -- Focus within a window (tab or pane switch) is not a window focus, so it
 -- shows nothing: the tab bar already names the tab.
 local M = {}
@@ -43,6 +56,9 @@ local TEXT_SIZE = 28
 local PADDING = 24 -- inside the box, around the text
 local MARGIN = 40 -- between the box and the window's sides; a longer title is cut at the end
 local MIN_TEXT_WIDTH = 120 -- a window narrower than this gets a box wider than itself
+-- How long after M.switching() the window left is not shown: a switch that
+-- never lands (the window closed) shows it again after this.
+local SWITCH_SECONDS = 1.5
 
 -- Every focus event and overlay is logged (event_log.lua), to the file only, e.g.
 --   2026-10-07T14:52:10.012Z AXFocusedWindowChanged
@@ -124,9 +140,30 @@ local function settled()
     return
   end
   local win = app:focusedWindow()
-  if win and win:isStandard() then
-    show(win)
+  if not (win and win:isStandard()) then
+    return
   end
+  local leaving = M.leaving
+  if leaving and hs.timer.secondsSinceEpoch() < leaving.deadline and win:id() == leaving.id then
+    log("window %s: the one a switch is leaving, nothing shown", tostring(leaving.id))
+    return
+  end
+  M.leaving = nil
+  show(win)
+end
+
+-- A switch from outside iTerm2 is about to bring another of its windows
+-- forward (see the header): iTerm2's focused window now is the one left.
+function M.switching()
+  local app = hs.application.get(ITERM2)
+  local win = app and app:focusedWindow()
+  if not win then
+    M.leaving = nil
+    log("switching: iTerm2 has no focused window, none to skip")
+    return
+  end
+  M.leaving = { id = win:id(), deadline = hs.timer.secondsSinceEpoch() + SWITCH_SECONDS }
+  log("switching: leaving window %s", tostring(win:id()))
 end
 
 M.settleTimer = hs.timer.delayed.new(SETTLE_SECONDS, settled)
