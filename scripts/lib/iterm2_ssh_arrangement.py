@@ -199,8 +199,9 @@ def parse_file(text: str) -> list[Saved]:
     r"""Return the windows of the file's text.
 
     "window: x\nssh vm\n" -> [Saved("x", ["ssh vm"])]. A command before the
-    first "window:" line or a window with no tabs is an error: a hand edit
-    gone wrong.
+    first "window:" line, a window with no tabs, or an attach line no
+    restore can land (attach_request) is an error: a hand edit gone wrong,
+    caught here so that no tab opens before it.
     """
     windows: list[tuple[int, Saved]] = []
     for n, line in enumerate(text.splitlines(), 1):
@@ -210,6 +211,11 @@ def parse_file(text: str) -> list[Saved]:
             if not windows:
                 msg = f'line {n} is a command before any "window:" line: {line}'
                 raise ArrangementError(msg)
+            try:
+                attach_request(line)
+            except ArrangementError as e:
+                msg = f"line {n} {e}"
+                raise ArrangementError(msg) from e
             windows[-1][1].lines.append(line)
     if not windows:
         msg = 'no "window:" line'
@@ -299,11 +305,19 @@ def attach_request(line: str) -> tuple[str, str] | None:
     attach_line's output -> its socket and session; any other line -> None.
     "LC_TMUX_ATTACH=claude:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm"
         -> ("claude", "api/docs")
+    An attach line no restore can land -- a socket not in SOCKETS, no
+    session -- is an error (a hand edit, or a file older than this script).
     """
     value = sent_value(line, "LC_TMUX_ATTACH")
     if value is None:
         return None
     socket, _, session = value.partition(":")
+    if socket not in SOCKETS:
+        msg = f"attaches on tmux socket {socket!r}, not one of {', '.join(SOCKETS)}: {line}"
+        raise ArrangementError(msg)
+    if not session:
+        msg = f"attaches no session on socket {socket!r}: {line}"
+        raise ArrangementError(msg)
     return socket, session
 
 
@@ -368,14 +382,17 @@ def plan(tab: Tab, index: int, local_hosts: frozenset[str]) -> Plan:
 def parse_sessions(text: str) -> dict[str, list[tuple[str, str]]]:
     r"""Return {shown name: [(socket, session)]} from list_sessions_argv's output.
 
-    "claude ai-agent vm/ai-agent\ndefault main main\n"
+    "claude:ai-agent:vm/ai-agent\ndefault:main:main\n"
         -> {"vm/ai-agent": [("claude", "ai-agent")], "main": [("default", "main")]}
+    Fields split at ":", which neither a session name (tmux allows none) nor
+    a hostname holds; a space would split "my notes", whose tab then read
+    as on no socket rather than as a name to rename (attach_line).
     Lines of any other shape ("no server running on ...") are what a socket
     with no server prints; they are kept only for the error in lines().
     """
     found: dict[str, list[tuple[str, str]]] = {}
     for line in text.splitlines():
-        fields = line.split(" ")
+        fields = line.split(":")
         if len(fields) == 3 and fields[0] in SOCKETS and all(fields):
             socket, session, shown = fields
             found.setdefault(shown, []).append((socket, session))
@@ -397,12 +414,13 @@ def list_sessions_argv(login: str, *, unattended: bool) -> list[str]:
     """Return the argv that lists every socket's sessions on the host of `login`.
 
     A line per session: its socket, its name, and the name its title shows
-    (TITLED), tmux formatting both on the far side so the host is that one's.
+    (TITLED), ":"-separated (parse_sessions), tmux formatting both on the far
+    side so the host is that one's.
     The remote command is one word for ssh; its single quotes read the same
     in a remote sh and a remote fish.
     """
     remote = "; ".join(
-        f"{tmux(socket)} ls -F '{socket} #{{session_name}} {TITLED[socket]}'"
+        f"{tmux(socket)} ls -F '{socket}:#{{session_name}}:{TITLED[socket]}'"
         for socket in SOCKETS
     )
     return ssh_argv(login, remote, unattended=unattended)

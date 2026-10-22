@@ -55,16 +55,17 @@ arr.LOG.append(LOG)  # the script's own log() lines land in this run's log
 
 # What `tmux ls` on each socket of each host prints (list_sessions_argv):
 # socket, session, and the name its title shows -- "<hostname>/<session>"
-# on the claude socket. Twin's claude "dup" shows as "dup" through a host
+# on the claude socket -- ":"-separated. Twin's claude "dup" shows as "dup" through a host
 # named "" -- impossible, but it puts one shown name on both sockets.
 HOSTS = {
-    "ssh vm": "claude ai-agent vm/ai-agent\nclaude api/docs vm/api/docs\n"
-    "default main main\n"
+    "ssh vm": "claude:ai-agent:vm/ai-agent\nclaude:api/docs:vm/api/docs\n"
+    "default:main:main\n"
+    "default:my notes:my notes\n"
     "error connecting to /tmp/tmux-1000/x (No such file or directory)\n",
     "ssh -p 2222 user@box": "no server running on /tmp/tmux-1000/claude\n"
-    "default main main\n",
-    "ssh twin": "claude dup dup\ndefault dup dup\n",
-    "ssh -t vm": "default main main\n",
+    "default:main:main\n",
+    "ssh twin": "claude:dup:dup\ndefault:dup:dup\n",
+    "ssh -t vm": "default:main:main\n",
 }
 
 
@@ -253,6 +254,33 @@ def _() -> None:
     refused([Tab(2, "fish", "fish", "fish", "/", LOCAL)], "2 panes")
 
 
+@case("a session named with a space is refused as one to rename, not as on no socket")
+def _() -> None:
+    refused([Tab(1, "ssh", "ssh vm", "[my notes]", "/", "vm")], "needing quotes; rename it")
+
+
+@case("a saved attach line on a socket the restore cannot land is refused at parse")
+def _() -> None:
+    for value, want in [
+        ("work:main", "socket 'work'"),
+        ("main", "socket 'main'"),  # no ":" at all
+        ("claude:", "no session"),
+    ]:
+        line = f"LC_TMUX_ATTACH={value} ssh -o SendEnv=LC_TMUX_ATTACH vm"
+        error = error_of(lambda line=line: arr.parse_file(f"window: x\nssh vm\n{line}\n"))
+        assert want in error, f"{error!r} lacks {want!r}"
+        assert "line 3" in error, error
+
+
+@case("TITLED is what ~/.tmux.conf's set-titles-string shows for each socket")
+def _() -> None:
+    conf = (REPO / "home/.tmux.conf").read_text()
+    titles = re.findall(r"^set-option -g set-titles-string (.+)$", conf, re.MULTILINE)
+    assert len(titles) == 1, titles
+    for socket, shown in arr.TITLED.items():
+        assert f"[{shown}]" in titles[0], (socket, shown, titles[0])
+
+
 @case("a session on no socket is refused, with the host's output")
 def _() -> None:
     refused([Tab(1, "ssh", "ssh vm", "[gone]", "/", "vm")], "on no socket")
@@ -324,8 +352,8 @@ def _() -> None:
         "2222",
         "vm",
         (
-            "tmux -L claude ls -F 'claude #{session_name} #{host}/#{session_name}';"
-            " tmux ls -F 'default #{session_name} #{session_name}'"
+            "tmux -L claude ls -F 'claude:#{session_name}:#{host}/#{session_name}';"
+            " tmux ls -F 'default:#{session_name}:#{session_name}'"
         ),
     ], got
 
