@@ -615,20 +615,21 @@ if [ "$(uname)" = "Darwin" ]; then
   # iTerm2 notices when the host changes back and asks "Looks like focus
   # reporting was left on ... Turn it off?", one banner per mode.
   #
-  # The banners are left to ask. From 2026-09-27 to 09-30 these keys were
-  # true, the banner's "Always", which resets the modes silently; they are
-  # deleted from machines that got that. iTerm2 also takes a host for
-  # changed while a tab is still attached to a remote tmux (what makes it
-  # do so is not known yet), and tmux asks for these modes once, at attach:
-  # a silent reset there leaves it without them for the rest of the attach.
+  # The keys are false: never reset, never ask. iTerm2 also takes a host
+  # for changed while a tab is still attached to a remote tmux (what makes
+  # it do so is not known), and tmux asks for these modes once, at attach,
+  # so a reset there leaves it without them for the rest of the attach.
   # With focus reports gone, home/.claude/ntfy-stop.sh saw nobody looking
-  # and pushed a turn that was being watched (2026-09-30), and nothing on
-  # screen said why. Answer No while attached, Yes back at a local prompt
-  # after a dropped connection; "Always" sets the key true again.
+  # and pushed a turn that was being watched (2026-09-30). true (the
+  # banner's "Always", 2026-09-27 to 09-30) did that silently; unset (to
+  # 2026-10-22) asked on every such false change too, a banner to answer
+  # No to. The cost: after a dropped ssh connection the
+  # junk above reaches the local prompt until the modes are reset by hand
+  # (`reset`).
   #   unset: the banner asks   true: reset silently   false: never reset,
   #   never ask (checked for focus reporting in iTerm2 3.7.3)
   for mode in FocusReporting MouseReporting BracketedPaste DEC2048; do
-    defaults delete com.googlecode.iterm2 "NoSyncTurnOff${mode}OnHostChange" 2>/dev/null
+    defaults write com.googlecode.iterm2 "NoSyncTurnOff${mode}OnHostChange" -bool false
   done
   # Same banner family for the title: a remote prompt/tmux/nvim retitles the
   # tab and the title outlives the ssh session. true restores the pre-ssh
