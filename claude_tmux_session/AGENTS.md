@@ -1,6 +1,6 @@
 # Claude Code tmux manager session
 
-This directory is the working directory of the always-on "claude" tmux
+This directory is the working directory of the always-on "manager" tmux
 session started at boot by claude-tmux.service (see
 `../home/.config/systemd/user/claude-tmux.service` and
 `../scripts/claude_tmux_run.sh`). That session runs Claude Code with
@@ -10,7 +10,7 @@ sessions on this machine.
 ## The setup
 
 - All sessions live on a dedicated tmux server: `tmux -L claude ...`.
-- Only the "claude" session is managed by systemd (recreated when it dies,
+- Only the "manager" session is managed by systemd (recreated when it dies,
   killed by `systemctl --user stop claude-tmux`). Every other session is
   created on demand -- by you, when asked -- and survives service restarts
   and stops; nothing recreates one that exits.

@@ -187,7 +187,7 @@ workspace trust dialog; the manager starts inside the repo and would
 otherwise sit at that prompt, invisible, in its detached pane.
 
 ```bash
-tmux -L claude attach -t claude            # attach (any session name works)
+tmux -L claude attach -t manager           # attach (any session name works)
 systemctl --user status claude-tmux        # is it up?
 journalctl --user -u claude-tmux -f        # logs
 systemctl --user stop claude-tmux          # stop until next boot

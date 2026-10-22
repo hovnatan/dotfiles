@@ -44,7 +44,7 @@ case "$want" in *" "*) exit 0 ;; esac
 [ "$want" != "$sname" ] || exit 0
 # Logged with the other tmux hooks (log-event.sh): session names are how
 # every other line there says which session it means.
-#   2026-09-30T13:25:01Z session $0 renamed claude/old-task -> claude (pane title "* vm-claude")
+#   2026-09-30T13:25:01Z session $0 renamed manager/old-task -> manager (pane title "* vm-manager")
 # shellcheck source=scripts/lib/event_log.sh
 . "${0%/*}/../../../scripts/lib/event_log.sh"
 if tmux -S "$socket" rename-session -t "$sid" "$want"; then

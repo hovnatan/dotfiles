@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Run the Claude Code manager in a tmux session "claude" from boot,
+# Run the Claude Code manager in a tmux session "manager" from boot,
 # restarting it whenever it exits. The session starts in
 # ~/.dotfiles/claude_tmux_session, whose AGENTS.md tells it how to start and
 # resume the other Claude Code tmux sessions on demand. Opt-in per machine

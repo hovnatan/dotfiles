@@ -1,5 +1,5 @@
 [Unit]
-Description=tmux session "claude" running the Claude Code manager
+Description=tmux session "manager" running the Claude Code manager
 Documentation=man:tmux(1)
 After=default.target
 # Safety valve: if claude exits immediately (bad auth, bad config), give up
@@ -10,7 +10,7 @@ StartLimitBurst=10
 [Service]
 Type=simple
 
-# The one managed session is "claude", started in
+# The one managed session is "manager", started in
 # ~/.dotfiles/claude_tmux_session; the AGENTS.md there documents how that
 # session starts and resumes the other, unmanaged Claude Code sessions
 # (conversations named "<hostname>-<tmux name>") on this server.
@@ -21,7 +21,7 @@ Type=simple
 #
 # systemd still has to track the *session*, not the server: the server
 # daemonizes out of ExecStart, so the watch loop in claude_tmux_run.sh is
-# what keeps the unit alive, and it exits when the "claude" session
+# what keeps the unit alive, and it exits when the "manager" session
 # disappears, which is what triggers Restart=always. ExecStop kills just
 # that session, so the unmanaged sessions survive a service stop.
 #

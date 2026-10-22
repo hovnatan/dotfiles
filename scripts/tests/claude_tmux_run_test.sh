@@ -15,7 +15,7 @@
 #
 #   transient unit (like claude-tmux.service, KillMode=process)
 #     the unit file's ExecStart -----> server in tmux-server-<socket>.scope
-#                                         +- "claude" pane (the manager)
+#                                         +- "manager" pane
 #   claude_tmux_run.sh new ctb /tmp ---->  +- "ctb" pane
 #
 # Checks, each printed as PASS/FAIL with a timestamp:
@@ -225,10 +225,10 @@ systemd-run --user --quiet --unit="$UNIT" -p KillMode=process \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" -E CLAUDE_TMUX_ALIVE_SECONDS=2 \
   /bin/sh -c "$start_script"
 for _ in $(seq 40); do
-  t has-session -t claude 2>/dev/null && break
+  t has-session -t =manager 2>/dev/null && break
   sleep 0.25
 done
-if t has-session -t claude 2>/dev/null; then pass "manager session up from the unit"; else
+if t has-session -t =manager 2>/dev/null; then pass "manager session up from the unit"; else
   fail "manager session never appeared"
   exit 1
 fi
@@ -255,14 +255,15 @@ fi
 t kill-window -t "=ctb:{end}" # the window just opened (highest index)
 
 # Run from inside ctb, as the manager or a user in a pane does: tmux then
-# resolves a bare "=claude" window target to ctb's own window (named
-# "claude" after its process) before trying the session "claude".
-t rename-window -t =ctb:0 claude # what automatic-rename calls it, made certain
+# resolves a bare "=manager" window target to a window of that name in ctb
+# before trying the session "manager". Windows are named after their
+# process ("claude"), so ctb's is given the manager's name to set the trap.
+t rename-window -t =ctb:0 manager
 inside="$(t display -p -t =ctb: '#{socket_path},#{pid},#{session_id}')"
 st=$(TMUX="${inside/\$/}" TMUX_PANE="$(t display -p -t =ctb: '#{pane_id}')" run status 2>&1)
-want=$(t list-panes -t =claude: -F '#{pane_pid}')
-if grep -q "^== claude \[claude pid $want\]" <<<"$st"; then pass "status from inside ctb reports the manager's own pane"; else
-  fail "status from inside ctb, manager pane $want: $(grep '^== claude' <<<"$st")"
+want=$(t list-panes -t =manager: -F '#{pane_pid}')
+if grep -q "^== manager \[claude pid $want\]" <<<"$st"; then pass "status from inside ctb reports the manager's own pane"; else
+  fail "status from inside ctb, manager pane $want: $(grep '^== manager' <<<"$st")"
 fi
 
 # --- restart: a fresh claude in the same pane, same conversation ------------
@@ -499,7 +500,7 @@ rm -f "$WORK/agents_fail" "$H/.claude/projects/-tmp/0000-ctr.jsonl"
 
 # --- each pane: launcher, process, logging, environment ---------------------
 
-for s in claude ctb; do
+for s in manager ctb; do
   pid=$(t list-panes -t "=$s:" -F '#{pane_pid}' 2>/dev/null)
   [ -n "$pid" ] || {
     fail "$s: no pane"
@@ -532,7 +533,7 @@ server_unit=$(sed 's|.*/||' "/proc/$server_pid/cgroup")
 # tmux >= 3.7 ties each pane's scope to the unit that started its server:
 # that must be the server's own scope. Older tmux sets no PartOf at all.
 if printf '3.7\n%s\n' "${server_version%%[a-z]*}" | sort -V -C; then want="tmux-server-$SOCK.scope"; else want=""; fi
-for s in claude ctb; do
+for s in manager ctb; do
   pid=$(t list-panes -t "=$s:" -F '#{pane_pid}')
   partof=$(systemctl --user show "$(sed 's|.*/||' "/proc/$pid/cgroup")" -p PartOf --value)
   [ "$partof" = "$want" ] && pass "$s: pane PartOf '${partof:-nothing}' (tmux $server_version)" \
@@ -549,7 +550,7 @@ left=$(cat "/sys/fs/cgroup$cgroup/cgroup.procs" 2>/dev/null | tr '\n' ' ')
   || fail "unit stop left in $cgroup: $left($(ps -o comm= -p "${left%% *}"))"
 sleep 1
 alive=$(sessions)
-[ "$alive" = "claude ctb " ] && pass "unit stop left both sessions alive" || fail "after unit stop, sessions: '${alive}'"
+[ "$alive" = "ctb manager " ] && pass "unit stop left both sessions alive" || fail "after unit stop, sessions: '${alive}'"
 
 # --- the unit file's ExecStop, under systemd's own environment --------------
 
@@ -557,14 +558,14 @@ alive=$(sessions)
 stop_script=$(unit_line ExecStop) || exit 1
 stop_script=${stop_script//\$\{MAINPID\}/1}
 # Under a label, as /label leaves it: ExecStop must still find it.
-t rename-session -t =claude claude/x
+t rename-session -t =manager manager/x
 systemd-run --user --quiet --wait --pipe \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" \
   /bin/sh -c "$stop_script" >"$WORK/execstop.out" 2>&1
 rc=$?
 alive=$(sessions)
 if [ "$rc" -eq 0 ] && [ "$alive" = "ctb " ]; then
-  pass "ExecStop killed only the manager (labeled claude/x)"
+  pass "ExecStop killed only the manager (labeled manager/x)"
 else
   fail "ExecStop rc=$rc, sessions left: '${alive}'; output: $(tr '\n' ' ' <"$WORK/execstop.out")"
 fi

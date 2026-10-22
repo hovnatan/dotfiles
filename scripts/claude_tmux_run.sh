@@ -9,15 +9,15 @@
 # lists every machine's sessions, hence the hostname. The name is passed
 # with -n on every launch, resumes included.
 #
-#   claude_tmux_run.sh serve           ExecStart: ensure the managed "claude"
-#                                      session (the manager) exists, then watch;
+#   claude_tmux_run.sh serve           ExecStart: ensure the managed "manager"
+#                                      session exists, then watch;
 #                                      blocks while it lives, never run by hand
 #   claude_tmux_run.sh stop [name[/task]]
 #                                      kill the session of exactly that name
 #                                      (never a prefix of another name, and a
 #                                      bare <name> never a labeled
 #                                      <name>/<task>); no name: the managed
-#                                      "claude" session, labeled or not
+#                                      "manager" session, labeled or not
 #                                      (ExecStop)
 #   claude_tmux_run.sh new <name>[/<task>] <dir> [--dangerous]
 #                                      start an unmanaged session on a FRESH
@@ -122,6 +122,9 @@ HOST=$(hostname)
 MANAGER_DIR="$HOME/.dotfiles/claude_tmux_session"
 ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}" # startup window new/load wait out
 NAME_RE='^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)?$'    # <name>[/<task>] new/load accept
+# The manager's tmux session; its conversation is "<hostname>-manager".
+# Until 2026-10-22 it was "claude", like the socket.
+MANAGER=manager
 # How long restart lets claude shut down after TERM before KILL: past its own
 # failsafe, which exits it within max(5 s, SessionEnd hook timeout + 5 s).
 EXIT_SECONDS="${CLAUDE_TMUX_EXIT_SECONDS:-30}"
@@ -497,7 +500,7 @@ launch() {
   # The new-session that starts the server therefore runs in a scope of its
   # own, which then owns the panes:
   #
-  #   claude-tmux.service        watch loop; ExecStop kills only "claude"
+  #   claude-tmux.service        watch loop; ExecStop kills only "manager"
   #   tmux-server-claude.scope   tmux server  <--PartOf--  tmux-spawn-*.scope
   #                                                        (one per pane)
   #
@@ -628,7 +631,7 @@ case "${1:-}" in
     # conversation: `stop api` beside api/login and api/docs
     # kills api or nothing (exact_session).
     if [ $# -lt 2 ]; then
-      s=$(sessions_under claude) || exit 1
+      s=$(sessions_under "$MANAGER") || exit 1
       s=${s%%$'\n'*}
       [ -z "$s" ] && exit 0
     else
@@ -999,14 +1002,14 @@ case "${1:-}" in
       echo "usage: $0 serve  (claude-tmux.service's ExecStart; takes no arguments)" >&2
       exit 1
     fi
-    if [ -z "$(find_session claude)" ]; then
-      find_conversation resolve "$HOST-claude" \
+    if [ -z "$(find_session "$MANAGER")" ]; then
+      find_conversation resolve "$HOST-$MANAGER" \
         "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl
       if [ -n "$id" ]; then
-        resume_session claude "$MANAGER_DIR" --dangerously-skip-permissions || exit 1
+        resume_session "$MANAGER" "$MANAGER_DIR" --dangerously-skip-permissions || exit 1
       else
-        start_session claude "$MANAGER_DIR" "new conversation $HOST-claude in $MANAGER_DIR" \
-          -n "$HOST-claude" --dangerously-skip-permissions || exit 1
+        start_session "$MANAGER" "$MANAGER_DIR" "new conversation $HOST-$MANAGER in $MANAGER_DIR" \
+          -n "$HOST-$MANAGER" --dangerously-skip-permissions || exit 1
       fi
     fi
     # The managed session under whatever label its conversation carries.
@@ -1015,7 +1018,7 @@ case "${1:-}" in
     # start); waited on in the background, the TERM trap can take it along.
     nap=""
     trap 'kill "$nap" 2>/dev/null; exit 0' TERM
-    while [ -n "$(find_session claude)" ]; do
+    while [ -n "$(find_session "$MANAGER")" ]; do
       sleep 5 &
       nap=$!
       wait "$nap"
