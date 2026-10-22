@@ -50,8 +50,10 @@
 #     mid-wait, and a login shell slower than the startup window (once read
 #     as "claude exited")
 #   - restart refuses a claude still running a background shell, which
-#     --check names and --force restarts anyway; prefix C-r, typed into an
-#     attached client, prompts with that shell, restarts on y, and shows
+#     --check names and --force restarts anyway; a job claude detached is
+#     named beside it, never refused, and ended with the old claude's scope
+#     (logged); prefix C-r, typed into an
+#     attached client, prompts with both, restarts on y, and shows
 #     the verdict; a prompt left unanswered leaves no process waiting on
 #     it; restart-claude.sh refuses a socket that is not claude's
 #   - an agents --json entry missing a key fails status, not reads as ""
@@ -185,7 +187,9 @@ cp "$(command -v sleep)" "$WORK/idle/claude"
 # Claude Code update or daemon would; with $WORK/agents.json, it prints that
 # (the restart checks write the pane they act on there). Read at launch,
 # for the restart checks: $WORK/bg starts a child shaped like a background
-# shell of claude's Bash tool; $WORK/slow_exit holds the seconds the stub
+# shell of claude's Bash tool; $WORK/detach a job it detached (setsid, its
+# parent gone: no descendant of claude, still in the pane's scope), its pid
+# written to $WORK/detached.pid; $WORK/slow_exit holds the seconds the stub
 # then takes to shut down after TERM -- it stays this script, whose process
 # is named claude too (#!/bin/bash: env would re-exec as "bash").
 cat >"$H/.local/bin/claude" <<EOF
@@ -197,6 +201,9 @@ if [ "\${1:-}" = agents ]; then
 fi
 if [ -e "$WORK/bg" ]; then
   bash -c "source $H/.claude/shell-snapshots/snapshot-bash-0.sh 2>/dev/null || true && eval 'sleep 100000 # bg' < /dev/null && pwd -P >| /dev/null" &
+fi
+if [ -e "$WORK/detach" ]; then
+  ( setsid sleep 100001 </dev/null >/dev/null 2>&1 & echo \$! >"$WORK/detached.pid" )
 fi
 if [ -e "$WORK/slow_exit" ]; then
   trap "sleep \$(cat "$WORK/slow_exit"); exit 0" TERM
@@ -403,9 +410,13 @@ rm "$WORK/slow_profile"
 check_restarted "restart with a 4 s login shell and a 2 s startup window"
 
 # A tracked background shell: refused, listed by --check, --force kills it.
-touch "$WORK/bg"
+# A detached job beside it is listed too, never a refusal, and ends with
+# the old claude's scope.
+touch "$WORK/bg" "$WORK/detach"
 restart_ctb
-rm "$WORK/bg"
+rm "$WORK/bg" "$WORK/detach"
+detached_pid=$(cat "$WORK/detached.pid")
+bgpids+=("$detached_pid")
 pid=$(pid_now)
 read -r shell _ < <(ps -A -o ppid=,pid= | awk -v p="$pid" '$1 == p { print $2 }')
 [ -n "${shell:-}" ] && bgpids+=("$shell")
@@ -416,7 +427,7 @@ rc=$?
   && pass "restart with a background shell: refused ($out)" || fail "restart with a background shell: rc=$rc ($out)"
 out=$(run restart --check ctb 2>&1)
 rc=$?
-[ "$rc" -eq 0 ] && [ "$out" = "1 background shell(s): sleep 100000 # bg" ] && [ "$(pid_now)" = "$pid" ] \
+[ "$rc" -eq 0 ] && [ "$out" = "1 background shell(s): sleep 100000 # bg, and 1 detached process(es): sleep" ] && [ "$(pid_now)" = "$pid" ] \
   && pass "restart --check names it: '$out'" || fail "restart --check: rc=$rc ($out), shell ${shell:-none}"
 
 # prefix C-r, typed into an attached client: the prompt names the shell,
@@ -468,12 +479,16 @@ stray=$(ps -A -o pid=,args= | grep -F -e "-S $(t display -p '#{socket_path}') co
 seen=$(tr -d '\033' <"$WORK/client.out")
 grep -q 'not a claude session (tmux socket '"$SOCK"')' <<<"$seen" \
   && pass "restart-claude.sh on another socket: refused on the message line" || fail "no refusal on the message line for another socket"
-grep -q 'restart claude in ctb? it kills 1 background shell(s): sleep 100000 # bg (y/n)' <<<"$seen" \
-  && pass "C-r prompt names the background shell" || fail "C-r prompt: $(grep -ao 'restart claude[^\[]*' <<<"$seen" | head -1)"
+grep -q 'restart claude in ctb? it kills 1 background shell(s): sleep 100000 # bg, and 1 detached process(es): sleep (y/n)' <<<"$seen" \
+  && pass "C-r prompt names the background shell and the detached job" || fail "C-r prompt: $(grep -ao 'restart claude[^\[]*' <<<"$seen" | head -1)"
 grep -q 'C-r: session ctb: restarted conversation 0000-ctrs' <<<"$seen" \
   && pass "C-r verdict on the message line" || fail "C-r verdict: $(grep -ao 'C-r: [^\[]*' <<<"$seen" | tail -1)"
 rc=0 out="(through prefix C-r)"
 check_restarted "prefix C-r, y"
+! kill -0 "$detached_pid" 2>/dev/null \
+  && grep -hq "stopped tmux-spawn-.*scope, the old claude's scope: .*$detached_pid sleep 100001" "$H"/.dotfiles/.logs/*_claude_tmux_restart/events.log \
+  && pass "restart ended the detached job with the old scope, and logged it" \
+  || fail "detached job $detached_pid after the restart: $(ps -o pid=,args= -p "$detached_pid"); log: $(grep -h 'stopped' "$H"/.dotfiles/.logs/*_claude_tmux_restart/events.log)"
 
 # A session with no claude in it has nothing to restart.
 t new-session -d -s ctnc sleep 100000
@@ -657,7 +672,6 @@ start=$(start_of ctl/a)
 [ "$rc" -eq 0 ] && [[ "$start" == *"--resume 0000-ctla -n $(hostname)/ctl/a "* ]] \
   && pass "load ctl/a titled $(hostname)-ctl/a: resumed as $(hostname)/ctl/a ($out)" \
   || fail "load ctl/a titled $(hostname)-ctl/a: rc=$rc ($out), start '$start'"
-cp "$WORK/agents.json" "$WORK/agents.json.keep"
 agents_json "$(t list-panes -t =ctl/a: -F '#{pane_pid}')" idle "$(hostname)-ctl/a"
 out=$(run load ctl/a 2>&1)
 rc=$?
@@ -666,7 +680,7 @@ rc=$?
 out=$(run conversations ctl 2>&1)
 grep -qE '^ctl/a +yes ' <<<"$out" && pass "conversations lists $(hostname)-ctl/a as ctl/a, live" \
   || fail "conversations for $(hostname)-ctl/a: $out"
-mv "$WORK/agents.json.keep" "$WORK/agents.json"
+rm "$WORK/agents.json"
 t kill-session -t =ctl/a
 rm -f "$H/.claude/projects/-tmp/0000-ctla.jsonl"
 

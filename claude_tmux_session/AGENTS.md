@@ -54,8 +54,9 @@ sessions on this machine.
   of its own, and when a session closes, however it closes, the scopes of
   its panes are stopped (`home/.config/tmux/reap-panes.sh`, logged in the
   tmux hooks' log): a `setsid nohup` job, a proxy, a watcher started from a
-  session does not survive it. `restart` keeps the pane, so it keeps them
-  too. A job meant to outlive its session runs as a unit of its own:
+  session does not survive it. Nor does it survive a `restart` (or
+  `prefix C-r`), which stops the old claude's scope once the new one runs.
+  A job meant to outlive its session runs as a unit of its own:
   `systemd-run --user --unit=<name> <command>` (then
   `systemctl --user status <name>`, `journalctl --user -u <name>`).
 
@@ -163,8 +164,10 @@ restart logs its steps under `~/.dotfiles/.logs/<UTC>_claude_tmux_restart/`.
 `restart` refuses a BUSY session and leaves it running: a turn, or a
 background shell claude still tracks, which `claude agents` also reports
 as busy, the turn long over. `--check` prints that work without
-restarting; `--force` restarts over it -- only on the user's say, after
-reading the pane. `prefix C-r` puts the same work in its y/n prompt.
+restarting, followed by the detached processes the restart would end
+(`, and 1 detached process(es): cloud-sql-proxy`), which never refuse;
+`--force` restarts over the work -- only on the user's say, after
+reading the pane. `prefix C-r` puts both in its y/n prompt.
 
 Reload only IDLE sessions. A reload buys a fresh binary; it is never worth
 killing work in flight, and "reload all sessions" does not authorise that.
@@ -178,11 +181,12 @@ Capture every target's pane first and leave a session alone when it shows:
   command "may have been running when the process exited" and has to redo it.
   Tracked means a live CHILD of the session's `claude` pid. A process merely
   carrying that session's `CLAUDE_PID`/`TMUX_PANE` env but reparented to
-  systemd was detached on purpose (`setsid nohup ... > log`): it survives the
-  restart untouched (the pane stays) and nothing was tracking it, so it is
-  NOT a reason to skip. It ends only when its session closes (see The setup).
-  Grep the session's transcript for how it was launched before believing an
-  env stamp.
+  systemd was detached on purpose (`setsid nohup ... > log`): nothing was
+  tracking it, so it is NOT a reason to skip, but the restart ends it with
+  the old claude's scope (see The setup). Name such processes in the report
+  (`restart --check` lists them), so the user can start again what still
+  matters. Grep the session's transcript for how it was launched before
+  believing an env stamp.
 
 `restart` finds both itself (a tracked shell is a child of claude's pid);
 the list says what the pane shows when it refuses. Reload the idle ones,
@@ -221,11 +225,10 @@ instead.
   them.
 - This manager session cannot reload itself: it is in a turn whenever it
   runs anything, so `restart manager` refuses. Tell the user to press
-  `prefix C-r` in its pane once it is idle, which keeps the pane and so
-  its background jobs. `systemctl --user restart claude-tmux` also works --
-  systemd recreates the session and resumes this conversation -- but it
-  closes the session first, so what the manager left running in the
-  background ends with it (see The setup). A pulled change to the unit file
+  `prefix C-r` in its pane once it is idle, or run
+  `systemctl --user restart claude-tmux`, which recreates the session and
+  resumes this conversation. Either ends what the manager left running in
+  the background (see The setup). A pulled change to the unit file
   needs `systemctl --user daemon-reload` first (`dotup` runs it); until then
   a restart runs the unit as systemd last read it.
 - A pulled change to `home/.tmux.conf` (a hook, the title format) reaches

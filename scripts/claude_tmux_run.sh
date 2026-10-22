@@ -49,7 +49,9 @@
 #                                      binary after an update. Refuses a
 #                                      busy session (a turn or background
 #                                      shells) unless --force; --check only
-#                                      checks, printing that work. prefix C-r in
+#                                      checks, printing that work and the
+#                                      detached processes the restart ends
+#                                      (never a refusal). prefix C-r in
 #                                      ~/.tmux.conf runs it on the session in
 #                                      view.
 #   claude_tmux_run.sh status [lines]  every session on the socket: whether
@@ -492,6 +494,38 @@ bg_shells() {
     | sed -e "s/^ *\([0-9]*\) .* && eval '\(.*\)' < \/dev\/null .*/\1 \2/" -e "s/'\"'\"'/'/g"
 }
 
+# scope_of <pid>: the systemd unit the process runs in, from the unified
+# (cgroup v2) line of /proc/<pid>/cgroup -- a pane's own scope under
+# tmux >= 3.7, "tmux-spawn-<uuid>.scope"; empty when /proc has none.
+scope_of() {
+  local cg
+  cg=$(sed -n 's/^0:://p' "/proc/$1/cgroup" 2>/dev/null)
+  echo "${cg##*/}"
+}
+
+# detached <scope> [<pid>]: "<pid> <args>" per process in <scope> that is
+# neither <pid> nor its descendant (every process in it, with no <pid>) --
+# what was started from the pane and detached (setsid, nohup &, a double
+# fork), so reparented off <pid> and still running in its scope:
+#   tmux-spawn-a.scope  claude 10, its shell 11 (child), proxy 12 (ppid 1)
+#   detached tmux-spawn-a.scope 10  ->  "12 cloud-sql-proxy --port 5432"
+detached() {
+  local cg
+  cg=$(systemctl --user show -p ControlGroup --value "$1")
+  [ -n "$cg" ] && [ -r "/sys/fs/cgroup$cg/cgroup.procs" ] || return 0
+  ps -A -o pid=,ppid=,args= | awk -v root="${2:-}" '
+    NR == FNR { scope[$1] = 1; next }
+    { p = $1; pp[p] = $2; sub(/^ *[0-9]+ +[0-9]+ /, ""); args[p] = $0 }
+    END {
+      if (root != "") mine[root] = 1
+      do {
+        grew = 0
+        for (p in pp) if (!(p in mine) && (pp[p] in mine)) { mine[p] = 1; grew = 1 }
+      } while (grew)
+      for (p in scope) if (!(p in mine) && (p in args)) print p, args[p]
+    }' "/sys/fs/cgroup$cg/cgroup.procs" -
+}
+
 # The command every claude pane runs, its claude arguments appended (see
 # launch, and restart, which respawns a pane with it).
 PANE_CMD=("$LOGIN_SHELL" -lc 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' "${LOGIN_SHELL##*/}")
@@ -789,6 +823,8 @@ case "${1:-}" in
     #            hook (tmux): respawn-pane PANE_CMD --resume <id> -n <title>
     #            <mode>, then unset the hook and remain-on-exit
     #   wait     for the respawn; a claude still up after EXIT_SECONDS gets KILL
+    #   stop     the old claude's scope: the new one runs in a scope of its
+    #            own, and what the old one left detached there ends now
     #   report   wait_alive on the new claude
     #
     # The respawn and the disarm are one command list the server runs, so
@@ -804,7 +840,11 @@ case "${1:-}" in
     # every check, kills nothing, and prints that work as one line instead
     # of refusing over it: what prefix C-r puts in its prompt
     # (~/.dotfiles/home/.config/tmux/restart-claude.sh) before a forced
-    # restart. Always refused: a conversation also open in another process
+    # restart. Detached processes the old claude left (detached) are listed
+    # with that work but never refuse: a reload ends them by design, as
+    # closing the session would (home/.config/tmux/reap-panes.sh), and a job
+    # meant to outlive both runs as its own unit (systemd-run --user
+    # --unit=<name>). Always refused: a conversation also open in another process
     # (two writers corrupt one transcript), and a pane not launched here,
     # whose start command names no permission mode to keep (auto, or bypass
     # for --dangerous).
@@ -861,11 +901,15 @@ case "${1:-}" in
     # idle_check: what a restart would kill, as one line in "work" --
     #   busy: a turn, or 1 background shell(s): sleep 900
     # -- empty when claude is idle with no shells. Refused unless --force;
-    # --check prints it. Asked after the slow transcript lookup, so that
-    # little can start between it and the arming (a remote-control message
-    # could start a turn).
+    # --check prints it, with what the old scope holds detached ("gone"):
+    #   1 background shell(s): sleep 900, and 2 detached process(es): ssh-agent;cloud-sql-proxy
+    # (detached ones by program name: the full command lines go to the log)
+    # Asked after the slow transcript lookup, so that little can start
+    # between it and the arming (a remote-control message could start a turn).
+    old_scope=$(scope_of "$pid")
+    case $old_scope in tmux-spawn-*.scope) ;; *) old_scope="" ;; esac
     idle_check() {
-      local state shells
+      local state shells left
       agents=$(live_agents) || exit 1
       state=$(agent_status "$pid" <<<"$agents")
       shells=$(bg_shells "$pid")
@@ -874,8 +918,13 @@ case "${1:-}" in
       if [ -n "$shells" ]; then
         work+="${work:+, or }$(wc -l <<<"$shells" | tr -d ' ') background shell(s): $(cut -d' ' -f2- <<<"$shells" | paste -sd ';' -)"
       fi
+      gone=""
+      [ -z "$old_scope" ] || left=$(detached "$old_scope" "$pid")
+      if [ -n "${left:-}" ]; then
+        gone="$(wc -l <<<"$left" | tr -d ' ') detached process(es): $(awk '{ n = $2; sub(/.*\//, "", n); print n }' <<<"$left" | paste -sd ';' -)"
+      fi
       if [ -n "$check" ]; then
-        [ -z "$work" ] || echo "$work"
+        [ -z "$work$gone" ] || echo "$work${work:+${gone:+, and }}$gone"
       elif [ -n "$work" ] && [ -z "$force" ]; then
         echo "restart: session $s is not idle ($work), which a restart kills; wait for it (Esc ends a turn), or --force" >&2
         exit 1
@@ -893,7 +942,7 @@ case "${1:-}" in
       log "$s: FAILED $*" >&2
       exit 1
     }
-    say "claude $pid, conversation $live_id ($live_title), dir $cwd, ${mode[*]}${work:+; forced over $work}"
+    say "claude $pid, conversation $live_id ($live_title), dir $cwd, ${mode[*]}${work:+; forced over $work}${gone:+; ending $gone}"
 
     # Arm. Until TERM goes out a signal disarms, so an interrupted restart
     # leaves no hook behind to resume a claude that exits later on its own.
@@ -930,7 +979,27 @@ case "${1:-}" in
       kill -KILL "$pid"
       respawned "$pid" 5 || die "claude $pid survived KILL; the armed hook resumes the conversation once it exits"
     fi
-    say "respawned: pane $pane runs pid ${state#* }; waiting for claude"
+    say "respawned: pane $pane runs pid ${state#* }"
+
+    # The old claude's scope: the new one must run in another (tmux >= 3.7
+    # makes one per spawn), else stopping it would end the new claude too.
+    # What is left there -- jobs the old claude detached, shells --force
+    # orphaned -- ends now. Should this script die before here, the next
+    # session to close stops the scope all the same (reap-panes.sh: it
+    # holds no live pane's own process).
+    if [ -n "$old_scope" ]; then
+      [ "$(scope_of "${state#* }")" != "$old_scope" ] \
+        || die "the new claude runs in the old one's scope $old_scope; it was left running"
+      if [ "$(systemctl --user show -p LoadState --value "$old_scope")" = loaded ]; then
+        left=$(detached "$old_scope" | paste -sd ';' -)
+        if systemctl --user stop "$old_scope" 2>/dev/null; then
+          say "stopped $old_scope, the old claude's scope: ${left:-empty}"
+        elif [ "$(systemctl --user show -p LoadState --value "$old_scope")" = loaded ]; then
+          die "could not stop $old_scope (holding: ${left:-nothing listed}); see: systemctl --user status $old_scope"
+        fi
+      fi
+    fi
+    say "waiting for claude"
     if msg=$(started "$pane" "restarted conversation $live_id ($live_title) in $cwd (${mode[*]})" 2>&1); then
       log "$msg" # "session <name>: ...", the name already in it
     else

@@ -223,7 +223,7 @@ main() {
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
   [ -e ~/.config/systemd/user/claude-tmux.service ] \
-    && echo "  claude-tmux: prefix C-r in the manager's pane (keeps its background jobs; systemctl --user restart claude-tmux closes its session and ends them); other sessions: reload them from it"
+    && echo "  claude-tmux: prefix C-r in the manager's pane (or systemctl --user restart claude-tmux); other sessions: reload them from it"
   return "$status"
 }
 

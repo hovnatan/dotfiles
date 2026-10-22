@@ -6,17 +6,18 @@
 #
 #   reap-panes.sh <socket path> [--server-gone]
 #
-# Which pane a scope belongs to is read from its processes: every process
-# started in a pane inherits TMUX_PANE (%N), detached ones included. A scope
-# with a process whose TMUX_PANE is a live pane stays; any other is stopped.
-# A scope that holds a live pane's own process stays too.
-# So a pane's first process exiting is not enough -- `restart` respawns the
-# pane (the same %N, a new claude in a new scope) and keeps the jobs the old
-# claude left -- but the pane closing, with its session, is.
+# A scope is kept while it holds a live pane's own process (the pane_pid
+# tmux reports) and stopped otherwise: its pane closed, with its session,
+# or the pane was respawned into a scope of its own. A process started from
+# the pane, detached or not, stays in the scope it was born in.
 #
-#   tmux-spawn-a.scope  claude (TMUX_PANE=%3), proxy (%3)   %3 live  -> kept
-#   tmux-spawn-b.scope  proxy (TMUX_PANE=%1)                %1 gone  -> stopped
-#   tmux-spawn-c.scope  a process without TMUX_PANE alone            -> stopped
+#   tmux-spawn-a.scope  claude (pane %3's process), a proxy it detached  -> kept
+#   tmux-spawn-b.scope  a proxy, its pane %1 closed                      -> stopped
+#   tmux-spawn-c.scope  a job left by %3's earlier claude (respawned)    -> stopped
+#
+# `restart` stops a respawned pane's old scope itself, right after the
+# respawn (scripts/claude_tmux_run.sh); this catches what a restart that
+# died midway left.
 #
 # tmux 3.7 runs each pane in a scope of its own, PartOf the server's scope
 # (see launch in scripts/claude_tmux_run.sh). A process a session detached
@@ -34,7 +35,7 @@
 # So what a session started ends with it:
 #
 #   session-closed hook (~/.tmux.conf)  -> reap-panes.sh <socket>
-#       every pane scope that holds no process of a live pane
+#       every pane scope that holds no live pane's own process
 #   launch, no server (claude_tmux_run.sh) -> reap-panes.sh <socket> --server-gone
 #       all of them -- the hook cannot be relied on for the last session,
 #       whose server exits with it -- then waits for the server's scope to
@@ -109,12 +110,11 @@ unreachable() {
   exit 1
 }
 
-# The live panes, " %0 %3 ", and the scopes their own processes run in,
-# " tmux-spawn-a.scope ... " -- that one is how a pane just forked is known,
-# before it execs into an environment that has TMUX_PANE. None once the
-# server is gone. The scope is the last component of the unified (cgroup
-# v2) line of /proc/<pid>/cgroup: "0::/user.slice/.../tmux-spawn-a.scope".
-live=" " live_scopes=" "
+# The scopes the live panes' own processes run in, " tmux-spawn-a.scope
+# ... " -- none once the server is gone. The scope is the last component of
+# the unified (cgroup v2) line of /proc/<pid>/cgroup:
+# "0::/user.slice/.../tmux-spawn-a.scope".
+live_scopes=" "
 if [ -n "$server_gone" ]; then
   server_runs && unreachable "no server answers"
 else
@@ -122,7 +122,7 @@ else
   # pane's scope. The server exiting with its last session is the one
   # benign failure: it is gone within moments, and what it leaves
   # is the next cold start's (launch runs this with --server-gone).
-  if ! out=$(tmux -S "$sock" list-panes -a -F '#{pane_id} #{pane_pid}' 2>&1); then
+  if ! out=$(tmux -S "$sock" list-panes -a -F '#{pane_pid}' 2>&1); then
     for _ in $(seq 50); do
       server_runs || {
         event_log_note tmux_hooks "server gone with its last session; its pane scopes are the next start's to stop"
@@ -132,22 +132,10 @@ else
     done
     unreachable "$(tr '\n' ' ' <<<"$out")"
   fi
-  while read -r pane pid; do
-    live+="$pane "
+  while read -r pid; do
     cg=$(sed -n 's/^0:://p' "/proc/$pid/cgroup" 2>/dev/null) && live_scopes+="${cg##*/} "
   done <<<"$out"
 fi
-
-# owned <cgroup.procs file>: true if a process listed there belongs to a
-# live pane. environ is NUL-separated; a process gone meanwhile reads empty.
-owned() {
-  local pid pane
-  while read -r pid; do
-    pane=$(tr '\0' '\n' <"/proc/$pid/environ" 2>/dev/null | sed -n 's/^TMUX_PANE=//p')
-    [ -n "$pane" ] && case $live in *" $pane "*) return 0 ;; esac
-  done <"$1"
-  return 1
-}
 
 # Several sessions closing at once run several of these side by side, so a
 # unit can go between the listing and any step here: one no longer up is
@@ -159,7 +147,6 @@ for unit in $units; do
     unit_up "$unit" && no_procs "$unit"
     continue
   fi
-  owned "$procs_file" && continue
   procs=$(xargs -r ps -o pid=,args= -p <"$procs_file" 2>/dev/null | tr -s ' \n' ' ' | cut -c1-300)
   if systemctl --user stop "$unit" 2>/dev/null; then
     event_log_note tmux_hooks "reaped $unit:${procs:- (empty)}"

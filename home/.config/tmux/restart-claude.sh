@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # prefix C-r (~/.tmux.conf): restart the claude in the session in view, in
 # place -- `claude_tmux_run.sh restart`, behind a confirm prompt that names
-# the work the restart would kill (a turn, background shells), with its
-# verdict on the message line.
+# what the restart would kill (a turn, background shells, the processes the
+# old claude left detached), with its verdict on the message line.
 #
 #   restart-claude.sh ask <socket path> <session> <client>   the binding
 #   restart-claude.sh go  <socket path> <session> <client>   the prompt's y
