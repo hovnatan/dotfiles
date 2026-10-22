@@ -20,8 +20,6 @@
 --                                     1 tab
 --          | picked
 --          v
---     iterm2_window_names.switching(), unless it is the current one: the
---     name banner skips the window left while the Space slides
 --     iterm2_api.activateWindow --"window <id>"--> iterm2_api.py
 --
 -- The second row is the window in front before this one, so a middle click
@@ -58,7 +56,6 @@ local REPLY_SECONDS = 1
 
 local api = require("iterm2_api")
 local picker = require("picker")
-local windowNames = require("iterm2_window_names")
 
 -- Every open and pick is logged (event_log.lua), to the file only, e.g.
 --   2026-10-20T17:02:11.410Z middle click: listing windows
@@ -73,19 +70,12 @@ log, M.logDir = require("event_log").new("iterm2_switcher", { console = false })
 -- iterm2_api or the picker (failure.lua).
 local fail, guarded = require("failure").new("iterm2_switcher", log)
 
--- The window in front when the picker opened (its "current"), so a pick of
--- another one tells the name banner a switch is coming (switching()).
-local current
-
 -- onPick raises, not guarded() here: the picker runs it guarded, alerts
 -- what no fail() did, and gives the keyboard back to the app in front
 -- before when it raised (iterm2_api.py down: nothing came forward).
 M.picker = picker.new({
   onPick = function(window)
     log("picked %s", window)
-    if window ~= current then
-      windowNames.switching()
-    end
     api.activateWindow(window)
   end,
   onCancel = function()
@@ -111,7 +101,6 @@ local function show(event, point)
       ),
     })
   end
-  current = event.current
   -- %.0f, not %d: a click's position can be fractional (812.5), which %d
   -- raises on.
   log("picker up: %d windows at (%.0f, %.0f)", #rows, point.x, point.y)

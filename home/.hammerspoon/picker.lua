@@ -20,13 +20,10 @@
 -- Hammerspoon is the active app while the picker is up, as hs.chooser
 -- does. A pick does not reactivate the app before: onPick activates what
 -- was picked, and an activation first would land on the window that was in
--- front, for as long as the switch takes. iTerm2's window-name banner
--- (iterm2_window_names.lua) then named the old window, then the new one,
--- when a Space slide outlasted its 0.25s wait (2026-10-20 logs). Not a
--- nonactivating panel, which takes the keys with the other app left in
--- front: that app never learns it lost the keyboard, so hiding the panel
--- does not give it back, and the window picked came forward with no keys
--- reaching it (tried 2026-10-20).
+-- front, for as long as the switch takes. Not a nonactivating panel, which
+-- takes the keys with the other app left in front: that app never learns
+-- it lost the keyboard, so hiding the panel does not give it back, and the
+-- window picked came forward with no keys reaching it (tried 2026-10-20).
 --
 -- The page is loaded once, at new(), and kept hidden between openings: a
 -- webview's first load is about 100 ms (its WebKit process starting), an
