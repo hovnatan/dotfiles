@@ -19,8 +19,9 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
                             commandLine, title, path, hostname (read_windows)
       |
       v  plan(): what each tab is
-    ssh, title "[<session>]" -> remote tmux; which socket holds <session>
-                                is asked of the host (one ssh per host)
+    ssh, title "[<shown>]"   -> remote tmux; which socket holds the session
+                                shown, and under what name, is asked of the
+                                host (one ssh per host)
                                 -> LC_TMUX_ATTACH=claude:<session> \
                                      ssh -o SendEnv=LC_TMUX_ATTACH <login>
     ssh, any other title     -> the far side's directory, if it reported one
@@ -47,9 +48,14 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
 
 <login> is ssh_command.py's replay of the tab's ssh command line (Cmd-T's
 parser): the options and destination, never a remote command or forward.
-The "[<session>]" title is ~/.tmux.conf's set-titles-string for an iTerm2
-client. A session lives on the default socket or on claude_tmux_run.sh's
-"claude" one, and the title does not say which, hence the lookup.
+The "[<shown>]" title is ~/.tmux.conf's set-titles-string for an iTerm2
+client: the session name on the default socket, and on claude_tmux_run.sh's
+"claude" one the conversation's full name, "<hostname>/<session>" (TITLED).
+The title does not say which socket, hence the lookup, which also maps
+the shown name back to the session to attach:
+
+    "[main]"             -> default:main
+    "[vm/api/docs]"      -> claude:api/docs   (host "vm")
 
 The attach goes through the remote login shell, not a remote command: over
 Tailscale SSH a remote command gets a pty that stays root's, and the
@@ -115,6 +121,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "home/.hammerspoon"
 import ssh_command
 
 SOCKETS = ("claude", "default")  # tmux_attach_requested.fish accepts these
+# What each socket's sessions show inside the brackets of the terminal title,
+# as tmux formats; must match ~/.tmux.conf's set-titles-string.
+TITLED = {"claude": "#{host}/#{session_name}", "default": "#{session_name}"}
 LANDING_TIMEOUT = 30.0  # s for every restored tab to show its session or directory
 DIR = Path.home() / ".local/state/iterm2_ssh_arrangements"
 SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
@@ -213,10 +222,11 @@ def parse_file(text: str) -> list[Saved]:
 
 
 def tmux_session(title: str) -> str | None:
-    """Return the remote tmux session a tab title shows, or None.
+    """Return the name a tab title shows for its remote tmux session, or None.
 
-    "[api/docs]" -> "api/docs"; "[ai-agent] " -> "ai-agent" (retitle.sh
-    may leave a trailing space); "fish:~" -> None.
+    "[vm/api/docs]" -> "vm/api/docs"; "[main] " -> "main" (retitle.sh
+    may leave a trailing space); "fish:~" -> None. On the claude socket that
+    name is "<hostname>/<session>" (TITLED); the lookup maps it back.
     """
     m = re.fullmatch(r"\[(.+)\] ?", title)
     return m[1] if m else None
@@ -355,19 +365,20 @@ def plan(tab: Tab, index: int, local_hosts: frozenset[str]) -> Plan:
     return Plan("ssh", login=login, path=tab.path)
 
 
-def parse_sessions(text: str) -> dict[str, list[str]]:
-    r"""Return {session: [sockets]} from the `tmux ls` output of every socket.
+def parse_sessions(text: str) -> dict[str, list[tuple[str, str]]]:
+    r"""Return {shown name: [(socket, session)]} from list_sessions_argv's output.
 
-    "claude ai-agent\ndefault main\n"
-        -> {"ai-agent": ["claude"], "main": ["default"]}
+    "claude ai-agent vm/ai-agent\ndefault main main\n"
+        -> {"vm/ai-agent": [("claude", "ai-agent")], "main": [("default", "main")]}
     Lines of any other shape ("no server running on ...") are what a socket
     with no server prints; they are kept only for the error in lines().
     """
-    found: dict[str, list[str]] = {}
+    found: dict[str, list[tuple[str, str]]] = {}
     for line in text.splitlines():
-        socket, _, session = line.partition(" ")
-        if socket in SOCKETS and session:
-            found.setdefault(session, []).append(socket)
+        fields = line.split(" ")
+        if len(fields) == 3 and fields[0] in SOCKETS and all(fields):
+            socket, session, shown = fields
+            found.setdefault(shown, []).append((socket, session))
     return found
 
 
@@ -385,11 +396,14 @@ def ssh_argv(login: str, remote: str, *, unattended: bool) -> list[str]:
 def list_sessions_argv(login: str, *, unattended: bool) -> list[str]:
     """Return the argv that lists every socket's sessions on the host of `login`.
 
+    A line per session: its socket, its name, and the name its title shows
+    (TITLED), tmux formatting both on the far side so the host is that one's.
     The remote command is one word for ssh; its single quotes read the same
     in a remote sh and a remote fish.
     """
     remote = "; ".join(
-        f"{tmux(socket)} ls -F '{socket} #{{session_name}}'" for socket in SOCKETS
+        f"{tmux(socket)} ls -F '{socket} #{{session_name}} {TITLED[socket]}'"
+        for socket in SOCKETS
     )
     return ssh_argv(login, remote, unattended=unattended)
 
@@ -420,7 +434,7 @@ def parse_dirs(text: str, paths: list[str]) -> dict[str, bool]:
     return {p: a == "y" for p, a in zip(paths, answers, strict=True)}
 
 
-Lookup = Callable[[str], tuple[dict[str, list[str]], str]]
+Lookup = Callable[[str], tuple[dict[str, list[tuple[str, str]]], str]]
 DirCheck = Callable[[str, str], bool]  # (login, path) -> a directory there
 
 
@@ -446,20 +460,20 @@ def lines(plans: list[Plan], lookup: Lookup, has_dir: DirCheck) -> list[str]:
             out.append(dir_line(p.login, p.path) if p.path else p.login)
             continue
         found, raw = lookup(p.login)
-        sockets = found.get(p.session, [])
-        if not sockets:
+        held = found.get(p.session, [])
+        if not held:
             msg = (
                 f"tab {i}: tmux session {p.session!r} is on no socket"
                 f" ({', '.join(SOCKETS)}) of `{p.login}`; its tmux ls said:\n{raw}"
             )
             raise ArrangementError(msg)
-        if len(sockets) > 1:
+        if len(held) > 1:
             msg = (
                 f"tab {i}: tmux session {p.session!r} is on sockets"
-                f" {' and '.join(sockets)} of `{p.login}`; rename one"
+                f" {' and '.join(s for s, _ in held)} of `{p.login}`; rename one"
             )
             raise ArrangementError(msg)
-        out.append(attach_line(p.login, sockets[0], p.session))
+        out.append(attach_line(p.login, *held[0]))
     return out
 
 
@@ -633,9 +647,9 @@ async def snapshot(app: iterm2.App) -> None:
 
 def remote_lookup(*, unattended: bool) -> Lookup:
     """Return a lookup asking each host once which tmux sockets hold which sessions."""
-    cache: dict[str, tuple[dict[str, list[str]], str]] = {}
+    cache: dict[str, tuple[dict[str, list[tuple[str, str]]], str]] = {}
 
-    def lookup(login: str) -> tuple[dict[str, list[str]], str]:
+    def lookup(login: str) -> tuple[dict[str, list[tuple[str, str]]], str]:
         if login not in cache:
             log(f"asking `{login}` which tmux sockets hold which sessions")
             # tmux ls exits 1 for a socket with no server, an empty socket,
@@ -825,19 +839,33 @@ class Landing:
     reach: Reach
 
 
-def tmux_landing(label: str, name: str, session: iterm2.Session) -> Landing:
-    """Return the landing of a tab that attaches tmux session `name`.
+def tmux_landing(
+    label: str,
+    socket: str,
+    name: str,
+    session: iterm2.Session,
+) -> Landing:
+    """Return the landing of a tab that attaches tmux session `name` on `socket`.
 
-    Landed once its title shows the session: "[api/docs] " for "api/docs"
-    (~/.tmux.conf's set-titles-string for an iTerm2 client).
+    Landed once its title shows the session as TITLED does (~/.tmux.conf's
+    set-titles-string for an iTerm2 client): "[main] " for default:main,
+    "[vm/api/docs]" for claude:api/docs. The saved line does not name the
+    far side's host, so on the claude socket any "<host>/" prefix will do
+    (a hostname holds no "/", so the first one ends it).
     """
+    shows = {"claude": f"<host>/{name}", "default": name}[socket]
 
     async def reach(s: iterm2.Session) -> tuple[bool, str]:
         title = await s.async_get_variable("name")
-        landed = isinstance(title, str) and tmux_session(title) == name
+        shown = tmux_session(title) if isinstance(title, str) else None
+        if socket == "claude":
+            host, sep, rest = (shown or "").partition("/")
+            landed = bool(host) and bool(sep) and rest == name
+        else:
+            landed = shown == name
         return landed, f"title reads {title!r}"
 
-    return Landing(label, f"[{name}]", session, reach)
+    return Landing(label, f"[{shows}]", session, reach)
 
 
 def dir_landing(label: str, path: str, local: str, session: iterm2.Session) -> Landing:
@@ -868,7 +896,7 @@ def landing_of(
     `local` is the local host, read whenever the file holds a directory line.
     """
     if request := attach_request(line):
-        return tmux_landing(label, request[1], session)
+        return tmux_landing(label, *request, session)
     if (where := dir_request(line)) is not None:
         if local is None:
             msg = f"{label}: a directory line, but no local host was read: {line}"

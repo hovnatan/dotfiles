@@ -16,7 +16,7 @@ sessions on this machine.
   and stops; nothing recreates one that exits.
 - tmux session names are short (letters, digits, `-` and `_` only; the
   window title shows the first two characters). The Claude Code conversation
-  behind a session is named `<hostname>-<session name>`. A session has ONE
+  behind a session is named `<hostname>/<session name>`. A session has ONE
   name: the prompt bar, `/list-agents` (what SendMessage addresses), the
   `/resume` picker and claude.ai all show it, and `/rename` from any of
   them changes it everywhere; claude.ai lists every machine's sessions,
@@ -24,12 +24,16 @@ sessions on this machine.
   every launch, resumes included (a resume by id alone reverts the peer
   name to an auto-generated directory-based one). If a running session
   still shows an auto-generated peer name,
-  `/rename <hostname>-<session name>` inside it fixes it live.
+  `/rename <hostname>/<session name>` inside it fixes it live.
+- Until 2026-10-22 the form was `<hostname>-<session name>`, and older
+  conversations and running sessions still carry it. Every command below
+  still finds them, and the next `load` or `restart` of one renames it to
+  the `/` form. Address a running one by the name `ListAgents` shows.
 - A conversation is LABELED with its task once the task is clear:
   `/label <task>` inside the session, or `prefix L` from tmux, either of
-  which types the full `/rename <hostname>-<session name>/<task>` (task: the
+  which types the full `/rename <hostname>/<session name>/<task>` (task: the
   session-name alphabet, letters, digits, `-` and `_`, e.g.
-  `vm-backend/fix-login`), or `Ctrl+R` on its row in the
+  `vm/backend/fix-login`), or `Ctrl+R` on its row in the
   `/resume` picker for a finished one. The label is what the picker, the
   prompt bar, the status line and claude.ai show; without it every
   conversation a name accumulates (one per `/clear`) reads the same. The
@@ -57,7 +61,7 @@ Two commands bring a session up. To resume an existing conversation
 ```
 
 It is idempotent. `load <name>` resumes the conversation most recently
-talked in under `<hostname>-<name>`, labeled or not, in the directory that
+talked in under `<hostname>/<name>`, labeled or not, in the directory that
 conversation belongs to; `load <name>/<task>` pins the conversation
 carrying that label (found with `history`, below) and refuses when the
 `<name>/<task>` session is live with a different one -- switching means

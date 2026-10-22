@@ -53,14 +53,18 @@ Landing = arr.Landing
 LOCAL = "Mac.local"  # iTerm2's host for a local session here
 arr.LOG.append(LOG)  # the script's own log() lines land in this run's log
 
-# What `tmux ls` on each socket of each host prints.
+# What `tmux ls` on each socket of each host prints (list_sessions_argv):
+# socket, session, and the name its title shows -- "<hostname>/<session>"
+# on the claude socket. Twin's claude "dup" shows as "dup" through a host
+# named "" -- impossible, but it puts one shown name on both sockets.
 HOSTS = {
-    "ssh vm": "claude ai-agent\nclaude api/docs\ndefault main\n"
+    "ssh vm": "claude ai-agent vm/ai-agent\nclaude api/docs vm/api/docs\n"
+    "default main main\n"
     "error connecting to /tmp/tmux-1000/x (No such file or directory)\n",
     "ssh -p 2222 user@box": "no server running on /tmp/tmux-1000/claude\n"
-    "default main\n",
-    "ssh twin": "claude dup\ndefault dup\n",
-    "ssh -t vm": "default main\n",
+    "default main main\n",
+    "ssh twin": "claude dup dup\ndefault dup dup\n",
+    "ssh -t vm": "default main main\n",
 }
 
 
@@ -125,9 +129,9 @@ def refused(tabs: list[Tab], want: str) -> None:
 def _() -> None:
     got = save(
         [
-            Tab(1, "ssh", "ssh vm", "[ai-agent]", "/home/me", "vm"),
+            Tab(1, "ssh", "ssh vm", "[vm/ai-agent]", "/home/me", "vm"),
             Tab(1, "ssh", "ssh vm", "fish:~/d/ai-agent", "/home/me/d/ai-agent", "vm"),
-            Tab(1, "ssh", "ssh vm", "[api/docs] ", "/home/me", "vm"),
+            Tab(1, "ssh", "ssh vm", "[vm/api/docs] ", "/home/me", "vm"),
             Tab(1, "ssh", "ssh -p 2222 user@box ./deploy.sh", "[main]", "/", "box"),
             Tab(1, "ssh", "ssh -p 2222 user@box", "fish:/", "/", "box"),
         ],
@@ -254,6 +258,11 @@ def _() -> None:
     refused([Tab(1, "ssh", "ssh vm", "[gone]", "/", "vm")], "on no socket")
 
 
+@case("a claude session's bare name is not its title, so it matches nothing")
+def _() -> None:
+    refused([Tab(1, "ssh", "ssh vm", "[ai-agent]", "/", "vm")], "on no socket")
+
+
 @case("a session on two sockets is refused")
 def _() -> None:
     refused(
@@ -315,8 +324,8 @@ def _() -> None:
         "2222",
         "vm",
         (
-            "tmux -L claude ls -F 'claude #{session_name}';"
-            " tmux ls -F 'default #{session_name}'"
+            "tmux -L claude ls -F 'claude #{session_name} #{host}/#{session_name}';"
+            " tmux ls -F 'default #{session_name} #{session_name}'"
         ),
     ], got
 
@@ -405,9 +414,9 @@ def in_dir(path: str, after: int, start: str = "/Users/me") -> Moving:
     )
 
 
-def tmux_tab(label: str, name: str, s: Moving) -> Landing:
+def tmux_tab(label: str, name: str, s: Moving, socket: str = "claude") -> Landing:
     """Return the landing of a tmux tab."""
-    return arr.tmux_landing(label, name, s)
+    return arr.tmux_landing(label, socket, name, s)
 
 
 def dir_tab(label: str, path: str, s: Moving) -> Landing:
@@ -418,9 +427,10 @@ def dir_tab(label: str, path: str, s: Moving) -> Landing:
 @case("restore waits for each tmux tab to show its session, each dir tab its path")
 def _() -> None:
     tabs = [
-        tmux_tab("window 1 tab 1", "ai-agent", titled("[ai-agent]", 3)),
-        tmux_tab("window 1 tab 2", "api/docs", titled("[api/docs] ", 0)),
+        tmux_tab("window 1 tab 1", "ai-agent", titled("[vm/ai-agent]", 3)),
+        tmux_tab("window 1 tab 2", "api/docs", titled("[vm/api/docs] ", 0)),
         dir_tab("window 1 tab 3", "/home/me/d", in_dir("/home/me/d", 4)),
+        tmux_tab("window 1 tab 4", "main", titled("[main]", 2), socket="default"),
     ]
     asyncio.run(arr.wait_landed(tabs, timeout=5, poll=0.01))
 
@@ -428,8 +438,8 @@ def _() -> None:
 @case("a tab still a shell at the timeout fails the restore, by name")
 def _() -> None:
     tabs = [
-        tmux_tab("window 1 tab 1", "ai-agent", titled("[ai-agent]", 0)),
-        tmux_tab("window 2 tab 3", "api/docs", titled("[api/docs]", 10**6)),
+        tmux_tab("window 1 tab 1", "ai-agent", titled("[vm/ai-agent]", 0)),
+        tmux_tab("window 2 tab 3", "api/docs", titled("[vm/api/docs]", 10**6)),
         dir_tab("window 2 tab 4", "/home/me/d", in_dir("/home/me/d", 10**6)),
         dir_tab("window 2 tab 5", "/srv", in_dir("/srv", 0)),
     ]
@@ -437,7 +447,7 @@ def _() -> None:
         lambda: asyncio.run(arr.wait_landed(tabs, timeout=0.05, poll=0.01)),
     )
     assert "2 tabs did not land" in error, error
-    assert "window 2 tab 3: want [api/docs], title reads 'fish'" in error, error
+    assert "window 2 tab 3: want [<host>/api/docs], title reads 'fish'" in error, error
     want = (
         "window 2 tab 4: want directory '/home/me/d' off host 'Mac.local',"
         " path reads '/Users/me' on host 'Mac.local'"
@@ -445,6 +455,23 @@ def _() -> None:
     assert want in error, error
     assert "window 1 tab 1" not in error, error
     assert "window 2 tab 5" not in error, error
+
+
+@case("a claude tab has landed only on its own session, behind some host")
+def _() -> None:
+    for title, want in [
+        ("[vm/api/docs]", True),
+        ("[box/api/docs] ", True),
+        ("[api/docs]", False),  # no host: the bare name is not a claude title
+        ("[vm/api/docs2]", False),
+        ("[vm/x/api/docs]", False),  # the host ends at the first "/"
+        ("[vm-api/docs]", False),  # the form before 2026-10-22
+        ("[main]", False),
+    ]:
+        s = titled(title, 0)
+        tab = tmux_tab("t", "api/docs", s)
+        got = asyncio.run(tab.reach(s))[0]
+        assert got is want, (title, got)
 
 
 @case("a tab still local in the very directory wanted has not landed (Mac to Mac)")
@@ -462,7 +489,7 @@ def _() -> None:
     attach = arr.attach_line("ssh vm", "claude", "api/docs")
     got = arr.landing_of("t", attach, s, None)
     assert got is not None, attach
-    assert got.want == "[api/docs]", got
+    assert got.want == "[<host>/api/docs]", got
     got = arr.landing_of("t", arr.dir_line("ssh vm", "/a b"), s, LOCAL)
     assert got is not None
     assert got.want == "directory '/a b' off host 'Mac.local'", got

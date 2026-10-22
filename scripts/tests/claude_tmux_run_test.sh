@@ -71,6 +71,9 @@
 #     load refuses a name with no conversation and any directory; no
 #     subcommand and an unknown one (the retired spawn) fail at once
 #     instead of reaching the watch loop, which would block forever
+#   - a conversation titled in the form before 2026-10-22, "<host>-<name>",
+#     is still loaded, counted as up when live, and listed; load and
+#     restart re-assert its title in the current "<host>/<name>" form
 #   - load <name>/<task> refuses a label two conversations carry, but not
 #     one conversation resumed into two transcripts; load --id resumes the
 #     conversation holding that id at its newest transcript, and refuses an
@@ -114,10 +117,11 @@ start_of() { t display -p -t "=$1:" '#{pane_start_command}' 2>/dev/null; }
 # /tmp, titled for this host -- one load would resume -- talked in on
 # 2026-01-<day> (default 01). Transcripts sharing a uuid are one
 # conversation resumed into a second file; without one, each stands alone.
+# SEP=- titles it in the form before 2026-10-22, "<host>-<title>".
 transcript() {
   mkdir -p "$H/.claude/projects/-tmp"
   printf '%s\n' "{\"type\":\"user\",\"cwd\":\"/tmp\",\"uuid\":\"${3:-$2}\",\"timestamp\":\"2026-01-${4:-01}T00:00:00.000Z\",\"message\":{\"content\":\"hi\"}}" \
-    "{\"type\":\"custom-title\",\"customTitle\":\"$(hostname)-$1\",\"sessionId\":\"$2\"}" \
+    "{\"type\":\"custom-title\",\"customTitle\":\"$(hostname)${SEP:-/}$1\",\"sessionId\":\"$2\"}" \
     >"$H/.claude/projects/-tmp/$2.jsonl"
 }
 # unit_line <key>: the unit file's <key>= line as the script /bin/sh -c
@@ -273,7 +277,7 @@ fi
 agents_json() {
   python3 -c 'import json, sys
 print(json.dumps([{"pid": int(sys.argv[1]), "sessionId": "0000-ctrs", "name": sys.argv[3], "status": sys.argv[2]}]))' \
-    "$1" "$2" "${3:-$(hostname)-ctb}" >"$WORK/agents.json"
+    "$1" "$2" "${3:-$(hostname)/ctb}" >"$WORK/agents.json"
 }
 transcript ctb 0000-ctrs
 pane=$(t display -p -t =ctb: '#{pane_id}')
@@ -328,12 +332,23 @@ grep -q 'forced over busy: a turn' <<<"$out" && pass "... logged as forced" || f
 restart_ctb
 start=$(t display -p -t "$pane" '#{pane_start_command}')
 check_restarted "restart ctb"
-[[ "$start" == *"--resume 0000-ctrs -n $(hostname)-ctb --permission-mode auto --remote-control"* ]] \
+[[ "$start" == *"--resume 0000-ctrs -n $(hostname)/ctb --permission-mode auto --remote-control"* ]] \
   && pass "restart ctb: launch flags kept ($start)" || fail "restart ctb: start command '$start'"
+
+# A claude still carrying the old "<host>-" title comes back under the new one.
+old=$(pid_now)
+agents_json "$old" idle "$(hostname)-ctb"
+out=$(run restart ctb 2>&1)
+rc=$?
+note_log "$out"
+check_restarted "restart ctb titled $(hostname)-ctb"
+start=$(t display -p -t "$pane" '#{pane_start_command}')
+[[ "$start" == *"-n $(hostname)/ctb "* ]] && pass "restart re-asserted $(hostname)-ctb as $(hostname)/ctb" \
+  || fail "restart of $(hostname)-ctb: start command '$start'"
 
 # A title tmux's command parser would split or expand, set by hand.
 old=$(pid_now)
-agents_json "$old" idle "$(hostname)-ctb/is#1'x"
+agents_json "$old" idle "$(hostname)/ctb/is#1'x"
 out=$(run restart ctb 2>&1)
 rc=$?
 note_log "$out"
@@ -636,6 +651,29 @@ start=$(start_of ctb2/a)
 t kill-session -t =ctb2/a
 rm -f "$H/.claude/projects/-tmp/0000-ctb2a.jsonl"
 
+# A conversation titled the old way, "<host>-ctl/a": load finds it, resumes
+# it under "<host>/ctl/a", counts it as up while its claude still reports
+# the old title, and conversations lists it.
+SEP=- transcript ctl/a 0000-ctla
+out=$(run load ctl/a 2>&1)
+rc=$?
+start=$(start_of ctl/a)
+[ "$rc" -eq 0 ] && [[ "$start" == *"--resume 0000-ctla -n $(hostname)/ctl/a "* ]] \
+  && pass "load ctl/a titled $(hostname)-ctl/a: resumed as $(hostname)/ctl/a ($out)" \
+  || fail "load ctl/a titled $(hostname)-ctl/a: rc=$rc ($out), start '$start'"
+cp "$WORK/agents.json" "$WORK/agents.json.keep"
+agents_json "$(t list-panes -t =ctl/a: -F '#{pane_pid}')" idle "$(hostname)-ctl/a"
+out=$(run load ctl/a 2>&1)
+rc=$?
+[ "$rc" -eq 0 ] && grep -q 'already running' <<<"$out" && pass "load ctl/a live as $(hostname)-ctl/a: already running ($out)" \
+  || fail "load ctl/a live as $(hostname)-ctl/a: rc=$rc ($out)"
+out=$(run conversations ctl 2>&1)
+grep -qE '^ctl/a +yes ' <<<"$out" && pass "conversations lists $(hostname)-ctl/a as ctl/a, live" \
+  || fail "conversations for $(hostname)-ctl/a: $out"
+mv "$WORK/agents.json.keep" "$WORK/agents.json"
+t kill-session -t =ctl/a
+rm -f "$H/.claude/projects/-tmp/0000-ctla.jsonl"
+
 # --- new and load: a fresh conversation vs an existing one -----------------
 
 # A used bare name: new must start FRESH, in the directory given -- the
@@ -647,7 +685,7 @@ out=$(run new ctn "$WORK/fresh" 2>&1)
 rc=$?
 start=$(start_of ctn)
 where=$(t display -p -t =ctn: '#{pane_current_path}' 2>/dev/null)
-if [ "$rc" -eq 0 ] && [[ "$start" != *--resume* ]] && [[ "$start" == *"-n $(hostname)-ctn "* ]] && [ "$where" = "$WORK/fresh" ]; then
+if [ "$rc" -eq 0 ] && [[ "$start" != *--resume* ]] && [[ "$start" == *"-n $(hostname)/ctn "* ]] && [ "$where" = "$WORK/fresh" ]; then
   pass "new ctn beside an existing ctn conversation: fresh, in its directory ($out)"
 else
   fail "new ctn: rc=$rc ($out), start '$start', cwd '$where'"

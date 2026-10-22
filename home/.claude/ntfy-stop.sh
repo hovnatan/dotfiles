@@ -22,7 +22,7 @@
 # locked screen must not suppress the push.  The human-readable name
 # is resolved in hook mode for the log lines, and again at push time for
 # the title (a /label may have renamed the session meanwhile), whose
-# <hostname>-<name> form matches the conversation/peer naming
+# <hostname>/<name> form matches the conversation/peer naming
 # claude_tmux_run.sh owns.
 #
 # The topic is read from ~/.config/claude-ntfy/topic, which stays OUTSIDE
@@ -191,7 +191,7 @@ if [ "${1:-}" = --wait ]; then
     exit 0
   fi
   curl -sf --max-time 10 \
-    -H "Title: CC: $(hostname)-$session" \
+    -H "Title: CC: $(hostname)/$session" \
     -H "Tags: speech_balloon" \
     -d "finished a turn ${DEBOUNCE_SECONDS}s ago and is still unwatched" \
     "$NTFY_URL/$topic" >/dev/null

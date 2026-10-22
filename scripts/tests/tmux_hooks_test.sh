@@ -20,7 +20,9 @@
 #                                            client tmux had last, so every
 #                                            line of two tabs read the same)
 #   switch-client to b                    -> session-changed ... session=b
-#   a's pane title "* <host>-renamed"     -> session $N renamed a -> renamed
+#   a's pane title "* <host>/renamed"     -> session $N renamed a -> renamed
+#   then "* <host>-old" (the form before  -> renamed renamed -> old
+#   2026-10-22)
 #   client dies                           -> detached ... session=b
 #                                            synthetic focus-out to %N (b)
 #   an iTerm2-over-ssh attach to a tty    -> exit 1, the reason in the
@@ -162,11 +164,15 @@ t switch-client -c "$client_tty" -t b
 wait_for ' session-changed [^ ]+ session=b: not iTerm2, local: @ssh unset$' \
   && pass "a session switch is logged" || fail "no session-changed line: $(hooks_log)"
 
-t select-pane -t a -T "* $HOSTNAME-renamed"
-wait_for " session \\\$[0-9]+ renamed a -> renamed \\(pane title \"\\* $HOSTNAME-renamed\"\\)\$" \
+t select-pane -t a -T "* $HOSTNAME/renamed"
+wait_for " session \\\$[0-9]+ renamed a -> renamed \\(pane title \"\\* $HOSTNAME/renamed\"\\)\$" \
   && pass "a rename from the pane title is logged" || fail "no rename line: $(hooks_log)"
 [ "$(t list-sessions -F '#{session_name}' | sort | tr '\n' ' ')" = "b renamed " ] \
   && pass "and the session is renamed" || fail "sessions: $(t list-sessions -F '#{session_name}' | tr '\n' ' ')"
+# A conversation not yet reloaded still carries "<host>-<name>".
+t select-pane -t renamed -T "* $HOSTNAME-old"
+wait_for " session \\\$[0-9]+ renamed renamed -> old \\(pane title \"\\* $HOSTNAME-old\"\\)\$" \
+  && pass "the old <host>-<name> title still renames the session" || fail "no rename from $HOSTNAME-old: $(hooks_log)"
 
 # wait: without it bash prints the killed job, heredoc and all.
 kill "$client"

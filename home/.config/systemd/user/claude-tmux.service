@@ -13,7 +13,7 @@ Type=simple
 # The one managed session is "manager", started in
 # ~/.dotfiles/claude_tmux_session; the AGENTS.md there documents how that
 # session starts and resumes the other, unmanaged Claude Code sessions
-# (conversations named "<hostname>-<tmux name>") on this server.
+# (conversations named "<hostname>/<tmux name>") on this server.
 
 # The sessions run on a dedicated socket (tmux -L claude), not the default
 # one, so this service never shares a server with interactive tmux sessions.

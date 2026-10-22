@@ -8,17 +8,19 @@
 #
 # Claude Code sets its pane title to "<glyph> <session name>" and updates
 # it live on /rename; tmux announces every change of it. This takes the
-# name after the glyph, drops the "<hostname>-" prefix, and renames the
+# name after the glyph, drops the "<hostname>/" prefix, and renames the
 # session when the rest differs:
 #
-#   pane title "* vm-backend/fix-login"  -->  session "backend/fix-login"
-#   pane title "* vm-backend"   (label dropped)  -->  session "backend"
+#   pane title "* vm/backend/fix-login"  -->  session "backend/fix-login"
+#   pane title "* vm/backend"   (label dropped)  -->  session "backend"
+#   pane title "* vm-backend"   (the form before 2026-10-22, still on
+#                                conversations not yet reloaded)  -->  "backend"
 #
 #   args: socket_path session_id session_name [pane_title]
 #
 # Only that socket (or the one a test names): its sessions are the ones
 # the script names, while a claude started by hand elsewhere would rename
-# whatever session it sits in. Only a "<glyph> <hostname>-<one word>"
+# whatever session it sits in. Only a "<glyph> <hostname>/<one word>"
 # title: a shell or editor pane ("zsh", "vim file") has no glyph, and an
 # unnamed claude ("* Claude Code") neither the prefix nor one word. The
 # glyph is recognised as "no ASCII letter or digit", not by its code
@@ -39,12 +41,16 @@ socket=$1 sid=$2 sname=$3 title=${4-}
 glyph=${title%% *} want=${title#* }
 [ "$glyph" != "$title" ] || exit 0
 case "$glyph" in *[A-Za-z0-9]*) exit 0 ;; esac
-case "$want" in "$HOSTNAME-"*) want=${want#"$HOSTNAME-"} ;; *) exit 0 ;; esac
+case "$want" in
+  "$HOSTNAME/"*) want=${want#"$HOSTNAME/"} ;;
+  "$HOSTNAME-"*) want=${want#"$HOSTNAME-"} ;;
+  *) exit 0 ;;
+esac
 case "$want" in *" "*) exit 0 ;; esac
 [ "$want" != "$sname" ] || exit 0
 # Logged with the other tmux hooks (log-event.sh): session names are how
 # every other line there says which session it means.
-#   2026-09-30T13:25:01Z session $0 renamed manager/old-task -> manager (pane title "* vm-manager")
+#   2026-09-30T13:25:01Z session $0 renamed manager/old-task -> manager (pane title "* vm/manager")
 # shellcheck source=scripts/lib/event_log.sh
 . "${0%/*}/../../../scripts/lib/event_log.sh"
 if tmux -S "$socket" rename-session -t "$sid" "$want"; then

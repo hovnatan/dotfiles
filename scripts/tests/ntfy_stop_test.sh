@@ -245,7 +245,7 @@ has "watched (\$$sid_watched)" "prompt: user replied, pending push cancelled" &&
 
 posts=$(grep -c '^POST /testtopic' "$WORK/listener.out")
 [ "$posts" = 2 ] && pass "listener got exactly 2 pushes" || fail "listener got $posts pushes"
-grep -qF "title='CC: $(hostname)-push-ok'" "$WORK/listener.out" && pass "push title names host and session" || fail "push title wrong: $(head -1 "$WORK/listener.out")"
+grep -qF "title='CC: $(hostname)/push-ok'" "$WORK/listener.out" && pass "push title names host and session" || fail "push title wrong: $(head -1 "$WORK/listener.out")"
 ntfy_log | grep -q testtopic && fail "the topic leaked into the log" || pass "topic never logged"
 
 # Where and how it logs: with the repo's other event logs, UTC-stamped, and

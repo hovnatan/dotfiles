@@ -3,13 +3,13 @@
 #
 #   label-session.sh <task> [<socket> <pane>]
 #
-# types "/rename <hostname>-<name>/<task>" into the pane, Enter included.
+# types "/rename <hostname>/<name>/<task>" into the pane, Enter included.
 # The socket and pane default to this process's own ($TMUX, $TMUX_PANE),
 # which is how the /label skill beside this file calls it from the
 # session's Bash tool; the "prefix L" binding in ~/.tmux.conf passes the
 # pane the user is looking at. <name> is the tmux session's bare name (its
 # label, if any, dropped), so from session "backend" or "backend/old-task"
-# the title becomes "vm-backend/<task>" -- the convention
+# the title becomes "vm/backend/<task>" -- the convention
 # claude_tmux_run.sh resolves (Naming there), which the pane-title-changed
 # hook then mirrors back onto the tmux session as "backend/<task>".
 #
@@ -52,7 +52,7 @@ case "$task" in
 esac
 [ -n "$socket" ] && [ -n "$pane" ] || fail "not inside a tmux pane, and no socket and pane given"
 # Only the claude socket (or the one a test names): its sessions are the
-# ones named "<hostname>-<name>"; elsewhere the convention does not hold.
+# ones named "<hostname>/<name>"; elsewhere the convention does not hold.
 [ "${socket##*/}" = "${CLAUDE_TMUX_SOCKET:-claude}" ] \
   || fail "pane is on tmux socket '${socket##*/}', not the claude socket"
 
@@ -67,7 +67,7 @@ claude_pid=$(ps -t "$tty" -o stat=,pid=,args= 2>/dev/null \
 [ -z "${CLAUDE_PID:-}" ] || [ "$CLAUDE_PID" = "$claude_pid" ] \
   || fail "claude $CLAUDE_PID is not the pane's foreground claude (nested session?)"
 
-title="$(hostname)-${session%%/*}/$task"
+title="$(hostname)/${session%%/*}/$task"
 tmux -S "$socket" send-keys -t "$pane" -l "/rename $title" \; send-keys -t "$pane" Enter
 notify "$title"
 echo "$title"

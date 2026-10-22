@@ -3,7 +3,7 @@
 # The tmux + Claude Code machinery behind claude-tmux.service, and the new
 # and load helpers its manager session uses. All sessions live on the dedicated
 # "claude" tmux socket; the Claude Code conversation behind tmux session
-# <name> is named "<hostname>-<name>": a session has ONE name -- the
+# <name> is named "<hostname>/<name>": a session has ONE name -- the
 # prompt bar, /list-agents, the /resume picker and claude.ai all show it,
 # and /rename from any of them changes it everywhere -- and claude.ai
 # lists every machine's sessions, hence the hostname. The name is passed
@@ -66,8 +66,8 @@
 #                                      a reused name accumulates apart
 #
 # Naming. The conversation behind tmux session <name> is titled
-# "<hostname>-<name>"; once its task is clear it is labeled
-# "<hostname>-<name>/<task>" (/label <task> inside the session or prefix L
+# "<hostname>/<name>"; once its task is clear it is labeled
+# "<hostname>/<name>/<task>" (/label <task> inside the session or prefix L
 # in tmux, both typing that /rename through
 # ~/.dotfiles/home/.claude/skills/label/label-session.sh, or Ctrl+R
 # in the /resume picker for a finished one), which is what the picker, the prompt
@@ -82,11 +82,11 @@
 # beside api/login), and only the watcher looks the manager up by its bare
 # name (sessions_under; tmux targets without "=" prefix-match as well). The
 # label rides on the same record as the name, so load treats the bare
-# name as a prefix: "backend" resumes whichever of vm-backend and
-# vm-backend/<anything> was talked in last, and re-asserts THAT full
+# name as a prefix: "backend" resumes whichever of vm/backend and
+# vm/backend/<anything> was talked in last, and re-asserts THAT full
 # title with -n, since a resume by id alone would reset it. That is also
 # why starting a conversation is a command of its own: with backend/x
-# talked in last, no form of load reaches a fresh vm-backend. A /clear
+# talked in last, no form of load reaches a fresh vm/backend. A /clear
 # carries the label into the fresh conversation; nothing strips it, so
 # relabel (or /rename to the bare name) when the new work differs. The
 # names and labels new and load accept share one alphabet, NAME_RE: what
@@ -122,7 +122,24 @@ HOST=$(hostname)
 MANAGER_DIR="$HOME/.dotfiles/claude_tmux_session"
 ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}" # startup window new/load wait out
 NAME_RE='^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)?$'    # <name>[/<task>] new/load accept
-# The manager's tmux session; its conversation is "<hostname>-manager".
+# The conversation behind session <name>[/<task>] is "$CONV<name>[/<task>]":
+# "/" after the hostname, which no hostname contains, so the split is never
+# ambiguous ("vm/api/docs"). Until 2026-10-22 it was "<hostname>-",
+# and conversations and live sessions still carry that form: every lookup
+# reads both (canon_title here, canon() in transcripts), and every load and
+# restart re-asserts the title with -n in the new form, so a conversation
+# moves over the next time it is brought up.
+#   canon_title vm-api/docs -> vm/api/docs; vm/api/docs and x-y unchanged
+CONV="$HOST/"
+canon_title() {
+  case $1 in
+    "$HOST-"*) printf '%s\n' "$CONV${1#"$HOST-"}" ;;
+    *) printf '%s\n' "$1" ;;
+  esac
+}
+# canon_titles: canon_title on every line of stdin.
+canon_titles() { awk -v h="$HOST" '{ if (index($0, h "-") == 1) $0 = h "/" substr($0, length(h) + 2); print }'; }
+# The manager's tmux session; its conversation is "<hostname>/manager".
 # Until 2026-10-22 it was "claude", like the socket.
 MANAGER=manager
 # How long restart lets claude shut down after TERM before KILL: past its own
@@ -164,7 +181,8 @@ fi
 # last talked in, and its head carries the cwd and the first prompt. Only
 # each file's tail and head are read, in one process for all files: whole
 # transcripts reach 45 MB. The name selects titles equal to it or extended
-# by "/<task>" (see Naming); empty selects every titled transcript. Newest
+# by "/<task>" (see Naming); a title in the old "<hostname>-" form is read,
+# and printed, in the new one. Empty selects every titled transcript. Newest
 # first, by last message, not file mtime: labeling an old conversation
 # from the /resume picker rewrites its transcript without anyone talking
 # in it, and by mtime that old conversation would be the one the next
@@ -184,11 +202,17 @@ fi
 #            session id (the key in place of a name), resolved to its newest
 #            transcript, or nothing
 transcripts() {
-  python3 - "$@" <<'PYEOF'
+  CTR_HOST="$HOST" python3 - "$@" <<'PYEOF'
 import json, os, sys
 from datetime import datetime, timezone
 
 mode, key, paths = sys.argv[1], sys.argv[2], sys.argv[3:]
+HOST = os.environ["CTR_HOST"]
+
+def canon(title):
+    """The title in the current "<host>/" form (canon_title in the script)."""
+    return HOST + "/" + title[len(HOST) + 1:] if title.startswith(HOST + "-") else title
+
 conv = "" if mode == "resolve-id" else key   # the title filter; an id selects every titled one
 # A directory with no transcripts yet (a fresh machine) leaves the caller's
 # *.jsonl glob unexpanded; that literal pattern means "no conversations".
@@ -239,7 +263,7 @@ for path in paths:
     for line in reversed(tail(path)):
         if title is None and line.startswith('{"type":"custom-title"'):
             rec = json.loads(line)
-            title, sid = rec.get("customTitle", ""), rec.get("sessionId", "")
+            title, sid = canon(rec.get("customTitle", "")), rec.get("sessionId", "")
         if ts is None and ('"type":"user"' in line or '"type":"assistant"' in line):
             ts = quoted(line, "timestamp")   # a message: the picker orders by these too
         if title is not None and ts is not None:
@@ -293,7 +317,7 @@ def fold(rows):
 if mode in ("resolve", "resolve-id"):
     if mode == "resolve-id":
         rows = [r for r in fold(rows) if key == r["id"] or key in r.get("also", [])]
-    elif "/" in conv:
+    elif "/" in conv.removeprefix(HOST + "/"):
         carriers = fold([r for r in rows if r["title"] == conv])
         if len(carriers) > 1:
             sys.exit(f"claude_tmux_run.sh: {conv} labels {len(carriers)} conversations ("
@@ -648,7 +672,7 @@ case "${1:-}" in
     usage="usage: $0 new <name>[/<task>] <dir> [--dangerous]  (name and task: A-Za-z0-9_- only)"
     parse_args "$usage" 2 "${@:2}"
     spec=${rest[0]} dir=${rest[1]}
-    conv="$HOST-$spec"
+    conv="$CONV$spec"
     if [[ ! "$spec" =~ $NAME_RE ]]; then
       echo "$usage" >&2
       exit 1
@@ -695,19 +719,19 @@ case "${1:-}" in
         echo "$usage" >&2
         exit 1
       fi
-      find_conversation resolve "$HOST-$spec" "$HOME"/.claude/projects/*/*.jsonl
+      find_conversation resolve "$CONV$spec" "$HOME"/.claude/projects/*/*.jsonl
       if [ -z "$id" ]; then
-        echo "load: no conversation named $HOST-$spec; $0 new $spec <dir> starts one ($0 conversations lists what exists)" >&2
+        echo "load: no conversation named $CONV$spec; $0 new $spec <dir> starts one ($0 conversations lists what exists)" >&2
         exit 1
       fi
     fi
     # The session a conversation runs in carries its title minus the
-    # hostname -- api/docs for <host>-api/docs, whichever spec found it. An
+    # hostname -- api/docs for <host>/api/docs, whichever spec found it. An
     # id can reach a conversation titled otherwise (by hand), which names no
     # session.
-    target=${title#"$HOST-"}
+    target=${title#"$CONV"}
     if [ "$target" = "$title" ] || [[ ! "$target" =~ $NAME_RE ]]; then
-      echo "load: conversation $id is titled '$title', which names no session ($HOST-<name>[/<task>]); rename it from the /resume picker (Ctrl+R) first" >&2
+      echo "load: conversation $id is titled '$title', which names no session ($CONV<name>[/<task>]); rename it from the /resume picker (Ctrl+R) first" >&2
       exit 1
     fi
 
@@ -725,7 +749,7 @@ case "${1:-}" in
       if [ -n "$spec" ] && [[ "$spec" != */* ]]; then
         ok=1
       elif [ -n "$spec" ]; then
-        ok=$([ "$live" = "$title" ] && echo 1)
+        ok=$([ "$(canon_title "$live")" = "$title" ] && echo 1)
       else
         ok=$([ "$(agent_id "${pid:-}" <<<"$agents")" = "$id" ] && echo 1)
       fi
@@ -871,7 +895,7 @@ case "${1:-}" in
     }
     trap 'disarm; die "interrupted before the kill; claude $pid left running"' INT TERM HUP
     hook="respawn-pane -t $pane -c $(tmux_quote "$cwd") $(tmux_quote "${PANE_CMD[@]}" \
-      --resume "$live_id" -n "$live_title" "${mode[@]}" --remote-control)"
+      --resume "$live_id" -n "$(canon_title "$live_title")" "${mode[@]}" --remote-control)"
     hook+=" ; set-hook -p -u -t $pane pane-died ; set-option -p -u -t $pane remain-on-exit"
     if ! tmux -L "$SOCKET" set-option -p -t "$pane" remain-on-exit on \
       || ! tmux -L "$SOCKET" set-hook -p -t "$pane" pane-died "$hook"; then
@@ -965,11 +989,11 @@ case "${1:-}" in
     # tmux session, which hosts one of a name's many.
     filter="${2:-}"
     live=$(live_agents) || exit 1
-    live=$(cut -f3 <<<"$live")
+    live=$(cut -f3 <<<"$live" | canon_titles)
     printf '%-40s %-5s %-17s %s\n' NAME LIVE 'LAST ACTIVE' DIRECTORY
     transcripts tsv "" "$HOME"/.claude/projects/*/*.jsonl \
       | while IFS=$'\t' read -r ts _ title cwd _; do
-        name=${title#"$HOST-"}
+        name=${title#"$CONV"}
         [ "$name" != "$title" ] && [[ "$name" =~ $NAME_RE ]] || continue
         [ -z "$filter" ] || [[ "$name" == *"$filter"* ]] || continue
         printf '%s\t%s\t%s\t%s\n' "$name" "$ts" "$cwd" "$title"
@@ -990,7 +1014,7 @@ case "${1:-}" in
       echo "usage: $0 history <name>" >&2
       exit 1
     fi
-    transcripts history "$HOST-$name" "$HOME"/.claude/projects/*/*.jsonl
+    transcripts history "$CONV$name" "$HOME"/.claude/projects/*/*.jsonl
     exit 0
     ;;
   serve)
@@ -1003,13 +1027,13 @@ case "${1:-}" in
       exit 1
     fi
     if [ -z "$(find_session "$MANAGER")" ]; then
-      find_conversation resolve "$HOST-$MANAGER" \
+      find_conversation resolve "$CONV$MANAGER" \
         "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl
       if [ -n "$id" ]; then
         resume_session "$MANAGER" "$MANAGER_DIR" --dangerously-skip-permissions || exit 1
       else
-        start_session "$MANAGER" "$MANAGER_DIR" "new conversation $HOST-$MANAGER in $MANAGER_DIR" \
-          -n "$HOST-$MANAGER" --dangerously-skip-permissions || exit 1
+        start_session "$MANAGER" "$MANAGER_DIR" "new conversation $CONV$MANAGER in $MANAGER_DIR" \
+          -n "$CONV$MANAGER" --dangerously-skip-permissions || exit 1
       fi
     fi
     # The managed session under whatever label its conversation carries.

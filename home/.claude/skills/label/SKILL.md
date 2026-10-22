@@ -10,7 +10,7 @@ Run exactly this, with the argument the user gave, and nothing else:
 
     ~/.claude/skills/label/label-session.sh "$ARGUMENTS"
 
-It types `/rename <hostname>-<name>/<task>` into this session's own pane;
+It types `/rename <hostname>/<name>/<task>` into this session's own pane;
 the rename queues behind this turn and runs the moment it ends. On success
 reply with the one line it printed, the full title, and stop. On failure
 quote its error and stop: do not retry with a changed task, do not run

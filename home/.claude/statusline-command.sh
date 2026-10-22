@@ -233,18 +233,12 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
   fi
 fi
 
-# Session name (set via -n or /rename; absent on unnamed sessions) minus
-# the "<hostname>-" prefix these sessions carry for claude.ai's sake (see
-# ~/.dotfiles/scripts/claude_tmux_run.sh): the machine is this one, and the
-# 20 characters (17 + "...") that keep the line short are better spent on
-# the name and its task label. Parameter expansion only: this runs on
-# every refresh.
+# Session name (set via -n or /rename; absent on unnamed sessions), whole:
+# "<hostname>/<name>/<task>" as claude_tmux_run.sh names it, the same string
+# the prompt bar, /resume and claude.ai show, so one conversation never
+# reads two ways. Neither shortened nor stripped of the hostname.
 sname=""
 if [ -n "$session_name" ]; then
-  session_name="${session_name#"$(hostname)-"}"
-  if [ "${#session_name}" -gt 20 ]; then
-    session_name="${session_name%"${session_name#?????????????????}"}..."
-  fi
   sname="\033[1m${session_name}\033[0m \033[2m|\033[0m "
 fi
 

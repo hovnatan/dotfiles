@@ -168,11 +168,11 @@ and the fleet policy in `claude_tmux_session/AGENTS.md` stay separate steps.
 
 ## Claude Code in tmux from boot (VMs)
 
-Runs an always-on manager tmux session `claude` at boot: Claude Code with
+Runs an always-on manager tmux session `manager` at boot: Claude Code with
 permissions bypassed, started in `~/.dotfiles/claude_tmux_session`, restarted
 whenever it exits. Ask it (e.g. over Remote Control) to bring up other
 sessions: per `claude_tmux_session/AGENTS.md` it resumes the conversation
-named `<hostname>-<name>` -- also its Remote Control name on claude.ai -- in
+named `<hostname>/<name>` -- also its Remote Control name on claude.ai -- in
 a tmux session `<name>` running in auto permission mode (permissions
 bypassed only on explicit request). Spawned sessions are
 unmanaged: they survive service restarts and stops, and nothing recreates one
