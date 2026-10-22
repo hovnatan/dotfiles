@@ -6,17 +6,12 @@
 # Adding an element? Take a free treatment, or share one whose meaning already
 # matches; never re-use a hue for an unrelated idea.
 #
-#   bold bright    host:                   a lighter shade of the path's blue:
-#     blue                                 the same "location" idea, told apart
-#                                          at a glance from the path; left out
-#                                          when the session name opens with it
-#   bold blue      path                    matches the PS1 in ~/.zshrc.shared;
-#                                          host:path reads as a location, as in scp
+#   bold blue      path                    matches the PS1 in ~/.zshrc.shared
 #   blue           cache "cold"            the entry is gone; the next request
 #                                          pays a full write. The one shared
 #                                          hue: blue is what "cold" looks like,
 #                                          and weight keeps it apart from the
-#                                          host and path, which are never drawn plain
+#                                          path, which is never drawn plain
 #   green          branch                  matches that PS1; "*" marks dirty,
 #                                          "?" a dirty check that timed out
 #   yellow         gauge 20-80%            warm, but not now (Ctx)
@@ -183,21 +178,6 @@ else
   path="${path}${1}"
 fi
 
-# Short machine name in front of the path ("mbp:~/.dotfiles"), the same name
-# the fish prompt shows: fish's universal fish_prompt_host, read from the
-# gitignored fish_variables so no host name sits in this public repo, else the
-# hostname up to its first dot. fish stores it escaped (my\x2dbox for my-box),
-# and dash's printf cannot decode \xNN, so awk does, portably across awks.
-host=$(sed -n 's/^SETUVAR fish_prompt_host://p' "$HOME/.config/fish/fish_variables" 2>/dev/null | awk '
-  { out = ""; s = $0; hex = "0123456789abcdef"
-    while (match(s, /\\x[0-9a-fA-F][0-9a-fA-F]/)) {
-      h = tolower(substr(s, RSTART + 2, 2))
-      out = out substr(s, 1, RSTART - 1) sprintf("%c", (index(hex, substr(h, 1, 1)) - 1) * 16 + index(hex, substr(h, 2, 1)) - 1)
-      s = substr(s, RSTART + 4)
-    }
-    print out s }')
-[ -n "$host" ] || host=$(hostname -s)
-
 # Git branch, always green, with a trailing "*" when the tree is dirty -- the
 # same shape as git_prompt in ~/.zshrc.shared, so one repo never reads two ways
 # on one screen. See the glyph note in the hue budget above for why the dirty
@@ -242,15 +222,6 @@ sname=""
 if [ -n "$session_name" ]; then
   sname="\033[1m${session_name}\033[0m \033[2m|\033[0m "
 fi
-
-# A name that already opens with the host ("vm/backend") says where the
-# session runs, so the path loses its "vm:" rather than print the host twice.
-# Matched against both spellings: claude_tmux_run.sh names by the full
-# hostname, the prefix above may be fish's shorter fish_prompt_host.
-case "$session_name" in
-  "$host"/* | "$(hostname)"/*) host_prefix="" ;;
-  *) host_prefix="$host:" ;;
-esac
 
 # Main-thread agent name (absent unless the session is running as a custom
 # agent type via --agent / a .claude/agents/*.md slug). Rare and worth
@@ -412,4 +383,4 @@ cache=" \033[2m|\033[0m ${pcolor}${cache_mark}${cache_txt}\033[0m"
 # reads as its own: "12:55 ET" on the Mac, "16:55 UTC" on a UTC box.
 clk=" \033[2m|\033[0m ${clock}"
 
-printf '%b\033[1;94m%s\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b' "$sname" "$host_prefix" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$clk"
+printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$clk"
