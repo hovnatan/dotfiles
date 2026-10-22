@@ -5,11 +5,12 @@ globs:
 # Skip what git ignores (.venv/, .logs/, ...), so a local run lints the same
 # set as CI's clean checkout.
 gitignore: true
-# Vendored skills (a .upstream file beside SKILL.md): byte-for-byte copies of
-# a reviewed upstream commit, replaced whole by check_skill_updates.sh --apply.
-# Restyling one here would show as drift from upstream. Add a skill to this
-# list when vendoring it (e.g. "home/.claude/skills/<name>/**").
-ignores: []
+# Vendored code (a .upstream file at its root): byte-for-byte copies of a
+# reviewed upstream commit, skills replaced whole by check_skill_updates.sh
+# --apply. Restyling one here would show as drift from upstream. Add a skill
+# to this list when vendoring it (e.g. "home/.claude/skills/<name>/**").
+ignores:
+  - "home/.config/tmux/vendor/**"
 config:
   # The rules live in one place, shared with every project that has no config.
   extends: home/.config/markdownlint/.markdownlint.yaml

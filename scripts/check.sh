@@ -74,10 +74,14 @@ need() {
 # --- the checks ---------------------------------------------------------------
 
 # shell_files: every tracked shell script, NUL-separated. The git hooks
-# have no .sh, as git runs them by their bare names.
-shell_files() { git ls-files -z '*.sh' 'scripts/git-hooks/*'; }
+# have no .sh, as git runs them by their bare names. Vendored code
+# (home/.config/tmux/vendor/, each pinned by its .upstream) is left out: it
+# stays byte-for-byte upstream's, in upstream's style.
+shell_files() {
+  git ls-files -z '*.sh' 'scripts/git-hooks/*' ':(exclude)home/.config/tmux/vendor/**'
+}
 
-# Fix a shfmt failure with:  git ls-files -z '*.sh' 'scripts/git-hooks/*' | xargs -0 shfmt -w
+# Fix a shfmt failure with:  scripts/check.sh's shell_files | xargs -0 shfmt -w
 check_shell() {
   need shellcheck shfmt || return 1
   shell_files | xargs -0 shellcheck -S warning || return 1

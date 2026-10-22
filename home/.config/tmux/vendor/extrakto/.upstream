@@ -1,0 +1,7 @@
+repo=https://github.com/laktak/extrakto
+subdir=
+branch=master
+commit=d1af77988081dae496fa4a1f5e5e6bc9ef66767f
+# Byte-for-byte at that commit (upstream has no releases or tags), minus its
+# CI and tests: .github/ tests/ .gitignore .editorconfig. Loaded from
+# ~/.tmux.conf; bump by re-copying the same files at a reviewed commit.
