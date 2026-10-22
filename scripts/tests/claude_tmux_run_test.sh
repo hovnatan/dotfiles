@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/claude_tmux_run.sh scripts/lib/* home/.config/systemd/user/claude-tmux.service home/.profile.shared home/.config/tmux/restart-claude.sh home/.tmux.conf
+# check.sh covers: scripts/claude_tmux_run.sh scripts/lib/* home/.config/systemd/user/claude-tmux.service home/.profile.shared home/.config/tmux/restart-claude.sh home/.config/tmux/reap-panes.sh home/.tmux.conf
 # check.sh runs-on: Linux
 #
 # claude_tmux_run_test.sh -- end-to-end checks for scripts/claude_tmux_run.sh
@@ -78,6 +78,11 @@
 #     one conversation resumed into two transcripts; load --id resumes the
 #     conversation holding that id at its newest transcript, and refuses an
 #     id nothing holds
+#   - a process a session left in the background (setsid) ends when the
+#     session closes, and another session's stays, as does a session born
+#     while the reap runs; with the last session
+#     gone, the next cold start stops what is left instead of failing on a
+#     tmux-server-<socket> scope still loaded; each stop is logged
 #
 # Usage: scripts/tests/claude_tmux_run_test.sh   (exit 0 = all passed)
 # On failure the work dir (stub, profile, unit output) is kept and printed.
@@ -103,6 +108,7 @@ H="$WORK/home"
 LOGIN_SHELL=$(getent passwd "$(id -un)" | cut -d: -f7)
 
 failures=0
+RUN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ) # to tell this run's lines in shared logs
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 pass() { log "PASS $*"; }
 fail() {
@@ -154,6 +160,7 @@ cleanup() {
     case "$f" in */.logs/*_claude_tmux_restart/events.log) rm -rf "${f%/events.log}" ;; esac
   done
   [ "${#bgpids[@]}" -eq 0 ] || kill "${bgpids[@]}" 2>/dev/null
+  [ -z "${ORPHAN:-}" ] || pkill -f -x "sleep $ORPHAN"
   if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
 }
 trap cleanup EXIT
@@ -781,6 +788,84 @@ kill "$(t list-panes -t =ctb2: -F '#{pane_pid}')"
 sleep 1
 t has-session -t =ctb2 2>/dev/null && fail "ctb2's process exited but the session remains (dead pane kept)" \
   || pass "ctb2's process exited and its session went with it"
+
+# --- what a session started in the background ends with it -----------------
+# tmux 3.7 runs each pane in a scope of its own, PartOf the server's scope.
+# A process a session detached (setsid, nohup, a tool's background job)
+# outlives its pane in that scope, and the scope keeps the server's scope
+# loaded after the server exits: the next cold start's systemd-run of
+# tmux-server-<socket> is refused ("already loaded"), and nothing comes up
+# (2026-10-22: a cloud-sql-proxy a session had left). Last, as it ends the
+# server.
+orphan_in() { # <session>: prints the pid of the orphan it left there
+  # Earlier orphans run the same command: wait for one that was not there.
+  local before p
+  before=" $(pgrep -f -x "sleep $ORPHAN" | tr '\n' ' ')"
+  t new-window -d -t "=$1:" "sh -c 'setsid sleep $ORPHAN </dev/null >/dev/null 2>&1 & exec sleep 100000'"
+  for _ in $(seq 20); do
+    for p in $(pgrep -f -x "sleep $ORPHAN"); do
+      case $before in *" $p "*) ;; *) echo "$p" && return ;; esac
+    done
+    sleep 0.1
+  done
+}
+gone() { # <pid>: true once it has exited, within 5 s
+  for _ in $(seq 50); do
+    kill -0 "$1" 2>/dev/null || return 0
+    sleep 0.1
+  done
+  return 1
+}
+ORPHAN=$((300000 + $$ % 100000)) # a sleep length nothing else on the box runs
+
+t kill-server 2>/dev/null
+sleep 0.5
+run new cl1 /tmp >/dev/null 2>&1 && run new cl2 /tmp >/dev/null 2>&1 \
+  || fail "new cl1, cl2 for the orphan checks"
+o1=$(orphan_in cl1)
+o2=$(orphan_in cl2)
+t kill-session -t =cl1
+if [ -n "$o1" ] && gone "$o1"; then pass "closing a session stops what it left in the background (pid $o1)"; else
+  fail "pid ${o1:-none} outlived its session cl1 ($(ps -o args= -p "${o1:-0}"))"
+fi
+kill -0 "${o2:-0}" 2>/dev/null && pass "and leaves another session's (pid $o2) running" \
+  || fail "closing cl1 also ended cl2's background job (pid ${o2:-none})"
+# A session started while the hook of one just closed runs is not taken for
+# a leftover: the reaper once listed the live panes before the scopes, and
+# stopped the scope of a pane born in between (`stop` then `new`).
+# The window is the hook's own run, so the new session comes 0 to 0.45 s
+# after the close, across it.
+for i in $(seq 0 15); do
+  t new-session -d -s "clr$i" sleep 100000
+  t kill-session -t "=clr$i"
+  sleep "$(printf '0.%02d' $((i * 3)))"
+  t new-session -d -s "cln$i" sleep 100000
+done
+sleep 3
+born=$(sessions | tr ' ' '\n' | grep -c '^cln')
+[ "$born" -eq 16 ] && pass "16 sessions started as another closed all survive its reap" \
+  || fail "of 16 sessions started as another closed, $born survive its reap ($(sessions))"
+for i in $(seq 0 15); do t kill-session -t "=cln$i" 2>/dev/null; done
+# The last session: the server exits with it (exit-empty), so the next
+# launch is the one that must clear what is left.
+t kill-session -t =cl2
+sleep 0.5
+if run new cl3 /tmp >"$WORK/cold.out" 2>&1; then pass "a cold start after the last session left an orphan: $(cat "$WORK/cold.out")"; else
+  fail "a cold start after the last session left an orphan: $(tr '\n' ' ' <"$WORK/cold.out")"
+fi
+if [ -n "$o2" ] && gone "$o2"; then pass "and that orphan (pid $o2) is gone"; else
+  fail "pid ${o2:-none} survived the server and the next start ($(ps -o args= -p "${o2:-0}"))"
+fi
+# $H/.dotfiles is the repo, so the reaps land in its daily hooks log.
+reaped=$(cat "$REPO"/.logs/*_tmux_hooks/events.log 2>/dev/null | grep -c "reaped tmux-spawn-.*sleep $ORPHAN")
+[ "$reaped" -ge 2 ] && pass "each reap is logged with what it stopped ($reaped lines)" \
+  || fail "reaps logged: $reaped, expected 2 (tmux hooks log)"
+# Nothing of this run's failed to stop: a FAILED line is a reap that picked
+# a live pane's scope, or one another reap had taken. Lines of the run are
+# those stamped since it started (the log is shared with the live server).
+failed_reaps=$(cat "$REPO"/.logs/*_tmux_hooks/events.log 2>/dev/null \
+  | awk -v t="$RUN_START" '$1 >= t && /FAILED to stop/' | cut -c1-160)
+[ -z "$failed_reaps" ] && pass "no reap failed during the run" || fail "reaps failed: $failed_reaps"
 
 log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"
 exit $((failures > 0))

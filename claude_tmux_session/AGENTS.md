@@ -50,6 +50,14 @@ sessions on this machine.
   whatever its label; `=backend` matches only the unlabeled name.
 - A prompt-bar color (`/color`) does not survive `/clear`; only a resume
   brings it back (Claude Code does that itself).
+- What a session starts ends with it. Each pane runs in a systemd scope
+  of its own, and when a session closes, however it closes, the scopes of
+  its panes are stopped (`home/.config/tmux/reap-panes.sh`, logged in the
+  tmux hooks' log): a `setsid nohup` job, a proxy, a watcher started from a
+  session does not survive it. `restart` keeps the pane, so it keeps them
+  too. A job meant to outlive its session runs as a unit of its own:
+  `systemd-run --user --unit=<name> <command>` (then
+  `systemctl --user status <name>`, `journalctl --user -u <name>`).
 
 ## Bringing up a session
 
@@ -171,7 +179,8 @@ Capture every target's pane first and leave a session alone when it shows:
   Tracked means a live CHILD of the session's `claude` pid. A process merely
   carrying that session's `CLAUDE_PID`/`TMUX_PANE` env but reparented to
   systemd was detached on purpose (`setsid nohup ... > log`): it survives the
-  kill untouched and nothing was tracking it, so it is NOT a reason to skip.
+  restart untouched (the pane stays) and nothing was tracking it, so it is
+  NOT a reason to skip. It ends only when its session closes (see The setup).
   Grep the session's transcript for how it was launched before believing an
   env stamp.
 

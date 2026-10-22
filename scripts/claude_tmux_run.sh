@@ -533,8 +533,16 @@ launch() {
   # exactly while some session does, and later calls just talk to it. A
   # failure (no user systemd manager) stops the launch with systemd-run's
   # own error rather than quietly starting the server inside the service.
+  #
+  # A scope of that name can outlive its server: a pane's scope that a
+  # session's background job keeps alive holds it loaded (PartOf), and
+  # systemd-run would be refused. reap-panes.sh --server-gone stops those
+  # pane scopes first and waits for the name to come free; the
+  # session-closed hook does the same for every session but the last.
   local scope=()
   if ! tmux -L "$SOCKET" list-sessions >/dev/null 2>&1; then
+    "$(dirname "$0")/../home/.config/tmux/reap-panes.sh" \
+      "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$SOCKET" --server-gone || return 1
     scope=(systemd-run --user --scope --quiet --collect
       --unit="tmux-server-$SOCKET"
       --description="tmux server for the $SOCKET socket (claude_tmux_run.sh)")
