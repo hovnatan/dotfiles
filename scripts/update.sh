@@ -216,10 +216,14 @@ main() {
   # Nothing running re-reads its config on its own; say what to poke.
   echo "--- reload as needed"
   echo "  tmux:        tmux source-file ~/.tmux.conf"
+  # The claude sessions run on a tmux server of their own, which the line
+  # above does not reach: its hooks and title format change only on this.
+  [ -e ~/.config/systemd/user/claude-tmux.service ] \
+    && echo "  claude tmux: tmux -L claude source-file ~/.tmux.conf"
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
   [ -e ~/.config/systemd/user/claude-tmux.service ] \
-    && echo "  claude-tmux: systemctl --user restart claude-tmux (the manager; other sessions: reload them from it)"
+    && echo "  claude-tmux: prefix C-r in the manager's pane (keeps its background jobs; systemctl --user restart claude-tmux closes its session and ends them); other sessions: reload them from it"
   return "$status"
 }
 

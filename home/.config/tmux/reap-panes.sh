@@ -39,6 +39,8 @@
 #       all of them -- the hook cannot be relied on for the last session,
 #       whose server exits with it -- then waits for the server's scope to
 #       unload, and fails naming what still holds it
+#   either, the server's scope up but tmux unable to reach it (socket file
+#   removed, a tmux the server rejects) -> stops nothing, fails loudly
 #
 # A job meant to outlive its session belongs in a unit of its own:
 #   systemd-run --user --unit=<name> <command>
@@ -60,21 +62,80 @@ server_unit="tmux-server-$name.scope"
 # shellcheck source=scripts/lib/event_log.sh
 . "${0%/*}/../../../scripts/lib/event_log.sh"
 
-# The pane scopes, listed BEFORE the panes: a scope only exists once tmux
-# has forked its pane, so every pane a listed scope can belong to is in the
-# list-panes below. The other order stopped a pane born in between.
+# The pane scopes, listed BEFORE anything is asked of the server: a scope
+# only exists once tmux has forked its pane, so every pane a listed scope
+# can belong to is in the list-panes below. The other order stopped a pane
+# born in between. Likewise a server started after this listing has its
+# scope active by the time --server-gone checks it below.
 units=$(systemctl --user show -p ConsistsOf --value "$server_unit")
+
+# unit_up <unit>: true while the unit is loaded and not inactive or failed.
+unit_up() {
+  [ "$(systemctl --user show -p LoadState --value "$1")" = loaded ] || return 1
+  case $(systemctl --user show -p ActiveState --value "$1") in inactive | failed) return 1 ;; esac
+}
+# procs_of <unit>: the file listing the unit's processes, failing when the
+# unit has none to list (gone, or not up).
+procs_of() {
+  local cg
+  cg=$(systemctl --user show -p ControlGroup --value "$1")
+  [ -n "$cg" ] && [ -r "/sys/fs/cgroup$cg/cgroup.procs" ] && echo "/sys/fs/cgroup$cg/cgroup.procs"
+}
+# no_procs <unit>: an unreadable process list of a unit that is up is an
+# error, not a skip -- on a cgroup v1 or hybrid host that is every scope,
+# and the leftovers this exists to stop would pile up unseen.
+no_procs() {
+  event_log_note tmux_hooks "FAILED to read $1's processes"
+  echo "reap-panes.sh: $1 is up but its processes cannot be read under /sys/fs/cgroup$(systemctl --user show -p ControlGroup --value "$1"); this needs the unified cgroup v2 hierarchy at /sys/fs/cgroup" >&2
+  exit 1
+}
+# server_runs: true while the tmux server process is in its scope. Not the
+# scope's own state: the hooks the server runs (this one included) live in
+# that scope too and keep it up for a moment after the server has gone.
+server_runs() {
+  local f pid
+  unit_up "$server_unit" || return 1
+  f=$(procs_of "$server_unit") || no_procs "$server_unit"
+  while read -r pid; do
+    [ "$(cat "/proc/$pid/comm" 2>/dev/null)" = "tmux: server" ] && return 0
+  done <"$f"
+  return 1
+}
+# unreachable <client error>: the server runs and this cannot reach it --
+# not the same as a server gone. Stop nothing.
+unreachable() {
+  event_log_note tmux_hooks "REFUSED to reap: the tmux server in $server_unit runs but $sock cannot reach it ($1)"
+  echo "reap-panes.sh: no tmux server answers at $sock ($1), but one runs in $server_unit: it cannot be reached (its socket file removed? a tmux the server's protocol rejects?). Nothing stopped. Check: systemctl --user status $server_unit; ls -l $sock" >&2
+  exit 1
+}
 
 # The live panes, " %0 %3 ", and the scopes their own processes run in,
 # " tmux-spawn-a.scope ... " -- that one is how a pane just forked is known,
 # before it execs into an environment that has TMUX_PANE. None once the
-# server is gone. /proc/<pid>/cgroup is "0::/user.slice/.../tmux-spawn-a.scope".
+# server is gone. The scope is the last component of the unified (cgroup
+# v2) line of /proc/<pid>/cgroup: "0::/user.slice/.../tmux-spawn-a.scope".
 live=" " live_scopes=" "
-if [ -z "$server_gone" ]; then
+if [ -n "$server_gone" ]; then
+  server_runs && unreachable "no server answers"
+else
+  # A failed list-panes is never read as "no panes", which would stop every
+  # pane's scope. The server exiting with its last session is the one
+  # benign failure: it is gone within moments, and what it leaves
+  # is the next cold start's (launch runs this with --server-gone).
+  if ! out=$(tmux -S "$sock" list-panes -a -F '#{pane_id} #{pane_pid}' 2>&1); then
+    for _ in $(seq 50); do
+      server_runs || {
+        event_log_note tmux_hooks "server gone with its last session; its pane scopes are the next start's to stop"
+        exit 0
+      }
+      sleep 0.1
+    done
+    unreachable "$(tr '\n' ' ' <<<"$out")"
+  fi
   while read -r pane pid; do
     live+="$pane "
-    cg=$(cut -d: -f3 "/proc/$pid/cgroup" 2>/dev/null) && live_scopes+="${cg##*/} "
-  done < <(tmux -S "$sock" list-panes -a -F '#{pane_id} #{pane_pid}' 2>/dev/null)
+    cg=$(sed -n 's/^0:://p' "/proc/$pid/cgroup" 2>/dev/null) && live_scopes+="${cg##*/} "
+  done <<<"$out"
 fi
 
 # owned <cgroup.procs file>: true if a process listed there belongs to a
@@ -89,21 +150,20 @@ owned() {
 }
 
 # Several sessions closing at once run several of these side by side, so a
-# unit can go between the listing and any step here: one gone is skipped
-# (an empty ControlGroup would name the root cgroup, every process).
+# unit can go between the listing and any step here: one no longer up is
+# skipped (and one up whose processes cannot be read fails, see no_procs).
 for unit in $units; do
   case $unit in tmux-spawn-*.scope) ;; *) continue ;; esac
   case $live_scopes in *" $unit "*) continue ;; esac
-  cg=$(systemctl --user show -p ControlGroup --value "$unit")
-  procs_file="/sys/fs/cgroup$cg/cgroup.procs"
-  [ -n "$cg" ] && [ -r "$procs_file" ] || continue
+  if ! procs_file=$(procs_of "$unit"); then
+    unit_up "$unit" && no_procs "$unit"
+    continue
+  fi
   owned "$procs_file" && continue
   procs=$(xargs -r ps -o pid=,args= -p <"$procs_file" 2>/dev/null | tr -s ' \n' ' ' | cut -c1-300)
   if systemctl --user stop "$unit" 2>/dev/null; then
     event_log_note tmux_hooks "reaped $unit:${procs:- (empty)}"
-  elif [ "$(systemctl --user show -p LoadState --value "$unit")" != loaded ]; then
-    continue
-  else
+  elif unit_up "$unit"; then
     event_log_note tmux_hooks "FAILED to stop $unit:${procs:- (empty)}"
     echo "reap-panes.sh: could not stop $unit (holding:${procs:- nothing listed}); see: systemctl --user status $unit" >&2
     exit 1

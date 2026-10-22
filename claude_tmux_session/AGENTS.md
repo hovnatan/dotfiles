@@ -220,12 +220,18 @@ instead.
   launch directory. Report both so the user can restore
   them.
 - This manager session cannot reload itself: it is in a turn whenever it
-  runs anything, so `restart claude` refuses. Tell the user to press
-  `prefix C-r` in its pane once it is idle, or run
-  `systemctl --user restart claude-tmux`; systemd recreates the session and
-  resumes this conversation. A pulled change to the unit file needs
-  `systemctl --user daemon-reload` first (`dotup` runs it); until then a
-  restart runs the unit as systemd last read it.
+  runs anything, so `restart manager` refuses. Tell the user to press
+  `prefix C-r` in its pane once it is idle, which keeps the pane and so
+  its background jobs. `systemctl --user restart claude-tmux` also works --
+  systemd recreates the session and resumes this conversation -- but it
+  closes the session first, so what the manager left running in the
+  background ends with it (see The setup). A pulled change to the unit file
+  needs `systemctl --user daemon-reload` first (`dotup` runs it); until then
+  a restart runs the unit as systemd last read it.
+- A pulled change to `home/.tmux.conf` (a hook, the title format) reaches
+  the claude sessions' server only on
+  `tmux -L claude source-file ~/.tmux.conf`: a plain `tmux source-file`
+  reloads the default server, and nothing reloads either on its own.
 
 Never run `claude_tmux_run.sh serve` -- that is the systemd entrypoint,
 which blocks forever in a watch loop (a bare call only prints the usage)

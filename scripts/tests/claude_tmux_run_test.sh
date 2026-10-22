@@ -9,7 +9,8 @@
 # systemd manager (transient units, scopes) and tmux. Takes about 60 s.
 #
 #   throwaway HOME: .profile       the installer's hook -> home/.profile.shared
-#                   .dotfiles  ->  this repo
+#                   .dotfiles/     every entry of this repo linked, but .logs:
+#                                  the event logs the run causes land here
 #                   .local/bin/claude   stub: `agents --json` -> [], otherwise
 #                                       an idle process whose comm is "claude"
 #
@@ -82,7 +83,9 @@
 #     session closes, and another session's stays, as does a session born
 #     while the reap runs; with the last session
 #     gone, the next cold start stops what is left instead of failing on a
-#     tmux-server-<socket> scope still loaded; each stop is logged
+#     tmux-server-<socket> scope still loaded; each stop is logged; a server
+#     that runs but cannot be reached (its socket file removed) is not taken
+#     for one gone: the cold start and the hook refuse, stopping nothing
 #
 # Usage: scripts/tests/claude_tmux_run_test.sh   (exit 0 = all passed)
 # On failure the work dir (stub, profile, unit output) is kept and printed.
@@ -108,7 +111,6 @@ H="$WORK/home"
 LOGIN_SHELL=$(getent passwd "$(id -un)" | cut -d: -f7)
 
 failures=0
-RUN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ) # to tell this run's lines in shared logs
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 pass() { log "PASS $*"; }
 fail() {
@@ -144,7 +146,6 @@ unit_line() {
   echo "${line//%h/$H}"
 }
 
-restart_logs=()
 bgpids=()
 # Tear down everything this run created, whatever state it stopped in.
 cleanup() {
@@ -154,11 +155,6 @@ cleanup() {
   # would add a dead /tmp/tmux-<uid>/cttest-<pid>. Same path rule as tmux's.
   rm -f "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$SOCK"
   systemctl --user reset-failed "$UNIT" 2>/dev/null
-  # The restarts' event logs: $H/.dotfiles is the repo, so they land in its
-  # .logs beside real ones; each is removed by the exact path it printed.
-  for f in "${restart_logs[@]}"; do
-    case "$f" in */.logs/*_claude_tmux_restart/events.log) rm -rf "${f%/events.log}" ;; esac
-  done
   [ "${#bgpids[@]}" -eq 0 ] || kill "${bgpids[@]}" 2>/dev/null
   [ -z "${ORPHAN:-}" ] || pkill -f -x "sleep $ORPHAN"
   if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
@@ -171,7 +167,15 @@ trap cleanup EXIT
 # or the "manager" below would resume a real conversation. Its idle process
 # is a copy of sleep named claude: wait_alive checks the pane's comm.
 mkdir -p "$H/.local/bin" "$H/.claude/projects" "$WORK/idle"
-ln -s "$REPO" "$H/.dotfiles"
+# ~/.dotfiles holds the repo, entry by entry, so the hooks and scripts that
+# name ~/.dotfiles/... run this checkout -- but a .logs of its own: the
+# event logs (~/.dotfiles/.logs, scripts/lib/event_log.sh) of the restarts
+# and of the tmux hooks this server fires stay in the throwaway HOME, out of
+# the checkout's, which the live server writes to.
+mkdir "$H/.dotfiles"
+for e in "$REPO"/* "$REPO"/.[!.]*; do
+  [ "${e##*/}" = .logs ] || ln -s "$e" "$H/.dotfiles/"
+done
 # The real Nix profile, so login shells here pick the same tmux the service
 # does: without it the server runs the distro's tmux (3.4 on Ubuntu 24.04),
 # which never sets PartOf, and the scope checks below pass without testing.
@@ -290,19 +294,13 @@ transcript ctb 0000-ctrs
 pane=$(t display -p -t =ctb: '#{pane_id}')
 pid_now() { t display -p -t "$pane" '#{pane_pid}'; }
 # restart_ctb [env assignments...]: restart ctb as the idle claude it runs
-# now; sets out, rc and old (the pid before), and keeps the log's path.
+# now; sets out, rc and old (the pid before).
 restart_ctb() {
   old=$(pid_now)
   agents_json "$old" idle
   out=$(env "$@" HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" \
     CLAUDE_TMUX_ALIVE_SECONDS="${ALIVE:-2}" "$REPO/scripts/claude_tmux_run.sh" restart ctb 2>&1)
   rc=$?
-  note_log "$out"
-}
-note_log() {
-  local l
-  l=$(sed -n 's/^log: //p' <<<"$1")
-  [ -z "$l" ] || restart_logs+=("$l")
 }
 # check_restarted <what>: pass when ctb's pane runs a new claude (not
 # $old) resuming 0000-ctrs, with no hook or remain-on-exit left on it.
@@ -332,7 +330,6 @@ rc=$?
 old=$pid
 out=$(run restart --force ctb 2>&1)
 rc=$?
-note_log "$out"
 check_restarted "restart --force ctb while busy"
 grep -q 'forced over busy: a turn' <<<"$out" && pass "... logged as forced" || fail "... not logged as forced: $out"
 
@@ -347,7 +344,6 @@ old=$(pid_now)
 agents_json "$old" idle "$(hostname)-ctb"
 out=$(run restart ctb 2>&1)
 rc=$?
-note_log "$out"
 check_restarted "restart ctb titled $(hostname)-ctb"
 start=$(t display -p -t "$pane" '#{pane_start_command}')
 [[ "$start" == *"-n $(hostname)/ctb "* ]] && pass "restart re-asserted $(hostname)-ctb as $(hostname)/ctb" \
@@ -358,7 +354,6 @@ old=$(pid_now)
 agents_json "$old" idle "$(hostname)/ctb/is#1'x"
 out=$(run restart ctb 2>&1)
 rc=$?
-note_log "$out"
 check_restarted "restart ctb titled is#1'x"
 start=$(t display -p -t "$pane" '#{pane_start_command}')
 [[ "$start" == *"is#1'x"* ]] && pass "title is#1'x reached the new claude ($start)" \
@@ -397,7 +392,6 @@ for _ in $(seq 40); do
 done
 kill "$bg"
 wait "$bg" 2>/dev/null
-note_log "$(cat "$WORK/interrupted.out")"
 sleep 5 # the 3 s shutdown, then the respawn
 rc=0 out="(restart killed after: $(tail -n 1 "$WORK/interrupted.out"))"
 check_restarted "restart killed mid-wait"
@@ -480,11 +474,6 @@ grep -q 'C-r: session ctb: restarted conversation 0000-ctrs' <<<"$seen" \
   && pass "C-r verdict on the message line" || fail "C-r verdict: $(grep -ao 'C-r: [^\[]*' <<<"$seen" | tail -1)"
 rc=0 out="(through prefix C-r)"
 check_restarted "prefix C-r, y"
-# The binding's restart printed its log path to the helper only: found by
-# what it logged.
-for f in "$REPO"/.logs/*_claude_tmux_restart/events.log; do
-  grep -q "0000-ctrs" "$f" 2>/dev/null && grep -q "^.* ctb: claude $old," "$f" && restart_logs+=("$f")
-done
 
 # A session with no claude in it has nothing to restart.
 t new-session -d -s ctnc sleep 100000
@@ -856,15 +845,30 @@ fi
 if [ -n "$o2" ] && gone "$o2"; then pass "and that orphan (pid $o2) is gone"; else
   fail "pid ${o2:-none} survived the server and the next start ($(ps -o args= -p "${o2:-0}"))"
 fi
-# $H/.dotfiles is the repo, so the reaps land in its daily hooks log.
-reaped=$(cat "$REPO"/.logs/*_tmux_hooks/events.log 2>/dev/null | grep -c "reaped tmux-spawn-.*sleep $ORPHAN")
+# A server that runs but cannot be reached is not a server gone: with its
+# socket file removed, a cold start stopped every live session's pane and
+# started a second server; and the hook, its list-panes failing, read every
+# pane as dead. Both now refuse and stop nothing.
+sockfile="${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$SOCK"
+cl3=$(t list-panes -t =cl3: -F '#{pane_pid}')
+mv "$sockfile" "$sockfile.away"
+run new cl4 /tmp >"$WORK/unreach.out" 2>&1
+rc=$?
+mv "$sockfile.away" "$sockfile"
+[ "$rc" -ne 0 ] && grep -q 'cannot be reached' "$WORK/unreach.out" && kill -0 "$cl3" 2>/dev/null \
+  && pass "a cold start with the server unreachable refuses, cl3 untouched ($(tr '\n' ' ' <"$WORK/unreach.out"))" \
+  || fail "a cold start with the server unreachable: rc=$rc, cl3 claude ${cl3:-?} $(kill -0 "${cl3:-0}" 2>/dev/null && echo alive || echo GONE) ($(tr '\n' ' ' <"$WORK/unreach.out"))"
+HOME="$H" CLAUDE_TMUX_SOCKET="$SOCK" "$REPO/home/.config/tmux/reap-panes.sh" "$WORK/nowhere/$SOCK" >"$WORK/unreach.out" 2>&1
+rc=$?
+[ "$rc" -ne 0 ] && grep -q 'cannot be reached' "$WORK/unreach.out" && kill -0 "$cl3" 2>/dev/null \
+  && pass "the hook with the server unreachable refuses, cl3 untouched ($(tr '\n' ' ' <"$WORK/unreach.out"))" \
+  || fail "the hook with the server unreachable: rc=$rc, cl3 claude ${cl3:-?} $(kill -0 "${cl3:-0}" 2>/dev/null && echo alive || echo GONE) ($(tr '\n' ' ' <"$WORK/unreach.out"))"
+reaped=$(cat "$H"/.dotfiles/.logs/*_tmux_hooks/events.log 2>/dev/null | grep -c "reaped tmux-spawn-.*sleep $ORPHAN")
 [ "$reaped" -ge 2 ] && pass "each reap is logged with what it stopped ($reaped lines)" \
   || fail "reaps logged: $reaped, expected 2 (tmux hooks log)"
-# Nothing of this run's failed to stop: a FAILED line is a reap that picked
-# a live pane's scope, or one another reap had taken. Lines of the run are
-# those stamped since it started (the log is shared with the live server).
-failed_reaps=$(cat "$REPO"/.logs/*_tmux_hooks/events.log 2>/dev/null \
-  | awk -v t="$RUN_START" '$1 >= t && /FAILED to stop/' | cut -c1-160)
+# Nothing failed to stop: a FAILED line is a reap that picked a live pane's
+# scope, or one another reap had taken.
+failed_reaps=$(grep -h 'FAILED to stop' "$H"/.dotfiles/.logs/*_tmux_hooks/events.log 2>/dev/null | cut -c1-160)
 [ -z "$failed_reaps" ] && pass "no reap failed during the run" || fail "reaps failed: $failed_reaps"
 
 log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"

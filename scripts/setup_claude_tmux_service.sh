@@ -37,4 +37,4 @@ systemctl --user restart claude-tmux.service
 echo
 systemctl --user --no-pager status claude-tmux.service | head -4
 echo
-echo "Attach with: tmux -L claude attach -t claude"
+echo "Attach with: tmux -L claude attach -t manager"
