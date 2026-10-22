@@ -8,7 +8,8 @@
 #
 #   bold bright    host:                   a lighter shade of the path's blue:
 #     blue                                 the same "location" idea, told apart
-#                                          at a glance from the path
+#                                          at a glance from the path; left out
+#                                          when the session name opens with it
 #   bold blue      path                    matches the PS1 in ~/.zshrc.shared;
 #                                          host:path reads as a location, as in scp
 #   blue           cache "cold"            the entry is gone; the next request
@@ -242,6 +243,15 @@ if [ -n "$session_name" ]; then
   sname="\033[1m${session_name}\033[0m \033[2m|\033[0m "
 fi
 
+# A name that already opens with the host ("vm/backend") says where the
+# session runs, so the path loses its "vm:" rather than print the host twice.
+# Matched against both spellings: claude_tmux_run.sh names by the full
+# hostname, the prefix above may be fish's shorter fish_prompt_host.
+case "$session_name" in
+  "$host"/* | "$(hostname)"/*) host_prefix="" ;;
+  *) host_prefix="$host:" ;;
+esac
+
 # Main-thread agent name (absent unless the session is running as a custom
 # agent type via --agent / a .claude/agents/*.md slug). Rare and worth
 # noticing, and magenta is reserved for it alone, so it gets the hue in bold
@@ -402,4 +412,4 @@ cache=" \033[2m|\033[0m ${pcolor}${cache_mark}${cache_txt}\033[0m"
 # reads as its own: "12:55 ET" on the Mac, "16:55 UTC" on a UTC box.
 clk=" \033[2m|\033[0m ${clock}"
 
-printf '%b\033[1;94m%s\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b' "$sname" "$host:" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$clk"
+printf '%b\033[1;94m%s\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b' "$sname" "$host_prefix" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$clk"
