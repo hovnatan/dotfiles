@@ -34,21 +34,18 @@ sessions on this machine.
   prompt bar, the status line and claude.ai show; without it every
   conversation a name accumulates (one per `/clear`) reads the same. The
   peer name carries the label too, so address a labeled session by its
-  full name (`ListAgents` shows it). Resumes keep the label; `/clear` would
-  carry it into the fresh conversation, so the SessionStart hook below
-  strips it there.
+  full name (`ListAgents` shows it). Resumes keep the label, and so does
+  `/clear`: the fresh conversation inherits it, so relabel it (or
+  `/rename` back to the bare name) once its own task is clear. Until then
+  two conversations carry one label, and `load <name>/<task>` refuses.
 - The tmux session follows its conversation's name, label included:
   `backend/fix-login` while that conversation runs, `backend`
-  again after `/clear` (mechanism: Naming in `claude_tmux_run.sh`). tmux
+  again once it is renamed to the bare name (mechanism: Naming in
+  `claude_tmux_run.sh`). tmux
   targets without `=` prefix-match, so `-t backend` reaches the session
   whatever its label; `=backend` matches only the unlabeled name.
-- A session's prompt-bar color (`/color` inside Claude Code) survives
-  `/clear`, which otherwise wipes it, and a task label does not leak past
-  it: the SessionStart hook
-  `~/.dotfiles/home/.config/tmux/session-clear.sh` types `/rename` back to
-  the bare name and re-types the color the cleared conversation had.
-  Resumes restore both on their own. Pick a color once per session with
-  `/color`; nothing is configured anywhere.
+- A prompt-bar color (`/color`) does not survive `/clear`; only a resume
+  brings it back (Claude Code does that itself).
 
 ## Bringing up a session
 

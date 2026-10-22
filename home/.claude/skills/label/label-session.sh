@@ -14,11 +14,10 @@
 # hook then mirrors back onto the tmux session as "backend/<task>".
 #
 # Why typing. Nothing outside a live session can rename it: no hook output,
-# flag or tool does, only /rename typed at its prompt (see session-clear.sh,
-# which types for the same reason). Typed while a turn runs -- the /label
-# skill's own, or whatever the pane is busy with under prefix L -- the
-# command queues and runs when the turn ends (checked on 2.1.270: the label
-# shows in the prompt bar right after the reply).
+# flag or tool does, only /rename typed at its prompt. Typed while a turn
+# runs -- the /label skill's own, or whatever the pane is busy with under
+# prefix L -- the command queues and runs when the turn ends (checked on
+# 2.1.270: the label shows in the prompt bar right after the reply).
 #
 # The one check: the pane's tty must have a claude in its foreground process
 # group, the probe focus-out-unattached.sh settled on (#{pane_current_command}

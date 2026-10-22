@@ -76,9 +76,8 @@
 # for a labeled conversation), and the
 # pane-title-changed hook declared in ~/.tmux.conf
 # (~/.dotfiles/home/.config/tmux/sync-session-name.sh) renames it
-# <name>/<task> the moment claude announces its title, on every /rename
-# after, and back to <name> after a /clear -- so `tmux ls` and the status
-# bar show the label too. A full name, label included, is what has one
+# <name>/<task> the moment claude announces its title, and again on every
+# /rename after -- so `tmux ls` and the status bar show the label too. A full name, label included, is what has one
 # live session: new, load and stop act on the exact name (api/docs runs
 # beside api/login), and only the watcher looks the manager up by its bare
 # name (sessions_under; tmux targets without "=" prefix-match as well). The
@@ -88,11 +87,11 @@
 # title with -n, since a resume by id alone would reset it. That is also
 # why starting a conversation is a command of its own: with backend/x
 # talked in last, no form of load reaches a fresh vm-backend. A /clear
-# carries the label into the fresh conversation, where it is wrong;
-# ~/.dotfiles/home/.config/tmux/session-clear.sh strips it. The names and
-# labels new and load accept share one alphabet, NAME_RE: what tmux keeps
-# verbatim (it rewrites "." and ":" to "_"). Both hooks act only on
-# sessions of this socket, where every conversation is named this way.
+# carries the label into the fresh conversation; nothing strips it, so
+# relabel (or /rename to the bare name) when the new work differs. The
+# names and labels new and load accept share one alphabet, NAME_RE: what
+# tmux keeps verbatim (it rewrites "." and ":" to "_"). The hook acts only
+# on sessions of this socket, where every conversation is named this way.
 #
 # The manager runs in ~/.dotfiles/claude_tmux_session with permissions
 # bypassed; the AGENTS.md there tells it when to call new and load. Those
@@ -181,8 +180,6 @@ fi
 #   resolve-id  the same three lines for the conversation holding that
 #            session id (the key in place of a name), resolved to its newest
 #            transcript, or nothing
-# ~/.dotfiles/home/.config/tmux/session-clear.sh reads the same records in
-# awk (portable, no python) -- change both together.
 transcripts() {
   python3 - "$@" <<'PYEOF'
 import json, os, sys

@@ -12,7 +12,7 @@
 # session when the rest differs:
 #
 #   pane title "* vm-backend/fix-login"  -->  session "backend/fix-login"
-#   pane title "* vm-backend"    (after /clear)   -->  session "backend"
+#   pane title "* vm-backend"   (label dropped)  -->  session "backend"
 #
 #   args: socket_path session_id session_name [pane_title]
 #
