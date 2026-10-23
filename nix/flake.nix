@@ -72,6 +72,9 @@
             # (ansible, ansible-playbook, ansible-galaxy); its Python and
             # modules come with it, so no pip install (2026-10-05)
             pkgs.ansible
+            # awscli2 -- AWS CLI v2 (aws), beside az and gcloud; awscli is
+            # the old v1 (2026-10-23)
+            pkgs.awscli2
             # Microsoft Azure CLI, with its extensions declared here: Nix's az
             # runs a Python without pip, so `az extension add` fails, and
             # extensions pip-installed under another Python break on its
