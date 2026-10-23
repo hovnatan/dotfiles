@@ -51,7 +51,8 @@
 #                                      shells) unless --force; --check only
 #                                      checks, printing that work and the
 #                                      detached processes the restart ends
-#                                      (never a refusal). prefix C-r in
+#                                      (never a refusal), one per line,
+#                                      programs by full path. prefix C-r in
 #                                      ~/.tmux.conf runs it on the session in
 #                                      view.
 #   claude_tmux_run.sh status [lines]  every session on the socket: whether
@@ -483,13 +484,28 @@ tmux_quote() {
 
 # bg_shells <claude pid>: the shells that claude still tracks, one
 # "<pid> <command>" line each. Its Bash tool runs every command as a child
-#   bash -c source ~/.claude/shell-snapshots/<s>.sh ... && eval '<command>' < /dev/null ...
-# so with no turn running, such a child is a background task or a Monitor;
-# its MCP servers and helpers (hunspell) are children too, but not of that
-# form. Killing claude ends these with no completion record.
+#   bash -c source ~/.claude/shell-snapshots/<s>.sh ... && eval '<command>' < /dev/null && pwd -P >| <cwd file>
+# (no "< /dev/null" when the command redirects stdin itself), so with no
+# turn running, such a child is a background task or a Monitor; its MCP
+# servers and helpers (hunspell) are children too, but not of that form.
+# Killing claude ends these with no completion record.
 bg_shells() {
-  ps -A -o ppid=,pid=,args= | awk -v p="$1" '$1 == p && /\.claude\/shell-snapshots\// { $1 = ""; print }' \
-    | sed -e "s/^ *\([0-9]*\) .* && eval '\(.*\)' < \/dev\/null .*/\1 \2/" -e "s/'\"'\"'/'/g"
+  # The command runs from the FIRST "&& eval '" (the wrapper's; the command
+  # may hold another) to the wrapper's tail at the end of the line, its
+  # quotes unescaped ('"'"' -> '). A line of another form is still a shell
+  # claude tracks: it is listed whole, never dropped.
+  ps -A -o ppid=,pid=,args= | awk -v p="$1" '
+    $1 == p && /\.claude\/shell-snapshots\// {
+      pid = $2
+      sub(/^ *[0-9]+ +[0-9]+ /, "")
+      cmd = $0
+      i = index(cmd, " && eval '\''")
+      if (i) cmd = substr(cmd, i + 10)
+      if (i && sub(/'\''( < \/dev\/null)? && pwd -P >\| [^ ]*$/, "", cmd)) {
+        gsub(/'\''"'\''"'\''/, "'\''", cmd)
+      } else cmd = $0
+      print pid, cmd
+    }'
 }
 
 # scope_of <pid>: the systemd unit the process runs in, from the unified
@@ -511,6 +527,7 @@ detached() {
   local cg
   cg=$(systemctl --user show -p ControlGroup --value "$1")
   [ -n "$cg" ] && [ -r "/sys/fs/cgroup$cg/cgroup.procs" ] || return 0
+  # In pid order, so a listing reads the same twice.
   ps -A -o pid=,ppid=,args= | awk -v root="${2:-}" '
     NR == FNR { scope[$1] = 1; next }
     { p = $1; pp[p] = $2; sub(/^ *[0-9]+ +[0-9]+ /, ""); args[p] = $0 }
@@ -521,7 +538,29 @@ detached() {
         for (p in pp) if (!(p in mine) && (pp[p] in mine)) { mine[p] = 1; grew = 1 }
       } while (grew)
       for (p in scope) if (!(p in mine) && (p in args)) print p, args[p]
-    }' "/sys/fs/cgroup$cg/cgroup.procs" -
+    }' "/sys/fs/cgroup$cg/cgroup.procs" - | sort -n
+}
+
+# program <pid> <argv0>: what the process runs, for a person to recognise:
+# the full path of its executable, from /proc (argv[0] is often a bare
+# "ssh" found through PATH), and the name it was started under when that
+# differs (a multi-call binary, a versioned file behind a symlink):
+#   12 ssh        ->  /usr/bin/ssh
+#   13 tail       ->  /usr/bin/busybox (tail)
+#   14 claude     ->  /home/u/.local/share/claude/versions/2.1.309 (claude)
+#   15 ssh-agent  ->  ssh-agent (path not readable)
+# The last: the kernel hides the exe link of a setuid or setgid program
+# (ssh-agent is setgid on Ubuntu), and of one that made itself
+# non-dumpable; argv[0] is then all there is.
+program() {
+  local exe base
+  exe=$(readlink "/proc/$1/exe" 2>/dev/null) || {
+    echo "$2 (path not readable)"
+    return
+  }
+  base=${exe##*/}
+  base=${base% (deleted)}
+  if [ "$base" = "${2##*/}" ]; then echo "$exe"; else echo "$exe (${2##*/})"; fi
 }
 
 # The command every claude pane runs, its claude arguments appended (see
@@ -835,8 +874,8 @@ case "${1:-}" in
     # arming. agents --json cannot tell the two apart: it reports "busy"
     # for as long as a background shell runs, the turn long over (2.1.303),
     # but the pane shows which, so the call is the user's. --check runs
-    # every check, kills nothing, and prints that work as one line instead
-    # of refusing over it: what prefix C-r puts in its prompt
+    # every check, kills nothing, and prints that work, one item per line,
+    # instead of refusing over it: what prefix C-r puts in its popup
     # (~/.dotfiles/home/.config/tmux/restart-claude.sh) before a forced
     # restart. Detached processes the old claude left (detached) are listed
     # with that work but never refuse: a reload ends them by design, as
@@ -898,19 +937,21 @@ case "${1:-}" in
 
     # idle_check: what a restart would kill, as one line in "work" --
     #   busy: a turn, or 1 background shell(s): sleep 900
-    # -- empty when claude is idle with no shells. Refused unless --force;
-    # --check prints it, with what the old scope holds detached ("gone"):
-    #   1 background shell(s): sleep 900, and 2 detached process(es): /usr/bin/ssh;/opt/bin/cloud-sql-proxy
-    # (detached ones by the program they run, its full path from /proc: argv[0]
-    # is often a bare "ssh" found through PATH; the full command lines go to
-    # the log. A link the kernel hides, a setuid/setgid program's (ssh-agent
-    # on Ubuntu), falls back to argv[0] as given.)
+    # -- empty when claude is idle with no shells. Refused unless --force.
+    # --check prints it, and what the old scope holds detached ("gone"),
+    # one item per line instead, what prefix C-r's popup lists:
+    #   busy: a turn
+    #   background shell: sleep 900
+    #   detached: /usr/bin/ssh
+    #   detached: /usr/bin/busybox (tail)
+    # (detached ones by program, see program; their full command lines go
+    # to the log).
     # Asked after the slow transcript lookup, so that little can start
     # between it and the arming (a remote-control message could start a turn).
     old_scope=$(scope_of "$pid")
     case $old_scope in tmux-spawn-*.scope) ;; *) old_scope="" ;; esac
     idle_check() {
-      local state shells left
+      local state shells left programs
       agents=$(live_agents) || exit 1
       state=$(agent_status "$pid" <<<"$agents")
       shells=$(bg_shells "$pid")
@@ -922,12 +963,13 @@ case "${1:-}" in
       gone=""
       [ -z "$old_scope" ] || left=$(detached "$old_scope" "$pid")
       if [ -n "${left:-}" ]; then
-        gone="$(wc -l <<<"$left" | tr -d ' ') detached process(es): $(while read -r p argv0 _; do
-          readlink "/proc/$p/exe" 2>/dev/null || echo "$argv0"
-        done <<<"$left" | paste -sd ';' -)"
+        programs=$(while read -r p argv0 _; do program "$p" "$argv0"; done <<<"$left")
+        gone="$(wc -l <<<"$left" | tr -d ' ') detached process(es): $(paste -sd ';' - <<<"$programs")"
       fi
       if [ -n "$check" ]; then
-        [ -z "$work$gone" ] || echo "$work${work:+${gone:+, and }}$gone"
+        [ "$state" = idle ] || echo "$state: a turn"
+        [ -z "$shells" ] || cut -d' ' -f2- <<<"$shells" | sed 's/^/background shell: /'
+        [ -z "$gone" ] || sed 's/^/detached: /' <<<"$programs"
       elif [ -n "$work" ] && [ -z "$force" ]; then
         echo "restart: session $s is not idle ($work), which a restart kills; wait for it (Esc ends a turn), or --force" >&2
         exit 1

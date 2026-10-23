@@ -163,10 +163,11 @@ restart logs its steps under `~/.dotfiles/.logs/<UTC>_claude_tmux_restart/`.
 `restart` refuses a BUSY session and leaves it running: a turn, or a
 background shell claude still tracks, which `claude agents` also reports
 as busy, the turn long over. `--check` prints that work without
-restarting, followed by the detached processes the restart would end
-(`, and 1 detached process(es): cloud-sql-proxy`), which never refuse;
-`--force` restarts over the work -- only on the user's say, after
-reading the pane. `prefix C-r` puts both in its y/n prompt.
+restarting, one item per line, followed by the detached processes the
+restart would end, by the full path of their program
+(`detached: /usr/bin/ssh`), which never refuse; `--force` restarts over
+the work -- only on the user's say, after reading the pane.
+`prefix C-r` lists both in its y/n popup.
 
 Reload only IDLE sessions. A reload buys a fresh binary; it is never worth
 killing work in flight, and "reload all sessions" does not authorise that.

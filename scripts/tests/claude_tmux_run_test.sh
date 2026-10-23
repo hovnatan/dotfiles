@@ -49,13 +49,19 @@
 #     (KILL after CLAUDE_TMUX_EXIT_SECONDS), the restart itself killed
 #     mid-wait, and a login shell slower than the startup window (once read
 #     as "claude exited")
-#   - restart refuses a claude still running a background shell, which
-#     --check names and --force restarts anyway; a job claude detached is
-#     named beside it, never refused, and ended with the old claude's scope
-#     (logged); prefix C-r, typed into an
-#     attached client, prompts with both, restarts on y, and shows
-#     the verdict; a prompt left unanswered leaves no process waiting on
-#     it; restart-claude.sh refuses a socket that is not claude's
+#   - restart refuses a claude still running background shells (both of
+#     the Bash tool's wrapper forms), which --check lists, one per line, and
+#     --force restarts anyway; jobs claude detached are listed beside them
+#     by the full path of their program (with the name started under, for
+#     a multi-call one; argv[0] where the kernel hides the path), never
+#     refused, and ended with the old claude's scope (logged); prefix C-r,
+#     typed into an attached client, lists both in a popup, restarts on y,
+#     and shows the verdict; restart-claude.sh refuses a socket that is not
+#     claude's, asks nothing for a client that is gone, restarts nothing
+#     when tmux will not open the popup (another one open) or the client
+#     is too small for it, asks again about a turn begun under the popup,
+#     cuts a long item to 3 rows and a list to what fits (pointing at the
+#     full one), and leaves nothing waiting on a popup left unanswered
 #   - an agents --json entry missing a key fails status, not reads as ""
 #   - when `claude agents --json` fails, load, status and conversations
 #     stop with an error instead of acting on "nothing open" (a resume
@@ -186,10 +192,15 @@ cp "$(command -v sleep)" "$WORK/idle/claude"
 # With $WORK/agents_fail present, `agents --json` fails the way a broken
 # Claude Code update or daemon would; with $WORK/agents.json, it prints that
 # (the restart checks write the pane they act on there). Read at launch,
-# for the restart checks: $WORK/bg starts a child shaped like a background
-# shell of claude's Bash tool; $WORK/detach a job it detached (setsid, its
-# parent gone: no descendant of claude, still in the pane's scope), its pid
-# written to $WORK/detached.pid; $WORK/slow_exit holds the seconds the stub
+# for the restart checks: $WORK/bg starts two children shaped like
+# background shells of claude's Bash tool (in both of its forms: with
+# "< /dev/null" after the eval, and without, for a command that redirects
+# stdin itself); $WORK/detach three jobs it detached (setsid, their parent
+# gone: no descendant of claude, still in the pane's scope) -- a sleep, a
+# sleep started as "tail" (how a multi-call binary looks), and a python
+# that made itself non-dumpable (prctl PR_SET_DUMPABLE 0), whose exe link
+# the kernel then hides as it does a setuid program's -- their pids written
+# to $WORK/detached.pid in that order; $WORK/slow_exit holds the seconds the stub
 # then takes to shut down after TERM -- it stays this script, whose process
 # is named claude too (#!/bin/bash: env would re-exec as "bash").
 cat >"$H/.local/bin/claude" <<EOF
@@ -201,9 +212,13 @@ if [ "\${1:-}" = agents ]; then
 fi
 if [ -e "$WORK/bg" ]; then
   bash -c "source $H/.claude/shell-snapshots/snapshot-bash-0.sh 2>/dev/null || true && eval 'sleep 100000 # bg' < /dev/null && pwd -P >| /dev/null" &
+  bash -c "source $H/.claude/shell-snapshots/snapshot-bash-0.sh 2>/dev/null || true && eval 'sleep 100004 </dev/null # '\"'\"'bg2'\"'\"'' && pwd -P >| /dev/null" &
 fi
 if [ -e "$WORK/detach" ]; then
-  ( setsid sleep 100001 </dev/null >/dev/null 2>&1 & echo \$! >"$WORK/detached.pid" )
+  : >"$WORK/detached.pid"
+  ( setsid sleep 100001 </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
+  ( setsid bash -c 'exec -a tail sleep 100002' </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
+  ( setsid python3 -c 'import ctypes, time; ctypes.CDLL(None).prctl(4, 0); time.sleep(100003)' </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
 fi
 if [ -e "$WORK/slow_exit" ]; then
   trap "sleep \$(cat "$WORK/slow_exit"); exit 0" TERM
@@ -409,35 +424,43 @@ restart_ctb
 rm "$WORK/slow_profile"
 check_restarted "restart with a 4 s login shell and a 2 s startup window"
 
-# A tracked background shell: refused, listed by --check, --force kills it.
-# A detached job beside it is listed too, never a refusal, and ends with
-# the old claude's scope.
+# Tracked background shells: refused, listed by --check, --force kills
+# them. The jobs detached beside them are listed too, never a refusal, and
+# end with the old claude's scope.
 touch "$WORK/bg" "$WORK/detach"
 restart_ctb
 rm "$WORK/bg" "$WORK/detach"
-detached_pid=$(cat "$WORK/detached.pid")
-bgpids+=("$detached_pid")
-# Named by the program it runs, its full path (setsid ran a bare "sleep").
-detached_exe=$(readlink "/proc/$detached_pid/exe")
+mapfile -t detached_pids <"$WORK/detached.pid"
+bgpids+=("${detached_pids[@]}")
 pid=$(pid_now)
-read -r shell _ < <(ps -A -o ppid=,pid= | awk -v p="$pid" '$1 == p { print $2 }')
-[ -n "${shell:-}" ] && bgpids+=("$shell")
+mapfile -t shells < <(ps -A -o ppid=,pid= | awk -v p="$pid" '$1 == p { print $2 }')
+bgpids+=("${shells[@]}")
 agents_json "$pid" idle
 out=$(run restart ctb 2>&1)
 rc=$?
-[ "$rc" -ne 0 ] && grep -q 'is not idle (1 background shell(s): sleep 100000 # bg), which a restart kills' <<<"$out" && [ "$(pid_now)" = "$pid" ] \
-  && pass "restart with a background shell: refused ($out)" || fail "restart with a background shell: rc=$rc ($out)"
+[ "$rc" -ne 0 ] && grep -qF "is not idle (2 background shell(s): sleep 100000 # bg;sleep 100004 </dev/null # 'bg2'), which a restart kills" <<<"$out" && [ "$(pid_now)" = "$pid" ] \
+  && pass "restart with background shells: refused ($out)" || fail "restart with background shells: rc=$rc ($out)"
+# One line each; the detached by the full path of the program they run
+# (all three were started by bare name), with the name each was started
+# under where that differs, and by argv[0] where the kernel hides the path.
+sleep_exe=$(readlink "/proc/${detached_pids[0]}/exe")
+want="background shell: sleep 100000 # bg
+background shell: sleep 100004 </dev/null # 'bg2'
+detached: $sleep_exe
+detached: $sleep_exe (tail)
+detached: python3 (path not readable)"
 out=$(run restart --check ctb 2>&1)
 rc=$?
-[ "$rc" -eq 0 ] && [ "$out" = "1 background shell(s): sleep 100000 # bg, and 1 detached process(es): $detached_exe" ] && [ "$(pid_now)" = "$pid" ] \
-  && pass "restart --check names it: '$out'" || fail "restart --check: rc=$rc ($out), shell ${shell:-none}"
+[ "$rc" -eq 0 ] && [ "$(sort <<<"$out")" = "$(sort <<<"$want")" ] && [ "$(pid_now)" = "$pid" ] \
+  && pass "restart --check lists them: $(paste -sd '|' - <<<"$out")" || fail "restart --check: rc=$rc; want: $want; got: $out"
 
-# prefix C-r, typed into an attached client: the prompt names the shell,
-# y restarts, the verdict reaches the message line. And the helper refuses
-# a socket that is not claude's, and cuts a prompt wider than the client
-# (narrowed to 40 columns once $WORK/client.out.narrow exists). The client's TERM is its own, as a real
-# terminal's would be: CI has none, and tmux attach then exits at once
-# ("open terminal failed").
+# prefix C-r, typed into an attached client: a popup lists the shells and
+# the detached jobs, y restarts, the verdict reaches the message line. The
+# client's TERM is its own, as a real terminal's would be: CI has none, and
+# tmux attach then exits at once ("open terminal failed"). It types what
+# press writes to $WORK/client.out.key, takes the size resize writes to
+# $WORK/client.out.size, and stays attached until $WORK/client.out.done
+# exists (three minutes at most).
 python3 - "$(t display -p '#{socket_path}')" "$WORK/client.out" <<'EOF' &
 import os, pty, select, sys, time
 sock, log = sys.argv[1], sys.argv[2]
@@ -446,71 +469,184 @@ if pid == 0:
     os.execvpe("tmux", ["tmux", "-S", sock, "attach", "-t", "=ctb"],
                dict(os.environ, TERM="xterm-256color"))
 import fcntl, struct, termios
-fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 200, 0, 0))
-keys = [(1.5, b"\x01"), (2, b"\x12"), (4, b"y")]   # C-a C-r, then y on the prompt
+def size(cols, rows):
+    fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", rows, cols, 0, 0))
+def take(suffix):
+    try:
+        with open(log + suffix, "rb") as f:
+            data = f.read()
+    except FileNotFoundError:
+        return None
+    os.remove(log + suffix)
+    return data
+size(200, 40)
 t0 = time.time()
-narrow = False
 with open(log, "wb") as out:
-    while time.time() - t0 < 20 and not os.path.exists(log + ".done"):
-        if not narrow and os.path.exists(log + ".narrow"):
-            fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 40, 0, 0))
-            narrow = True
-        if keys and time.time() - t0 > keys[0][0]:
-            os.write(fd, keys.pop(0)[1])
+    while time.time() - t0 < 180 and not os.path.exists(log + ".done"):
+        keys = take(".key")
+        if keys is not None:
+            os.write(fd, keys)
+        dims = take(".size")
+        if dims is not None:
+            size(*map(int, dims.split()))
         if select.select([fd], [], [], 0.1)[0]:
             try:
-                out.write(os.read(fd, 65536)); out.flush()
+                data = os.read(fd, 65536)
             except OSError:
                 break
+            out.write(data); out.flush()
 EOF
 client_job=$!
-# After the verdict (a message showing takes the next key for itself):
-# the helper asked about a socket that is not claude's.
-for _ in $(seq 60); do
-  grep -aq 'C-r: session' "$WORK/client.out" 2>/dev/null && break
+sockpath=$(t display -p '#{socket_path}')
+# press <keys>: the client types them (printf %b escapes); resize <cols>
+# <rows>: its terminal takes that size. Each waits until it is done.
+press() {
+  printf '%b' "$1" >"$WORK/client.out.key.tmp" && mv "$WORK/client.out.key.tmp" "$WORK/client.out.key"
+  for _ in $(seq 40); do
+    [ -e "$WORK/client.out.key" ] || return 0
+    sleep 0.1
+  done
+  fail "the C-r client never typed '$1'"
+}
+client_size() { t list-clients -F '#{client_name} #{client_width} #{client_height}' | awk -v c="$client" '$1 == c { print $2, $3 }'; }
+resize() {
+  echo "$1 $2" >"$WORK/client.out.size.tmp" && mv "$WORK/client.out.size.tmp" "$WORK/client.out.size"
+  for _ in $(seq 40); do
+    [ "$(client_size)" = "$1 $2" ] && return 0
+    sleep 0.1
+  done
+  fail "the C-r client never took the size $1x$2 (it is $(client_size)), so the checks at that size mean nothing"
+}
+# since <byte>: what the client drew from that byte of its output on,
+# escapes stripped; wait_for <byte> <text>: until that holds <text>.
+since() { tail -c +"$(($1 + 1))" "$WORK/client.out" | tr -d '\033'; }
+wait_for() {
+  for _ in $(seq 80); do
+    since "$1" | grep -aqF -- "$2" && return 0
+    sleep 0.25
+  done
+  return 1
+}
+# ask_cr <client>: prefix C-r's helper on ctb, for that client, its popup
+# text file in $WORK (so a stray popup is told from a live one's).
+ask_cr() {
+  HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" TMPDIR="$WORK" \
+    "$REPO/home/.config/tmux/restart-claude.sh" ask "$sockpath" ctb "$1" 2>&1
+}
+for _ in $(seq 40); do
+  client=$(t list-clients -F '#{client_name}' | head -1)
+  [ -n "$client" ] && break
   sleep 0.25
 done
-client=$(t list-clients -F '#{client_name}' | head -1)
 [ -n "$client" ] || fail "C-r client never attached: $(tr -d '\033' <"$WORK/client.out" | tail -c 300)"
-CLAUDE_TMUX_SOCKET=other HOME="$H" "$REPO/home/.config/tmux/restart-claude.sh" ask "$(t display -p '#{socket_path}')" ctb "$client"
-sleep 1
-# A prompt the client leaves without answering: nothing may wait on it.
-# Asked about the claude C-r just started (listed, so --check lets it
-# through to the prompt) in a turn, on a 40-column client, it is cut to
-# fit, its (y/n) kept.
-agents_json "$(pid_now)" busy
-touch "$WORK/client.out.narrow"
-for _ in $(seq 20); do
-  [ "$(t display -p -c "$client" '#{client_width}')" = 40 ] && break
-  sleep 0.25
-done
-HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" \
-  "$REPO/home/.config/tmux/restart-claude.sh" ask "$(t display -p '#{socket_path}')" ctb "$client"
-for _ in $(seq 20); do
-  grep -aqF 'it kill... (y/n)' "$WORK/client.out" && break
-  sleep 0.25
-done
-touch "$WORK/client.out.done"
-old=$pid
-wait "$client_job"
+
+# C-a C-r, then y on the popup: listed one per line, restarted.
 sleep 0.5
-stray=$(ps -A -o pid=,args= | grep -F -e "-S $(t display -p '#{socket_path}') confirm-before" | grep -v grep)
-[ -z "$stray" ] && pass "unanswered C-r prompt: nothing left waiting" || fail "unanswered C-r prompt left: $stray"
-seen=$(tr -d '\033' <"$WORK/client.out")
-grep -q 'not a claude session (tmux socket '"$SOCK"')' <<<"$seen" \
-  && pass "restart-claude.sh on another socket: refused on the message line" || fail "no refusal on the message line for another socket"
-grep -qF "restart claude in ctb? it kills 1 background shell(s): sleep 100000 # bg, and 1 detached process(es): $detached_exe (y/n)" <<<"$seen" \
-  && pass "C-r prompt names the background shell and the detached job" || fail "C-r prompt: $(grep -ao 'restart claude[^\[]*' <<<"$seen" | head -1)"
-grep -qF "restart claude in ctb? it kill... (y/n)" <<<"$seen" \
-  && pass "C-r prompt on a 40-column client: cut to fit, (y/n) kept" || fail "narrow C-r prompt: $(grep -ao 'restart claude[^\[]*' <<<"$seen" | tail -1)"
-grep -q 'C-r: session ctb: restarted conversation 0000-ctrs' <<<"$seen" \
-  && pass "C-r verdict on the message line" || fail "C-r verdict: $(grep -ao 'C-r: [^\[]*' <<<"$seen" | tail -1)"
-rc=0 out="(through prefix C-r)"
+press '\001\022'
+wait_for 0 'any other key' || fail "no C-r popup: $(since 0 | tail -c 300)"
+missing=""
+for line in " restart claude in ctb? " " The restart kills:" "background shell: sleep 100000 # bg" "background shell: sleep 100004 </dev/null # 'bg2'" \
+  "detached: $sleep_exe" "detached: $sleep_exe (tail)" "detached: python3 (path not readable)" " y: restart   any other key: cancel"; do
+  since 0 | grep -qF -- "$line" || missing+="${missing:+, }'$line'"
+done
+[ -z "$missing" ] && pass "C-r popup lists the background shells and the detached jobs, one per line" \
+  || fail "C-r popup lacks $missing; it drew: $(since 0 | grep -ao 'restart claude in ctb.\{0,300\}' | head -1)"
+press y
+wait_for 0 'C-r: session ctb: restarted conversation 0000-ctrs' \
+  && pass "C-r verdict on the message line" || fail "C-r verdict: $(since 0 | grep -ao 'C-r: [^\[]*' | tail -1)"
+old=$pid rc=0 out="(through prefix C-r)"
 check_restarted "prefix C-r, y"
-! kill -0 "$detached_pid" 2>/dev/null \
-  && grep -hq "stopped tmux-spawn-.*scope, the old claude's scope: .*$detached_pid sleep 100001" "$H"/.dotfiles/.logs/*_claude_tmux_restart/events.log \
-  && pass "restart ended the detached job with the old scope, and logged it" \
-  || fail "detached job $detached_pid after the restart: $(ps -o pid=,args= -p "$detached_pid"); log: $(grep -h 'stopped' "$H"/.dotfiles/.logs/*_claude_tmux_restart/events.log)"
+gone=1
+for p in "${detached_pids[@]}"; do kill -0 "$p" 2>/dev/null && gone=""; done
+[ -n "$gone" ] \
+  && grep -hq "stopped tmux-spawn-.*scope, the old claude's scope: .*${detached_pids[0]} sleep 100001" "$H"/.dotfiles/.logs/*_claude_tmux_restart/events.log \
+  && pass "restart ended the detached jobs with the old scope, and logged them" \
+  || fail "detached jobs after the restart: $(ps -o pid=,args= -p "${detached_pids[*]}"); log: $(grep -h 'stopped' "$H"/.dotfiles/.logs/*_claude_tmux_restart/events.log)"
+pid=$(pid_now)
+
+# The helper refuses a socket that is not claude's, and asks nothing for a
+# client that is gone.
+mark=$(wc -c <"$WORK/client.out")
+CLAUDE_TMUX_SOCKET=other HOME="$H" "$REPO/home/.config/tmux/restart-claude.sh" ask "$sockpath" ctb "$client"
+wait_for "$mark" 'not a claude session (tmux socket '"$SOCK"')' \
+  && pass "restart-claude.sh on another socket: refused on the message line" || fail "no refusal on the message line for another socket"
+out=$(ask_cr /dev/pts/999999)
+rc=$?
+[ "$rc" -eq 0 ] && [ -z "$out" ] && [ "$(t display -p -t "$pane" '#{pane_in_mode}')" = 0 ] \
+  && pass "C-r for a client that is gone: nothing asked, exit 0" || fail "C-r for a gone client: rc=$rc ($out), pane in mode: $(t display -p -t "$pane" '#{pane_in_mode}')"
+
+# A popup tmux will not open (one is open already: a second C-r, a menu)
+# exits 0 with nothing drawn, which is no y: nothing restarted, and said so.
+agents_json "$pid" idle
+t display-popup -c "$client" -E 'sleep 30' &
+blocker=$!
+sleep 0.5
+mark=$(wc -c <"$WORK/client.out")
+out=$(ask_cr "$client")
+rc=$?
+wait_for "$mark" 'could not open the confirm popup' && [ "$rc" -eq 0 ] && [ "$(pid_now)" = "$pid" ] \
+  && pass "C-r with another popup open: nothing restarted, said so" || fail "C-r with another popup open: rc=$rc ($out), pid $pid -> $(pid_now), drew: $(since "$mark" | grep -ao 'C-r: [^\[]*' | tail -1)"
+t display-popup -C -c "$client"
+wait "$blocker"
+
+# What starts while the popup is open was never shown: after the y it is
+# asked about, the popup marked as changed, and n there restarts nothing.
+mark=$(wc -c <"$WORK/client.out")
+ask_cr "$client" >"$WORK/popup.out" &
+popup_job=$!
+wait_for "$mark" 'any other key' || fail "no C-r popup for the changed-list check: $(since "$mark" | tail -c 300)"
+agents_json "$pid" busy
+press y
+wait_for "$mark" '(changed since you answered) The restart kills:' && since "$mark" | grep -qF 'busy: a turn' \
+  && pass "C-r after a turn began under the popup: asked again, marked changed" || fail "C-r changed list: $(since "$mark" | tail -c 400)"
+press n
+wait "$popup_job"
+rc=$?
+[ "$rc" -eq 0 ] && [ "$(pid_now)" = "$pid" ] && [ ! -s "$WORK/popup.out" ] \
+  && pass "n on the changed list: nothing restarted" || fail "n on the changed list: rc=$rc ($(cat "$WORK/popup.out")), pid $pid -> $(pid_now)"
+
+# Cut to fit. A 500-column item (a status that long is no real claude's,
+# but any one item of it is) on 30x10: no room for even one of its 3 rows
+# beside the rest, so counted instead, the full list pointed at (its hint
+# wraps after "scri" at that width). On 30x6
+# there is no room for any: refused, nothing restarted.
+agents_json "$pid" "$(printf 'x%.0s' {1..500})"
+resize 30 10
+mark=$(wc -c <"$WORK/client.out")
+ask_cr "$client" >"$WORK/popup.out" &
+popup_job=$!
+wait_for "$mark" 'cancel' || fail "no C-r popup on 30x10: $(since "$mark" | tail -c 300)"
+since "$mark" | grep -qF '... and 1 more' && since "$mark" | grep -qF 'full list: ~/.dotfiles/scri' \
+  && pass "C-r popup on 30x10: the item counted, the full list pointed at" || fail "C-r popup on 30x10: $(since "$mark" | tail -c 400)"
+press n
+wait "$popup_job"
+resize 30 6
+mark=$(wc -c <"$WORK/client.out")
+out=$(ask_cr "$client")
+rc=$?
+wait_for "$mark" 'C-r: too small' && [ "$rc" -eq 0 ] && [ "$(pid_now)" = "$pid" ] \
+  && pass "C-r on 30x6: too small, nothing restarted" || fail "C-r on 30x6: rc=$rc ($out), drew: $(since "$mark" | tail -c 300)"
+
+# On 30x40 the item is cut to 3 rows; and the popup the client then
+# leaves without answering leaves nothing waiting on it.
+resize 30 40
+mark=$(wc -c <"$WORK/client.out")
+ask_cr "$client" >"$WORK/popup.out" &
+popup_job=$!
+wait_for "$mark" 'cancel' || fail "no C-r popup on 30x40: $(since "$mark" | tail -c 300)"
+narrow_seen=$(since "$mark")
+touch "$WORK/client.out.done"
+wait "$client_job"
+wait "$popup_job"
+rc=$?
+sleep 0.5
+grep -qF 'xxx...' <<<"$narrow_seen" && ! grep -qF ': a turn' <<<"$narrow_seen" && grep -qF 'full list:' <<<"$narrow_seen" \
+  && pass "C-r popup on 30x40: the item cut to 3 rows, the full list pointed at" || fail "C-r popup on 30x40: $(tail -c 400 <<<"$narrow_seen")"
+# This test's helper, as either step (not one merely naming the file, as
+# check.sh's arguments can, nor a live C-r's).
+stray=$(ps -A -o pid=,args= | grep -F -e "restart-claude.sh ask $sockpath " -e "restart-claude.sh popup $WORK/" | grep -v grep)
+[ "$rc" -eq 0 ] && [ -z "$stray" ] && [ ! -s "$WORK/popup.out" ] && [ "$(pid_now)" = "$pid" ] \
+  && pass "unanswered C-r popup: nothing left waiting" || fail "unanswered C-r popup: rc=$rc ($(cat "$WORK/popup.out")), left: $stray"
 
 # A session with no claude in it has nothing to restart.
 t new-session -d -s ctnc sleep 100000
