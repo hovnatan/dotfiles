@@ -900,8 +900,11 @@ case "${1:-}" in
     #   busy: a turn, or 1 background shell(s): sleep 900
     # -- empty when claude is idle with no shells. Refused unless --force;
     # --check prints it, with what the old scope holds detached ("gone"):
-    #   1 background shell(s): sleep 900, and 2 detached process(es): ssh-agent;cloud-sql-proxy
-    # (detached ones by program name: the full command lines go to the log)
+    #   1 background shell(s): sleep 900, and 2 detached process(es): /usr/bin/ssh;/opt/bin/cloud-sql-proxy
+    # (detached ones by the program they run, its full path from /proc: argv[0]
+    # is often a bare "ssh" found through PATH; the full command lines go to
+    # the log. A link the kernel hides, a setuid/setgid program's (ssh-agent
+    # on Ubuntu), falls back to argv[0] as given.)
     # Asked after the slow transcript lookup, so that little can start
     # between it and the arming (a remote-control message could start a turn).
     old_scope=$(scope_of "$pid")
@@ -919,7 +922,9 @@ case "${1:-}" in
       gone=""
       [ -z "$old_scope" ] || left=$(detached "$old_scope" "$pid")
       if [ -n "${left:-}" ]; then
-        gone="$(wc -l <<<"$left" | tr -d ' ') detached process(es): $(awk '{ n = $2; sub(/.*\//, "", n); print n }' <<<"$left" | paste -sd ';' -)"
+        gone="$(wc -l <<<"$left" | tr -d ' ') detached process(es): $(while read -r p argv0 _; do
+          readlink "/proc/$p/exe" 2>/dev/null || echo "$argv0"
+        done <<<"$left" | paste -sd ';' -)"
       fi
       if [ -n "$check" ]; then
         [ -z "$work$gone" ] || echo "$work${work:+${gone:+, and }}$gone"

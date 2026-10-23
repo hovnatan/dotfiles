@@ -417,6 +417,8 @@ restart_ctb
 rm "$WORK/bg" "$WORK/detach"
 detached_pid=$(cat "$WORK/detached.pid")
 bgpids+=("$detached_pid")
+# Named by the program it runs, its full path (setsid ran a bare "sleep").
+detached_exe=$(readlink "/proc/$detached_pid/exe")
 pid=$(pid_now)
 read -r shell _ < <(ps -A -o ppid=,pid= | awk -v p="$pid" '$1 == p { print $2 }')
 [ -n "${shell:-}" ] && bgpids+=("$shell")
@@ -427,12 +429,13 @@ rc=$?
   && pass "restart with a background shell: refused ($out)" || fail "restart with a background shell: rc=$rc ($out)"
 out=$(run restart --check ctb 2>&1)
 rc=$?
-[ "$rc" -eq 0 ] && [ "$out" = "1 background shell(s): sleep 100000 # bg, and 1 detached process(es): sleep" ] && [ "$(pid_now)" = "$pid" ] \
+[ "$rc" -eq 0 ] && [ "$out" = "1 background shell(s): sleep 100000 # bg, and 1 detached process(es): $detached_exe" ] && [ "$(pid_now)" = "$pid" ] \
   && pass "restart --check names it: '$out'" || fail "restart --check: rc=$rc ($out), shell ${shell:-none}"
 
 # prefix C-r, typed into an attached client: the prompt names the shell,
 # y restarts, the verdict reaches the message line. And the helper refuses
-# a socket that is not claude's. The client's TERM is its own, as a real
+# a socket that is not claude's, and cuts a prompt wider than the client
+# (narrowed to 40 columns once $WORK/client.out.narrow exists). The client's TERM is its own, as a real
 # terminal's would be: CI has none, and tmux attach then exits at once
 # ("open terminal failed").
 python3 - "$(t display -p '#{socket_path}')" "$WORK/client.out" <<'EOF' &
@@ -446,8 +449,12 @@ import fcntl, struct, termios
 fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 200, 0, 0))
 keys = [(1.5, b"\x01"), (2, b"\x12"), (4, b"y")]   # C-a C-r, then y on the prompt
 t0 = time.time()
+narrow = False
 with open(log, "wb") as out:
     while time.time() - t0 < 20 and not os.path.exists(log + ".done"):
+        if not narrow and os.path.exists(log + ".narrow"):
+            fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 40, 0, 0))
+            narrow = True
         if keys and time.time() - t0 > keys[0][0]:
             os.write(fd, keys.pop(0)[1])
         if select.select([fd], [], [], 0.1)[0]:
@@ -468,8 +475,21 @@ client=$(t list-clients -F '#{client_name}' | head -1)
 CLAUDE_TMUX_SOCKET=other HOME="$H" "$REPO/home/.config/tmux/restart-claude.sh" ask "$(t display -p '#{socket_path}')" ctb "$client"
 sleep 1
 # A prompt the client leaves without answering: nothing may wait on it.
+# Asked about the claude C-r just started (listed, so --check lets it
+# through to the prompt) in a turn, on a 40-column client, it is cut to
+# fit, its (y/n) kept.
+agents_json "$(pid_now)" busy
+touch "$WORK/client.out.narrow"
+for _ in $(seq 20); do
+  [ "$(t display -p -c "$client" '#{client_width}')" = 40 ] && break
+  sleep 0.25
+done
 HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" \
   "$REPO/home/.config/tmux/restart-claude.sh" ask "$(t display -p '#{socket_path}')" ctb "$client"
+for _ in $(seq 20); do
+  grep -aqF 'it kill... (y/n)' "$WORK/client.out" && break
+  sleep 0.25
+done
 touch "$WORK/client.out.done"
 old=$pid
 wait "$client_job"
@@ -479,8 +499,10 @@ stray=$(ps -A -o pid=,args= | grep -F -e "-S $(t display -p '#{socket_path}') co
 seen=$(tr -d '\033' <"$WORK/client.out")
 grep -q 'not a claude session (tmux socket '"$SOCK"')' <<<"$seen" \
   && pass "restart-claude.sh on another socket: refused on the message line" || fail "no refusal on the message line for another socket"
-grep -q 'restart claude in ctb? it kills 1 background shell(s): sleep 100000 # bg, and 1 detached process(es): sleep (y/n)' <<<"$seen" \
+grep -qF "restart claude in ctb? it kills 1 background shell(s): sleep 100000 # bg, and 1 detached process(es): $detached_exe (y/n)" <<<"$seen" \
   && pass "C-r prompt names the background shell and the detached job" || fail "C-r prompt: $(grep -ao 'restart claude[^\[]*' <<<"$seen" | head -1)"
+grep -qF "restart claude in ctb? it kill... (y/n)" <<<"$seen" \
+  && pass "C-r prompt on a 40-column client: cut to fit, (y/n) kept" || fail "narrow C-r prompt: $(grep -ao 'restart claude[^\[]*' <<<"$seen" | tail -1)"
 grep -q 'C-r: session ctb: restarted conversation 0000-ctrs' <<<"$seen" \
   && pass "C-r verdict on the message line" || fail "C-r verdict: $(grep -ao 'C-r: [^\[]*' <<<"$seen" | tail -1)"
 rc=0 out="(through prefix C-r)"

@@ -51,8 +51,18 @@ case "$step" in
       say "$(tail -n 1 <<<"$work")"
       exit 0
     fi
+    # The prompt is cut to the client's width, " (y/n)" kept: tmux clips a
+    # longer one at the right edge, the question with it, and the kill list
+    # names programs by full path (/nix/store/...-openssh-9.9p1/bin/ssh), so
+    # a fixed cut either clips a wide terminal's list or overflows a narrow
+    # one. No width means the client is gone: nobody is left to ask.
+    width=$(tmux -S "$socket" display-message -p -c "$client" '#{client_width}') || exit 0
     prompt="restart claude in $session?"
-    [ -z "$work" ] || prompt+=" it kills $(cut -c1-100 <<<"$work")"
+    [ -z "$work" ] || prompt+=" it kills $work"
+    max=$((width - 7))
+    if [ "${#prompt}" -gt "$max" ] && [ "$max" -gt 3 ]; then
+      prompt="${prompt:0:max-3}..."
+    fi
     tmux -S "$socket" confirm-before -b -t "$client" -p "${prompt//#/##} (y/n)" \
       "run-shell -b \"~/.dotfiles/home/.config/tmux/restart-claude.sh go #{q:socket_path} #{q:session_name} #{q:client_name}\""
     ;;
