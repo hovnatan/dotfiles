@@ -30,8 +30,7 @@ sessions on this machine.
   still finds them, and the next `load` or `restart` of one renames it to
   the `/` form. Address a running one by the name `ListAgents` shows.
 - A conversation is LABELED with its task once the task is clear:
-  `/label <task>` inside the session, or `prefix L` from tmux, either of
-  which types the full `/rename <hostname>/<session name>/<task>` (task: the
+  `/rename <hostname>/<session name>/<task>` inside the session (task: the
   session-name alphabet, letters, digits, `-` and `_`, e.g.
   `vm/backend/fix-login`), or `Ctrl+R` on its row in the
   `/resume` picker for a finished one. The label is what the picker, the

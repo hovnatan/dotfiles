@@ -583,7 +583,7 @@ alive=$(sessions)
 # A set ${MAINPID} marks a real stop request (not a restart cycle).
 stop_script=$(unit_line ExecStop) || exit 1
 stop_script=${stop_script//\$\{MAINPID\}/1}
-# Under a label, as /label leaves it: ExecStop must still find it.
+# Under a label, as a /rename leaves it: ExecStop must still find it.
 t rename-session -t =manager manager/x
 systemd-run --user --quiet --wait --pipe \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" \

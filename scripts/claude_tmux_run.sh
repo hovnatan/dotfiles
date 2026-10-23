@@ -69,10 +69,8 @@
 #
 # Naming. The conversation behind tmux session <name> is titled
 # "<hostname>/<name>"; once its task is clear it is labeled
-# "<hostname>/<name>/<task>" (/label <task> inside the session or prefix L
-# in tmux, both typing that /rename through
-# ~/.dotfiles/home/.claude/skills/label/label-session.sh, or Ctrl+R
-# in the /resume picker for a finished one), which is what the picker, the prompt
+# "<hostname>/<name>/<task>" (/rename inside the session, or Ctrl+R in
+# the /resume picker for a finished one), which is what the picker, the prompt
 # bar and claude.ai show. The tmux session follows the conversation minus
 # the hostname: it is created under that name (<name>, or <name>/<task>
 # for a labeled conversation), and the

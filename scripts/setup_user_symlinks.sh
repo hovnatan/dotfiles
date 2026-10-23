@@ -264,6 +264,15 @@ for skill in ~/.dotfiles/home/.claude/skills/*/; do
   fi
   ln -sfn "${skill%/}" "$link"
 done
+# A skill removed from the repo leaves its link dangling (the /label skill,
+# 2026-10-23): drop the links into home/.claude/skills that point at nothing.
+# Only those -- a link elsewhere, or a real directory, is not ours to judge.
+for link in ~/.claude/skills/*; do
+  [ -L "$link" ] && [ ! -e "$link" ] || continue
+  case $(readlink "$link") in
+    "$HOME"/.dotfiles/home/.claude/skills/*) rm "$link" && echo "removed $link (its skill left the repo)" ;;
+  esac
+done
 
 # Expose the same skills under ~/.agents/skills for tools that look there.
 mkdir -p ~/.agents
