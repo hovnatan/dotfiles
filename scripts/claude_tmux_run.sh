@@ -541,26 +541,30 @@ detached() {
     }' "/sys/fs/cgroup$cg/cgroup.procs" - | sort -n
 }
 
-# program <pid> <argv0>: what the process runs, for a person to recognise:
-# the full path of its executable, from /proc (argv[0] is often a bare
-# "ssh" found through PATH), and the name it was started under when that
-# differs (a multi-call binary, a versioned file behind a symlink):
+# program <pid>: what the process runs, for a person to recognise: the full
+# path of its executable, from /proc (argv[0] is often a bare "ssh" found
+# through PATH), and the name it was started under when that differs (a
+# multi-call binary, a versioned file behind a symlink):
 #   12 ssh        ->  /usr/bin/ssh
 #   13 tail       ->  /usr/bin/busybox (tail)
 #   14 claude     ->  /home/u/.local/share/claude/versions/2.1.309 (claude)
 #   15 ssh-agent  ->  ssh-agent (path not readable)
-# The last: the kernel hides the exe link of a setuid or setgid program
-# (ssh-agent is setgid on Ubuntu), and of one that made itself
-# non-dumpable; argv[0] is then all there is.
+# The name is comm, the basename of the path exec was given (cut to 15
+# characters by the kernel), not argv[0]: a program may rewrite its argv,
+# and an ssh ControlMaster does, to "ssh: <socket> [mux]", whose first word
+# would read "ssh:". The last: the kernel hides the exe link of a setuid or
+# setgid program (ssh-agent is setgid on Ubuntu), and of one that made
+# itself non-dumpable; comm is then all there is.
 program() {
-  local exe base
+  local exe base comm
+  comm=$(cat "/proc/$1/comm")
   exe=$(readlink "/proc/$1/exe" 2>/dev/null) || {
-    echo "$2 (path not readable)"
+    echo "$comm (path not readable)"
     return
   }
   base=${exe##*/}
   base=${base% (deleted)}
-  if [ "$base" = "${2##*/}" ]; then echo "$exe"; else echo "$exe (${2##*/})"; fi
+  if [ "${base:0:15}" = "$comm" ]; then echo "$exe"; else echo "$exe ($comm)"; fi
 }
 
 # The command every claude pane runs, its claude arguments appended (see
@@ -963,7 +967,7 @@ case "${1:-}" in
       gone=""
       [ -z "$old_scope" ] || left=$(detached "$old_scope" "$pid")
       if [ -n "${left:-}" ]; then
-        programs=$(while read -r p argv0 _; do program "$p" "$argv0"; done <<<"$left")
+        programs=$(while read -r p _; do program "$p"; done <<<"$left")
         gone="$(wc -l <<<"$left" | tr -d ' ') detached process(es): $(paste -sd ';' - <<<"$programs")"
       fi
       if [ -n "$check" ]; then

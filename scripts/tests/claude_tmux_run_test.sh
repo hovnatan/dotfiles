@@ -195,11 +195,13 @@ cp "$(command -v sleep)" "$WORK/idle/claude"
 # for the restart checks: $WORK/bg starts two children shaped like
 # background shells of claude's Bash tool (in both of its forms: with
 # "< /dev/null" after the eval, and without, for a command that redirects
-# stdin itself); $WORK/detach three jobs it detached (setsid, their parent
+# stdin itself); $WORK/detach four jobs it detached (setsid, their parent
 # gone: no descendant of claude, still in the pane's scope) -- a sleep, a
-# sleep started as "tail" (how a multi-call binary looks), and a python
-# that made itself non-dumpable (prctl PR_SET_DUMPABLE 0), whose exe link
-# the kernel then hides as it does a setuid program's -- their pids written
+# sleep started through a symlink named "tail" (how a multi-call binary
+# looks), a python that made itself non-dumpable (prctl PR_SET_DUMPABLE 0),
+# whose exe link the kernel then hides as it does a setuid program's, and a
+# sleep started through "ssh" whose argv reads "ssh: <socket> [mux]" (how
+# an ssh ControlMaster retitles itself) -- their pids written
 # to $WORK/detached.pid in that order; $WORK/slow_exit holds the seconds the stub
 # then takes to shut down after TERM -- it stays this script, whose process
 # is named claude too (#!/bin/bash: env would re-exec as "bash").
@@ -217,8 +219,11 @@ fi
 if [ -e "$WORK/detach" ]; then
   : >"$WORK/detached.pid"
   ( setsid sleep 100001 </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
-  ( setsid bash -c 'exec -a tail sleep 100002' </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
+  ln -sf "\$(command -v sleep)" "$WORK/tail"
+  ln -sf "\$(command -v sleep)" "$WORK/ssh"
+  ( setsid "$WORK/tail" 100002 </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
   ( setsid python3 -c 'import ctypes, time; ctypes.CDLL(None).prctl(4, 0); time.sleep(100003)' </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
+  ( setsid bash -c 'exec -a "ssh: $WORK/cm [mux]" "$WORK/ssh" 100005' </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
 fi
 if [ -e "$WORK/slow_exit" ]; then
   trap "sleep \$(cat "$WORK/slow_exit"); exit 0" TERM
@@ -440,15 +445,17 @@ out=$(run restart ctb 2>&1)
 rc=$?
 [ "$rc" -ne 0 ] && grep -qF "is not idle (2 background shell(s): sleep 100000 # bg;sleep 100004 </dev/null # 'bg2'), which a restart kills" <<<"$out" && [ "$(pid_now)" = "$pid" ] \
   && pass "restart with background shells: refused ($out)" || fail "restart with background shells: rc=$rc ($out)"
-# One line each; the detached by the full path of the program they run
-# (all three were started by bare name), with the name each was started
-# under where that differs, and by argv[0] where the kernel hides the path.
+# One line each; the detached by the full path of the program they run,
+# with the name each was started under where that differs (from comm, so an
+# argv the program rewrote, the "ssh:" of the mux, does not show), and by
+# that name where the kernel hides the path.
 sleep_exe=$(readlink "/proc/${detached_pids[0]}/exe")
 want="background shell: sleep 100000 # bg
 background shell: sleep 100004 </dev/null # 'bg2'
 detached: $sleep_exe
 detached: $sleep_exe (tail)
-detached: python3 (path not readable)"
+detached: python3 (path not readable)
+detached: $sleep_exe (ssh)"
 out=$(run restart --check ctb 2>&1)
 rc=$?
 [ "$rc" -eq 0 ] && [ "$(sort <<<"$out")" = "$(sort <<<"$want")" ] && [ "$(pid_now)" = "$pid" ] \
@@ -546,7 +553,7 @@ press '\001\022'
 wait_for 0 'any other key' || fail "no C-r popup: $(since 0 | tail -c 300)"
 missing=""
 for line in " restart claude in ctb? " " The restart kills:" "background shell: sleep 100000 # bg" "background shell: sleep 100004 </dev/null # 'bg2'" \
-  "detached: $sleep_exe" "detached: $sleep_exe (tail)" "detached: python3 (path not readable)" " y: restart   any other key: cancel"; do
+  "detached: $sleep_exe" "detached: $sleep_exe (tail)" "detached: python3 (path not readable)" "detached: $sleep_exe (ssh)" " y: restart   any other key: cancel"; do
   since 0 | grep -qF -- "$line" || missing+="${missing:+, }'$line'"
 done
 [ -z "$missing" ] && pass "C-r popup lists the background shells and the detached jobs, one per line" \
