@@ -60,6 +60,50 @@
             config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "terraform" "vagrant" ];
           };
 
+          # Slack's own CLI (slack): sign in to a workspace, then manage apps
+          # and their manifests, and run or deploy Bolt and Deno apps. Not in
+          # nixpkgs (its slack-cli is an unrelated bash wrapper, last released
+          # 2018), so Slack's release tarball, pinned by hash: a static Go
+          # binary, Apache-2.0, nothing to compile. Bump: the version below,
+          # then each system's hash from `nix store prefetch-file <url>`
+          # (2026-10-25)
+          slack-cli =
+            let
+              version = "4.11.0";
+              release = {
+                x86_64-linux = { arch = "linux_amd64"; hash = "sha256-+uvSXY0nUTuVqqu/2jtz+AxwWcAaU73mXc8um6b4mvs="; };
+                aarch64-linux = { arch = "linux_arm64"; hash = "sha256-uK5HrlVFJAzc0h7IWkClbeom5/BzIHM6blJmGIwbZtw="; };
+                aarch64-darwin = { arch = "macOS_arm64"; hash = "sha256-1mBJaSQksekQFN95KzgABwnFNhQp4/F/U+ZHINiuq7w="; };
+              }.${system};
+            in
+            pkgs.stdenvNoCC.mkDerivation {
+              pname = "slack-cli";
+              inherit version;
+              src = pkgs.fetchurl {
+                url = "https://downloads.slack-edge.com/slack-cli/slack_cli_${version}_${release.arch}.tar.gz";
+                inherit (release) hash;
+              };
+              # The tarball holds ./bin/slack (and, on Linux, ./LICENSE) with
+              # no top directory of its own.
+              sourceRoot = ".";
+              dontConfigure = true;
+              dontBuild = true;
+              # Already stripped and static: installed as Slack built it.
+              dontStrip = true;
+              installPhase = ''
+                runHook preInstall
+                install -Dm755 bin/slack $out/bin/slack
+                runHook postInstall
+              '';
+              meta = {
+                description = "Slack's command-line interface for building and managing Slack apps";
+                homepage = "https://docs.slack.dev/tools/slack-cli/";
+                license = pkgs.lib.licenses.asl20;
+                sourceProvenance = [ pkgs.lib.sourceTypes.binaryNativeCode ];
+                mainProgram = "slack";
+              };
+            };
+
           # Every machine: Linux boxes and Macs get the same tools at the
           # same versions (2026-09-23). The macOS entries came from the
           # Brewfile's formulae, their comments carried over.
@@ -195,6 +239,8 @@
             pkgs.ruff
             # Static analysis and lint tool, for (ba)sh scripts
             pkgs.shellcheck
+            # slack -- Slack's own CLI, packaged above (2026-10-25)
+            slack-cli
             # shfmt -- shell formatter, style in .editorconfig; CI checks
             # (scripts/check.sh shell) (2026-10-05)
             pkgs.shfmt
