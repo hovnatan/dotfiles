@@ -59,7 +59,9 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
                                   leaves no windows to restore at launch;
                                   in a child process (CLOSE_TIMEOUT)
       quit iTerm2, wait it out    (skipped when it is not running)
-      launch it, connect          once its API answers (RELAUNCH_TIMEOUT)
+      launch it, connect          by open_clean.sh, with the environment a
+                                  Dock launch gives it, not this run's;
+                                  once its API answers (RELAUNCH_TIMEOUT)
       restore                     as above
       close every other window    what iTerm2 opened at launch
                                   (AlwaysOpenWindowAtStartup)
@@ -157,6 +159,11 @@ RELAUNCH_TIMEOUT = 120
 CLOSE_TIMEOUT = 30  # s for `replace`'s child to close every window (it takes ~1)
 PROGRESS_EVERY = 5.0  # s between the lines `replace` logs while it waits
 ITERM2_BUNDLE = "com.googlecode.iterm2"
+# What launches it in `replace`. A plain `open` hands it this process's
+# environment, which every tab inherits: run from a Claude Code Bash tool, each
+# `claude` started in a tab then saved no transcript ("inherited
+# CLAUDE_CODE_CHILD_SESSION marker", 2026-10-26). This launches it as the Dock does.
+OPEN_CLEAN = Path(__file__).resolve().parents[2] / "scripts/macos/open_clean.sh"
 DIR = Path.home() / ".local/state/iterm2_ssh_arrangements"
 SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
 # A day of them at Hammerspoon's one per 10 minutes (iterm2_snapshots.lua).
@@ -1249,11 +1256,23 @@ async def app_of(connection: iterm2.Connection) -> iterm2.App:
     return app
 
 
+def launch_argv() -> list[str]:
+    """Return the argv that launches iTerm2 clean (OPEN_CLEAN); fail without it."""
+    if not os.access(OPEN_CLEAN, os.X_OK):
+        msg = (
+            f"{OPEN_CLEAN} is missing or not executable; `replace` launches"
+            " iTerm2 through it, so a fresh checkout of the dotfiles repo is needed"
+        )
+        raise ArrangementError(msg)
+    return [str(OPEN_CLEAN), "-b", ITERM2_BUNDLE]
+
+
 def replace(name: str) -> None:
     """Quit iTerm2, its windows closed first, launch it, and restore `name` alone."""
-    # Both checks come before anything closes: a run that stops later
+    # Every check comes before anything closes: a run that stops later
     # leaves no windows, or no iTerm2, and nothing restored.
     windows = load(name)
+    launch = launch_argv()
     if under := iterm2_ancestor(os.getpid(), ps_parent):
         msg = (
             f"runs under iTerm2 ({under}), so quitting iTerm2 would end it before"
@@ -1275,14 +1294,14 @@ def replace(name: str) -> None:
         quit_iterm2()
     log("launching iTerm2")
     done = subprocess.run(  # noqa: S603 - fixed argv
-        ["open", "-b", ITERM2_BUNDLE],  # noqa: S607 - macOS's own open
+        launch,
         capture_output=True,
         text=True,
         check=False,
     )
     if done.returncode != 0:
         msg = (
-            f"open -b {ITERM2_BUNDLE} failed (exit {done.returncode}):"
+            f"{' '.join(launch)} failed (exit {done.returncode}):"
             f" {done.stderr.strip()}"
         )
         raise ArrangementError(msg)

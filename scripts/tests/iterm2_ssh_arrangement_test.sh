@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/lib/iterm2_ssh_arrangement.py scripts/iterm2_ssh_arrangement.sh home/.hammerspoon/ssh_command.py scripts/tests/iterm2_ssh_arrangement_test.py
+# check.sh covers: scripts/lib/iterm2_ssh_arrangement.py scripts/iterm2_ssh_arrangement.sh home/.hammerspoon/ssh_command.py scripts/tests/iterm2_ssh_arrangement_test.py scripts/macos/open_clean.sh
 # Exercise the pure part of scripts/lib/iterm2_ssh_arrangement.py: iTerm2's
 # tabs in, the saved lines out, with the remote tmux lookup faked and a
 # stub iterm2 module. No iTerm2, uv or ssh, so it runs in CI on Linux and

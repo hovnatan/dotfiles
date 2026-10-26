@@ -743,6 +743,27 @@ def _() -> None:
     assert arr.iterm2_ancestor(70, procs.__getitem__) is None
 
 
+@case("replace launches iTerm2 by open_clean.sh, so no tab inherits its env")
+def _() -> None:
+    # A plain `open` from a Claude Code Bash tool gave iTerm2, and every tab,
+    # CLAUDE_CODE_CHILD_SESSION=1: each `claude` there then saved no transcript.
+    # Resolved, as OPEN_CLEAN is: a worktree under /var is under /private/var.
+    clean = (REPO / "scripts/macos/open_clean.sh").resolve()
+    assert arr.launch_argv() == [str(clean), "-b", "com.googlecode.iterm2"]
+    assert os.access(clean, os.X_OK), clean
+
+
+@case("replace without open_clean.sh fails before anything closes, naming it")
+def _() -> None:
+    saved = arr.OPEN_CLEAN
+    arr.OPEN_CLEAN = REPO / "no/such/open_clean.sh"
+    try:
+        error = error_of(arr.launch_argv)
+    finally:
+        arr.OPEN_CLEAN = saved
+    assert "no/such/open_clean.sh is missing or not executable" in error, error
+
+
 @case("ps names this process's parent, for replace's iTerm2 check")
 def _() -> None:
     ppid, path = arr.ps_parent(os.getpid())
