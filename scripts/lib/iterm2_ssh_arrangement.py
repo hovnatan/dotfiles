@@ -848,14 +848,31 @@ async def save(
     log(f"saved {file}")
 
 
+def saved_summary(names: list[str]) -> str:
+    """Say which arrangements `names` are: those named by hand, then the snapshots.
+
+    Snapshots are counted, not listed, as a day of them is 144 names:
+        ["good", "auto-20261026_141220", "all", "auto-20261026_151220"]
+        -> "all, good; and 2 snapshots, newest auto-20261026_151220"
+    Their names sort by the time in them, so the last is the newest.
+    """
+    named = sorted(n for n in names if not n.startswith(SNAPSHOT_PREFIX))
+    snaps = sorted(n for n in names if n.startswith(SNAPSHOT_PREFIX))
+    parts = [", ".join(named)] if named else []
+    if snaps:
+        noun = "snapshot" if len(snaps) == 1 else "snapshots"
+        parts.append(f"{len(snaps)} {noun}, newest {snaps[-1]}")
+    return "; and ".join(parts) or "(none)"
+
+
 def load(name: str) -> list[Saved]:
     """Return the windows of arrangement `name`; a missing or bad file is an error."""
     file = DIR / f"{name}.txt"
     if not file.exists():
-        names = sorted(p.stem for p in DIR.glob("*.txt")) if DIR.exists() else []
+        names = [p.stem for p in DIR.glob("*.txt")] if DIR.exists() else []
         msg = (
             f"no arrangement {name!r}: {file} does not exist;"
-            f" saved ones: {names or '(none)'}"
+            f" saved ones: {saved_summary(names)}"
         )
         raise ArrangementError(msg)
     try:

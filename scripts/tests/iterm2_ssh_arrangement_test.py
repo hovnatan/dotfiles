@@ -848,6 +848,17 @@ def _() -> None:
     assert "'auto-mine' has the snapshot prefix" in error, error
 
 
+@case("a missing arrangement's error lists the named ones and counts the snapshots")
+def _() -> None:
+    snaps = ["auto-20261026_151220", "auto-20261025_224220", "auto-20261026_141220"]
+    got = arr.saved_summary(["good", snaps[0], "all", *snaps[1:]])
+    assert got == "all, good; and 3 snapshots, newest auto-20261026_151220", got
+    got = arr.saved_summary(snaps[:1])
+    assert got == "1 snapshot, newest auto-20261026_151220", got
+    assert arr.saved_summary(["good"]) == "good"
+    assert arr.saved_summary([]) == "(none)"
+
+
 @case("a snapshot's ssh asks for nothing and gives up on a host that is down")
 def _() -> None:
     got = arr.list_sessions_argv("ssh -p 2222 vm", unattended=True)
