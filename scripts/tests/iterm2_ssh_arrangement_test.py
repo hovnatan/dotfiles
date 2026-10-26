@@ -586,9 +586,20 @@ class RestoredSession:
 class RestoredTab:
     """A tab of a RestoredWindow."""
 
-    def __init__(self, events: list[str]) -> None:
-        """Hold one new pane."""
-        self.current_session = RestoredSession(events)
+    def __init__(self, window: "RestoredWindow") -> None:
+        """Hold one new pane, its id the window's and its place there: "made1.0"."""
+        self.window, self.tab_id = window, f"{window.window_id}.{len(window.tabs)}"
+        self.current_session = RestoredSession(window.app.events)
+
+    async def async_activate(self, *, order_window_front: bool) -> None:
+        """Select it in its window, unless the app ignores selections.
+
+        Raising the window too is never asked for.
+        """
+        assert not order_window_front
+        if not self.window.app.ignore_select:
+            self.window.current_tab = self
+        self.window.app.events.append(f"selected {self.tab_id}")
 
 
 class RestoredWindow:
@@ -597,13 +608,15 @@ class RestoredWindow:
     def __init__(self, app: "RestoredApp", wid: str) -> None:
         """Open window `wid` in `app`, with one tab."""
         self.app, self.window_id, self.template = app, wid, ""
-        self.tabs = [RestoredTab(app.events)]
+        self.tabs: list[RestoredTab] = []
+        self.tabs.append(RestoredTab(self))
         self.current_tab = self.tabs[0]
         app.windows.append(self)
 
     async def async_create_tab(self) -> RestoredTab:
-        """Open another tab."""
-        self.tabs.append(RestoredTab(self.app.events))
+        """Open another tab, which takes the selection, as in iTerm2."""
+        self.tabs.append(RestoredTab(self))
+        self.current_tab = self.tabs[-1]
         return self.tabs[-1]
 
     async def async_set_title(self, template: str) -> None:
@@ -629,8 +642,9 @@ class RestoredWindow:
 class RestoredApp:
     """iTerm2 as a restore sees it: localhostName "Mac", windows by id."""
 
-    def __init__(self) -> None:
-        """Hold no window yet."""
+    def __init__(self, *, ignore_select: bool = False) -> None:
+        """Hold no window yet; `ignore_select` leaves each tab selection undone."""
+        self.ignore_select = ignore_select
         self.windows: list[RestoredWindow] = []
         self.closed: list[str] = []
         self.events: list[str] = []
@@ -644,6 +658,10 @@ class RestoredApp:
         """Read localhostName."""
         assert var == "localhostName", var
         return "Mac"
+
+    def get_window_by_id(self, wid: str) -> RestoredWindow | None:
+        """Return the open window `wid`, or None."""
+        return next((w for w in self.windows if w.window_id == wid), None)
 
     async def create(self, _connection: object) -> RestoredWindow:
         """Open a window, as iterm2.Window.async_create does."""
@@ -660,9 +678,9 @@ SAVED = arr.parse_file(
 )
 
 
-def restored(*, alone: bool) -> RestoredApp:
+def restored(*, alone: bool, ignore_select: bool = False) -> RestoredApp:
     """Return the app after restoring SAVED beside a window iTerm2 opened, "startup"."""
-    app = RestoredApp()
+    app = RestoredApp(ignore_select=ignore_select)
     RestoredWindow(app, "startup")
     stub.Window.async_create = app.create
     try:
@@ -689,6 +707,22 @@ def _() -> None:
         assert read is ("LC_LOGIN_DIR" in line), app.events[i - 1 : i + 1]
     assert [w.template for w in app.windows] == ["", "b", "a"], app.windows
     assert app.closed == [], app.closed
+
+
+@case("restore leaves each window on its first tab, not the last one it made")
+def _() -> None:
+    app = restored(alone=False)
+    # Window "a" made second (last first), with two tabs; "b" with one.
+    got = {w.window_id: w.current_tab.tab_id for w in app.windows}
+    assert got == {"startup": "startup.0", "made1": "made1.0", "made2": "made2.0"}, got
+    assert "selected made2.0" in app.events, app.events
+
+
+@case("restore fails, naming the window, when its first tab does not stay selected")
+def _() -> None:
+    error = error_of(lambda: restored(alone=False, ignore_select=True))
+    want = "window 1: tab 'made2.1' is selected, want its first, 'made2.0'"
+    assert want in error, error
 
 
 @case("replace: the restore closes every window it did not open, last")

@@ -41,7 +41,8 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
     the file --> a new window per "window:" block, a tab per line, each line
                  typed into the tab's shell (as Cmd-T does), so exiting ssh
                  leaves a local shell; its title template set and read back.
-                 The first block's window ends up in front, as it was saved.
+                 The first block's window ends up in front, as it was saved,
+                 and each window shows its first tab, not the last one made.
                  Then each tmux tab is waited on until its title shows its
                  session, and each directory tab until its path is that
                  directory (wait_landed): a request the far side never acted
@@ -951,6 +952,7 @@ async def open_windows(
     # key window when saved. Each title is read back, as a window left with
     # the wrong name is a failure, not a skip.
     typed: list[tuple[str, str, iterm2.Session]] = []
+    firsts: list[tuple[int, str, str]] = []  # (window index, window id, tab id)
     for wi in reversed(range(len(windows))):
         w = windows[wi]
         window = await iterm2.Window.async_create(connection)
@@ -961,8 +963,9 @@ async def open_windows(
         # cleanup then keeps it, ssh sessions that connected and all, and
         # the error names a window that is still there.
         opened.append(window)
+        first = window.current_tab
         for i, line in enumerate(w.lines):
-            tab = window.current_tab if i == 0 else await window.async_create_tab()
+            tab = first if i == 0 else await window.async_create_tab()
             if tab is None or tab.current_session is None:
                 msg = f"iTerm2 made no tab {i + 1} in window {wi + 1}"
                 raise ArrangementError(msg)
@@ -972,6 +975,11 @@ async def open_windows(
             await tab.current_session.async_send_text(line + "\n")
             log(f"{label}: {line}")
             typed.append((label, line, tab.current_session))
+
+        # Each new tab took the selection: give it back to the first, the
+        # window's start, without raising the window over the others.
+        await first.async_activate(order_window_front=False)
+        firsts.append((wi, window.window_id, first.tab_id))
         if w.template:
             await window.async_set_title(w.template)
             got = await window.async_get_variable("titleOverrideFormat")
@@ -983,6 +991,7 @@ async def open_windows(
                 raise ArrangementError(msg)
         log(f"window {wi + 1} restored ({window.window_id}): {w.template!r}")
     await opened[-1].async_activate()
+    await check_first_tabs(app, firsts)
 
     # Landings are made once every tab has added its name for this Mac.
     hosts = frozenset(local)
@@ -993,6 +1002,30 @@ async def open_windows(
         if (lands := landing_of(label, line, s, hosts))
     ]
     await wait_landed(landing)
+
+
+async def check_first_tabs(app: iterm2.App, firsts: list[tuple[int, str, str]]) -> None:
+    """Fail unless each window in `firsts` has its first tab selected.
+
+    Read back as the title is: a window left on its last tab is a restore
+    that did not do what it says.
+    """
+    await app.async_refresh()
+    for wi, wid, tab_id in firsts:
+        window = app.get_window_by_id(wid)
+        if window is None:
+            msg = f"window {wi + 1} ({wid}) closed before its tabs were checked"
+            raise ArrangementError(msg)
+        tab = window.current_tab
+        if tab is None:
+            msg = f"window {wi + 1}: iTerm2 reports no selected tab"
+            raise ArrangementError(msg)
+        if tab.tab_id != tab_id:
+            msg = (
+                f"window {wi + 1}: tab {tab.tab_id!r} is selected,"
+                f" want its first, {tab_id!r}"
+            )
+            raise ArrangementError(msg)
 
 
 async def close_windows(app: iterm2.App, keep: set[str]) -> None:
