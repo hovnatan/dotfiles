@@ -118,8 +118,7 @@ check_lua() {
 # the list once it passes, and never add one.
 python_files() {
   git ls-files -z '*.py' ':(exclude)home/.config/tmux/vendor/**' \
-    ':(exclude)scripts/pdf_tools/reverse_names.py' \
-    ':(exclude)scripts/s.py'
+    ':(exclude)scripts/pdf_tools/reverse_names.py'
 }
 
 # The config is named, not found: ruff would otherwise read ~/.config/ruff,
