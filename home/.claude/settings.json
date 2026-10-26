@@ -20,6 +20,34 @@
     "defaultMode": "auto"
   },
   "model": "opus",
+  "disableClaudeAiConnectors": true,
+  "deniedMcpServers": [
+    {
+      "serverName": "computer-use"
+    }
+  ],
+  "skillOverrides": {
+    "anthropic-skills:chrome-browser": "user-invocable-only",
+    "anthropic-skills:built-in-browser": "user-invocable-only",
+    "anthropic-skills:computer-use": "user-invocable-only",
+    "anthropic-skills:morning": "user-invocable-only",
+    "anthropic-skills:import-memory": "user-invocable-only",
+    "anthropic-skills:deep-research": "user-invocable-only",
+    "anthropic-skills:docs": "user-invocable-only",
+    "anthropic-skills:google-workspace": "user-invocable-only",
+    "anthropic-skills:pdf": "user-invocable-only",
+    "anthropic-skills:docx": "user-invocable-only",
+    "anthropic-skills:pptx": "user-invocable-only",
+    "anthropic-skills:xlsx": "user-invocable-only",
+    "work-log": "user-invocable-only",
+    "loop": "user-invocable-only",
+    "schedule": "user-invocable-only",
+    "simplify": "user-invocable-only",
+    "security-review": "user-invocable-only",
+    "init": "user-invocable-only",
+    "fewer-permission-prompts": "user-invocable-only",
+    "code-review": "user-invocable-only"
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -75,19 +103,17 @@
     "refreshInterval": 60
   },
   "enabledPlugins": {
-    "chrome-devtools-mcp@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": false,
     "claude-code-setup@claude-plugins-official": true,
     "astral@astral-sh": true,
     "feature-dev@claude-plugins-official": true,
-    "document-skills@anthropic-agent-skills": true,
-    "example-skills@anthropic-agent-skills": true,
-    "discernment-nudge@anthropic-agent-skills": true,
-    "academy-guide@anthropic-agent-skills": true,
+    "example-skills@anthropic-agent-skills": false,
+    "discernment-nudge@anthropic-agent-skills": false,
+    "academy-guide@anthropic-agent-skills": false,
     "mattpocock-skills@mattpocock": true,
     "cc-plugin-you-should-know@builtin": true,
-    "context7@anthropic-plugin-directory": true
+    "context7@anthropic-plugin-directory": false
   },
-  "disableClaudeAiConnectors": true,
   "extraKnownMarketplaces": {
     "astral-sh": {
       "source": {
