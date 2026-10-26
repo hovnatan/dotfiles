@@ -19,7 +19,8 @@
 #                                                     runs it every 10 minutes
 #
 # Saved to ~/.local/state/iterm2_ssh_arrangements/<name>.txt, a block of
-# commands per window: machine-local, since it names hosts.
+# commands per window: machine-local, since it names hosts. A <name> with a
+# "/" or ".txt" is that file's path instead, so the shell can complete it.
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/.." && pwd)
 . "$REPO/scripts/lib/event_log.sh"

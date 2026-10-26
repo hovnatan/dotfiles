@@ -34,7 +34,8 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
       v
     ~/.local/state/iterm2_ssh_arrangements/<name>.txt: plain text, to read
     or edit by hand; a "window: <title template>" line per window, then one
-    command per tab, in tab order (render / parse_file)
+    command per tab, in tab order (render / parse_file). A <name> given
+    with a "/" or ".txt" is that file's path instead (name_of)
 
   restore [<name>]
     the file --> a new window per "window:" block, a tab per line, each line
@@ -173,7 +174,8 @@ SNAPSHOT_KEEP = 144
 UNATTENDED_SSH = ("-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
 USAGE = (
     "usage: iterm2_ssh_arrangement.sh save [<name> [<window title prefix>]]"
-    " | restore [<name>] | replace [<name>] | snapshot"
+    " | restore [<name>] | replace [<name>] | snapshot;"
+    " a <name> with a / or .txt is the path of its file"
 )
 MAX_ARGS = 3  # save <name> <prefix>
 LOG: list[Path] = []  # the run's event log, set by main()
@@ -872,6 +874,26 @@ def saved_summary(names: list[str]) -> str:
     return "; and ".join(parts) or "(none)"
 
 
+def name_of(arg: str) -> str:
+    """Return the arrangement an argument names: a name as is, a path as its file's.
+
+    A "/" or a ".txt" makes it a path, so a shell's completion of the file
+    works, from anywhere or from DIR itself:
+        "~/.local/state/iterm2_ssh_arrangements/good.txt" -> "good"
+        "good.txt", run in DIR                             -> "good"
+    It must be a .txt in DIR, where every arrangement lives; one elsewhere
+    would be read from DIR under its stem, a different file. Only the folder
+    is resolved: a symlinked arrangement keeps the name it was given.
+    """
+    if "/" not in arg and not arg.endswith(".txt"):
+        return arg
+    path = Path(arg).expanduser().absolute()
+    if path.parent.resolve() != DIR.resolve() or path.suffix != ".txt":
+        msg = f"path {arg!r}: an arrangement is a <name>.txt in {DIR}"
+        raise ArrangementError(msg)
+    return path.stem
+
+
 def load(name: str) -> list[Saved]:
     """Return the windows of arrangement `name`; a missing or bad file is an error."""
     file = DIR / f"{name}.txt"
@@ -1350,7 +1372,6 @@ def main() -> None:
     LOG.append(Path(sys.argv[1]))
     args = sys.argv[2:]
     command, name, prefix = [*args, None, None, None][:3]
-    name = name or "all"
     if (
         command not in ("save", "restore", "replace", "snapshot")
         or len(args) > MAX_ARGS
@@ -1358,6 +1379,11 @@ def main() -> None:
         or (command == "snapshot" and len(args) > 1)
     ):
         log(f"ERROR: {USAGE}")
+        sys.exit(1)
+    try:
+        name = name_of(name or "all")
+    except ArrangementError as e:
+        log(f"ERROR: {e}")
         sys.exit(1)
     if not re.fullmatch(r"[\w.-]+", name, re.ASCII):
         log(f"ERROR: name {name!r}: use letters, digits, '.', '_', '-'")

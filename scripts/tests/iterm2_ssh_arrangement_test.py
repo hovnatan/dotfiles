@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import types
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -762,6 +763,45 @@ def _() -> None:
     finally:
         arr.OPEN_CLEAN = saved
     assert "no/such/open_clean.sh is missing or not executable" in error, error
+
+
+@case("an argument with a / is a path to an arrangement in DIR, named by its stem")
+def _() -> None:
+    assert arr.name_of("good") == "good"
+    snap = arr.DIR / "auto-20261026_183220.txt"
+    assert arr.name_of(str(snap)) == "auto-20261026_183220"
+    tilde = "~/" + str((arr.DIR / "good.txt").relative_to(Path.home()))
+    assert arr.name_of(tilde) == "good", tilde
+    assert arr.name_of(str(arr.DIR / "x" / ".." / "good.txt")) == "good"
+
+
+@case("a bare <name>.txt is a path too, one outside DIR refused, a symlink named")
+def _() -> None:
+    saved, cwd = arr.DIR, Path.cwd()
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        arr.DIR = root / "arrangements"
+        arr.DIR.mkdir()
+        # Symlinked files are named as linked, not by their targets.
+        (root / "elsewhere.txt").write_text("")
+        (arr.DIR / "work.txt").symlink_to(root / "elsewhere.txt")
+        (arr.DIR / "b.txt").write_text("")
+        (arr.DIR / "a.txt").symlink_to(arr.DIR / "b.txt")
+        try:
+            assert arr.name_of(str(arr.DIR / "work.txt")) == "work"
+            assert arr.name_of(str(arr.DIR / "a.txt")) == "a"
+            # A shell's completion in DIR itself: no "/" at all.
+            os.chdir(arr.DIR)
+            assert arr.name_of("good.txt") == "good"
+            # From elsewhere the same word is a file there, not DIR's.
+            os.chdir(root)
+            bad = ["good.txt", str(root / "good.txt"), str(arr.DIR / "good.bak")]
+            for arg in [*bad, str(arr.DIR / "x/good.txt")]:
+                error = error_of(lambda arg=arg: arr.name_of(arg))
+                assert f"an arrangement is a <name>.txt in {arr.DIR}" in error, error
+        finally:
+            os.chdir(cwd)
+            arr.DIR = saved
 
 
 @case("ps names this process's parent, for replace's iTerm2 check")
