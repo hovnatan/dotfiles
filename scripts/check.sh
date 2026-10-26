@@ -118,12 +118,6 @@ check_lua() {
 # the list once it passes, and never add one.
 python_files() {
   git ls-files -z '*.py' ':(exclude)home/.config/tmux/vendor/**' \
-    ':(exclude)home/.claude/skills/scan-to-epub/scripts/build_epub.py' \
-    ':(exclude)home/.claude/skills/scan-to-epub/scripts/calibrate.py' \
-    ':(exclude)home/.claude/skills/scan-to-epub/scripts/figsheet.py' \
-    ':(exclude)home/.claude/skills/scan-to-epub/scripts/lint_epub.py' \
-    ':(exclude)home/.claude/skills/scan-to-epub/scripts/propose_toc.py' \
-    ':(exclude)home/.claude/skills/scan-to-epub/scripts/verify_coverage.py' \
     ':(exclude)scripts/mp_prog.py' \
     ':(exclude)scripts/pdf_tools/reverse_names.py' \
     ':(exclude)scripts/s.py'
