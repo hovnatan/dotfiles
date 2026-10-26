@@ -48,9 +48,10 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
                  It adds to the windows already open, and runs from any
                  terminal while iTerm2 runs.
 
-  relaunch [<name>]
-    restore, onto an iTerm2 that holds nothing else; run from another
-    terminal app, since it quits iTerm2 (relaunch):
+  replace [<name>]
+    the saved windows in place of every window open: a restore onto an
+    iTerm2 quit and launched, so it holds nothing else. Run from another
+    terminal app, since it quits iTerm2 (replace):
 
       parse the file              a bad one fails here, before anything closes
       refuse under iTerm2         its quit would end this run halfway
@@ -153,8 +154,8 @@ FRESH_HOST_TIMEOUT = 5.0  # s for a new tab to report its host (it takes ~0.1)
 # s for a quit iTerm2 to exit, and for a launched one to answer its API
 # (longer the first time, while macOS asks to let this terminal control it).
 RELAUNCH_TIMEOUT = 120
-CLOSE_TIMEOUT = 30  # s for relaunch's child to close every window (it takes ~1)
-PROGRESS_EVERY = 5.0  # s between the lines a relaunch logs while it waits
+CLOSE_TIMEOUT = 30  # s for `replace`'s child to close every window (it takes ~1)
+PROGRESS_EVERY = 5.0  # s between the lines `replace` logs while it waits
 ITERM2_BUNDLE = "com.googlecode.iterm2"
 DIR = Path.home() / ".local/state/iterm2_ssh_arrangements"
 SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
@@ -165,7 +166,7 @@ SNAPSHOT_KEEP = 144
 UNATTENDED_SSH = ("-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
 USAGE = (
     "usage: iterm2_ssh_arrangement.sh save [<name> [<window title prefix>]]"
-    " | restore [<name>] | relaunch [<name>] | snapshot"
+    " | restore [<name>] | replace [<name>] | snapshot"
 )
 MAX_ARGS = 3  # save <name> <prefix>
 LOG: list[Path] = []  # the run's event log, set by main()
@@ -874,7 +875,7 @@ async def restore(
 ) -> None:
     """Open a new window per saved one, the first saved one in front.
 
-    `alone` (relaunch): then close every other window, what iTerm2 opened at
+    `alone` (`replace`): then close every other window, what iTerm2 opened at
     its launch. Last, so one it opened late is gone too; and on a failure as
     well, so a tab that never lands leaves no startup window beside the rest.
     """
@@ -910,7 +911,7 @@ async def open_windows(
         if window is None or window.current_tab is None:
             msg = f"iTerm2 made no window for saved window {wi + 1}"
             raise ArrangementError(msg)
-        # Counted as opened before any tab of it can fail: a relaunch's
+        # Counted as opened before any tab of it can fail: `replace`'s
         # cleanup then keeps it, ssh sessions that connected and all, and
         # the error names a window that is still there.
         opened.append(window)
@@ -1084,7 +1085,7 @@ async def wait_landed(
             await asyncio.sleep(poll)
 
 
-# --- relaunch: iTerm2 quit and launched around a restore -----------------------
+# --- replace: iTerm2 quit and launched around a restore ------------------------
 
 
 def iterm2_ancestor(pid: int, parent: Callable[[int], tuple[int, str]]) -> str | None:
@@ -1177,7 +1178,7 @@ def connected(
     """Run act(connection, app) on a connection to iTerm2.
 
     `wait`: s to keep retrying the connection, for an iTerm2 just launched
-    whose API may not answer yet (relaunch); 0 tries once. Retried are no
+    whose API may not answer yet (`replace`); 0 tries once. Retried are no
     socket yet (OSError) and a handshake it fails while it starts: a 401 if
     it gave no cookie yet, or the InvalidMessage the package's own
     async_connect retries. A connection refused at the end is an error
@@ -1186,7 +1187,7 @@ def connected(
 
     Once per process: the package keeps its App, message helpers and
     notification subscriptions process-wide, bound to the first connection
-    (relaunch).
+    (replace).
     """
 
     async def run() -> None:
@@ -1208,7 +1209,7 @@ def connected(
                 if not iterm2_running():
                     msg = (
                         "iTerm2 is not running; `iterm2_ssh_arrangement.sh"
-                        " relaunch <name>` launches it and restores"
+                        " replace <name>` launches it and restores"
                     )
                 else:
                     msg = (
@@ -1231,7 +1232,7 @@ async def app_of(connection: iterm2.Connection) -> iterm2.App:
     return app
 
 
-def relaunch(name: str) -> None:
+def replace(name: str) -> None:
     """Quit iTerm2, its windows closed first, launch it, and restore `name` alone."""
     # Both checks come before anything closes: a run that stops later
     # leaves no windows, or no iTerm2, and nothing restored.
@@ -1275,7 +1276,7 @@ def relaunch(name: str) -> None:
 
 
 def close_all(log_file: Path) -> None:
-    """Close every window of iTerm2's, unasked: relaunch's child (in_child)."""
+    """Close every window of iTerm2's, unasked: `replace`'s child (in_child)."""
     LOG.append(log_file)
     try:
         connected(lambda _c, app: close_windows(app, keep=set()))
@@ -1315,9 +1316,9 @@ def main() -> None:
     command, name, prefix = [*args, None, None, None][:3]
     name = name or "all"
     if (
-        command not in ("save", "restore", "relaunch", "snapshot")
+        command not in ("save", "restore", "replace", "snapshot")
         or len(args) > MAX_ARGS
-        or (command in ("restore", "relaunch") and prefix)
+        or (command in ("restore", "replace") and prefix)
         or (command == "snapshot" and len(args) > 1)
     ):
         log(f"ERROR: {USAGE}")
@@ -1343,7 +1344,7 @@ def main() -> None:
             windows = load(name)
             connected(lambda c, app: restore(c, app, name, windows))
         else:
-            relaunch(name)
+            replace(name)
     except ArrangementError as e:
         log(f"ERROR: {e}")
         sys.exit(1)

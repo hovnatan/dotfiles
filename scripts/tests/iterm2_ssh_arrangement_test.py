@@ -40,7 +40,7 @@ vars(stub).update(
     {n: type(n, (), {}) for n in ("App", "Connection", "Session", "Window")},
 )
 sys.modules["iterm2"] = stub
-# And websockets (iterm2's), for the handshake error a relaunch retries.
+# And websockets (iterm2's), for the handshake error `replace` retries.
 errors = types.ModuleType("websockets.exceptions")
 vars(errors)["InvalidHandshake"] = type("InvalidHandshake", (Exception,), {})
 sockets = types.ModuleType("websockets")
@@ -690,7 +690,7 @@ def _() -> None:
     assert app.closed == [], app.closed
 
 
-@case("a relaunch's restore closes every window it did not open, last")
+@case("replace: the restore closes every window it did not open, last")
 def _() -> None:
     app = restored(alone=True)
     assert app.closed == ["startup"], app.closed
@@ -698,7 +698,7 @@ def _() -> None:
     assert app.events.index("activated made2") < app.events.index("closed startup")
 
 
-@case("a failed relaunch restore closes the startup window, not a half-made one")
+@case("replace: a failed restore closes the startup window, not a half-made one")
 def _() -> None:
     app = RestoredApp()
     RestoredWindow(app, "startup")
@@ -722,7 +722,7 @@ def _() -> None:
     assert [w.window_id for w in app.windows] == ["startup", "made1"], app.windows
 
 
-@case("relaunch refuses to run under iTerm2, whose quit would end it; tmux is fine")
+@case("replace refuses to run under iTerm2, whose quit would end it; tmux is fine")
 def _() -> None:
     procs = {
         500: (400, "/Users/me/.nix-profile/bin/python3"),
@@ -743,7 +743,7 @@ def _() -> None:
     assert arr.iterm2_ancestor(70, procs.__getitem__) is None
 
 
-@case("ps names this process's parent, for the relaunch's iTerm2 check")
+@case("ps names this process's parent, for replace's iTerm2 check")
 def _() -> None:
     ppid, path = arr.ps_parent(os.getpid())
     assert ppid == os.getppid(), (ppid, os.getppid())
