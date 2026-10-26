@@ -9,6 +9,9 @@
 #   iterm2_ssh_arrangement.sh save <name> <prefix>    the one window whose
 #                                                     title starts with <prefix>
 #   iterm2_ssh_arrangement.sh restore [<name>]        a new window per saved one
+#   iterm2_ssh_arrangement.sh relaunch [<name>]       iTerm2 quit and launched,
+#                                                     then those windows alone;
+#                                                     run from another terminal
 #   iterm2_ssh_arrangement.sh snapshot                every window as
 #                                                     auto-<UTC time>, keeping
 #                                                     the newest 144 (a day at

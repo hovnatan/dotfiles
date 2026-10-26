@@ -45,6 +45,23 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
                  session, and each directory tab until its path is that
                  directory (wait_landed): a request the far side never acted
                  on leaves a plain shell in ~, which fails the restore by name.
+                 It adds to the windows already open, and runs from any
+                 terminal while iTerm2 runs.
+
+  relaunch [<name>]
+    restore, onto an iTerm2 that holds nothing else; run from another
+    terminal app, since it quits iTerm2 (relaunch):
+
+      parse the file              a bad one fails here, before anything closes
+      refuse under iTerm2         its quit would end this run halfway
+      close every window          so the quit asks no "Quit iTerm2?" and
+                                  leaves no windows to restore at launch;
+                                  in a child process (CLOSE_TIMEOUT)
+      quit iTerm2, wait it out    (skipped when it is not running)
+      launch it, connect          once its API answers (RELAUNCH_TIMEOUT)
+      restore                     as above
+      close every other window    what iTerm2 opened at launch
+                                  (AlwaysOpenWindowAtStartup)
 
 <login> is ssh_command.py's replay of the tab's ssh command line (Cmd-T's
 parser): the options and destination, never a remote command or forward.
@@ -89,6 +106,9 @@ nor its own localhostName variable, so it is read, not guessed. Inside tmux
 that variable is the tab's that started the tmux session, maybe gone or
 since ssh'd elsewhere, so there the script refuses (local_host). A snapshot
 runs in no tab, and reads the names off the local tabs instead (local_hosts).
+A restore reads it off each tab it opens, before typing into it (fresh_host):
+a new tab runs the local shell even beside an ssh one, so a restore needs
+no tab of its own, and runs from tmux or another terminal app.
 
 A reported directory is still asked of the login's host before it is
 saved (one ssh per host, as for tmux): a tab that ssh'd on from there
@@ -103,11 +123,13 @@ only defines its functions.
 # ruff: noqa: CPY001
 
 import asyncio
+import multiprocessing
 import os
 import re
 import subprocess
 import sys
-from collections.abc import Awaitable, Callable, Iterator
+import time
+from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -115,6 +137,7 @@ from pathlib import Path
 from urllib.parse import quote, unquote
 
 import iterm2
+import websockets.exceptions
 
 # The parser lives beside its first user, Cmd-T's iterm2_api.py.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "home/.hammerspoon"))
@@ -124,7 +147,15 @@ SOCKETS = ("claude", "default")  # tmux_attach_requested.fish accepts these
 # What each socket's sessions show inside the brackets of the terminal title,
 # as tmux formats; must match ~/.tmux.conf's set-titles-string.
 TITLED = {"claude": "#{host}/#{session_name}", "default": "#{session_name}"}
+SESSION_FIELDS = 3  # a list_sessions_argv line: socket, session, shown name
 LANDING_TIMEOUT = 30.0  # s for every restored tab to show its session or directory
+FRESH_HOST_TIMEOUT = 5.0  # s for a new tab to report its host (it takes ~0.1)
+# s for a quit iTerm2 to exit, and for a launched one to answer its API
+# (longer the first time, while macOS asks to let this terminal control it).
+RELAUNCH_TIMEOUT = 120
+CLOSE_TIMEOUT = 30  # s for relaunch's child to close every window (it takes ~1)
+PROGRESS_EVERY = 5.0  # s between the lines a relaunch logs while it waits
+ITERM2_BUNDLE = "com.googlecode.iterm2"
 DIR = Path.home() / ".local/state/iterm2_ssh_arrangements"
 SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
 # A day of them at Hammerspoon's one per 10 minutes (iterm2_snapshots.lua).
@@ -134,7 +165,7 @@ SNAPSHOT_KEEP = 144
 UNATTENDED_SSH = ("-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
 USAGE = (
     "usage: iterm2_ssh_arrangement.sh save [<name> [<window title prefix>]]"
-    " | restore [<name>] | snapshot"
+    " | restore [<name>] | relaunch [<name>] | snapshot"
 )
 MAX_ARGS = 3  # save <name> <prefix>
 LOG: list[Path] = []  # the run's event log, set by main()
@@ -313,7 +344,10 @@ def attach_request(line: str) -> tuple[str, str] | None:
         return None
     socket, _, session = value.partition(":")
     if socket not in SOCKETS:
-        msg = f"attaches on tmux socket {socket!r}, not one of {', '.join(SOCKETS)}: {line}"
+        msg = (
+            f"attaches on tmux socket {socket!r},"
+            f" not one of {', '.join(SOCKETS)}: {line}"
+        )
         raise ArrangementError(msg)
     if not session:
         msg = f"attaches no session on socket {socket!r}: {line}"
@@ -393,7 +427,7 @@ def parse_sessions(text: str) -> dict[str, list[tuple[str, str]]]:
     found: dict[str, list[tuple[str, str]]] = {}
     for line in text.splitlines():
         fields = line.split(":")
-        if len(fields) == 3 and fields[0] in SOCKETS and all(fields):
+        if len(fields) == SESSION_FIELDS and fields[0] in SOCKETS and all(fields):
             socket, session, shown = fields
             found.setdefault(shown, []).append((socket, session))
     return found
@@ -611,11 +645,42 @@ async def local_hosts(
     as its login alone, with a note in the log.
     """
     names = {t.host for _, tabs in windows for t in tabs if t.job != "ssh"}
+    return frozenset({*names, await own_host(app)})
+
+
+async def own_host(app: iterm2.App) -> str:
+    """Return iTerm2's own name for this Mac, its localhostName."""
     own = await app.async_get_variable("localhostName")
     if not isinstance(own, str) or not own:
         msg = f"iTerm2 reported localhostName {own!r}"
         raise ArrangementError(msg)
-    return frozenset({*names, own})
+    return own
+
+
+async def fresh_host(
+    label: str,
+    session: iterm2.Session,
+    timeout: float = FRESH_HOST_TIMEOUT,
+    poll: float = 0.05,
+) -> str:
+    """Return the host a tab just opened reports: a name for this Mac, read.
+
+    Nothing is typed into it yet, so it runs the default profile's local
+    shell, beside an ssh tab too; iTerm2 sets its hostname within ~0.1 s.
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while True:
+        host = await session.async_get_variable("hostname")
+        if isinstance(host, str) and host:
+            return host
+        if loop.time() >= deadline:
+            msg = (
+                f"{label}: iTerm2 reported hostname {host!r} for the new tab"
+                f" after {timeout:g} s"
+            )
+            raise ArrangementError(msg)
+        await asyncio.sleep(poll)
 
 
 def snapshot_name(now: datetime) -> str:
@@ -722,7 +787,7 @@ def remote_dirs(plans: list[Plan], *, unattended: bool) -> DirCheck:
 
 
 @contextmanager
-def naming(wi: int, template: str) -> Iterator[None]:
+def naming(wi: int, template: str) -> Generator[None, None, None]:
     """Prefix an ArrangementError raised inside with window `wi` and its template."""
     try:
         yield
@@ -782,8 +847,8 @@ async def save(
     log(f"saved {file}")
 
 
-async def restore(connection: iterm2.Connection, app: iterm2.App, name: str) -> None:
-    """Open a new window per saved one, the first saved one in front."""
+def load(name: str) -> list[Saved]:
+    """Return the windows of arrangement `name`; a missing or bad file is an error."""
     file = DIR / f"{name}.txt"
     if not file.exists():
         names = sorted(p.stem for p in DIR.glob("*.txt")) if DIR.exists() else []
@@ -793,38 +858,73 @@ async def restore(connection: iterm2.Connection, app: iterm2.App, name: str) -> 
         )
         raise ArrangementError(msg)
     try:
-        windows = parse_file(file.read_text())
+        return parse_file(file.read_text())
     except ArrangementError as e:
         msg = f"{file}: {e}"
         raise ArrangementError(msg) from e
 
-    # A directory tab has landed only off the local host (dir_landing), so
-    # the local host is read for those, and only for those: a restore of
-    # tmux tabs alone still runs from inside tmux.
-    has_dirs = any(dir_request(line) is not None for w in windows for line in w.lines)
-    local = await local_host(app) if has_dirs else None
+
+async def restore(
+    connection: iterm2.Connection,
+    app: iterm2.App,
+    name: str,
+    windows: list[Saved],
+    *,
+    alone: bool = False,
+) -> None:
+    """Open a new window per saved one, the first saved one in front.
+
+    `alone` (relaunch): then close every other window, what iTerm2 opened at
+    its launch. Last, so one it opened late is gone too; and on a failure as
+    well, so a tab that never lands leaves no startup window beside the rest.
+    """
+    opened: list[iterm2.Window] = []
+    try:
+        await open_windows(connection, app, windows, opened)
+    finally:
+        if alone:
+            await close_windows(app, keep={w.window_id for w in opened})
+    log(f"restored {name}: {len(windows)} windows")
+
+
+async def open_windows(
+    connection: iterm2.Connection,
+    app: iterm2.App,
+    windows: list[Saved],
+    opened: list[iterm2.Window],
+) -> None:
+    """Open `windows`, appending each to `opened`, and wait until all land."""
+    # A directory tab has landed only off the local host (dir_landing). Its
+    # names are read off the directory tabs opened here, each before
+    # anything is typed into it (fresh_host), with iTerm2's own: no tab of
+    # the caller's needed.
+    local = {await own_host(app)}
 
     # Last window first, the first one activated at the end: it was the
     # key window when saved. Each title is read back, as a window left with
     # the wrong name is a failure, not a skip.
-    opened = []
-    landing: list[Landing] = []
+    typed: list[tuple[str, str, iterm2.Session]] = []
     for wi in reversed(range(len(windows))):
         w = windows[wi]
         window = await iterm2.Window.async_create(connection)
         if window is None or window.current_tab is None:
             msg = f"iTerm2 made no window for saved window {wi + 1}"
             raise ArrangementError(msg)
+        # Counted as opened before any tab of it can fail: a relaunch's
+        # cleanup then keeps it, ssh sessions that connected and all, and
+        # the error names a window that is still there.
+        opened.append(window)
         for i, line in enumerate(w.lines):
             tab = window.current_tab if i == 0 else await window.async_create_tab()
             if tab is None or tab.current_session is None:
                 msg = f"iTerm2 made no tab {i + 1} in window {wi + 1}"
                 raise ArrangementError(msg)
-            await tab.current_session.async_send_text(line + "\n")
             label = f"window {wi + 1} tab {i + 1}"
+            if dir_request(line) is not None:
+                local.add(await fresh_host(label, tab.current_session))
+            await tab.current_session.async_send_text(line + "\n")
             log(f"{label}: {line}")
-            if lands := landing_of(label, line, tab.current_session, local):
-                landing.append(lands)
+            typed.append((label, line, tab.current_session))
         if w.template:
             await window.async_set_title(w.template)
             got = await window.async_get_variable("titleOverrideFormat")
@@ -835,10 +935,26 @@ async def restore(connection: iterm2.Connection, app: iterm2.App, name: str) -> 
                 )
                 raise ArrangementError(msg)
         log(f"window {wi + 1} restored ({window.window_id}): {w.template!r}")
-        opened.append(window)
     await opened[-1].async_activate()
+
+    # Landings are made once every tab has added its name for this Mac.
+    hosts = frozenset(local)
+    log(f"local hosts {sorted(hosts)}")
+    landing = [
+        lands
+        for label, line, s in typed
+        if (lands := landing_of(label, line, s, hosts))
+    ]
     await wait_landed(landing)
-    log(f"restored {name}: {len(windows)} windows")
+
+
+async def close_windows(app: iterm2.App, keep: set[str]) -> None:
+    """Close every window of iTerm2's but those with ids in `keep`, unasked."""
+    await app.async_refresh()
+    for w in list(app.windows):
+        if w.window_id not in keep:
+            log(f"closing window {w.window_id} ({len(w.tabs)} tabs)")
+            await w.async_close(force=True)
 
 
 Reach = Callable[[iterm2.Session], Awaitable[tuple[bool, str]]]
@@ -886,39 +1002,42 @@ def tmux_landing(
     return Landing(label, f"[{shows}]", session, reach)
 
 
-def dir_landing(label: str, path: str, local: str, session: iterm2.Session) -> Landing:
+def dir_landing(
+    label: str,
+    path: str,
+    local: frozenset[str],
+    session: iterm2.Session,
+) -> Landing:
     """Return the landing of a tab that logs in to land in `path`.
 
-    Landed once it is in `path` on a host other than `local`, both as the far
-    side's prompt reports them (OSC 7, iterm2_report_host). The host too: the
-    tab starts local, maybe in the very path (Mac-to-Mac ssh, /Users/me),
-    which would count as landed before ssh had even connected.
+    Landed once it is in `path` on a host none of `local` (this Mac's names),
+    both as the far side's prompt reports them (OSC 7, iterm2_report_host).
+    The host too: the tab starts local, maybe in the very path (Mac-to-Mac
+    ssh, /Users/me), which would count as landed before ssh had connected.
     """
 
     async def reach(s: iterm2.Session) -> tuple[bool, str]:
         got = await s.async_get_variable("path")
         host = await s.async_get_variable("hostname")
-        return got == path and host != local, f"path reads {got!r} on host {host!r}"
+        return got == path and host not in local, f"path reads {got!r} on host {host!r}"
 
-    return Landing(label, f"directory {path!r} off host {local!r}", session, reach)
+    off = ", ".join(repr(h) for h in sorted(local))
+    return Landing(label, f"directory {path!r} off host {off}", session, reach)
 
 
 def landing_of(
     label: str,
     line: str,
     session: iterm2.Session,
-    local: str | None,
+    local: frozenset[str],
 ) -> Landing | None:
     """Return what the tab typed `line` must come to show; None for a plain line.
 
-    `local` is the local host, read whenever the file holds a directory line.
+    `local` are this Mac's names, which a directory tab must have left.
     """
     if request := attach_request(line):
         return tmux_landing(label, *request, session)
     if (where := dir_request(line)) is not None:
-        if local is None:
-            msg = f"{label}: a directory line, but no local host was read: {line}"
-            raise ArrangementError(msg)
         return dir_landing(label, where, local, session)
     return None
 
@@ -965,6 +1084,230 @@ async def wait_landed(
             await asyncio.sleep(poll)
 
 
+# --- relaunch: iTerm2 quit and launched around a restore -----------------------
+
+
+def iterm2_ancestor(pid: int, parent: Callable[[int], tuple[int, str]]) -> str | None:
+    """Return the iTerm2 process `pid` runs under, as "<pid> <path>"; else None.
+
+    parent(pid) -> (its parent's pid, its executable path), as ps says. A
+    tab's shell runs under iTermServer, under iTerm2:
+        fish -> iTermServer-3.7.6 -> iTerm2       -> "95610 .../iTermServer-3.7.6"
+        fish -> Terminal                          -> None
+    A tmux server forks off to launchd, so its panes run under no iTerm2,
+    whichever terminal started it.
+    """
+    while pid > 1:
+        ppid, path = parent(pid)
+        exe = Path(path).name
+        if exe == "iTerm2" or exe.startswith("iTermServer"):
+            return f"{pid} {path}"
+        pid = ppid
+    return None
+
+
+def ps_parent(pid: int) -> tuple[int, str]:
+    """Return (parent pid, executable path) of process `pid`, from ps."""
+    done = subprocess.run(  # noqa: S603 - fixed argv
+        ["ps", "-o", "ppid=,comm=", "-p", str(pid)],  # noqa: S607 - ps from PATH
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if done.returncode != 0:
+        msg = f"ps -p {pid} failed (exit {done.returncode}): {done.stderr.strip()}"
+        raise ArrangementError(msg)
+    ppid, path = done.stdout.strip().split(None, 1)
+    return int(ppid), path
+
+
+def osascript(script: str) -> str:
+    """Run AppleScript `script`; return its output, failing on any error."""
+    done = subprocess.run(  # noqa: S603 - fixed argv
+        ["osascript", "-e", script],  # noqa: S607 - macOS's own osascript
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if done.returncode != 0:
+        msg = (
+            f"osascript `{script}` failed (exit {done.returncode}):"
+            f" {done.stderr.strip()}"
+        )
+        raise ArrangementError(msg)
+    return done.stdout.strip()
+
+
+def iterm2_running() -> bool:
+    """Tell whether iTerm2 runs; asking so sends it no Apple event."""
+    return osascript(f'application id "{ITERM2_BUNDLE}" is running') == "true"
+
+
+def quit_iterm2() -> None:
+    """Quit iTerm2 and wait until it has exited.
+
+    With every window closed it asks nothing; were it to ask "Quit iTerm2?"
+    anyway, the osascript waits on the answer (up to AppleScript's 2 min).
+    An iTerm2 set to quit when its last window closes is gone already.
+    """
+    if not iterm2_running():
+        log("iTerm2 exited with its last window")
+        return
+    log("quitting iTerm2 (answer its prompt, if it shows one)")
+    osascript(f'tell application id "{ITERM2_BUNDLE}" to quit')
+    start = time.monotonic()
+    note = start + PROGRESS_EVERY
+    while iterm2_running():
+        now = time.monotonic()
+        if now >= start + RELAUNCH_TIMEOUT:
+            msg = f"iTerm2 still runs {RELAUNCH_TIMEOUT} s after it was told to quit"
+            raise ArrangementError(msg)
+        if now >= note:
+            log(f"iTerm2 still runs {now - start:.0f} s after it was told to quit")
+            note += PROGRESS_EVERY
+        time.sleep(0.2)
+    log("iTerm2 has exited")
+
+
+def connected(
+    act: Callable[[iterm2.Connection, iterm2.App], Awaitable[None]],
+    *,
+    wait: float = 0,
+) -> None:
+    """Run act(connection, app) on a connection to iTerm2.
+
+    `wait`: s to keep retrying the connection, for an iTerm2 just launched
+    whose API may not answer yet (relaunch); 0 tries once. Retried are no
+    socket yet (OSError) and a handshake it fails while it starts: a 401 if
+    it gave no cookie yet, or the InvalidMessage the package's own
+    async_connect retries. A connection refused at the end is an error
+    naming why, in the log, rather than the package's message on stderr
+    alone (run_until_complete's).
+
+    Once per process: the package keeps its App, message helpers and
+    notification subscriptions process-wide, bound to the first connection
+    (relaunch).
+    """
+
+    async def run() -> None:
+        loop = asyncio.get_running_loop()
+        start = loop.time()
+        note = start + PROGRESS_EVERY
+        while True:
+            try:
+                connection = await iterm2.Connection.async_create()
+                break
+            except (OSError, websockets.exceptions.InvalidHandshake) as e:
+                now = loop.time()
+                if now < start + wait:
+                    if now >= note:
+                        log(f"no API connection after {now - start:.0f} s: {e!r}")
+                        note += PROGRESS_EVERY
+                    await asyncio.sleep(0.5)
+                    continue
+                if not iterm2_running():
+                    msg = (
+                        "iTerm2 is not running; `iterm2_ssh_arrangement.sh"
+                        " relaunch <name>` launches it and restores"
+                    )
+                else:
+                    msg = (
+                        f"iTerm2 runs but refused an API connection ({e})"
+                        + (f" for {wait:g} s after its launch" if wait else "")
+                        + ": is its Python API on (Settings > General > Magic)?"
+                    )
+                raise ArrangementError(msg) from e
+        await act(connection, await app_of(connection))
+
+    asyncio.run(run())
+
+
+async def app_of(connection: iterm2.Connection) -> iterm2.App:
+    """Return iTerm2's app object over `connection`."""
+    app = await iterm2.async_get_app(connection)
+    if app is None:
+        msg = "iTerm2's Python API returned no app"
+        raise ArrangementError(msg)
+    return app
+
+
+def relaunch(name: str) -> None:
+    """Quit iTerm2, its windows closed first, launch it, and restore `name` alone."""
+    # Both checks come before anything closes: a run that stops later
+    # leaves no windows, or no iTerm2, and nothing restored.
+    windows = load(name)
+    if under := iterm2_ancestor(os.getpid(), ps_parent):
+        msg = (
+            f"runs under iTerm2 ({under}), so quitting iTerm2 would end it before"
+            " the restore; run it from another terminal app (Terminal, Ghostty),"
+            " or `restore` to add the windows to those open"
+        )
+        raise ArrangementError(msg)
+
+    # Every window closed first: iTerm2 then asks no "Quit iTerm2?" and
+    # keeps no windows to restore at its next launch (NSQuitAlwaysKeepsWindows).
+    # In a child process, as the package allows one connection a process:
+    # a second one here, to the new iTerm2, ran the first one's helpers on
+    # every message, which failed on its closed socket, and the new App
+    # missed the tabs it made (seen 2026-10-26: "iTerm2 made no tab 2").
+    # Spawned, not forked, so it imports the package afresh; and no command
+    # of the script's, which a stray `_close-all` typed in a tab would run.
+    if iterm2_running():
+        in_child(close_all, LOG[0], timeout=CLOSE_TIMEOUT, what="closing every window")
+        quit_iterm2()
+    log("launching iTerm2")
+    done = subprocess.run(  # noqa: S603 - fixed argv
+        ["open", "-b", ITERM2_BUNDLE],  # noqa: S607 - macOS's own open
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if done.returncode != 0:
+        msg = (
+            f"open -b {ITERM2_BUNDLE} failed (exit {done.returncode}):"
+            f" {done.stderr.strip()}"
+        )
+        raise ArrangementError(msg)
+    connected(
+        lambda c, app: restore(c, app, name, windows, alone=True),
+        wait=RELAUNCH_TIMEOUT,
+    )
+
+
+def close_all(log_file: Path) -> None:
+    """Close every window of iTerm2's, unasked: relaunch's child (in_child)."""
+    LOG.append(log_file)
+    try:
+        connected(lambda _c, app: close_windows(app, keep=set()))
+    except ArrangementError as e:
+        log(f"ERROR: {e}")
+        sys.exit(1)
+
+
+def in_child(
+    target: Callable[..., None],
+    *args: object,
+    timeout: float,
+    what: str,
+) -> None:
+    """Run target(*args) in a spawned process; its failure or overrun is an error.
+
+    A child left past `timeout` is killed: one whose iTerm2 quit under it
+    (QuitWhenAllWindowsClosed) can wait forever on an answer to a close.
+    """
+    child = multiprocessing.get_context("spawn").Process(target=target, args=args)
+    child.start()
+    child.join(timeout)
+    if child.exitcode is None:
+        child.kill()
+        child.join()
+        msg = f"{what} took over {timeout:g} s; killed it"
+        raise ArrangementError(msg)
+    if child.exitcode != 0:
+        msg = f"{what} failed (exit {child.exitcode}); see above"
+        raise ArrangementError(msg)
+
+
 def main() -> None:
     """Parse argv (<event log> <command> [<name> [<prefix>]]), connect, and act."""
     LOG.append(Path(sys.argv[1]))
@@ -972,9 +1315,9 @@ def main() -> None:
     command, name, prefix = [*args, None, None, None][:3]
     name = name or "all"
     if (
-        command not in ("save", "restore", "snapshot")
+        command not in ("save", "restore", "relaunch", "snapshot")
         or len(args) > MAX_ARGS
-        or (command == "restore" and prefix)
+        or (command in ("restore", "relaunch") and prefix)
         or (command == "snapshot" and len(args) > 1)
     ):
         log(f"ERROR: {USAGE}")
@@ -988,30 +1331,22 @@ def main() -> None:
         log(f"ERROR: name {name!r}: {SNAPSHOT_PREFIX!r} is for snapshots alone")
         sys.exit(1)
 
-    # An ArrangementError is a finding about the windows or the file, said
-    # in one line; anything else is a bug and keeps its traceback (the
-    # package prints it and exits 1). Caught in here, as the package catches
-    # every Exception that leaves `run`.
-    async def act(connection: iterm2.Connection) -> None:
-        app = await iterm2.async_get_app(connection)
-        if app is None:
-            msg = "iTerm2's Python API returned no app"
-            raise ArrangementError(msg)
+    # An ArrangementError is a finding about the windows, the file or
+    # iTerm2, said in one line; anything else is a bug and keeps its
+    # traceback.
+    try:
         if command == "save":
-            await save(app, name, prefix)
+            connected(lambda _c, app: save(app, name, prefix))
         elif command == "snapshot":
-            await snapshot(app)
+            connected(lambda _c, app: snapshot(app))
+        elif command == "restore":
+            windows = load(name)
+            connected(lambda c, app: restore(c, app, name, windows))
         else:
-            await restore(connection, app, name)
-
-    async def run(connection: iterm2.Connection) -> None:
-        try:
-            await act(connection)
-        except ArrangementError as e:
-            log(f"ERROR: {e}")
-            sys.exit(1)
-
-    iterm2.run_until_complete(run)
+            relaunch(name)
+    except ArrangementError as e:
+        log(f"ERROR: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

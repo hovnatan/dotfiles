@@ -113,7 +113,8 @@ recorded() { cat "$work/$1" 2>/dev/null || echo none; }
 # script itself (with the stub iterm2 module its own test uses), so the
 # writer and this reader cannot drift apart unseen.
 # arrangement <python> [<arg>...]: run python with the script loaded as `arr`
-# (and the stub iterm2 module its own test uses); the args are `args`.
+# (and the stub iterm2 and websockets modules its own test uses); the args
+# are `args`.
 arrangement() {
   local code=$1
   shift
@@ -121,6 +122,11 @@ arrangement() {
 stub = types.ModuleType('iterm2')
 vars(stub).update({n: type(n, (), {}) for n in ('App', 'Connection', 'Session', 'Window')})
 sys.modules['iterm2'] = stub
+errors = types.ModuleType('websockets.exceptions')
+vars(errors)['InvalidHandshake'] = type('InvalidHandshake', (Exception,), {})
+sockets = types.ModuleType('websockets')
+vars(sockets)['exceptions'] = errors
+sys.modules.update({'websockets': sockets, 'websockets.exceptions': errors})
 spec = importlib.util.spec_from_file_location('arr', sys.argv[1] + '/scripts/lib/iterm2_ssh_arrangement.py')
 arr = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(arr)

@@ -15,8 +15,10 @@
 --          Not by the error's text: it names windows key window first,
 --          so one cause reads differently as the focus moves.
 --
--- Bring one back from an iTerm2 tab:
+-- Bring one back beside the windows open, from any terminal:
 --   ~/.dotfiles/scripts/iterm2_ssh_arrangement.sh restore auto-20261019_143000
+-- or in place of them, iTerm2 quit and launched, from another terminal app:
+--   ~/.dotfiles/scripts/iterm2_ssh_arrangement.sh relaunch auto-20261019_143000
 --
 -- The script's own log is one directory a day,
 -- <dotfiles>/.logs/<UTC time>_iterm2_ssh_snapshot/; this module's says when

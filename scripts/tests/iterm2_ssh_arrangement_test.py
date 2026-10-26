@@ -40,6 +40,12 @@ vars(stub).update(
     {n: type(n, (), {}) for n in ("App", "Connection", "Session", "Window")},
 )
 sys.modules["iterm2"] = stub
+# And websockets (iterm2's), for the handshake error a relaunch retries.
+errors = types.ModuleType("websockets.exceptions")
+vars(errors)["InvalidHandshake"] = type("InvalidHandshake", (Exception,), {})
+sockets = types.ModuleType("websockets")
+vars(sockets)["exceptions"] = errors
+sys.modules.update({"websockets": sockets, "websockets.exceptions": errors})
 spec = importlib.util.spec_from_file_location(
     "iterm2_ssh_arrangement",
     REPO / "scripts/lib/iterm2_ssh_arrangement.py",
@@ -55,8 +61,9 @@ arr.LOG.append(LOG)  # the script's own log() lines land in this run's log
 
 # What `tmux ls` on each socket of each host prints (list_sessions_argv):
 # socket, session, and the name its title shows -- "<hostname>/<session>"
-# on the claude socket -- ":"-separated. Twin's claude "dup" shows as "dup" through a host
-# named "" -- impossible, but it puts one shown name on both sockets.
+# on the claude socket -- ":"-separated. Twin's claude "dup" shows as "dup"
+# through a host named "" -- impossible, but it puts one shown name on both
+# sockets.
 HOSTS = {
     "ssh vm": "claude:ai-agent:vm/ai-agent\nclaude:api/docs:vm/api/docs\n"
     "default:main:main\n"
@@ -256,7 +263,10 @@ def _() -> None:
 
 @case("a session named with a space is refused as one to rename, not as on no socket")
 def _() -> None:
-    refused([Tab(1, "ssh", "ssh vm", "[my notes]", "/", "vm")], "needing quotes; rename it")
+    refused(
+        [Tab(1, "ssh", "ssh vm", "[my notes]", "/", "vm")],
+        "needing quotes; rename it",
+    )
 
 
 @case("a saved attach line on a socket the restore cannot land is refused at parse")
@@ -267,7 +277,9 @@ def _() -> None:
         ("claude:", "no session"),
     ]:
         line = f"LC_TMUX_ATTACH={value} ssh -o SendEnv=LC_TMUX_ATTACH vm"
-        error = error_of(lambda line=line: arr.parse_file(f"window: x\nssh vm\n{line}\n"))
+        error = error_of(
+            lambda line=line: arr.parse_file(f"window: x\nssh vm\n{line}\n"),
+        )
         assert want in error, f"{error!r} lacks {want!r}"
         assert "line 3" in error, error
 
@@ -449,7 +461,7 @@ def tmux_tab(label: str, name: str, s: Moving, socket: str = "claude") -> Landin
 
 def dir_tab(label: str, path: str, s: Moving) -> Landing:
     """Return the landing of a directory tab, LOCAL being the local host."""
-    return arr.dir_landing(label, path, LOCAL, s)
+    return arr.dir_landing(label, path, frozenset({LOCAL}), s)
 
 
 @case("restore waits for each tmux tab to show its session, each dir tab its path")
@@ -514,17 +526,228 @@ def _() -> None:
 @case("restore waits on the lines that ask for a session or a directory, only")
 def _() -> None:
     s = in_dir("/x", 0)
+    local = frozenset({LOCAL, "Mac"})
     attach = arr.attach_line("ssh vm", "claude", "api/docs")
-    got = arr.landing_of("t", attach, s, None)
+    got = arr.landing_of("t", attach, s, local)
     assert got is not None, attach
     assert got.want == "[<host>/api/docs]", got
-    got = arr.landing_of("t", arr.dir_line("ssh vm", "/a b"), s, LOCAL)
+    got = arr.landing_of("t", arr.dir_line("ssh vm", "/a b"), s, local)
     assert got is not None
-    assert got.want == "directory '/a b' off host 'Mac.local'", got
+    assert got.want == "directory '/a b' off host 'Mac', 'Mac.local'", got
     for line in ["ssh vm", "cd '/tmp'"]:
-        assert arr.landing_of("t", line, s, LOCAL) is None, line
-    error = error_of(lambda: arr.landing_of("t", arr.dir_line("ssh vm", "/a"), s, None))
-    assert "no local host was read" in error, error
+        assert arr.landing_of("t", line, s, local) is None, line
+
+
+@case("a dir tab on any of this Mac's names has not landed, though in the path")
+def _() -> None:
+    s = Moving({"path": "/Users/me", "hostname": "Mac"}, {}, 10**6)
+    tab = arr.dir_landing("t", "/Users/me", frozenset({LOCAL, "Mac"}), s)
+    assert asyncio.run(tab.reach(s))[0] is False
+
+
+@case("a new tab's host is read once iTerm2 has set it, else the restore fails")
+def _() -> None:
+    s = Moving({"hostname": ""}, {"hostname": LOCAL}, 3)
+    assert asyncio.run(arr.fresh_host("t", s, timeout=5, poll=0.001)) == LOCAL
+    s = Moving({"hostname": ""}, {}, 10**6)
+    error = error_of(
+        lambda: asyncio.run(arr.fresh_host("w1 t2", s, timeout=0.01, poll=0.001)),
+    )
+    assert "w1 t2: iTerm2 reported hostname '' for the new tab" in error, error
+
+
+class RestoredSession:
+    """A new tab's pane: local until a line is typed, then where it leads.
+
+    Each read and line goes to `events`, so a test sees their order.
+    """
+
+    def __init__(self, events: list[str]) -> None:
+        """Start local in /Users/me, titled fish."""
+        self.events = events
+        self.vars = {"hostname": LOCAL, "path": "/Users/me", "name": "fish"}
+
+    async def async_get_variable(self, var: str) -> str:
+        """Read one of its variables."""
+        self.events.append(f"read {var}")
+        return self.vars[var]
+
+    async def async_send_text(self, text: str) -> None:
+        """Type `text`; the far side acts on its request at once."""
+        line = text.removesuffix("\n")
+        self.events.append(f"typed {line}")
+        if request := arr.attach_request(line):
+            self.vars["name"] = f"[vm/{request[1]}]"
+        elif (where := arr.dir_request(line)) is not None:
+            self.vars.update(path=where, hostname="vm")
+
+
+class RestoredTab:
+    """A tab of a RestoredWindow."""
+
+    def __init__(self, events: list[str]) -> None:
+        """Hold one new pane."""
+        self.current_session = RestoredSession(events)
+
+
+class RestoredWindow:
+    """A window the restore makes, or one iTerm2 opened at its launch."""
+
+    def __init__(self, app: "RestoredApp", wid: str) -> None:
+        """Open window `wid` in `app`, with one tab."""
+        self.app, self.window_id, self.template = app, wid, ""
+        self.tabs = [RestoredTab(app.events)]
+        self.current_tab = self.tabs[0]
+        app.windows.append(self)
+
+    async def async_create_tab(self) -> RestoredTab:
+        """Open another tab."""
+        self.tabs.append(RestoredTab(self.app.events))
+        return self.tabs[-1]
+
+    async def async_set_title(self, template: str) -> None:
+        """Set its title template."""
+        self.template = template
+
+    async def async_get_variable(self, var: str) -> str:
+        """Read titleOverrideFormat."""
+        assert var == "titleOverrideFormat", var
+        return self.template
+
+    async def async_activate(self) -> None:
+        """Bring it to the front."""
+        self.app.events.append(f"activated {self.window_id}")
+
+    async def async_close(self, *, force: bool) -> None:
+        """Close it, unasked; `windows` drops it at the next refresh, as iTerm2's."""
+        assert force
+        self.app.closed.append(self.window_id)
+        self.app.events.append(f"closed {self.window_id}")
+
+
+class RestoredApp:
+    """iTerm2 as a restore sees it: localhostName "Mac", windows by id."""
+
+    def __init__(self) -> None:
+        """Hold no window yet."""
+        self.windows: list[RestoredWindow] = []
+        self.closed: list[str] = []
+        self.events: list[str] = []
+        self.made = 0
+
+    async def async_refresh(self) -> None:
+        """Drop the windows closed since the last refresh."""
+        self.windows = [w for w in self.windows if w.window_id not in self.closed]
+
+    async def async_get_variable(self, var: str) -> str:
+        """Read localhostName."""
+        assert var == "localhostName", var
+        return "Mac"
+
+    async def create(self, _connection: object) -> RestoredWindow:
+        """Open a window, as iterm2.Window.async_create does."""
+        self.made += 1
+        return RestoredWindow(self, f"made{self.made}")
+
+
+SAVED = arr.parse_file(
+    "window: a\n"
+    + arr.dir_line("ssh vm", "/home/me/d")
+    + "\n"
+    + arr.attach_line("ssh vm", "claude", "x")
+    + "\nwindow: b\ncd '/tmp'\n",
+)
+
+
+def restored(*, alone: bool) -> RestoredApp:
+    """Return the app after restoring SAVED beside a window iTerm2 opened, "startup"."""
+    app = RestoredApp()
+    RestoredWindow(app, "startup")
+    stub.Window.async_create = app.create
+    try:
+        asyncio.run(arr.restore(None, app, "t", SAVED, alone=alone))
+    finally:
+        del stub.Window.async_create
+    return app
+
+
+@case("restore reads a new dir tab's host before typing, so it needs no tab of its own")
+def _() -> None:
+    # Unset, so a restore that went back to reading them fails here.
+    saved = {
+        k: os.environ.pop(k) for k in ("TMUX", "ITERM_SESSION_ID") if k in os.environ
+    }
+    try:
+        app = restored(alone=False)
+    finally:
+        os.environ.update(saved)
+    typed = {e: i for i, e in enumerate(app.events) if e.startswith("typed ")}
+    assert len(typed) == 3, app.events
+    for line, i in typed.items():
+        read = app.events[i - 1] == "read hostname"
+        assert read is ("LC_LOGIN_DIR" in line), app.events[i - 1 : i + 1]
+    assert [w.template for w in app.windows] == ["", "b", "a"], app.windows
+    assert app.closed == [], app.closed
+
+
+@case("a relaunch's restore closes every window it did not open, last")
+def _() -> None:
+    app = restored(alone=True)
+    assert app.closed == ["startup"], app.closed
+    assert app.events[-1] == "closed startup", app.events[-3:]
+    assert app.events.index("activated made2") < app.events.index("closed startup")
+
+
+@case("a failed relaunch restore closes the startup window, not a half-made one")
+def _() -> None:
+    app = RestoredApp()
+    RestoredWindow(app, "startup")
+    stub.Window.async_create = app.create
+    bad = [arr.Saved("a", ["cd '/tmp'"]), arr.Saved("b", ["cd '/x'"])]
+
+    async def no_title(self: RestoredWindow, _template: str) -> None:
+        """Leave the title unset, so its read-back fails the restore."""
+
+    set_title = RestoredWindow.async_set_title
+    RestoredWindow.async_set_title = no_title
+    try:
+        error = error_of(
+            lambda: asyncio.run(arr.restore(None, app, "t", bad, alone=True)),
+        )
+    finally:
+        RestoredWindow.async_set_title = set_title
+        del stub.Window.async_create
+    assert "window 2: title template reads back ''" in error, error
+    assert app.closed == ["startup"], app.closed
+    assert [w.window_id for w in app.windows] == ["startup", "made1"], app.windows
+
+
+@case("relaunch refuses to run under iTerm2, whose quit would end it; tmux is fine")
+def _() -> None:
+    procs = {
+        500: (400, "/Users/me/.nix-profile/bin/python3"),
+        400: (300, "fish"),
+        300: (200, "/Users/me/Library/Application Support/iTerm2/iTermServer-3.7.6"),
+        200: (1, "/Applications/iTerm.app/Contents/MacOS/iTerm2"),
+        # a tmux pane: the server forked off to launchd
+        60: (50, "fish"),
+        50: (1, "tmux"),
+        # Terminal.app
+        70: (10, "-fish"),
+        10: (1, "/System/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"),
+    }
+    got = arr.iterm2_ancestor(500, procs.__getitem__)
+    assert got == "300 " + procs[300][1], got
+    assert arr.iterm2_ancestor(200, procs.__getitem__) == "200 " + procs[200][1]
+    assert arr.iterm2_ancestor(60, procs.__getitem__) is None
+    assert arr.iterm2_ancestor(70, procs.__getitem__) is None
+
+
+@case("ps names this process's parent, for the relaunch's iTerm2 check")
+def _() -> None:
+    ppid, path = arr.ps_parent(os.getpid())
+    assert ppid == os.getppid(), (ppid, os.getppid())
+    assert path, path
 
 
 class FakeApp:
