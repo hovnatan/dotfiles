@@ -87,6 +87,13 @@ trade. The same goes for your own long tasks - surface a finding when you
 have it instead of holding everything for the final report, unless the task's
 output contract is a single structured payload.
 
+Background jobs: wake on every stage, not only on exit. When you start a long
+job in the background, also arm a Monitor on its log that prints each stage
+line and every failure signature, so a failure two minutes in reaches me then,
+not when the job exits twenty minutes later. Write job scripts to stop at the
+first failed stage, rather than waiting out health checks or running later
+stages against a broken state.
+
 # Results: leave a handoff document next to the artifacts
 
 When a task produces results someone will later read, compare against, or
