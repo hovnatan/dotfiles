@@ -7,9 +7,10 @@
 # does. Needs tmux (3.6 or later, for the focus hooks), python3 and fish
 # (report-attach.sh's host report); about 15 s.
 #
-#   sessions   a: sleep           b: a stand-in "claude" (a link to sleep,
-#                                    which is all focus-out-unattached.sh
-#                                    looks at: the name and the foreground)
+#   sessions   a: sleep           b: a stand-in "claude" (a link to bash,
+#                                    idle on a FIFO; the name and the
+#                                    foreground are all
+#                                    focus-out-unattached.sh looks at)
 #
 #   client attaches to a                  -> attached ... session=a
 #   a bystander client attaches to b, and reports nothing
@@ -88,11 +89,15 @@ wait_for() {
   return 1
 }
 
-ln -s /bin/sleep "$WORK/claude"
+# bash, not sleep: Ubuntu 26.04's sleep is uutils' multi-call binary, which
+# refuses to run under another name (a copy: "coreutils: unknown program
+# 'claude'"). The FIFO has no writer, so read just waits.
+ln -s "$(command -v bash)" "$WORK/claude"
+mkfifo "$WORK/never"
 grep -E '^set-hook -g (client-(attached|detached|session-changed|focus-in|focus-out)|pane-title-changed)' \
   "$REPO/home/.tmux.conf" >"$WORK/hooks.conf"
 t -f /dev/null new-session -d -s a 'sleep 300'
-t new-session -d -s b "$WORK/claude 300"
+t new-session -d -s b "$WORK/claude -c 'read -r -t 300 <>$WORK/never'"
 t set -g focus-events on
 if t source-file "$WORK/hooks.conf" 2>"$WORK/out"; then
   pass "$("$TMUX_BIN" -V) takes the $(wc -l <"$WORK/hooks.conf" | tr -d ' ') hook lines of home/.tmux.conf"

@@ -173,7 +173,12 @@ trap cleanup EXIT
 
 # The stub must win over the real claude on every PATH a login shell builds,
 # or the "manager" below would resume a real conversation. Its idle process
-# is a copy of sleep named claude: wait_alive checks the pane's comm.
+# is a copy of bash named claude, waiting on a FIFO nobody writes: wait_alive
+# checks the pane's comm, and the restart checks count its children, which
+# `read -t` starts none of. Not a copy of sleep: Ubuntu 26.04's is uutils'
+# multi-call binary, which runs under its own name only ("coreutils:
+# unknown program 'claude'"; through a symlink, "Requested utility `tail`
+# does not match executable name").
 mkdir -p "$H/.local/bin" "$H/.claude/projects" "$WORK/idle"
 # ~/.dotfiles holds the repo, entry by entry, so the hooks and scripts that
 # name ~/.dotfiles/... run this checkout -- but a .logs of its own: the
@@ -188,7 +193,8 @@ done
 # does: without it the server runs the distro's tmux (3.4 on Ubuntu 24.04),
 # which never sets PartOf, and the scope checks below pass without testing.
 [ -e "$HOME/.nix-profile" ] && ln -s "$(readlink -f "$HOME/.nix-profile")" "$H/.nix-profile"
-cp "$(command -v sleep)" "$WORK/idle/claude"
+cp "$(command -v bash)" "$WORK/idle/claude"
+mkfifo "$WORK/idle/never"
 # With $WORK/agents_fail present, `agents --json` fails the way a broken
 # Claude Code update or daemon would; with $WORK/agents.json, it prints that
 # (the restart checks write the pane they act on there). Read at launch,
@@ -197,11 +203,12 @@ cp "$(command -v sleep)" "$WORK/idle/claude"
 # "< /dev/null" after the eval, and without, for a command that redirects
 # stdin itself); $WORK/detach four jobs it detached (setsid, their parent
 # gone: no descendant of claude, still in the pane's scope) -- a sleep, a
-# sleep started through a symlink named "tail" (how a multi-call binary
-# looks), a python that made itself non-dumpable (prctl PR_SET_DUMPABLE 0),
-# whose exe link the kernel then hides as it does a setuid program's, and a
-# sleep started through "ssh" whose argv reads "ssh: <socket> [mux]" (how
-# an ssh ControlMaster retitles itself) -- their pids written
+# bash started through a symlink named "tail" (how a multi-call binary
+# looks: comm is not its exe's name), a python that made itself
+# non-dumpable (prctl PR_SET_DUMPABLE 0), whose exe link the kernel then
+# hides as it does a setuid program's, and a bash started through "ssh"
+# whose argv reads "ssh: <socket> [mux]" (how an ssh ControlMaster retitles
+# itself); the two bashes idle on the FIFO -- their pids written
 # to $WORK/detached.pid in that order; $WORK/slow_exit holds the seconds the stub
 # then takes to shut down after TERM -- it stays this script, whose process
 # is named claude too (#!/bin/bash: env would re-exec as "bash").
@@ -219,17 +226,17 @@ fi
 if [ -e "$WORK/detach" ]; then
   : >"$WORK/detached.pid"
   ( setsid sleep 100001 </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
-  ln -sf "\$(command -v sleep)" "$WORK/tail"
-  ln -sf "\$(command -v sleep)" "$WORK/ssh"
-  ( setsid "$WORK/tail" 100002 </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
+  ln -sf "\$(command -v bash)" "$WORK/tail"
+  ln -sf "\$(command -v bash)" "$WORK/ssh"
+  ( setsid "$WORK/tail" -c "read -r -t 100002 <>'$WORK/idle/never'" </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
   ( setsid python3 -c 'import ctypes, time; ctypes.CDLL(None).prctl(4, 0); time.sleep(100003)' </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
-  ( setsid bash -c 'exec -a "ssh: $WORK/cm [mux]" "$WORK/ssh" 100005' </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
+  ( setsid bash -c 'exec -a "ssh: $WORK/cm [mux]" "$WORK/ssh" -c "read -r -t 100005 <>$WORK/idle/never"' </dev/null >/dev/null 2>&1 & echo \$! >>"$WORK/detached.pid" )
 fi
 if [ -e "$WORK/slow_exit" ]; then
   trap "sleep \$(cat "$WORK/slow_exit"); exit 0" TERM
   while :; do sleep 1 & wait \$!; done
 fi
-exec "$WORK/idle/claude" 100000
+exec "$WORK/idle/claude" -c "read -r -t 100000 <>'$WORK/idle/never'"
 EOF
 chmod +x "$H/.local/bin/claude"
 
@@ -450,12 +457,13 @@ rc=$?
 # argv the program rewrote, the "ssh:" of the mux, does not show), and by
 # that name where the kernel hides the path.
 sleep_exe=$(readlink "/proc/${detached_pids[0]}/exe")
+bash_exe=$(readlink "/proc/${detached_pids[1]}/exe")
 want="background shell: sleep 100000 # bg
 background shell: sleep 100004 </dev/null # 'bg2'
 detached: $sleep_exe
-detached: $sleep_exe (tail)
+detached: $bash_exe (tail)
 detached: python3 (path not readable)
-detached: $sleep_exe (ssh)"
+detached: $bash_exe (ssh)"
 out=$(run restart --check ctb 2>&1)
 rc=$?
 [ "$rc" -eq 0 ] && [ "$(sort <<<"$out")" = "$(sort <<<"$want")" ] && [ "$(pid_now)" = "$pid" ] \
@@ -553,7 +561,7 @@ press '\001\022'
 wait_for 0 'any other key' || fail "no C-r popup: $(since 0 | tail -c 300)"
 missing=""
 for line in " restart claude in ctb? " " The restart kills:" "background shell: sleep 100000 # bg" "background shell: sleep 100004 </dev/null # 'bg2'" \
-  "detached: $sleep_exe" "detached: $sleep_exe (tail)" "detached: python3 (path not readable)" "detached: $sleep_exe (ssh)" " y: restart   any other key: cancel"; do
+  "detached: $sleep_exe" "detached: $bash_exe (tail)" "detached: python3 (path not readable)" "detached: $bash_exe (ssh)" " y: restart   any other key: cancel"; do
   since 0 | grep -qF -- "$line" || missing+="${missing:+, }'$line'"
 done
 [ -z "$missing" ] && pass "C-r popup lists the background shells and the detached jobs, one per line" \
