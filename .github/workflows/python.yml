@@ -1,0 +1,24 @@
+# Every tracked .py file, but vendored code and check.sh's debt list, must
+# pass ruff under home/.config/ruff (every rule on). ruff comes from the
+# pinned nixpkgs (nix/flake.lock), the build `dotup` installs, since its
+# rules and formatting shift between releases.
+# scripts/check.sh's `python` check, which the pre-push hook runs too.
+# Fix a format failure with:  scripts/check.sh's python_files | xargs -0 ruff format
+name: python
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: ruff check and format --check
+        run: |
+          nix shell --inputs-from "path:$PWD/nix" nixpkgs#ruff --command bash -c \
+            "ruff --version && scripts/check.sh python"

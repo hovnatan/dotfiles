@@ -1356,8 +1356,7 @@ def replace(name: str) -> None:
     )
     if done.returncode != 0:
         msg = (
-            f"{' '.join(launch)} failed (exit {done.returncode}):"
-            f" {done.stderr.strip()}"
+            f"{' '.join(launch)} failed (exit {done.returncode}): {done.stderr.strip()}"
         )
         raise ArrangementError(msg)
     connected(

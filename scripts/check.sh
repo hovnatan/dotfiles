@@ -9,6 +9,8 @@
 #              .editorconfig) on every tracked .sh and git
 #              hook, and no bare GNU `timeout`
 #   lua        stylua --check on every tracked .lua            lua.yml
+#   python     ruff check and ruff format --check on every     python.yml
+#              tracked .py, rules in home/.config/ruff
 #   configs    scripts/check_configs.sh: fish parse and        configs.yml
 #              layout, JSON, nvim startup
 #   markdown   markdownlint-cli2 on every tracked .md          markdown.yml
@@ -28,7 +30,7 @@
 #                                          one a line, and run none
 #
 # --changed picks:
-#   shell lua configs            always: a few seconds over the whole repo
+#   shell lua python configs     always: a few seconds over the whole repo
 #   markdown yaml
 #   nix                          a path under nix/, or check_nix_flake.sh
 #   test:<name>                  a path its `# check.sh covers:` line names,
@@ -37,7 +39,8 @@
 #                                tools the tests drive) changed
 #
 #   e.g. --changed home/.config/tmux/retitle.sh README.md
-#        -> shell lua configs markdown yaml test:appearance test:tmux_hooks
+#        -> shell lua python configs markdown yaml test:appearance
+#           test:tmux_hooks
 #
 # Each test declares, near its top (bash patterns; `*` also spans `/`):
 #   # check.sh covers: scripts/prune_logs.sh scripts/lib/*
@@ -55,7 +58,7 @@ cd "$REPO" || exit 1
 
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 usage() {
-  echo "usage: $0 [shell|lua|configs|markdown|yaml|nix|tests ...] | --changed <path>..." >&2
+  echo "usage: $0 [shell|lua|python|configs|markdown|yaml|nix|tests ...] | --changed <path>..." >&2
   exit 2
 }
 
@@ -107,6 +110,33 @@ check_shell() {
 check_lua() {
   need stylua || return 1
   git ls-files -z '*.lua' | xargs -0 stylua --check
+}
+
+# python_files: every tracked .py, NUL-separated, but vendored code (as in
+# shell_files) and the debt list: files from before this check that do not
+# pass it yet. A new file is checked from its first commit; take a file off
+# the list once it passes, and never add one.
+python_files() {
+  git ls-files -z '*.py' ':(exclude)home/.config/tmux/vendor/**' \
+    ':(exclude)home/.claude/skills/scan-to-epub/scripts/build_epub.py' \
+    ':(exclude)home/.claude/skills/scan-to-epub/scripts/calibrate.py' \
+    ':(exclude)home/.claude/skills/scan-to-epub/scripts/figsheet.py' \
+    ':(exclude)home/.claude/skills/scan-to-epub/scripts/lint_epub.py' \
+    ':(exclude)home/.claude/skills/scan-to-epub/scripts/propose_toc.py' \
+    ':(exclude)home/.claude/skills/scan-to-epub/scripts/verify_coverage.py' \
+    ':(exclude)scripts/mp_prog.py' \
+    ':(exclude)scripts/pdf_tools/reverse_names.py' \
+    ':(exclude)scripts/s.py'
+}
+
+# The config is named, not found: ruff would otherwise read ~/.config/ruff,
+# which CI has none of. It is the same file once installed.
+# Fix a format failure with:  scripts/check.sh's python_files | xargs -0 ruff format
+check_python() {
+  need ruff || return 1
+  local config=home/.config/ruff/pyproject.toml
+  python_files | xargs -0 ruff check --config "$config" || return 1
+  python_files | xargs -0 ruff format --check --config "$config"
 }
 
 check_configs() { scripts/check_configs.sh; }
@@ -178,7 +208,7 @@ fi
 
 if [ "${1:-}" = --changed ]; then
   shift
-  checks=(shell lua configs markdown yaml)
+  checks=(shell lua python configs markdown yaml)
   for p; do
     case "$p" in nix/* | scripts/check_nix_flake.sh)
       checks+=(nix)
@@ -193,12 +223,12 @@ if [ "${1:-}" = --changed ]; then
     fi
   done
 elif [ $# -eq 0 ]; then
-  checks=(shell lua configs markdown yaml nix)
+  checks=(shell lua python configs markdown yaml nix)
   add_all_tests
 else
   for c; do
     case "$c" in
-      shell | lua | configs | markdown | yaml | nix) checks+=("$c") ;;
+      shell | lua | python | configs | markdown | yaml | nix) checks+=("$c") ;;
       tests) add_all_tests ;;
       *) usage ;;
     esac
