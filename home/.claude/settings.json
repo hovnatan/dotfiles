@@ -87,6 +87,7 @@
     "cc-plugin-you-should-know@builtin": true,
     "context7@anthropic-plugin-directory": true
   },
+  "disableClaudeAiConnectors": true,
   "extraKnownMarketplaces": {
     "astral-sh": {
       "source": {
