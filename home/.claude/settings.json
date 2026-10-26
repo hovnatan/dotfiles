@@ -21,6 +21,7 @@
   },
   "model": "opus",
   "disableClaudeAiConnectors": true,
+  "enableArtifact": false,
   "deniedMcpServers": [
     {
       "serverName": "computer-use"
