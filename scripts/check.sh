@@ -113,12 +113,9 @@ check_lua() {
 }
 
 # python_files: every tracked .py, NUL-separated, but vendored code (as in
-# shell_files) and the debt list: files from before this check that do not
-# pass it yet. A new file is checked from its first commit; take a file off
-# the list once it passes, and never add one.
+# shell_files).
 python_files() {
-  git ls-files -z '*.py' ':(exclude)home/.config/tmux/vendor/**' \
-    ':(exclude)scripts/pdf_tools/reverse_names.py'
+  git ls-files -z '*.py' ':(exclude)home/.config/tmux/vendor/**'
 }
 
 # The config is named, not found: ruff would otherwise read ~/.config/ruff,

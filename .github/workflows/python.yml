@@ -1,5 +1,5 @@
-# Every tracked .py file, but vendored code and check.sh's debt list, must
-# pass ruff under home/.config/ruff (every rule on). ruff comes from the
+# Every tracked .py file but vendored code must pass ruff under
+# home/.config/ruff (every rule on). ruff comes from the
 # pinned nixpkgs (nix/flake.lock), the build `dotup` installs, since its
 # rules and formatting shift between releases.
 # scripts/check.sh's `python` check, which the pre-push hook runs too.
