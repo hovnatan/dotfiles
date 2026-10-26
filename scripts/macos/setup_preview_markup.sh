@@ -3,7 +3,7 @@
 # Preview.app markup ("AnnotationKit") defaults: magenta arrows/shapes,
 # magenta 24pt annotation text, and a solid black fill so text boxes get a
 # readable background over busy screenshots -- markup that stands out from
-# any UI for LLM review (see .claude/skills/review-screenshot).
+# any UI for LLM review.
 #
 # Preview has no settings UI for these -- it just remembers the last-used
 # values in its prefs, so picking another color in the markup toolbar
