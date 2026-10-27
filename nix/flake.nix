@@ -230,7 +230,7 @@
             pkgs.rclone
             # ripgrep -- rg; defaults in home/.config/ripgrep/rc
             pkgs.ripgrep
-            # rsync 3.x; Apple's /usr/bin/rsync is openrsync (see ssh_folder_sync.sh)
+            # rsync 3.x; Apple's /usr/bin/rsync is openrsync
             pkgs.rsync
             # ruff -- Python linter and formatter; the user config outside
             # projects is home/.config/ruff (every rule on). Replaces a stray
