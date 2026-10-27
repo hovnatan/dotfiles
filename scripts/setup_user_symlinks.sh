@@ -531,6 +531,12 @@ if [ "$(uname)" = "Darwin" ]; then
   # turn with the tab's bell icon, which is all Ghostty shows too.
   defaults write com.googlecode.iterm2 ShowNewOutputIndicator -bool false
   defaults write com.googlecode.iterm2 HideActivityIndicator -bool true
+  # No "idle"/"working"/"waiting" subtitle under the tab title: Claude Code
+  # reports its state over OSC 7501 when run straight in iTerm2 (not through
+  # tmux, which drops the sequence), and iTerm2 3.7 printed it on every Claude
+  # tab. The colored dot stays; iTerm2 has no setting to hide it. Same toggle
+  # as the Session Status toolbelt tool's "Show status in tab subtitle".
+  defaults write com.googlecode.iterm2 ShowSessionStatusInTabSubtitle -bool false
   # New tabs open right after the current one, as Ghostty's default
   # window-new-tab-position = current does; iTerm2 appends them at the end.
   defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
