@@ -1,12 +1,18 @@
 -- URL dispatcher: Hammerspoon is the default browser; Google Cloud links,
--- work URLs, Slack's own domains and anything clicked in a work app (Slack)
--- open in the work Chrome profile, everything else in the default one. Only
--- links from outside Chrome hit this.
+-- AWS console and login (CLI sign-in, SSO), work URLs, Slack's own domains
+-- and anything clicked in a work app (Slack) open in the work Chrome
+-- profile, everything else in the default one. Only links from outside
+-- Chrome hit this.
+--
+--   click --> httpCallback --> isWorkLink(host, url) --or--> source app is
+--                                 GCLOUD_HOSTS / auth       a work app (Slack)
+--                                 WORK_HOST_SUFFIXES             |
+--                                 work_url_prefixes              v
+--                              work profile if either, else the default one
 --
 -- Chrome profile directories map to accounts and work URLs name the
--- employer, so both live outside the repo, required as "local_hammerspoon"
--- via a git-ignored symlink at ~/.hammerspoon/local_hammerspoon.lua (see
--- init.lua):
+-- employer, so both live outside the repo, in the machine-private config
+-- (local_config.lua says how it loads):
 --   return {
 --     work_chrome_profile = "...",  -- e.g. "Default", "Profile 1"
 --     default_chrome_profile = "...",
@@ -14,12 +20,8 @@
 --   }
 -- Without it, links open in Chrome with no profile forcing.
 local chrome = require("chrome")
+local cfg = require("local_config")
 local M = {}
-
-local ok, cfg = pcall(require, "local_hammerspoon")
-if not ok then
-  cfg = {}
-end
 
 local GCLOUD_HOSTS = {
   ["console.cloud.google.com"] = true,
@@ -34,11 +36,25 @@ local function isGcloudAuth(host, url)
   return host == "accounts.google.com" and url:find("cloud-platform", 1, true) ~= nil
 end
 
--- Hosts that are work whatever the source app, matched on the registrable
--- domain so every subdomain counts (app.slack.com, <workspace>.slack.com,
--- files.slack.com). Not employer-identifying, so unlike work_url_prefixes
--- these can live in the repo.
-local WORK_HOST_SUFFIXES = { "slack.com" }
+-- Hosts that are work whatever the source app, matched as a suffix so the
+-- host itself and every subdomain count. Not employer-identifying, so
+-- unlike work_url_prefixes these can live in the repo. AWS is work-only, so
+-- all of it goes to the work profile, docs and S3 links included:
+--   slack.com       app.slack.com, <workspace>.slack.com
+--   aws.amazon.com  us-west-2.signin.aws.amazon.com (`aws login`), console
+--   amazonaws.com   oidc.us-east-1.amazonaws.com (`aws sso login`), S3
+--   awsapps.com     SSO start page <id>.awsapps.com/start
+--   aws             AWS's own top-level domain: us-east-1.signin.aws
+--                   (Identity Center sign-in), <id>.portal.us-east-1.app.aws
+-- amazon.com itself (shopping) does not match: only "aws.amazon.com" and
+-- names ending in ".aws.amazon.com" do.
+local WORK_HOST_SUFFIXES = {
+  "slack.com",
+  "aws.amazon.com",
+  "amazonaws.com",
+  "awsapps.com",
+  "aws",
+}
 
 local function isWorkHost(host)
   if not host then
@@ -108,15 +124,18 @@ local function openInChrome(url, profile)
   end
 end
 
-hs.urlevent.httpCallback = function(_, host, _, fullURL)
+-- Whether the link itself is work, from its host and URL alone. The source
+-- app is left out on purpose, so this answers the same from a terminal as
+-- from a click and can be checked without opening a tab:
+--   hs -c 'return require("url_dispatcher").isWorkLink("oidc.us-east-1.amazonaws.com", "https://oidc.us-east-1.amazonaws.com/")'
+function M.isWorkLink(host, fullURL)
+  assert(type(fullURL) == "string", "isWorkLink: pass the full URL as well as the host")
   host = host and host:lower()
-  if
-    GCLOUD_HOSTS[host]
-    or isGcloudAuth(host, fullURL)
-    or isWorkHost(host)
-    or isWorkURL(fullURL)
-    or isWorkSourceApp()
-  then
+  return (GCLOUD_HOSTS[host] or isGcloudAuth(host, fullURL) or isWorkHost(host) or isWorkURL(fullURL)) and true or false
+end
+
+hs.urlevent.httpCallback = function(_, host, _, fullURL)
+  if M.isWorkLink(host, fullURL) or isWorkSourceApp() then
     openInChrome(fullURL, cfg.work_chrome_profile)
   else
     openInChrome(fullURL, cfg.default_chrome_profile)
