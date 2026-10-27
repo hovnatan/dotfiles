@@ -537,6 +537,10 @@ if [ "$(uname)" = "Darwin" ]; then
   # tab. The colored dot stays; iTerm2 has no setting to hide it. Same toggle
   # as the Session Status toolbelt tool's "Show status in tab subtitle".
   defaults write com.googlecode.iterm2 ShowSessionStatusInTabSubtitle -bool false
+  # Sparkle checks for updates itself (Settings > General > Updates, daily by
+  # default): the cask is auto_updates, so a plain `brew upgrade` skips it and,
+  # with checks off, iTerm2 only moved on a manual "Check for Updates".
+  defaults write com.googlecode.iterm2 SUEnableAutomaticChecks -bool true
   # New tabs open right after the current one, as Ghostty's default
   # window-new-tab-position = current does; iTerm2 appends them at the end.
   defaults write com.googlecode.iterm2 AddNewTabAtEndOfTabs -bool false
