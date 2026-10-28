@@ -34,6 +34,20 @@ Applies to every socket: invisible until a session has a second window.
   one window. `window-linked` / `window-unlinked[1]` hooks set the session's
   `status` on or off. It shows only the window list (`0:claude 1:nvim
   2:fish`), gruvbox, the current window in the border orange, bells in red.
+- Hiding it: `prefix S` toggles a session option `@status_hidden`, and the
+  hooks above leave `status off` while it is set (the toggle applies the
+  result at once). For a view where the row is unwanted, e.g. a VS Code
+  terminal. `status` is a session option, so every client of the session
+  shares it: hiding it in VS Code hides it in an iTerm2 tab on the same
+  session too. Not per client because tmux has no per-client status; the
+  alternatives weighed (2026-10-28):
+  - a per-client blank `status-format` keyed on `#{client_termtype}`: the
+    row stays reserved, so it saves nothing (and what VS Code's xterm.js
+    reports there is unverified);
+  - a grouped session (`new-session -t`) per view: own options and current
+    window, but the session-name hook may rename the wrong session, ntfy
+    would not count its client, and `load`/`stop`/`status` assume one
+    session per name.
 - Verify while building: which session the hooks target, and what
   `window-unlinked` does mid-`kill-session` (the session is going away).
 
@@ -116,7 +130,9 @@ survives without claude, a state no command handles (read 2026-10-28):
 ## Tests
 
 - `scripts/tests/tmux_hooks_test.sh`: status on at two windows, off at one;
-  bindings present; a one-window session keeps `status off`.
+  bindings present; a one-window session keeps `status off`; with
+  `@status_hidden` set, adding and closing windows leaves `status off`, and
+  `prefix S` again restores the automatic rule.
 - `scripts/tests/claude_tmux_run_test.sh`: a detached `sleep` in a second
   pane is reaped on each close path of the table; the claude pane's scope
   survives all of them; a `restart` racing another pane's close ends with
