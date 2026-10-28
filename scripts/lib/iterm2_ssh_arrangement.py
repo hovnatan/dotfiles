@@ -272,11 +272,11 @@ def parse_file(text: str) -> list[Saved]:
 def tmux_session(title: str) -> str | None:
     """Return the name a tab title shows for its remote tmux session, or None.
 
-    "[vm/api/docs]" -> "vm/api/docs"; "[main] " -> "main" (retitle.sh
-    may leave a trailing space); "fish:~" -> None. On the claude socket that
-    name is "<hostname>/<session>" (TITLED); the lookup maps it back.
+    "[vm/api/docs]" -> "vm/api/docs"; "[main]" -> "main"; "fish:~" -> None.
+    On the claude socket that name is "<hostname>/<session>" (TITLED); the
+    lookup maps it back.
     """
-    m = re.fullmatch(r"\[(.+)\] ?", title)
+    m = re.fullmatch(r"\[(.+)\]", title)
     return m[1] if m else None
 
 
@@ -1062,7 +1062,7 @@ def tmux_landing(
     """Return the landing of a tab that attaches tmux session `name` on `socket`.
 
     Landed once its title shows the session as TITLED does (~/.tmux.conf's
-    set-titles-string for an iTerm2 client): "[main] " for default:main,
+    set-titles-string for an iTerm2 client): "[main]" for default:main,
     "[vm/api/docs]" for claude:api/docs. The saved line does not name the
     far side's host, so on the claude socket any "<host>/" prefix will do
     (a hostname holds no "/", so the first one ends it).

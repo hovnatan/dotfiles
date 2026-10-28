@@ -38,7 +38,7 @@
 #                                check.sh, tests.yml or nix/flake.lock (the
 #                                tools the tests drive) changed
 #
-#   e.g. --changed home/.config/tmux/retitle.sh README.md
+#   e.g. --changed home/.config/tmux/sync-session-name.sh README.md
 #        -> shell lua python configs markdown yaml test:appearance
 #           test:tmux_hooks
 #

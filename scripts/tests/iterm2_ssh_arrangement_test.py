@@ -140,7 +140,7 @@ def _() -> None:
         [
             Tab(1, "ssh", "ssh vm", "[vm/ai-agent]", "/home/me", "vm"),
             Tab(1, "ssh", "ssh vm", "fish:~/d/ai-agent", "/home/me/d/ai-agent", "vm"),
-            Tab(1, "ssh", "ssh vm", "[vm/api/docs] ", "/home/me", "vm"),
+            Tab(1, "ssh", "ssh vm", "[vm/api/docs]", "/home/me", "vm"),
             Tab(1, "ssh", "ssh -p 2222 user@box ./deploy.sh", "[main]", "/", "box"),
             Tab(1, "ssh", "ssh -p 2222 user@box", "fish:/", "/", "box"),
         ],
@@ -469,7 +469,7 @@ def dir_tab(label: str, path: str, s: Moving) -> Landing:
 def _() -> None:
     tabs = [
         tmux_tab("window 1 tab 1", "ai-agent", titled("[vm/ai-agent]", 3)),
-        tmux_tab("window 1 tab 2", "api/docs", titled("[vm/api/docs] ", 0)),
+        tmux_tab("window 1 tab 2", "api/docs", titled("[vm/api/docs]", 0)),
         dir_tab("window 1 tab 3", "/home/me/d", in_dir("/home/me/d", 4)),
         tmux_tab("window 1 tab 4", "main", titled("[main]", 2), socket="default"),
     ]
@@ -502,7 +502,7 @@ def _() -> None:
 def _() -> None:
     for title, want in [
         ("[vm/api/docs]", True),
-        ("[box/api/docs] ", True),
+        ("[box/api/docs]", True),
         ("[api/docs]", False),  # no host: the bare name is not a claude title
         ("[vm/api/docs2]", False),
         ("[vm/x/api/docs]", False),  # the host ends at the first "/"

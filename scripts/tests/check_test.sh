@@ -65,7 +65,7 @@ all_tests=$(for t in "$REPO"/scripts/tests/*_test.sh; do
 done)
 all_tests=${all_tests% }
 
-picks "$lint test:appearance test:tmux_hooks" --changed home/.config/tmux/retitle.sh
+picks "$lint test:appearance test:tmux_hooks" --changed home/.config/tmux/sync-session-name.sh
 picks "$lint" --changed README.md
 picks "$lint nix" --changed nix/flake.nix
 picks "$lint nix $all_tests" --changed nix/flake.lock
