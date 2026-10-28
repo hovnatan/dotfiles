@@ -51,6 +51,54 @@ Applies to every socket: invisible until a session has a second window.
 - Verify while building: which session the hooks target, and what
   `window-unlinked` does mid-`kill-session` (the session is going away).
 
+### Cmd-J / Cmd-K: previous / next tmux window
+
+macOS terminals never pass Cmd keys to the program, so the terminal maps
+each to bytes that tmux binds. Cmd-J/K are the iTerm2 previous/next TAB keys
+today (`GlobalKeyMap`, `scripts/setup_user_symlinks.sh`, `iterm_key j/k`), so
+tab switching moves to Ctrl-Cmd-J/K: Cmd-J/K moves between windows inside a
+tab, Ctrl-Cmd-J/K between tabs. J previous, K next, as the old commented
+`M-j`/`M-k` window bindings in `.tmux.conf` had it.
+
+What was tested (2026-10-28, tmux 3.7c, a client in a pty):
+
+| Bytes sent | tmux | plain fish, no tmux |
+| --- | --- | --- |
+| `\e[5;30001~` / `\e[5;30002~` as `user-keys` | switches windows, nothing leaks into the pane | ignored, the command line unchanged |
+| prefix + key (`0x01 0x6e`) | switches windows | types a stray `n` at the line start |
+| CSI u Super-j (`\e[106;9u`) | swallowed, no switch | not tried |
+| Option-J/K (`\ej`, `bind -n M-j`) | switches windows | taken: claude's `meta+j/k` page scroll |
+
+- `.tmux.conf`: `set -s user-keys[0] "\e[5;30001~"`, `user-keys[1]
+  "\e[5;30002~"`; `bind -n User0` / `User1` to `previous-window` /
+  `next-window`, under `if -F "#{>:#{session_windows},1}"` so a one-window
+  session stays silent instead of flashing "No next window".
+- iTerm2, in `setup_user_symlinks.sh`'s `iterm_key` block: `iterm_key` grows
+  a Text argument; cmd+j / cmd+k (`0x100000`, keycodes 38 / 40) become
+  "Send Escape Sequence" with `[5;30001~` / `[5;30002~` (iTerm2 prepends the
+  Esc), overwriting the tab entries in place (`-dict-add` replaces a key, so
+  nothing stale is left); ctrl+cmd+j / ctrl+cmd+k (`0x140000`) get the
+  previous / next tab actions (2 / 0). cmd+option+j/k (move tab) stay.
+  Global, not the Dotfiles profile: these keys' tab actions live there, and
+  a profile entry would shadow them with dead config left behind. Before
+  writing it, set one binding in iTerm2's Keys settings and read back
+  `defaults read com.googlecode.iterm2 GlobalKeyMap`, to copy the action
+  number and Text form iTerm2 itself writes (10 = Send Escape Sequence is
+  from memory, unverified).
+- Ghostty, kept in step (`home/.config/ghostty/config` is what the iTerm2
+  setup mirrors): `super+j` / `super+k` -> `text:\x1b[5;30001~` /
+  `text:\x1b[5;30002~`, tabs to `ctrl+super+j` / `ctrl+super+k`; and the
+  mapping comment in `setup_user_symlinks.sh` ("super+j / super+k -> cmd+j /
+  cmd+k previous / next tab").
+- VS Code, optional: `keybindings.json` entries running
+  `workbench.action.terminal.sendSequence` with the same text,
+  `when: terminalFocus`. They take Cmd-J (toggle panel) and Cmd-K (clear,
+  and the Cmd-K chords) while the terminal has focus.
+- Lost: Cmd-J "Jump to Selection" and Cmd-K "Clear Buffer" in iTerm2,
+  already shadowed by the tab keys today. Unchecked: whether macOS or a Mac
+  app grabs Ctrl-Cmd-J/K; nothing in these dotfiles does (`GlobalKeyMap`,
+  Hammerspoon, Karabiner).
+
 ## 2. Reap per pane, not per session
 
 `reap-panes.sh` logic is unchanged; only its triggers grow. Today it runs on
@@ -132,7 +180,9 @@ survives without claude, a state no command handles (read 2026-10-28):
 - `scripts/tests/tmux_hooks_test.sh`: status on at two windows, off at one;
   bindings present; a one-window session keeps `status off`; with
   `@status_hidden` set, adding and closing windows leaves `status off`, and
-  `prefix S` again restores the automatic rule.
+  `prefix S` again restores the automatic rule; a pty client sending
+  `\e[5;30001~` / `\e[5;30002~` moves to the previous / next window, and in
+  a one-window session changes nothing and shows no message.
 - `scripts/tests/claude_tmux_run_test.sh`: a detached `sleep` in a second
   pane is reaped on each close path of the table; the claude pane's scope
   survives all of them; a `restart` racing another pane's close ends with
@@ -163,6 +213,13 @@ survives without claude, a state no command handles (read 2026-10-28):
 
 `tmux -L claude source-file ~/.tmux.conf` on each machine; running sessions
 are untouched. `ntfy-stop.sh` takes effect at the next Stop.
+
+On the Mac, `dotup` reruns the `defaults write`s. Check in iTerm2's Keys
+settings that Cmd-J/K show the escape sequences and Ctrl-Cmd-J/K the tab
+actions; if a running iTerm2 still behaves the old way, quit and relaunch it
+(it may write its prefs back over the edit on quit, so check after the
+relaunch too). Then in a claude tab with two windows: Cmd-J/K switch
+windows, Ctrl-Cmd-J/K switch tabs; in a plain fish tab Cmd-J/K do nothing.
 
 ## Out of scope
 
