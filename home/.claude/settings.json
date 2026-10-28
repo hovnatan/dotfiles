@@ -146,7 +146,7 @@
   "promptCacheTtl": "1h",
   "modelSettings": {
     "claude-opus-5-5": {
-      "effortLevel": "high"
+      "effortLevel": "xhigh"
     }
   },
   "autoCompactWindow": 300000,
