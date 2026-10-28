@@ -133,6 +133,10 @@
             ]))
             # bash 5 for `#!/usr/bin/env bash` scripts; macOS /bin/bash is 3.2
             pkgs.bashInteractive
+            # ccusage -- token usage and cost reports (daily, monthly, per
+            # session, per 5-hour block) from the local session logs Claude
+            # Code and other coding agents write; no API key (2026-10-28)
+            pkgs.ccusage
             # chafa -- images in the terminal over ssh: Ghostty draws its Kitty
             # graphics, inside tmux too (the fish wrapper
             # home/.config/fish/functions/chafa.fish adds the flags); symbols
