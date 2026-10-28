@@ -6,14 +6,14 @@ section).
 
 Goal: open nvim and plain shells as extra tmux windows inside a claude
 session (`tmux -L claude`), without losing navigation, notifications or the
-cleanup of what a pane leaves behind. Three parts, landed together, each with
+cleanup of what a pane leaves behind. Four parts, landed together, each with
 its tests.
 
 ## What already works with extra windows
 
 - `claude_pane` (`scripts/claude_tmux_run.sh`) searches every window of a
-  session, so `status`, `restart`, `prefix C-r` and the load guard find
-  claude wherever it is.
+  session, so `status`, `restart` and `prefix C-r` find claude wherever it
+  is -- while claude runs. A session whose claude has exited is part 4.
 - `restart` respawns only the claude pane; other windows are untouched.
 - `sync-session-name.sh` ignores shell and nvim pane titles (no glyph).
 - A bell in a background tmux window still reaches the terminal
@@ -83,6 +83,36 @@ the push for a turn finished in window 0.
 - Pane gone: status 2, like a gone session.
 - The "unwatched" log line names the window the client was on.
 
+## 4. Bring claude back into a live session
+
+Today claude exiting (`/exit`, a crash, an OOM kill) closes its pane, and
+with it the session. With an nvim or shell window beside it the session
+survives without claude, a state no command handles (read 2026-10-28):
+
+| Command | Session alive, claude gone (today) |
+| --- | --- |
+| `load <name>` | **false success**: the bare-name branch sets `ok=1` on session existence and prints "already running" |
+| `load <name>/<task>`, `--id` | refuses, "stop it first", which kills the other windows |
+| `restart`, `prefix C-r` | refuses, "stop, then load", which kills the other windows |
+| `new <name>` | refuses (the name is live); correct, keep it |
+| `serve` (the manager) | **never recovers**: the watcher waits only for the session to vanish, so systemd never resumes claude |
+| `status` | correct: "NO CLAUDE -- pane runs fish" |
+
+- `load`: "already running" means a claude pane (`claude_pane`), not a
+  session of that name. A live session without one gets the conversation
+  resumed into a new window 0 of it: `launch` grows a
+  `new-window -t =<name>:0` branch beside `new-session`, with the same
+  `PANE_CMD`, directory and `--remote-control`. Index 0 may be taken by
+  another window once claude's closed (`renumber-windows`); then
+  `new-window -b` before the first window, so claude is 0 again. The
+  label guards stay: `load <name>/<task>` and `--id` still refuse a live
+  claude holding another conversation.
+- `restart` with no claude: point at `load <name>`, not `stop` + `load`.
+- `serve`: loop while the manager has a claude pane; a manager session
+  left without one gets the manager resumed into it, as at boot.
+- Header of `claude_tmux_run.sh` and the `load` section of
+  `claude_tmux_session/AGENTS.md`: `load` also revives a session's claude.
+
 ## Tests
 
 - `scripts/tests/tmux_hooks_test.sh`: status on at two windows, off at one;
@@ -92,6 +122,12 @@ the push for a turn finished in window 0.
   survives all of them; a `restart` racing another pane's close ends with
   the new claude up and no `FAILED to stop`; a three-window session close
   runs parallel reaps cleanly.
+- `scripts/tests/claude_tmux_run_test.sh`, part 4: a session with a second
+  window whose claude exits -> `load <name>` resumes claude as window 0 and
+  the other window keeps its pid; `load <name>/<task>` and `--id` do the
+  same for their conversation and still refuse a live claude holding
+  another; `restart` with no claude names `load`; the manager's claude
+  exiting beside an extra window is resumed by the `serve` watcher.
 - `scripts/tests/ntfy_stop_test.sh` (it runs the hook with
   `env -u TMUX_PANE` today, so pass a real pane): focused on claude's window
   -> no push; focused on another window of the session -> push; claude's
