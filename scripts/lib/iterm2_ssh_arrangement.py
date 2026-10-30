@@ -47,6 +47,9 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
                  session, and each directory tab until its path is that
                  directory (wait_landed): a request the far side never acted
                  on leaves a plain shell in ~, which fails the restore by name.
+                 The error groups such tabs by where they got to, by host
+                 and job: ssh still up with no word from the far side, ssh
+                 ended, or on the far side (not_landed).
                  It adds to the windows already open, and runs from any
                  terminal while iTerm2 runs.
 
@@ -111,7 +114,8 @@ nor its own localhostName variable, so it is read, not guessed. Inside tmux
 that variable is the tab's that started the tmux session, maybe gone or
 since ssh'd elsewhere, so there the script refuses (local_host). A snapshot
 runs in no tab, and reads the names off the local tabs instead (local_hosts).
-A restore reads it off each tab it opens, before typing into it (fresh_host):
+A restore reads it off each tab it opens with a request (a tmux session or
+a directory), before typing into it (fresh_host):
 a new tab runs the local shell even beside an ssh one, so a restore needs
 no tab of its own, and runs from tmux or another terminal app.
 
@@ -942,10 +946,11 @@ async def open_windows(
     opened: list[iterm2.Window],
 ) -> None:
     """Open `windows`, appending each to `opened`, and wait until all land."""
-    # A directory tab has landed only off the local host (dir_landing). Its
-    # names are read off the directory tabs opened here, each before
-    # anything is typed into it (fresh_host), with iTerm2's own: no tab of
-    # the caller's needed.
+    # A directory tab has landed only off the local host (dir_landing), and
+    # a tab that did not land is grouped by whether its host is still this
+    # Mac's (not_landed). iTerm2 shows one Mac by several names, so they are
+    # read off each tab that must land (is_request), before anything is typed
+    # into it (fresh_host), with iTerm2's own: no tab of the caller's needed.
     local = {await own_host(app)}
 
     # Last window first, the first one activated at the end: it was the
@@ -970,7 +975,7 @@ async def open_windows(
                 msg = f"iTerm2 made no tab {i + 1} in window {wi + 1}"
                 raise ArrangementError(msg)
             label = f"window {wi + 1} tab {i + 1}"
-            if dir_request(line) is not None:
+            if is_request(line):
                 local.add(await fresh_host(label, tab.current_session))
             await tab.current_session.async_send_text(line + "\n")
             log(f"{label}: {line}")
@@ -1001,7 +1006,7 @@ async def open_windows(
         for label, line, s in typed
         if (lands := landing_of(label, line, s, hosts))
     ]
-    await wait_landed(landing)
+    await wait_landed(landing, hosts)
 
 
 async def check_first_tabs(app: iterm2.App, firsts: list[tuple[int, str, str]]) -> None:
@@ -1105,6 +1110,11 @@ def dir_landing(
     return Landing(label, f"directory {path!r} off host {off}", session, reach)
 
 
+def is_request(line: str) -> bool:
+    """Tell whether a typed `line` is one landing_of waits on (a request)."""
+    return attach_request(line) is not None or dir_request(line) is not None
+
+
 def landing_of(
     label: str,
     line: str,
@@ -1124,17 +1134,20 @@ def landing_of(
 
 async def wait_landed(
     tabs: list[Landing],
-    timeout: float = LANDING_TIMEOUT,
+    local: frozenset[str],
+    timeout: float | None = None,
     poll: float = 0.5,
 ) -> None:
     """Wait until each restored tab shows its tmux session or its directory.
 
     The title shows the session once the far side's login fish has exec'd
     tmux; the path shows the directory once it has cd'd there and drawn a
-    prompt. Neither at `timeout`: the request was dropped on the way or not
-    acted on, and the restore fails naming the tab, rather than leaving a
-    plain shell in ~ where a session or a directory was saved.
+    prompt. Neither at `timeout` (LANDING_TIMEOUT): the restore fails naming
+    the tab, rather than leaving a plain shell in ~ where a session or a
+    directory was saved, and says where each one got to (not_landed), by
+    `local`, this Mac's names.
     """
+    timeout = LANDING_TIMEOUT if timeout is None else timeout
     waiting = list(tabs)
     log(f"waiting up to {timeout:g} s for {len(waiting)} tabs to land")
     deadline = asyncio.get_running_loop().time() + timeout
@@ -1146,22 +1159,104 @@ async def wait_landed(
                 log(f"{tab.label}: landed, {seen[tab.label]}")
                 waiting.remove(tab)
         if waiting and asyncio.get_running_loop().time() >= deadline:
-            msg = (
-                f"{len(waiting)} tabs did not land in {timeout:g} s:\n"
-                + "\n".join(
-                    f"  {tab.label}: want {tab.want}, {seen[tab.label]}"
-                    for tab in waiting
-                )
-                + "\nOn the far side, the tmux_attach_requested and"
-                " login_dir_requested event logs"
-                " (~/.dotfiles/.logs/*_<name>/events.log) show each request"
-                " received: none means LC_TMUX_ATTACH or LC_LOGIN_DIR never"
-                " arrived (sshd AcceptEnv, or the host runs no fish with those"
-                " functions: dotup it); a line says what was refused."
-            )
-            raise ArrangementError(msg)
+            raise ArrangementError(await not_landed(waiting, seen, local, timeout))
         if waiting:
             await asyncio.sleep(poll)
+
+
+# Where a tab that did not land got to, told by its host and its foreground
+# job, each needing a different look (not_landed):
+#
+#   host     job       stage    what to look at
+#   -------  --------  -------  -----------------------------------------------
+#   Mac's    ssh       SSH_UP   ssh runs, yet no shell there reported its host:
+#                               not logged in (a prompt in the tab, or a server
+#                               gone quiet, as a host restarting tailscaled on
+#                               2026-10-30), or a far side that reports none
+#                               (sshd dropped LC_*, LC_TERMINAL with them; no
+#                               fish of these dotfiles)
+#   Mac's    another   ENDED    ssh exited: the tab shows ssh's error or the
+#                               far side's (tmux: can't find session)
+#   other    any       FAR      a shell there reported in: its event logs say
+#                               what became of the request
+SSH_UP, ENDED, FAR = "ssh up", "ended", "far"
+
+
+async def stage_of(label: str, s: iterm2.Session, local: frozenset[str]) -> str:
+    """Return the stage (SSH_UP, ENDED, FAR) of the tab not landed, by `local`."""
+    host = await s.async_get_variable("hostname")
+    job = await s.async_get_variable("jobName")
+    for var, value in (("hostname", host), ("jobName", job)):
+        if not isinstance(value, str) or not value:
+            msg = f"{label} did not land, and iTerm2 reports its {var} as {value!r}"
+            raise ArrangementError(msg)
+    if host not in local:
+        return FAR
+    return SSH_UP if job == "ssh" else ENDED
+
+
+async def not_landed(
+    tabs: list[Landing],
+    seen: dict[str, str],
+    local: frozenset[str],
+    timeout: float,
+) -> str:
+    """Return the error for `tabs`, which did not land in `timeout` s.
+
+    A group per stage (stage_of), each its tabs, then what to look at:
+
+        2 tabs did not land in 30 s.
+        ssh runs, on this Mac's host ('Mac', 'Mac.local'), but no shell
+        on the far side has reported its host:
+          window 1 tab 1: want [<host>/x], title reads 'ssh'
+          <what to look at>
+    """
+    stages = {t.label: await stage_of(t.label, t.session, local) for t in tabs}
+    names = ", ".join(repr(h) for h in sorted(local))
+    logs = (
+        "the far side's tmux_attach_requested and login_dir_requested event"
+        " logs (~/.dotfiles/.logs/*_<name>/events.log)"
+    )
+    heads = {
+        SSH_UP: (
+            f"ssh runs, on this Mac's host ({names}), but no shell on the far"
+            " side has reported its host:"
+        ),
+        ENDED: f"ssh ended, the tab back on this Mac ({names}):",
+        FAR: "on the far side, not landed there:",
+    }
+    looks = {
+        SSH_UP: (
+            "The tab says which. Not logged in yet: ssh waits at a prompt (a"
+            " host key, a password, a Tailscale SSH check) or on a server that"
+            " took the connection and went quiet (a host restarting sshd or"
+            " tailscaled; ~/.ssh/config's ConnectTimeout ends that wait only"
+            " before the server's greeting). Logged in, a prompt on the far"
+            " side: it reports no host when its sshd drops LC_* (AcceptEnv),"
+            " taking the request and LC_TERMINAL, which the report needs, or"
+            " when it runs no fish with these dotfiles (dotup it)."
+        ),
+        ENDED: (
+            "The tab shows why: ssh's error (refused, timed out) or the far"
+            f" side's (tmux: can't find session). A line in {logs} means the"
+            " request got there."
+        ),
+        FAR: (
+            f"{logs[0].upper()}{logs[1:]} show each request received: none"
+            " means LC_TMUX_ATTACH or LC_LOGIN_DIR never arrived (sshd"
+            " AcceptEnv, or the host runs no fish with those functions: dotup"
+            " it); a line says what was refused."
+        ),
+    }
+
+    out = [f"{len(tabs)} tabs did not land in {timeout:g} s."]
+    for stage, head in heads.items():
+        group = [t for t in tabs if stages[t.label] == stage]
+        if group:
+            out.append(head)
+            out += [f"  {t.label}: want {t.want}, {seen[t.label]}" for t in group]
+            out.append(f"  {looks[stage]}")
+    return "\n".join(out)
 
 
 # --- replace: iTerm2 quit and launched around a restore ------------------------

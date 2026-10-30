@@ -442,17 +442,29 @@ class Moving:
 
 
 def titled(then: str, after: int) -> Moving:
-    """Return a tab titled "fish" until it reads `then` (tmux attached)."""
-    return Moving({"name": "fish"}, {"name": then}, after)
+    """Return a tab titled "fish" until it reads `then` (tmux attached).
+
+    Local with ssh up until then, for a wait that gives up first (stage_of).
+    """
+    return Moving(
+        {"name": "fish", "hostname": LOCAL, "jobName": "ssh"},
+        {"name": then, "hostname": "vm", "jobName": "ssh"},
+        after,
+    )
 
 
 def in_dir(path: str, after: int, start: str = "/Users/me") -> Moving:
-    """Return a tab local in `start` until it is in `path` on host "vm"."""
+    """Return a tab local in `start`, ssh up, until it is in `path` on host "vm"."""
     return Moving(
-        {"path": start, "hostname": LOCAL},
-        {"path": path, "hostname": "vm"},
+        {"path": start, "hostname": LOCAL, "jobName": "ssh"},
+        {"path": path, "hostname": "vm", "jobName": "ssh"},
         after,
     )
+
+
+def stuck(fields: dict[str, str | None]) -> Moving:
+    """Return a tab that reads `fields` for good."""
+    return Moving(fields, {}, 10**6)
 
 
 def tmux_tab(label: str, name: str, s: Moving, socket: str = "claude") -> Landing:
@@ -465,6 +477,15 @@ def dir_tab(label: str, path: str, s: Moving) -> Landing:
     return arr.dir_landing(label, path, frozenset({LOCAL}), s)
 
 
+def wait(
+    tabs: list[Landing],
+    local: frozenset[str] = frozenset({LOCAL}),
+    timeout: float = 0.05,
+) -> None:
+    """Wait for `tabs` to land, this Mac named `local`, polling fast."""
+    asyncio.run(arr.wait_landed(tabs, local, timeout=timeout, poll=0.01))
+
+
 @case("restore waits for each tmux tab to show its session, each dir tab its path")
 def _() -> None:
     tabs = [
@@ -473,7 +494,7 @@ def _() -> None:
         dir_tab("window 1 tab 3", "/home/me/d", in_dir("/home/me/d", 4)),
         tmux_tab("window 1 tab 4", "main", titled("[main]", 2), socket="default"),
     ]
-    asyncio.run(arr.wait_landed(tabs, timeout=5, poll=0.01))
+    wait(tabs, timeout=5)
 
 
 @case("a tab still a shell at the timeout fails the restore, by name")
@@ -484,9 +505,7 @@ def _() -> None:
         dir_tab("window 2 tab 4", "/home/me/d", in_dir("/home/me/d", 10**6)),
         dir_tab("window 2 tab 5", "/srv", in_dir("/srv", 0)),
     ]
-    error = error_of(
-        lambda: asyncio.run(arr.wait_landed(tabs, timeout=0.05, poll=0.01)),
-    )
+    error = error_of(lambda: wait(tabs))
     assert "2 tabs did not land" in error, error
     assert "window 2 tab 3: want [<host>/api/docs], title reads 'fish'" in error, error
     want = (
@@ -496,6 +515,84 @@ def _() -> None:
     assert want in error, error
     assert "window 1 tab 1" not in error, error
     assert "window 2 tab 5" not in error, error
+
+
+@case("a tab not landed is grouped by host and job: ssh up, ssh ended, far side")
+def _() -> None:
+    # 2026-10-30: a host restarting tailscaled took each login and never
+    # answered; every ssh tab stayed local with ssh up, while the error
+    # named AcceptEnv alone. One group per stage here, each tab on one of
+    # this Mac's two names or the far side's.
+    up = {"hostname": LOCAL, "jobName": "ssh"}
+    tabs = [
+        tmux_tab("w1 t1", "a", stuck({"name": "ssh", **up})),
+        dir_tab("w1 t2", "/d", stuck({"path": "/Users/me", **up, "hostname": "Mac"})),
+        tmux_tab("w2 t1", "gone", stuck({"name": "fish", **up, "jobName": "fish"})),
+        tmux_tab("w3 t1", "b", stuck({"name": "fish ~", **up, "hostname": "vm"})),
+        dir_tab("w3 t2", "/srv", stuck({"path": "/home/me", **up, "hostname": "vm"})),
+    ]
+    lines = error_of(lambda: wait(tabs, frozenset({LOCAL, "Mac"}))).splitlines()
+    assert lines[0] == "5 tabs did not land in 0.05 s.", lines
+
+    # Each group: its head, its tabs, then what to look at, in stage order.
+    heads = {
+        "up": "ssh runs, on this Mac's host ('Mac', 'Mac.local'), but no shell",
+        "ended": "ssh ended, the tab back on this Mac ('Mac', 'Mac.local'):",
+        "far": "on the far side, not landed there:",
+    }
+    at = {
+        k: next(i for i, x in enumerate(lines) if x.startswith(h))
+        for k, h in heads.items()
+    }
+    assert at["up"] < at["ended"] < at["far"], lines
+    groups = {
+        "up": lines[at["up"] : at["ended"]],
+        "ended": lines[at["ended"] : at["far"]],
+        "far": lines[at["far"] :],
+    }
+    assert groups["up"][-3:-1] == [
+        "  w1 t1: want [<host>/a], title reads 'ssh'",
+        (
+            "  w1 t2: want directory '/d' off host 'Mac.local',"
+            " path reads '/Users/me' on host 'Mac'"
+        ),
+    ], groups["up"]
+    assert groups["ended"][1] == "  w2 t1: want [<host>/gone], title reads 'fish'"
+    assert groups["far"][1:3] == [
+        "  w3 t1: want [<host>/b], title reads 'fish ~'",
+        (
+            "  w3 t2: want directory '/srv' off host 'Mac.local',"
+            " path reads '/home/me' on host 'vm'"
+        ),
+    ], groups["far"]
+
+    # ssh up is also a far side whose sshd drops LC_*: LC_TERMINAL goes
+    # with the request, and with it the host report, so AcceptEnv is named.
+    look = {k: g[-1] for k, g in groups.items()}
+    for word in ("ConnectTimeout", "AcceptEnv", "LC_TERMINAL", "dotup"):
+        assert word in look["up"], (word, look["up"])
+    assert "can't find session" in look["ended"], look["ended"]
+    # Each group's look stands alone: the log path, not a pointer to another.
+    assert "/events.log)" in look["ended"], look["ended"]
+    assert look["far"].startswith("  The far side's tmux_attach_requested"), look
+    assert "event logs" in look["far"], look["far"]
+    assert "AcceptEnv" in look["far"], look["far"]
+
+    # A stage with no tab gets no group.
+    error = error_of(lambda: wait(tabs[2:3]))
+    assert "ssh ended, the tab back" in error, error
+    assert "ssh runs" not in error, error
+    assert "on the far side, not landed" not in error, error
+
+
+@case("a tab not landed whose host or job iTerm2 does not report fails, naming it")
+def _() -> None:
+    for var, value in [("hostname", None), ("hostname", ""), ("jobName", "")]:
+        fields = {"name": "ssh", "hostname": LOCAL, "jobName": "ssh", var: value}
+        tab = tmux_tab("w1 t1", "a", stuck(fields))
+        error = error_of(lambda tab=tab: wait([tab]))
+        want = f"w1 t1 did not land, and iTerm2 reports its {var} as {value!r}"
+        assert want in error, error
 
 
 @case("a claude tab has landed only on its own session, behind some host")
@@ -518,9 +615,7 @@ def _() -> None:
 @case("a tab still local in the very directory wanted has not landed (Mac to Mac)")
 def _() -> None:
     tab = dir_tab("w1 t1", "/Users/me", in_dir("/Users/me", 10**6, start="/Users/me"))
-    error = error_of(
-        lambda: asyncio.run(arr.wait_landed([tab], timeout=0.05, poll=0.01)),
-    )
+    error = error_of(lambda: wait([tab]))
     assert "path reads '/Users/me' on host 'Mac.local'" in error, error
 
 
@@ -537,6 +632,10 @@ def _() -> None:
     assert got.want == "directory '/a b' off host 'Mac', 'Mac.local'", got
     for line in ["ssh vm", "cd '/tmp'"]:
         assert arr.landing_of("t", line, s, local) is None, line
+    # is_request, which picks the tabs whose host is read before typing, agrees.
+    for line in [attach, arr.dir_line("ssh vm", "/a b"), "ssh vm", "cd '/tmp'"]:
+        made = arr.landing_of("t", line, s, local) is not None
+        assert arr.is_request(line) is made, line
 
 
 @case("a dir tab on any of this Mac's names has not landed, though in the path")
@@ -557,6 +656,9 @@ def _() -> None:
     assert "w1 t2: iTerm2 reported hostname '' for the new tab" in error, error
 
 
+GONE = "gone"  # a tmux session the far side no longer has (RestoredSession)
+
+
 class RestoredSession:
     """A new tab's pane: local until a line is typed, then where it leads.
 
@@ -564,9 +666,14 @@ class RestoredSession:
     """
 
     def __init__(self, events: list[str]) -> None:
-        """Start local in /Users/me, titled fish."""
+        """Start local in /Users/me, titled fish, running fish."""
         self.events = events
-        self.vars = {"hostname": LOCAL, "path": "/Users/me", "name": "fish"}
+        self.vars = {
+            "hostname": LOCAL,
+            "path": "/Users/me",
+            "name": "fish",
+            "jobName": "fish",
+        }
 
     async def async_get_variable(self, var: str) -> str:
         """Read one of its variables."""
@@ -578,9 +685,11 @@ class RestoredSession:
         line = text.removesuffix("\n")
         self.events.append(f"typed {line}")
         if request := arr.attach_request(line):
-            self.vars["name"] = f"[vm/{request[1]}]"
+            if request[1] == GONE:
+                return  # tmux: can't find session; ssh ends, the tab local again
+            self.vars.update(name=f"[vm/{request[1]}]", hostname="vm", jobName="ssh")
         elif (where := arr.dir_request(line)) is not None:
-            self.vars.update(path=where, hostname="vm")
+            self.vars.update(path=where, hostname="vm", jobName="ssh")
 
 
 class RestoredTab:
@@ -690,7 +799,7 @@ def restored(*, alone: bool, ignore_select: bool = False) -> RestoredApp:
     return app
 
 
-@case("restore reads a new dir tab's host before typing, so it needs no tab of its own")
+@case("restore reads a new ssh tab's host before typing, so it needs no tab of its own")
 def _() -> None:
     # Unset, so a restore that went back to reading them fails here.
     saved = {
@@ -703,10 +812,37 @@ def _() -> None:
     typed = {e: i for i, e in enumerate(app.events) if e.startswith("typed ")}
     assert len(typed) == 3, app.events
     for line, i in typed.items():
-        read = app.events[i - 1] == "read hostname"
-        assert read is ("LC_LOGIN_DIR" in line), app.events[i - 1 : i + 1]
+        # Each tab that must land: a dir tab lands off this Mac's names, and
+        # a tmux tab not landed is told by them (not_landed). A cd tab, not.
+        # i > 0: the first event typed has none before it ([-1] wraps around).
+        read = i > 0 and app.events[i - 1] == "read hostname"
+        assert read is ("LC_" in line), (i, app.events[max(i - 1, 0) : i + 1])
     assert [w.template for w in app.windows] == ["", "b", "a"], app.windows
     assert app.closed == [], app.closed
+
+
+@case("restore groups a tab not landed by the names its own new tabs showed")
+def _() -> None:
+    # The gone tab ends on "Mac.local", which only fresh_host reads off a
+    # new tab (localhostName is "Mac"): a restore that read no tmux tab's
+    # host would file it under the far side.
+    app = RestoredApp()
+    stub.Window.async_create = app.create
+    lines = [arr.attach_line("ssh vm", "claude", x) for x in ("x", GONE)]
+    timeout, arr.LANDING_TIMEOUT = arr.LANDING_TIMEOUT, 0.05
+    try:
+        error = error_of(
+            lambda: asyncio.run(arr.restore(None, app, "t", [arr.Saved("a", lines)])),
+        )
+    finally:
+        arr.LANDING_TIMEOUT = timeout
+        del stub.Window.async_create
+    want = (
+        "1 tabs did not land in 0.05 s.\n"
+        "ssh ended, the tab back on this Mac ('Mac', 'Mac.local'):\n"
+        "  window 1 tab 2: want [<host>/gone], title reads 'fish'\n"
+    )
+    assert error.startswith(want), error
 
 
 @case("restore leaves each window on its first tab, not the last one it made")
