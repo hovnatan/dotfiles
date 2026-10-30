@@ -1,11 +1,12 @@
 ---
 name: remote-run
-description: "Remote machine work over ssh: sync code and inputs to the box, launch a job there, mirror its logs back. Load before the first ssh, rsync or scp that runs, benchmarks or trains anything on another machine."
+description: "Remote machine work over ssh: sync code and inputs to the box, launch a job there, mirror its logs back. Load before the first ssh, rsync or scp that runs, benchmarks or trains anything on another machine, and before stopping, deallocating or rebooting one."
 ---
 
 # Remote runs
 
-Three steps, in order: sync the box, launch the job, mirror its logs.
+Three steps, in order: sync the box, launch the job, mirror its logs. When
+you are done, stop the box only if nobody else is using it.
 
 ## Remote machines: sync one before you run anything on it
 
@@ -87,3 +88,19 @@ lifetime) from the remote output directory into a
 placed by the Observability rule in the global instructions (most specific
 owning folder). Timestamp `YYYYMMDD_HHMMSS` in UTC. Tell me the local path
 once the first refresh lands.
+
+## Remote shutdown: stop a box only when nobody is using it
+
+A box is often shared: other sessions run their own jobs there, under
+process names that are not yours. Before you stop, deallocate or reboot
+one, look at everything running on it, not only your own jobs:
+
+    timeout 30 ssh remote 'uptime; who; ps -eo user,pcpu,etimes,args --sort=-pcpu | head -20'
+
+The box is idle when the load is near zero, nobody is logged in, and
+nothing on CPU is anyone's work but your own finished jobs. When anything
+else is busy, leave the box up and tell me what is running: an idle hour
+costs little next to a killed run. An idle check that matched only its own
+process names once deallocated a box under another session's last
+evaluation, 47 minutes in. A shutdown built into a mirror loop or a wrapper
+script makes the same check first.
