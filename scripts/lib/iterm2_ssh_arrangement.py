@@ -11,7 +11,7 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
   save [<name>]                 every window (<name> defaults to "all")
   save <name> <title prefix>    the one window whose title starts so
   snapshot                      every window, as "auto-<UTC YYYYMMDD_HHMMSS>",
-                                then all but the newest 144 (a day) removed;
+                                then all but the newest 2016 (two weeks) removed;
                                 run every 10 minutes by Hammerspoon
                                 (home/.hammerspoon/iterm2_snapshots.lua)
     iTerm2 (Python API) --> per window, the key window first: its title
@@ -172,8 +172,12 @@ ITERM2_BUNDLE = "com.googlecode.iterm2"
 OPEN_CLEAN = Path(__file__).resolve().parents[2] / "scripts/macos/open_clean.sh"
 DIR = Path.home() / ".local/state/iterm2_ssh_arrangements"
 SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
-# A day of them at Hammerspoon's one per 10 minutes (iterm2_snapshots.lua).
-SNAPSHOT_KEEP = 144
+# Two weeks of them (14 x 144) at Hammerspoon's one per 10 minutes
+# (iterm2_snapshots.lua): long enough that a run of snapshots taken after
+# a drop, every ssh tab a dead local shell, does not push out the last
+# good one before it is missed (2026-10-31: a day's worth did). About
+# 3 KB each, so some 6 MB in all.
+SNAPSHOT_KEEP = 14 * 144
 # What a snapshot's ssh may not do: ask for anything (no tty to answer on)
 # or wait out a host that is down for the TCP timeout.
 UNATTENDED_SSH = ("-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
@@ -865,7 +869,7 @@ async def save(
 def saved_summary(names: list[str]) -> str:
     """Say which arrangements `names` are: those named by hand, then the snapshots.
 
-    Snapshots are counted, not listed, as a day of them is 144 names:
+    Snapshots are counted, not listed, as two weeks of them is 2016 names:
         ["good", "auto-20261026_141220", "all", "auto-20261026_151220"]
         -> "all, good; and 2 snapshots, newest auto-20261026_151220"
     Their names sort by the time in them, so the last is the newest.

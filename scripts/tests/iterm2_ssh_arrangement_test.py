@@ -21,7 +21,7 @@ import sys
 import tempfile
 import types
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 REPO, LOG = Path(sys.argv[1]), Path(sys.argv[2])
@@ -1065,10 +1065,12 @@ def _() -> None:
 def _() -> None:
     now = datetime(2026, 10, 19, 14, 30, 0, tzinfo=UTC)
     assert arr.snapshot_name(now) == "auto-20261019_143000"
-    # Three days old and all of them kept: a gap (iTerm2 quit over a
-    # weekend) costs no snapshot from before it.
+    # One per 10 minutes, the newest a month old, and all but the oldest two
+    # kept: count, not age, decides, so a gap (iTerm2 quit over a weekend)
+    # costs no snapshot from before it.
+    start = now - timedelta(days=30) - timedelta(minutes=10 * (arr.SNAPSHOT_KEEP + 2))
     keep = [
-        f"auto-202610{16 + i // 144:02}_{i % 144 // 6:02}{i % 6 * 10:02}00"
+        arr.snapshot_name(start + timedelta(minutes=10 * i))
         for i in range(arr.SNAPSHOT_KEEP + 2)
     ]
     names = ["all", *reversed(keep)]  # "all", a save by hand, is never dropped

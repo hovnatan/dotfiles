@@ -14,7 +14,7 @@
 #                                                     run from another terminal
 #   iterm2_ssh_arrangement.sh snapshot                every window as
 #                                                     auto-<UTC time>, keeping
-#                                                     the newest 144 (a day at
+#                                                     the newest 2016 (two weeks at
 #                                                     one per 10 minutes); Hammerspoon
 #                                                     runs it every 10 minutes
 #

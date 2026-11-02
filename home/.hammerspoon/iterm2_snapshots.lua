@@ -1,12 +1,12 @@
 -- Every 10 minutes while iTerm2 runs, saves its windows as an ssh
--- arrangement snapshot, keeping the newest 144 (a day of them):
+-- arrangement snapshot, keeping the newest 2016 (two weeks of them):
 --
 --   timer, every INTERVAL s
 --     |  iTerm2 not running, or the last snapshot still running -> skipped
 --     v
 --   scripts/iterm2_ssh_arrangement.sh snapshot   (hs.task)
 --     -> ~/.local/state/iterm2_ssh_arrangements/auto-<UTC YYYYMMDD_HHMMSS>.txt
---        and all but the newest 144 removed, once the new one is saved
+--        and all but the newest 2016 removed, once the new one is saved
 --     |
 --     v  exit
 --   0      logged; an alert if it ends a run of failures
