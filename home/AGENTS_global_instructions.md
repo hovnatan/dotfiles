@@ -56,6 +56,14 @@ immediately spawns a large swarm of subagents, explain the tradeoffs - cost,
 wall-clock time, and what it buys over doing the work directly - and wait for
 my explicit approval.
 
+# Git worktrees: only when I ask
+
+Work in the checkout you were started in: edit, test, commit and push from it,
+so the changes are where I look for them. Create a git worktree (by hand,
+`EnterWorktree`, or a subagent's worktree isolation) only when I ask for one.
+When another session works in the same checkout, stage and commit only your
+own files by path and leave its uncommitted changes alone.
+
 # Observability: report progress as it happens, not only at the end
 
 Write code and experiments so I can watch them work, at whatever cadence
