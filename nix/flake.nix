@@ -194,6 +194,9 @@
             # jq -- JSON on the command line; setup_workspace.sh reads
             # devcontainer.json with it
             pkgs.jq
+            # lazygit -- terminal UI for git: staging hunks, interactive
+            # rebase, branches and stashes in one view (2026-11-02)
+            pkgs.lazygit
             # Sophisticated file transfer program
             pkgs.lftp
             # Lua 5.4, the version Hammerspoon embeds: runs its modules
