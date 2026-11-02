@@ -165,14 +165,6 @@ exactly those cases wrongly - it turned a `+` into a `-` and subscripts into
 Lint the files you touched. Do not reflow or re-style someone else's file to
 satisfy the linter unless I ask or the project's config already covers it.
 
-# Slack: self-DM only
-
-When sending through the Slack MCP tools, never send directly to the real
-recipient: direct sends carry an unsuppressible "Sent using @Claude" footer,
-and slack_send_message_draft drops markdown links (only the label text
-survives). Instead post the message to my self-DM (my own user id as
-channel_id) and give me the message link; I copy-paste from there.
-
 # Password prompts: my own terminal, not `!`
 
 `!` runs without a tty, so sudo and other password prompts fail there.
