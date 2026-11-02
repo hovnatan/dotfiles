@@ -70,14 +70,6 @@ if status --is-interactive
         printf '\r\e[J'
     end
 
-    # After an `ssh` that ended in an error (exit 255), turn off the terminal
-    # modes its far side may have left on: functions/__ssh_drop_reset.fish.
-    # $status here is the command's, so it is passed on first thing.
-    #   remote tmux, connection drops -> a prompt whose tab scrolls again
-    function __ssh_drop_reset_after --on-event fish_postexec
-        __ssh_drop_reset $argv[1] $status
-    end
-
     bind -M insert \cg forget
 
     abbr rsync "rsync -a --info=progress2"
