@@ -12,6 +12,12 @@
 #   claude_tmux_run.sh serve           ExecStart: ensure the managed "manager"
 #                                      session exists, then watch;
 #                                      blocks while it lives, never run by hand
+#   claude_tmux_run.sh serve-check     whether claude-tmux.service's serve runs
+#                                      this script as it is on disk now: exit
+#                                      0 current, 2 replaced since serve
+#                                      started (prints the kill that reruns
+#                                      it), 1 anything else; scripts/update.sh
+#                                      asks after a pull. Linux only
 #   claude_tmux_run.sh stop [name[/task]]
 #                                      kill the session of exactly that name
 #                                      (never a prefix of another name, and a
@@ -1244,6 +1250,77 @@ case "${1:-}" in
     transcripts history "$CONV$name" "$HOME"/.claude/projects/*/*.jsonl
     exit 0
     ;;
+  serve-check)
+    # Whether the unit's serve runs this script as it is on disk now. serve
+    # parses itself once and runs that copy for as long as it lives (its
+    # arm below), so a pull that replaces this file leaves the unit on the
+    # old rules until serve reruns -- prefix C-r restarts claude, not serve.
+    # An Oct 2026 serve waited for the manager's session to vanish; with
+    # windows that session outlives its claude, and a manager quit beside a
+    # second window was never brought back. Bash keeps its script open
+    # (fd 255), and -ef against the path tells that file from a new one:
+    #
+    #   fd -> .../claude_tmux_run.sh            same inode     exit 0
+    #   fd -> .../claude_tmux_run.sh (deleted)  git replaced it exit 2, and
+    #       "kill -TERM <serve pid>": serve's trap exits 0, Restart=always
+    #       reruns it on the new file, and ExecStop, finding no MAINPID,
+    #       kills nothing -- every session stays, the manager's claude too
+    #   unit not active, or none of its processes holds the script  exit 1
+    #
+    # The unit's processes from its cgroup, not pgrep: the tests run serves
+    # of their own on other sockets. CLAUDE_TMUX_UNIT is for those tests.
+    if [ $# -ne 1 ]; then
+      echo "usage: $0 serve-check  (takes no arguments)" >&2
+      exit 1
+    fi
+    unit="${CLAUDE_TMUX_UNIT:-claude-tmux}"
+    state=$(systemctl --user show -p ActiveState --value "$unit") || exit 1
+    if [ "$state" != active ]; then
+      echo "serve-check: $unit.service is ${state:-unknown}, not active; see: systemctl --user status $unit" >&2
+      exit 1
+    fi
+    cg=$(systemctl --user show -p ControlGroup --value "$unit") || exit 1
+    procs="/sys/fs/cgroup$cg/cgroup.procs"
+    if [ -z "$cg" ] || [ ! -r "$procs" ]; then
+      echo "serve-check: cannot read the processes of $unit.service ('$procs'; cgroup v2 expected)" >&2
+      exit 1
+    fi
+
+    # Every process of the unit that holds the script open, and those whose
+    # copy is not the file at that path any more. A process or fd may be
+    # gone by the time it is read (serve's 5 s sleep, a $(...) subshell
+    # forked from serve and holding its fds): that one is skipped, it was
+    # never serve itself, or serve has just exited and the rerun is due.
+    held=() stale=()
+    while read -r pid; do
+      for fd in /proc/"$pid"/fd/*; do
+        target=$(readlink "$fd" 2>/dev/null) || continue
+        path=${target% (deleted)}
+        [ "${path##*/}" = claude_tmux_run.sh ] || continue
+        held+=("$pid")
+        [ "$fd" -ef "$path" ] || stale+=("$pid")
+        break
+      done
+    done <"$procs"
+    if [ ${#held[@]} -eq 0 ]; then
+      echo "serve-check: no process of $unit.service ($(tr '\n' ' ' <"$procs")) holds claude_tmux_run.sh open; its ExecStart should run '$0 serve' (home/.config/systemd/user/claude-tmux.service)" >&2
+      exit 1
+    fi
+    if [ ${#stale[@]} -eq 0 ]; then
+      echo "$unit.service: serve (pid ${held[*]}) runs the current claude_tmux_run.sh"
+      exit 0
+    fi
+
+    # serve is the stale process whose parent is not one of them: the
+    # others are its subshells, which a TERM would not stop.
+    serve_pid=""
+    for pid in "${stale[@]}"; do
+      ppid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+      [[ " ${stale[*]} " == *" $ppid "* ]] || serve_pid=$pid
+    done
+    echo "$unit.service: serve (pid $serve_pid) runs a claude_tmux_run.sh replaced since it started; rerun it on the new one, every session staying: kill -TERM $serve_pid"
+    exit 2
+    ;;
   serve)
     # ExecStart. An explicit subcommand, so no mistyped or bare call reaches
     # a loop that blocks forever. Being one case arm, it is parsed whole --
@@ -1298,7 +1375,7 @@ case "${1:-}" in
     ;;
   *)
     {
-      echo "usage: $0 serve|new|load|restart|stop|status|conversations|history ...  (got '${1:-}'; the header of $0 lists each one's arguments)"
+      echo "usage: $0 serve|serve-check|new|load|restart|stop|status|conversations|history ...  (got '${1:-}'; the header of $0 lists each one's arguments)"
       # The unit ran this bare before serve existed, and systemd keeps a
       # unit as it last read it.
       [ -n "${1:-}" ] || echo "  claude-tmux.service runs '$0 serve'; a unit calling it bare was loaded before that: systemctl --user daemon-reload && systemctl --user restart claude-tmux"

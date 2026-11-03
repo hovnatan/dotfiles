@@ -223,8 +223,31 @@ main() {
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
   [ -e ~/.config/systemd/user/claude-tmux.service ] \
-    && echo "  claude-tmux: prefix C-r in the manager's pane (or systemctl --user restart claude-tmux); other sessions: reload them from it"
+    && echo "  claude:      prefix C-r in a claude session restarts its claude (a new binary, settings, hooks)"
+  if [ "$(uname)" = Linux ] && [ -e ~/.config/systemd/user/claude-tmux.service ]; then
+    serve_check || status=1
+  fi
   return "$status"
+}
+
+# Whether claude-tmux.service's watch loop still runs the claude_tmux_run.sh
+# the pull just replaced: it read the script once, at its start, and keeps
+# its old rules until it reruns, which prefix C-r (a claude restart) never
+# does. claude_tmux_run.sh serve-check tells, and prints the kill that
+# reruns it with every session kept:
+#   exit 0   current                  "claude-tmux.service: serve ... current"
+#   exit 2   replaced since it began  that line, with the kill -TERM <pid>
+#   else     the unit not active, ... its error; the update fails
+serve_check() {
+  local out rc=0
+  out=$(~/.dotfiles/scripts/claude_tmux_run.sh serve-check 2>&1) || rc=$?
+  case $rc in
+    0 | 2) echo "  claude-tmux: $out" ;;
+    *)
+      echo "error: $out" >&2
+      return 1
+      ;;
+  esac
 }
 
 # The pull replaces this very file mid-run. Bash reads a script as it goes,

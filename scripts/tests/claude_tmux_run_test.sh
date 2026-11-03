@@ -40,6 +40,11 @@
 #     live session as window 0, the other window untouched; a claude started
 #     there by hand counts as the manager up (no second one); serve with
 #     tmux failing exits with that error instead of launching on a guess
+#   - serve-check: the unit's serve on this checkout is current (0); a
+#     second unit's serve run from a copy of the script turns stale (2) once
+#     the copy is replaced as git replaces it, and the kill it prints reruns
+#     serve on the new file, current again, the manager's claude untouched;
+#     a unit that is not active is an error (1)
 #   - a session whose claude exited beside another window: restart points
 #     at load, status shows NO CLAUDE, and load (bare, labeled, --id)
 #     resumes the conversation as window 0, the other window keeping its
@@ -124,10 +129,17 @@ for cmd in tmux systemd-run systemctl getent python3; do
     exit 1
   }
 done
+# launch's lock lives there; without it the first new fails and every
+# check after it fails for want of that session, burying the cause
+[ -n "${XDG_RUNTIME_DIR:-}" ] || {
+  echo "claude_tmux_run_test.sh: XDG_RUNTIME_DIR is unset; run it from a login with a user systemd session (export XDG_RUNTIME_DIR=/run/user/\$(id -u))" >&2
+  exit 1
+}
 
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
 SOCK="cttest-$$" # socket, transient unit and scope all carry it
 UNIT="$SOCK"
+CUNIT="$SOCK-copy" # serve-check's second unit, running a copy of the script
 WORK=$(mktemp -d)
 H="$WORK/home"
 LOGIN_SHELL=$(getent passwd "$(id -un)" | cut -d: -f7)
@@ -219,12 +231,12 @@ kill_claude() {
 bgpids=()
 # Tear down everything this run created, whatever state it stopped in.
 cleanup() {
-  systemctl --user stop "$UNIT" 2>/dev/null
+  systemctl --user stop "$UNIT" "$CUNIT" 2>/dev/null
   t kill-server 2>/dev/null
   # tmux leaves its socket file behind when the server exits, so each run
   # would add a dead /tmp/tmux-<uid>/cttest-<pid>. Same path rule as tmux's.
   rm -f "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$SOCK"
-  systemctl --user reset-failed "$UNIT" 2>/dev/null
+  systemctl --user reset-failed "$UNIT" "$CUNIT" 2>/dev/null
   [ "${#bgpids[@]}" -eq 0 ] || kill "${bgpids[@]}" 2>/dev/null
   [ -z "${ORPHAN:-}" ] || pkill -f -x "sleep $ORPHAN"
   if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
@@ -420,6 +432,66 @@ for _ in $(seq 80); do
 done
 claude_at0 manager && pass "and once it exits, serve brings the manager back" \
   || fail "manager not back after the hand-started claude exited: sessions '$(sessions)', unit $(systemctl --user is-active "$UNIT")"
+
+# --- serve-check: does the unit's serve run the script on disk? ------------
+
+# check <unit>: serve-check's output, then its exit code on a line of its own
+check() {
+  local rc=0 out
+  out=$(CLAUDE_TMUX_UNIT="$1" run serve-check 2>&1) || rc=$?
+  printf '%s\n%s\n' "$out" "$rc"
+}
+# wait_check <unit> <rc>: poll until serve-check exits <rc>, within 10 s
+wait_check() {
+  for _ in $(seq 40); do
+    [ "$(check "$1" | tail -1)" = "$2" ] && return 0
+    sleep 0.25
+  done
+  return 1
+}
+
+out=$(check "$UNIT")
+[ "${out##*$'\n'}" = 0 ] && pass "serve-check on the unit's serve: ${out%$'\n'*}" \
+  || fail "serve-check on the unit's serve: $out"
+
+# A second serve, run from a copy of the script, watching the same manager
+# (up, so it only watches). git replaces a file with a new one (a new
+# inode), as cp then mv does here; the serve running it keeps the old.
+mkdir -p "$WORK/copy/scripts"
+cp "$REPO/scripts/claude_tmux_run.sh" "$WORK/copy/scripts/"
+ln -s "$REPO/scripts/lib" "$WORK/copy/scripts/lib"
+ln -s "$REPO/home" "$WORK/copy/home"
+systemd-run --user --quiet --unit="$CUNIT" -p Restart=always -p RestartSec=1 \
+  -E HOME="$H" -E PATH="$H/.local/bin:$PATH" -E CLAUDE_TMUX_SOCKET="$SOCK" \
+  "$WORK/copy/scripts/claude_tmux_run.sh" serve
+manager_pid=$(t display -p -t =manager:0 '#{pane_pid}')
+if wait_check "$CUNIT" 0; then pass "serve-check on a serve of the copy, as started: current"; else
+  fail "serve-check on the copy's serve as started: $(check "$CUNIT")"
+fi
+cp "$WORK/copy/scripts/claude_tmux_run.sh" "$WORK/copy/new" && mv "$WORK/copy/new" "$WORK/copy/scripts/claude_tmux_run.sh"
+out=$(check "$CUNIT")
+main=$(systemctl --user show -p MainPID --value "$CUNIT")
+if [ "${out##*$'\n'}" = 2 ] && [[ "${out%$'\n'*}" == *"kill -TERM $main" ]]; then
+  pass "the copy replaced: stale, and the kill names serve ($main)"
+else
+  fail "serve-check after the copy was replaced (serve $main): $out"
+fi
+
+# Run the kill it printed, as the user would
+line=${out%$'\n'*}
+kill -TERM "${line##*kill -TERM }"
+if wait_check "$CUNIT" 0 && [ "$(systemctl --user show -p MainPID --value "$CUNIT")" != "$main" ]; then
+  pass "after that kill the unit reran serve on the new file: current ($(check "$CUNIT" | head -1))"
+else
+  fail "after kill -TERM $main: $(check "$CUNIT"), unit $(systemctl --user is-active "$CUNIT")"
+fi
+[ "$(t display -p -t =manager:0 '#{pane_pid}')" = "$manager_pid" ] \
+  && pass "and the manager's claude ran on through it (pid $manager_pid)" \
+  || fail "the manager's pane runs $(t display -p -t =manager:0 '#{pane_pid}'), was $manager_pid"
+systemctl --user stop "$CUNIT"
+out=$(check "$CUNIT")
+[ "${out##*$'\n'}" = 1 ] && [[ "$out" == *"not active"* ]] && pass "serve-check on a stopped unit: an error, '${out%$'\n'*}'" \
+  || fail "serve-check on a stopped unit: $out"
 
 # --- restart: a fresh claude in the same pane, same conversation ------------
 
