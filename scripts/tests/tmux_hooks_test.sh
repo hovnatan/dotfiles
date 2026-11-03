@@ -33,17 +33,28 @@
 # Then the window rules, on a second server started from the whole
 # home/.tmux.conf, with a client in a pty typing what a terminal would:
 #
-#   one window                        -> no status bar (another session too)
-#   a second window                   -> bar on for that session only; off
-#                                        again at one; closing a middle
-#                                        window renumbers the rest
-#   prefix C n p l w S 0-9, User0/1   -> bound
+#   one window, two windows           -> the bar on, on top, "cpu N% mem
+#                                        N% | <date time zone>" on the
+#                                        right (a stub tmux-mem-cpu-load in
+#                                        the throwaway HOME); closing a
+#                                        middle window renumbers the rest
+#   status-stats.sh                   -> no tool, or output of another
+#                                        form: the reason, exit 1
+#   panes setting titles; one that    -> each window named after its
+#   sets none                            pane's title, glyph and all, and
+#                                        renamed when it changes; the
+#                                        titleless one after its program
+#   prefix c C n p l C-s w s S 0-9,   -> bound; c new window, C new
+#   User0/1                              session, C-s and l last window,
+#                                        s the session picker
 #   Cmd-K Cmd-K Cmd-J (\e[5;30002~,   -> windows 1, 2, 1, nothing typed into
 #   \e[5;30001~ as iTerm2 sends them)    the pane; in a one-window session
 #                                        nothing moves and nothing is shown
-#   prefix S                          -> bar off, and kept off while windows
-#                                        come and go; prefix S -> rule back
-#   source-file                       -> the rule applied to every session
+#   prefix S                          -> bar off for that session only, kept
+#                                        off while windows come and go;
+#                                        prefix S -> back on
+#   source-file over the old rule     -> its hooks and per-session values
+#   (bar only with 2+ windows)           cleared: the bar on everywhere
 #
 # The socket is named "claude": sync-session-name.sh acts on that one only.
 # Exit 0 = all passed; on failure the work dir is kept and printed.
@@ -251,14 +262,43 @@ wait_for " attached $ro_tty session=b: iTerm2 over ssh, FAILED: cannot write to 
 # default-command is fish, and nothing here needs a shell.
 WSOCK="$SOCKDIR/win"
 tw() { env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin" TERM=xterm-256color "$TMUX_BIN" -S "$WSOCK" "$@"; }
-status_of() { tw show -v -t "$1": status 2>&1; }
+# status_of <session>: the bar as the session sees it, its own value or the
+# global one it inherits
+status_of() { tw display -p -t "$1": '#{status}' 2>&1; }
 current() { tw display -p -t "$1": '#{window_index}'; }
 mkfifo "$WORK/keys"
+# The bar's CPU and memory: status-stats.sh runs $HOME/.nix-profile/bin/
+# tmux-mem-cpu-load, here a stub printing what 3.8.3 prints (memory first,
+# then CPU, a NUL byte before the newline) or, with $WORK/stats_odd there,
+# something else.
+mkdir -p "$H/.nix-profile/bin"
+cat >"$H/.nix-profile/bin/tmux-mem-cpu-load" <<EOF
+#!/bin/sh
+[ -e "$WORK/stats_odd" ] && { echo "1.2 GB"; exit 0; }
+printf '73.98%%   7.8%%\000\n'
+EOF
+chmod +x "$H/.nix-profile/bin/tmux-mem-cpu-load"
+stats() { env -i HOME="$H" PATH=/usr/bin:/bin "$H/.dotfiles/home/.config/tmux/status-stats.sh" 2>&1; }
+out=$(stats)
+rc=$?
+[ "$rc" = 0 ] && [ "$out" = "cpu 7.8% mem 74.0%" ] && pass "status-stats.sh labels the tool's numbers: '$out'" \
+  || fail "status-stats.sh: rc=$rc '$out'"
+touch "$WORK/stats_odd"
+out=$(stats)
+rc=$?
+rm -f "$WORK/stats_odd"
+[ "$rc" = 1 ] && grep -qF "printed '1.2 GB', not" <<<"$out" && pass "status-stats.sh refuses output of another form: '$out'" \
+  || fail "status-stats.sh on odd output: rc=$rc '$out'"
+out=$(env -i HOME="$WORK/nohome" PATH=/usr/bin:/bin "$H/.dotfiles/home/.config/tmux/status-stats.sh" 2>&1)
+rc=$?
+[ "$rc" = 1 ] && grep -qF "no $WORK/nohome/.nix-profile/bin/tmux-mem-cpu-load" <<<"$out" \
+  && pass "status-stats.sh without the tool says so: '$out'" || fail "status-stats.sh without the tool: rc=$rc '$out'"
 tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300' 2>"$WORK/out" \
   || fail "the server would not start from home/.tmux.conf: $(cat "$WORK/out")"
 tw new-session -d -s solo 'sleep 300'
-[ "$(status_of w)" = off ] && [ "$(status_of solo)" = off ] \
-  && pass "a session of one window has no status bar" || fail "one window: status w=$(status_of w) solo=$(status_of solo)"
+[ "$(status_of w)" = on ] && [ "$(status_of solo)" = on ] && [ "$(tw show -gv status-position)" = top ] \
+  && pass "a session of one window has the bar, on top" \
+  || fail "one window: status w=$(status_of w) solo=$(status_of solo), position $(tw show -gv status-position), right '$(tw show -gv status-right)'"
 
 python3 - "$TMUX_BIN" "$WSOCK" "$H" "$WORK/keys" "$WORK/screen" <<'PYEOF' &
 import os, pty, select, sys
@@ -294,11 +334,22 @@ for _ in $(seq 50); do
   [ -n "$(tw list-clients -t =w -F '#{client_tty}')" ] && break
   sleep 0.1
 done
+# What the client draws on the right: the stub's numbers labelled, a bar,
+# the server's date, time and zone. The first draw has the date alone (the
+# job still running), so wait for the second. The minute by pattern: it
+# may turn between this line and the draw.
+want="cpu 7\.8% mem 74\.0% \| $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
+for _ in $(seq 50); do
+  grep -aqE "$want" "$WORK/screen" && break
+  sleep 0.1
+done
+grep -aqE "$want" "$WORK/screen" && pass "the bar draws '$(grep -aoE "$want" "$WORK/screen" | tail -1)' on the right" \
+  || fail "the bar never drew '$want'; screen: $(tr -c '[:print:]' ' ' <"$WORK/screen" | grep -o '[a-z]* [0-9.]*% [^E]*' | tail -2)"
 
 tw new-window -d -t =w: 'sleep 300'
 sleep 0.3
-[ "$(status_of w)" = on ] && [ "$(status_of solo)" = off ] \
-  && pass "a second window turns the bar on for that session only" || fail "two windows: w=$(status_of w) solo=$(status_of solo)"
+[ "$(status_of w)" = on ] && [ "$(status_of solo)" = on ] \
+  && pass "a second window keeps the bar" || fail "two windows: w=$(status_of w) solo=$(status_of solo)"
 tw new-window -d -t =w: 'sleep 300'
 tw kill-window -t =w:1
 sleep 0.3
@@ -307,16 +358,75 @@ sleep 0.3
   || fail "after closing window 1: windows $(tw list-windows -t =w: -F '#I' | tr '\n' ' '), status $(status_of w)"
 tw kill-window -t =w:1
 sleep 0.3
-[ "$(status_of w)" = off ] && pass "back to one window, the bar goes" || fail "back to one: status $(status_of w)"
+[ "$(status_of w)" = on ] && pass "back to one window, the bar stays" || fail "back to one: status $(status_of w)"
 
+# Window names: each window takes its pane's title as the program reports
+# it. Stand-ins: a pane setting a title as Claude Code does (glyph first),
+# one setting nvim's and then fish's (the change must rename the window),
+# and one that sets none (tmux's initial title, the host name, so the
+# window is named after the program). tmux re-checks a name only after the
+# pane prints, so the titleless one is a copy of bash named "notitle" that
+# keeps printing with builtins: no child, the pane's command stays notitle.
+# A copy of the real file: macOS kills a copied wrapper or system binary.
+mkdir -p "$WORK/cc"
+real_bash=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$(command -v bash)")
+cp "$real_bash" "$WORK/cc/notitle"
+# title_then <title> <command...>: set the pane title, then run the command.
+# The glyph as UTF-8 bytes: this file stays ASCII.
+cat >"$WORK/cc/title_then" <<'EOF'
+#!/bin/sh
+printf '\033]2;%s\033\\' "$1"
+shift
+exec "$@"
+EOF
+chmod +x "$WORK/cc/title_then"
+cc_title=$'\342\234\263'" vm/backend/fix-ci"
+tw new-session -d -s cc "$WORK/cc/title_then '$cc_title' sleep 300"
+tw new-window -d -t =cc: "$WORK/cc/title_then 'nvim: init.lua' sh -c 'sleep 1; exec $WORK/cc/title_then fish:~/x sleep 300'"
+tw new-window -d -t =cc: "$WORK/cc/notitle -c 'while :; do echo .; read -r -t 0.3; done'"
+# -u: the client tw starts has no locale (env -i), and without it tmux
+# prints the glyph as "_"
+names() { tw -u list-windows -t =cc: -F '#{window_name}' | paste -sd '|' -; }
+wait_names() {
+  for _ in $(seq 40); do
+    [ "$(names)" = "$1" ] && return 0
+    sleep 0.1
+  done
+  return 1
+}
+wait_names "$cc_title|nvim: init.lua|notitle" \
+  && pass "windows are named after their pane's title as reported (glyph kept), a titleless one after its program" \
+  || fail "window names: '$(names)', titles $(tw list-panes -s -t =cc: -F '#{pane_title}' | paste -sd '|' -)"
+wait_names "$cc_title|fish:~/x|notitle" && pass "a new title renames the window" \
+  || fail "after window 1's title changed: '$(names)'"
+tw kill-session -t =cc
+
+# what_key <table> <key>: the command that key runs, nothing when unbound.
+# From the whole table: `list-keys -T <table> <key>` prints nothing and
+# exits 0 for a bound and an unbound key alike (tmux 3.7c), so it cannot
+# tell them apart.
+what_key() {
+  tw list-keys -T "$1" | awk -v k="$2" '{
+    i = ($2 == "-r") ? 3 : 2 # "bind-key [-r] -T <table> <key> <command>"
+    if ($1 == "bind-key" && $i == "-T" && $(i + 2) == k) {
+      sub(/^bind-key +(-r +)?-T +[^ ]+ +[^ ]+ +/, ""); print; exit
+    }
+  }'
+}
 missing=""
-for k in C n p l w S 0 1 2 3 4 5 6 7 8 9; do
-  tw list-keys -T prefix "$k" >/dev/null 2>&1 || missing+=" prefix-$k"
+for k in c C n p l C-s w s S 0 1 2 3 4 5 6 7 8 9; do
+  [ -n "$(what_key prefix "$k")" ] || missing+=" prefix-$k"
 done
 for k in User0 User1; do
-  tw list-keys -T root "$k" >/dev/null 2>&1 || missing+=" $k"
+  [ -n "$(what_key root "$k")" ] || missing+=" $k"
 done
-[ -z "$missing" ] && pass "window bindings: prefix C n p l w S 0-9, User0 User1" || fail "unbound:$missing"
+[ -z "$missing" ] && pass "window bindings: prefix c C n p l C-s w s S 0-9, User0 User1" || fail "unbound:$missing"
+[ -z "$(what_key prefix z)" ] || fail "what_key reads prefix z, which the config leaves unbound, as bound: '$(what_key prefix z)'"
+[[ "$(what_key prefix c)" == "new-window -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
+  && [ "$(what_key prefix C-s)" = last-window ] && [ "$(what_key prefix l)" = last-window ] \
+  && [ "$(what_key prefix s)" = "choose-tree -Zs" ] \
+  && pass "prefix c: new window, C: new session, C-s and l: last window, s: session picker" \
+  || fail "prefix c '$(what_key prefix c)', C '$(what_key prefix C)', C-s '$(what_key prefix C-s)', l '$(what_key prefix l)', s '$(what_key prefix s)'"
 
 # Cmd-J / Cmd-K, as iTerm2 and Ghostty send them. In a one-window session
 # nothing moves, and tmux draws no "No next window" (an unguarded
@@ -339,10 +449,11 @@ c=$(current w)
 pane_text=$(tw capture-pane -p -t =w:1)
 [ -z "$(tr -d ' \n' <<<"$pane_text")" ] && pass "and nothing leaks into the pane" || fail "pane shows: $pane_text"
 
-# prefix S hides the bar, and it stays hidden while windows come and go;
-# prefix S again brings back the automatic rule.
+# prefix S hides the bar for its session only, and it stays hidden while
+# windows come and go; prefix S again brings it back.
 send_keys '\x01S'
-[ "$(status_of w)" = off ] && pass "prefix S hides the bar at once (3 windows)" || fail "after prefix S: status $(status_of w)"
+[ "$(status_of w)" = off ] && [ "$(status_of solo)" = on ] \
+  && pass "prefix S hides the bar at once, in that session only" || fail "after prefix S: status w=$(status_of w) solo=$(status_of solo)"
 tw new-window -d -t =w: 'sleep 300'
 tw kill-window -t =w:3
 tw kill-window -t =w:2
@@ -351,13 +462,20 @@ sleep 0.3
 send_keys '\x01S'
 [ "$(status_of w)" = on ] && pass "prefix S again: the bar is back (2 windows)" || fail "after prefix S again: status $(status_of w)"
 
-# A reload applies the rule to sessions that changed while it was not loaded.
-tw set-option -t =solo: status off
-tw new-window -d -t =solo: 'sleep 300'
+# A server that ran the rule before this one (the bar only with two or
+# more windows, e4f934cd): its hook and a session's own "off" survive a
+# reload unless the config clears them. Both are recreated as it left them.
+tw set-hook -g window-linked[0] 'set-option status off'
+tw set-hook -g window-unlinked[1] 'set-option status off'
 tw set-option -t =solo: status off
 tw source-file "$H/.dotfiles/home/.tmux.conf"
+tw new-window -d -t =solo: 'sleep 300'
+tw kill-window -t =solo:1
 sleep 0.3
-[ "$(status_of solo)" = on ] && pass "a reload sets the bar for every session" || fail "after reload: solo status $(status_of solo)"
+[ "$(status_of solo)" = on ] && [ -z "$(tw show -qv -t =solo: status)" ] \
+  && [ "$(tw show-hooks -g window-unlinked | grep -c .)" = 1 ] \
+  && pass "a reload over the old rule clears its hooks and per-session values: the bar on everywhere" \
+  || fail "after a reload over the old rule: solo status $(status_of solo), hooks $(tw show-hooks -g window-linked | tr "\n" " ")$(tw show-hooks -g window-unlinked | tr "\n" " ")"
 kill "$wclient"
 wait "$wclient" 2>/dev/null
 wclient=

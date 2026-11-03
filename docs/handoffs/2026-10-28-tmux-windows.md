@@ -4,6 +4,12 @@ Written 2026-10-28 on vm. Status: **implemented 2026-11-03**, parts 1-4
 and their tests; the optional VS Code keybindings were left out. Where the
 build differs from the plan below:
 
+- Superseded the same day: the status bar is now always on, on top, with
+  the date and time on the right; `prefix S` hides it per session. The
+  "on only with two or more windows" rule (part 1 below) and its hooks are
+  gone; the config clears them from a server that loaded them.
+  Windows show as `0 <name> | 1 <name>`, each named after the title its
+  program reports (`fish:~/x`, `nvim: init.lua`), not after the program.
 - The status-bar hooks act on `#{hook_session}` through `run-shell -C`: in
   `window-unlinked` the plain `session_*` formats describe another session,
   and `set-option -t "#{hook_session}"` is not expanded (`home/.tmux.conf`).

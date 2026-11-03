@@ -259,6 +259,10 @@
             pkgs.terraform
             # tmux -- latest release; Ubuntu 24.04 ships 3.4
             pkgs.tmux
+            # tmux-mem-cpu-load -- memory and CPU % for the tmux status bar
+            # (home/.tmux.conf status-right); one binary for macOS and
+            # Linux, no plugin manager (2026-11-03)
+            pkgs.tmux-mem-cpu-load
             # Markup-based typesetting system
             pkgs.typst
             # unzip, xz, zstd -- archive tools; macOS has no xz or zstd
