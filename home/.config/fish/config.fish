@@ -23,11 +23,8 @@ if status --is-interactive
     set -U fish_cursor_visual block
 
     set -u fish_color_cwd brcyan
-    if [ $TMUX ]
-        set -u fish_color_prompt_bg 665c54
-    else
-        set -u fish_color_prompt_bg red
-    end
+    # The host label's background, the same in tmux as outside it
+    set -u fish_color_prompt_bg red
 
     set -u fish_color_command normal
     set -u fish_color_error normal
