@@ -580,10 +580,13 @@ if [ "$(uname)" = "Darwin" ]; then
   # (home/.hammerspoon/iterm2_api.py). iTerm2 still asks before each new
   # script may connect; that check is left on.
   defaults write com.googlecode.iterm2 EnableAPIServer -bool true
-  # Tab bar shown for a one-tab window too (Appearance > Tabs > Show tab bar
-  # even when there is only one tab). iTerm2 hides it by default, so the
-  # terminal lost a row of height the moment a second tab opened.
-  defaults write com.googlecode.iterm2 HideTab -bool false
+  # No tab bar in a one-tab window (Appearance > Tabs > Show tab bar even
+  # when there is only one tab, unticked; iTerm2's default): tmux's own
+  # status bar lists the windows, so the row is better spent on the panes.
+  # The cost, taken knowingly: a second tab brings the bar back, and the
+  # terminal loses a row of height there, which tmux redraws at once.
+  # Read at launch.
+  defaults write com.googlecode.iterm2 HideTab -bool true
   # Long tab titles always lose their end, never their start, so a title
   # reads from its beginning ("~/.dotfiles/...", "[backend/...]"). Smart
   # truncation (the default) cuts the start instead whenever a window's
