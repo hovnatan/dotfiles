@@ -260,12 +260,15 @@ quiet_resign codesign --force --sign - "$app"
 # --- 6. default viewer --------------------------------------------------------
 
 # zathura opens these on double-click (2026-09-24); the rest of exts only get
-# "Open With". PDFs were Preview, EPUBs Books. Re-applied on every run, so
-# dotup undoes a switch made in Finder's Get Info; change this list instead.
+# "Open With". EPUBs were Books. Re-applied on every run, so dotup undoes a
+# switch made in Finder's Get Info; change this list instead.
+# PDFs left the list (2026-11-03): they stay with Preview, zathura is
+# "Open With" for them. Removing a type here does not hand it back; set the
+# new default once, e.g. `duti -s com.apple.Preview com.adobe.pdf all`.
 # duti comes from the Brewfile.
 # By type identifier: duti's ".pdf" extension form resolves to a dyn.* type
 # and fails with error -50.
-default_for=(com.adobe.pdf org.idpf.epub-container com.lizardtech.djvu)
+default_for=(org.idpf.epub-container com.lizardtech.djvu)
 command -v duti >/dev/null \
   || {
     echo "build_zathura_app.sh: duti not found; brew bundle --file=~/.dotfiles/Brewfile" >&2
