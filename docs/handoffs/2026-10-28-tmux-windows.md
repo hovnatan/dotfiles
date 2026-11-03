@@ -1,8 +1,35 @@
 # Plan: extra tmux windows in claude sessions
 
-Written 2026-10-28 on vm. Status: **planned, not started.** Nothing below is
-implemented. Weigh it against the existing iTerm2-tabs workflow first (last
-section).
+Written 2026-10-28 on vm. Status: **implemented 2026-11-03**, parts 1-4
+and their tests; the optional VS Code keybindings were left out. Where the
+build differs from the plan below:
+
+- The status-bar hooks act on `#{hook_session}` through `run-shell -C`: in
+  `window-unlinked` the plain `session_*` formats describe another session,
+  and `set-option -t "#{hook_session}"` is not expanded (`home/.tmux.conf`).
+- iTerm2 keeps each global binding under two keys, `<key>` and
+  `<key>-0x1` (the form its UI writes), so `iterm_key` writes both.
+  Action 10 (Send Escape Sequence) is confirmed by `iterm2.BindingAction`.
+- "Has a claude" for `load`, `restart` and the `serve` watcher means a pane
+  launched with the script's claude command (`claude_launched`), not only
+  a running claude: during a restart's or a slow load's login shell there
+  is none, and acting then started a second claude beside it. `serve`
+  revives by exiting its watch loop; `Restart=always` reruns it.
+- The unguarded `next-window` message ("No next window") is drawn on the
+  client's screen, not kept in `show-messages`; the test reads the screen.
+- After review: `launch` holds a per-socket `flock` and checks for a claude
+  again under it, since `new-window` into a live session lost the implicit
+  mutex `new-session` gave (two loads, or `serve` beside a load, started
+  two claudes). A dead claude pane (a failed respawn) does not count as one
+  starting. `serve` counts a claude started by hand as the manager up, and
+  exits on a tmux failure instead of reading it as "down".
+- After review, `ntfy-stop.sh`: a client counts by the window it shows,
+  in any session (a pane moved by `move-window` is still watched). A tmux
+  failure is logged as FAILED rather than read as "gone", which had
+  cancelled the push without a word.
+- Known gap: outside tmux, Cmd-J / Cmd-K reach the program as the raw
+  sequence; fish ignores it, bash's readline inserts `30001~`. A nested
+  tmux (ssh into a box running one) never sees them.
 
 Goal: open nvim and plain shells as extra tmux windows inside a claude
 session (`tmux -L claude`), without losing navigation, notifications or the

@@ -49,15 +49,20 @@ sessions on this machine.
   whatever its label; `=backend` matches only the unlabeled name.
 - A prompt-bar color (`/color`) does not survive `/clear`; only a resume
   brings it back (Claude Code does that itself).
-- What a session starts ends with it. Each pane runs in a systemd scope
-  of its own, and when a session closes, however it closes, the scopes of
-  its panes are stopped (`home/.config/tmux/reap-panes.sh`, logged in the
-  tmux hooks' log): a `setsid nohup` job, a proxy, a watcher started from a
-  session does not survive it. Nor does it survive a `restart` (or
-  `prefix C-r`), which stops the old claude's scope once the new one runs.
-  A job meant to outlive its session runs as a unit of its own:
+- What a pane starts ends with it. Each pane runs in a systemd scope of
+  its own, and when a pane closes, however it closes (its program exits,
+  `kill-pane`, `kill-window`, its session closing), its scope is stopped
+  (`home/.config/tmux/reap-panes.sh`, logged in the tmux hooks' log): a
+  `setsid nohup` job, a proxy, a watcher started from a pane does not
+  survive it. Nor does it survive a `restart` (or `prefix C-r`), which
+  stops the old claude's scope once the new one runs. A job meant to
+  outlive its pane runs as a unit of its own:
   `systemd-run --user --unit=<name> <command>` (then
   `systemctl --user status <name>`, `journalctl --user -u <name>`).
+- A session may hold more windows than claude's: the user opens nvim or a
+  shell beside it (`prefix C`; Cmd-J/K switch). Claude stays window 0. A
+  second `claude` in the same session is unsupported: both would rename
+  the session after their own conversation.
 
 ## Bringing up a session
 
@@ -74,7 +79,11 @@ conversation belongs to; `load <name>/<task>` pins the conversation
 carrying that label (found with `history`, below) and refuses when the
 `<name>/<task>` session is live with a different one -- switching means
 killing work in flight, which is the user's call. With no such
-conversation it refuses and points at `new`.
+conversation it refuses and points at `new`. `load` also revives a
+session's claude: when claude exited from a session that other windows
+keep alive, `load <name>` resumes the conversation into it as window 0
+and leaves the other windows as they are (`status` shows such a session
+as `NO CLAUDE`).
 
 To start a fresh conversation (e.g. "a new backend session"):
 

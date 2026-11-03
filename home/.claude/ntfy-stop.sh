@@ -6,7 +6,8 @@
 # whether anyone is looking right now and otherwise forks the waiter,
 # detached, and exits. Waiter mode (--wait): poll the tmux session's
 # focus for DEBOUNCE_SECONDS. A client of this session reporting fresh
-# focus at any poll cancels the push -- the user saw the result. So does
+# focus at any poll, with claude's pane on screen, cancels the push -- the
+# user saw the result. So does
 # a new message from the user, whatever the channel: --cancel, fired by
 # the UserPromptSubmit hook, kills the pending waiter. Transcript growth
 # re-arms the window, so a turn superseding the advertised one gets its
@@ -17,9 +18,23 @@
 # semantics the native push lacks.
 #
 # The session is identified by ID (third $TMUX field, stable across
-# renames for the server's lifetime). The cancel requires the focus to
-# be FRESH, not just present (see watched()): a client left focused on a
-# locked screen must not suppress the push.  The human-readable name
+# renames for the server's lifetime), and claude's pane by $TMUX_PANE: a
+# session can hold more windows than claude's (nvim, a shell), and a client
+# typing in one of those has not seen the turn. On screen means the
+# session's current window is the pane's, and that window is not zoomed
+# onto another of its panes. The current window is per session in tmux, so
+# every client of a session agrees on it. The pane's window is looked up at
+# every poll, as break-pane / join-pane move a pane between windows and
+# move-window / join-pane between sessions; a client counts by the window
+# it shows, whatever session it is attached to:
+#
+#   session $3 (current window @2)
+#     @1  claude %4        <- the turn finished here
+#     @2  nvim             <- pts/1, focused: not watching %4 -> push
+#
+# The cancel requires the focus to be FRESH, not just present (see
+# watched()): a client left focused on a locked screen must not suppress
+# the push. The human-readable name
 # is resolved in hook mode for the log lines, and again at push time for
 # the title (a /rename may have labeled the session meanwhile), whose
 # <hostname>/<name> form matches the conversation/peer naming
@@ -39,11 +54,12 @@
 #   2026-09-23T13:41:10Z backend ($3) wait: seen after 65s, no push
 # An "unwatched" verdict carries what tmux knew of the session's clients
 # (see clients()), so a push that should not have been sent explains itself.
-# Events: stop (watched now | waiter armed), wait (coalesced | seen |
-# session gone | transcript grew), prompt (pending push cancelled), push
-# (sent | FAILED with curl's exit code). The topic is never logged -- it is
-# the capability. Only machines with a topic log; days over a month old
-# are pruned with the other event logs (scripts/prune_logs.sh).
+# Events: stop (watched now | waiter armed | FAILED, no $TMUX_PANE or tmux
+# failing), wait (coalesced | seen | session or claude's pane gone |
+# transcript grew | FAILED, tmux failing), prompt (pending push cancelled),
+# push (sent | FAILED with curl's exit code). The topic is never logged -- it is the capability. Only machines
+# with a topic log; days over a month old are pruned with the other event
+# logs (scripts/prune_logs.sh).
 #
 # Portability: runs on stock macOS too, which lacks flock(1) and
 # setsid(1) (both util-linux), has no /run, and ships bash 3.2 and no jq
@@ -77,29 +93,68 @@ note() {
     || echo "ntfy-stop.sh: cannot log under $EVENT_LOG_ROOT" >&2
 }
 
-# clients <socket> <session-id>: set $clients to what tmux knows of the
-# session's clients, the evidence behind a verdict of "unwatched":
+# clients <socket> <session-id> <pane>: set $clients to what tmux knows of
+# the session's clients, the evidence behind a verdict of "unwatched":
 #   "pts/1 not focused, input 14s ago; pts/5 focused, input 2400s ago"
+#   "pts/1 focused, input 3s ago, on window 2 (claude's is 0)"
+#   "pts/1 focused, input 3s ago, claude's window zoomed onto another pane"
 #   "no client attached"
-# Input seconds ago with no focus is a contradiction worth seeing: somebody
-# is at that terminal, and its focus reports are not arriving (iTerm2
-# switches them off when it takes the host for changed; 2026-09-30).
+# The window is named only when it is not claude's, so a session of one
+# window reads as before. Input seconds ago with no focus is a
+# contradiction worth seeing: somebody is at that terminal, and its focus
+# reports are not arriving (iTerm2 switches them off when it takes the host
+# for changed; 2026-09-30).
+# The clients listed are those of the session claude's pane is in now --
+# the hook's, unless the pane moved -- and those of the hook's session once
+# the pane is gone. Best effort: this is evidence for a log line, and a
+# tmux failure here has already been reported by watched().
 clients() {
-  local now tty flags activity out=
+  local now tty flags activity win idx out="" own="" ownidx="" in="\$$2" zoomed=""
   now=${EPOCHSECONDS:-$(date +%s)}
-  while read -r tty flags activity; do
+  read -r own ownidx in zoomed <<PANE
+$(tmux -S "$1" display-message -p -t "$3" '#{window_id} #{window_index} #{session_id} #{?#{&&:#{window_zoomed_flag},#{!=:#{pane_active},1}},zoomed,}' 2>/dev/null)
+PANE
+  in=${in:-\$$2}
+  while read -r tty flags activity win idx; do
     [ -n "$tty" ] || continue
     case ",$flags," in *,focused,*) flags=focused ;; *) flags="not focused" ;; esac
     out="${out:+$out; }${tty#/dev/} $flags, input $((now - activity))s ago"
+    if [ -z "$own" ]; then
+      out="$out, claude's pane $3 gone"
+    elif [ "$win" != "$own" ]; then
+      out="$out, on window $idx (claude's is $ownidx)"
+    elif [ -n "$zoomed" ]; then
+      out="$out, claude's window zoomed onto another pane"
+    fi
   done <<LIST
-$(tmux -S "$1" list-clients -t "\$$2" -F '#{client_tty} #{client_flags} #{client_activity}' 2>/dev/null)
+$(tmux -S "$1" list-clients -t "$in" -F '#{client_tty} #{client_flags} #{client_activity} #{window_id} #{window_index}' 2>/dev/null)
 LIST
   clients=${out:-no client attached}
 }
 
-# watched <socket> <session-id>: status 0 if a client of the session is
-# focused AND produced input within STALE_SECONDS, 1 if not, 2 if the
-# session is gone. The freshness bound exists because a locked/asleep Mac
+# tmux_ask <socket> <tmux args...>: run tmux, its output in $tmux_out.
+# Status 0, 2 if the server is gone (the messages tmux prints when nothing
+# listens on the socket), 3 on any other failure, the message in $tmux_out
+# -- a client too old for the server, say -- which must not read as "gone":
+# that would cancel a push without a word.
+tmux_ask() {
+  local socket=$1
+  shift
+  tmux_out=$(tmux -S "$socket" "$@" 2>&1) && return 0
+  case $tmux_out in
+    "no server running on "* | "error connecting to "*"(No such file or directory)" | \
+      "error connecting to "*"(Connection refused)") return 2 ;;
+  esac
+  return 3
+}
+
+# watched <socket> <session-id> <pane>: status 0 if claude's pane is on
+# screen (its window current in its session, not zoomed onto another pane)
+# and a client showing that window is focused AND produced input within
+# STALE_SECONDS, 1 if not, 2 if the server or the pane is gone, 3 if tmux
+# failed otherwise (tmux_ask; its message in $tmux_out). Any client counts,
+# not only the hook session's: a pane moved to another session is watched
+# by that session's clients. The freshness bound exists because a locked/asleep Mac
 # freezes the outer terminal without ever sending a focus-out, leaving
 # the flag stuck at "focused" -- but a frozen terminal also sends no
 # input, so activity ages past the bound and pushes resume (a Stop within
@@ -109,12 +164,20 @@ LIST
 # do mouse scrolls. tmux evaluates the whole predicate itself via the -f
 # filter; the shell only tests whether any client matched.
 watched() {
-  local now hit
+  local now win
   now=${EPOCHSECONDS:-$(date +%s)} # builtin on bash 5+; forks on macOS 3.2
-  hit=$(tmux -S "$1" list-clients -t "\$$2" \
-    -f "#{&&:#{m:*focused*,#{client_flags}},#{e|<:$((now - STALE_SECONDS)),#{client_activity}}}" \
-    -F w 2>/dev/null) || return 2
-  [ -n "$hit" ]
+  # "@2", or "@2 zoomed" while the window shows another of its panes; empty
+  # once the pane is gone (display-message does not fail on a missing
+  # target, tmux 3.7c)
+  tmux_ask "$1" display-message -p -t "$3" \
+    '#{window_id}#{?#{&&:#{window_zoomed_flag},#{!=:#{pane_active},1}}, zoomed,}' || return
+  win=$tmux_out
+  [ -n "$win" ] || return 2
+  case $win in *" zoomed") return 1 ;; esac
+  tmux_ask "$1" list-clients \
+    -f "#{&&:#{&&:#{m:*focused*,#{client_flags}},#{e|<:$((now - STALE_SECONDS)),#{client_activity}}},#{==:#{window_id},$win}}" \
+    -F w || return
+  [ -n "$tmux_out" ]
 }
 
 # lock_path <socket path> <session id>: set $lock to that session's lock
@@ -124,7 +187,7 @@ watched() {
 lock_path() { lock="$RUN_DIR/claude-ntfy/${1##*/}-$2.lock"; }
 
 if [ "${1:-}" = --wait ]; then
-  socket="$2" sid="$3" topic="$4" transcript="${5:-}" who="${6:-\$$3}"
+  socket="$2" sid="$3" pane="$4" topic="$5" transcript="${6:-}" who="${7:-\$$3}"
   # One waiter per (socket, session): a Stop landing while one is pending
   # is the same "come look" request, so it is coalesced. mkdir is the
   # portable atomic lock; the recorded pid lets the next waiter claim a
@@ -156,15 +219,19 @@ if [ "${1:-}" = --wait ]; then
   growing=0
   while [ "$SECONDS" -lt "$end" ]; do
     # Watched (0) -> the user saw it; gone (2) -> nothing to report on.
-    watched "$socket" "$sid"
+    watched "$socket" "$sid" "$pane"
     case $? in
       0)
         note "$who" "wait: seen after $((SECONDS - start))s, no push"
         exit 0
         ;;
       2)
-        note "$who" "wait: session gone, no push"
+        note "$who" "wait: session or claude's pane $pane gone, no push"
         exit 0
+        ;;
+      3)
+        note "$who" "wait: FAILED, tmux -S $socket: $tmux_out; no push"
+        exit 1
         ;;
     esac
     # Transcript grew since this window started: a new turn superseded
@@ -183,11 +250,20 @@ if [ "${1:-}" = --wait ]; then
     sleep "$POLL_SECONDS"
   done
 
-  # Resolve the name only now, once per push; gone since the last poll
-  # means there is nothing left to come look at.
-  session=$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null)
+  # Resolve the name only now, once per push, from the pane: it may have
+  # moved to another session. Gone since the last poll means there is
+  # nothing left to come look at.
+  tmux_ask "$socket" display-message -p -t "$pane" '#{session_name}'
+  case $? in
+    0) session=$tmux_out ;;
+    2) session="" ;;
+    *)
+      note "$who" "wait: FAILED, tmux -S $socket: $tmux_out; no push"
+      exit 1
+      ;;
+  esac
   if [ -z "$session" ]; then
-    note "$who" "wait: session gone, no push"
+    note "$who" "wait: session or claude's pane $pane gone, no push"
     exit 0
   fi
   curl -sf --max-time 10 \
@@ -196,7 +272,7 @@ if [ "${1:-}" = --wait ]; then
     -d "finished a turn ${DEBOUNCE_SECONDS}s ago and is still unwatched" \
     "$NTFY_URL/$topic" >/dev/null
   rc=$?
-  clients "$socket" "$sid"
+  clients "$socket" "$sid" "$pane"
   if [ "$rc" -eq 0 ]; then
     note "$who" "push: sent via $NTFY_URL after $((SECONDS - start))s unwatched ($clients)"
   else
@@ -206,7 +282,8 @@ if [ "${1:-}" = --wait ]; then
 fi
 
 # --- cancel and hook modes both run inside the session's pane, with
-# $TMUX (socket-path,server-pid,session-id) identifying the session ---
+# $TMUX (socket-path,server-pid,session-id) identifying the session (and,
+# for the hook, $TMUX_PANE claude's pane) ---
 [ -n "${TMUX:-}" ] || exit 0 # not a tmux-hosted session
 socket=${TMUX%%,*} sid=${TMUX##*,}
 
@@ -232,11 +309,30 @@ fi
 # printed "No such file or directory" on every Stop of a topic-less box.
 IFS= read -r topic 2>/dev/null <"$TOPIC_FILE"
 [ -n "${topic:-}" ] || exit 0
-who="$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null) (\$$sid)"
-if watched "$socket" "$sid"; then # user is looking right now -- no waiter
-  note "$who" "stop: watched now, no push"
-  exit 0
+# "?" when tmux cannot say (failing: watched() below reports that).
+name=$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null)
+who="${name:-?} (\$$sid)"
+# tmux sets $TMUX_PANE beside $TMUX in every pane; without it there is no
+# telling whether claude's window is the one in view, and a guess either
+# way pushes wrongly or never.
+if [ -z "${TMUX_PANE:-}" ]; then
+  note "$who" "stop: FAILED, \$TMUX is set but \$TMUX_PANE is not"
+  echo "ntfy-stop.sh: \$TMUX is set but \$TMUX_PANE is not, so the pane claude runs in is unknown; start claude in a tmux pane, or unset TMUX if it is not in one" >&2
+  exit 1
 fi
+pane=$TMUX_PANE
+watched "$socket" "$sid" "$pane"
+case $? in
+  0) # user is looking right now -- no waiter
+    note "$who" "stop: watched now, no push"
+    exit 0
+    ;;
+  3)
+    note "$who" "stop: FAILED, tmux -S $socket: $tmux_out"
+    echo "ntfy-stop.sh: tmux -S $socket failed, so whether the turn was seen is unknown: $tmux_out" >&2
+    exit 1
+    ;;
+esac
 # The hook JSON on stdin carries the conversation transcript's path; the
 # waiter watches its mtime (see loop). sed, not jq: stock macOS has no jq.
 transcript=$(sed -n 's/.*"transcript_path":"\([^"]*\)".*/\1/p' 2>/dev/null)
@@ -244,8 +340,8 @@ transcript=$(sed -n 's/.*"transcript_path":"\([^"]*\)".*/\1/p' 2>/dev/null)
 # setsid fully detaches (survives signals to claude's process group);
 # stock macOS has no setsid, so fall back to nohup there.
 runner=$(command -v setsid || echo nohup)
-clients "$socket" "$sid"
+clients "$socket" "$sid" "$pane"
 note "$who" "stop: unwatched, waiter armed (debounce ${DEBOUNCE_SECONDS}s; $clients)"
-"$runner" "$0" --wait "$socket" "$sid" "$topic" "$transcript" "$who" \
+"$runner" "$0" --wait "$socket" "$sid" "$pane" "$topic" "$transcript" "$who" \
   </dev/null >/dev/null 2>&1 &
 exit 0

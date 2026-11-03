@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# tmux session-closed hook (declared in ~/.tmux.conf), and the first step of
-# a cold start in scripts/claude_tmux_run.sh (launch): on the claude socket,
-# stop the systemd scope of every pane that no longer exists, ending
-# whatever a session left running in the background there.
+# tmux hook for every pane that closes (declared in ~/.tmux.conf), and the
+# first step of a cold start in scripts/claude_tmux_run.sh (launch): on the
+# claude socket, stop the systemd scope of every pane that no longer
+# exists, ending whatever a pane left running in the background there.
 #
 #   reap-panes.sh <socket path> [--server-gone]
 #
@@ -32,10 +32,19 @@
 #   tmux-spawn-<uuid>.scope         active: its pane is gone, but
 #     `- cloud-sql-proxy ...        a session's background job is not
 #
-# So what a session started ends with it:
+# So what a pane starts ends with it, when the pane closes, not when some
+# later session does:
 #
-#   session-closed hook (~/.tmux.conf)  -> reap-panes.sh <socket>
-#       every pane scope that holds no live pane's own process
+#   pane-exited       its program exited    \
+#   after-kill-pane   kill-pane              |  (~/.tmux.conf)
+#   window-unlinked   kill-window, and each  |-> reap-panes.sh <socket>
+#                     window of a session    |   every pane scope that holds
+#                     killed                 |   no live pane's own process
+#   session-closed    the backstop          /
+#
+#   (a restart's respawn fires only pane-died: claude_tmux_run.sh stops the
+#   old claude's scope itself)
+#
 #   launch, no server (claude_tmux_run.sh) -> reap-panes.sh <socket> --server-gone
 #       all of them -- the hook cannot be relied on for the last session,
 #       whose server exits with it -- then waits for the server's scope to
@@ -43,7 +52,14 @@
 #   either, the server's scope up but tmux unable to reach it (socket file
 #   removed, a tmux the server rejects) -> stops nothing, fails loudly
 #
-# A job meant to outlive its session belongs in a unit of its own:
+# Not the closed pane's own scope alone: by hook time its pid is gone, so
+# /proc can no longer say which scope it ran in, and the diff against the
+# live panes finds exactly that scope, plus anything an earlier reap missed.
+# One close fires several of these (kill-session: one window-unlinked per
+# window, then session-closed), which then run side by side; see the loop
+# below for why that is safe.
+#
+# A job meant to outlive its pane belongs in a unit of its own:
 #   systemd-run --user --unit=<name> <command>
 #
 # Each scope stopped is logged with what ran in it (the tmux hooks' log):

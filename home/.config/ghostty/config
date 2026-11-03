@@ -48,8 +48,14 @@ shell-integration-features = no-ssh-env,no-ssh-terminfo
 # A host without the entry will complain about unknown terminal type;
 # use TERM=xterm-256color ssh <host> there until it is installed.
 
-keybind = super+j=previous_tab
-keybind = super+k=next_tab
+# Cmd-J / Cmd-K: previous / next tmux window. macOS never passes Cmd to the
+# program, so they send the sequences ~/.tmux.conf reads as User0 / User1
+# (fish outside tmux ignores them); the tabs move to Ctrl-Cmd-J / Ctrl-Cmd-K.
+# iTerm2 gets the same keys from scripts/setup_user_symlinks.sh.
+keybind = super+j=text:\x1b[5;30001~
+keybind = super+k=text:\x1b[5;30002~
+keybind = ctrl+super+j=previous_tab
+keybind = ctrl+super+k=next_tab
 
 # Ghostty follows the fixterms spec and sends ctrl+m as CSI u (ESC[109;5u)
 # even in legacy mode (src/input/key_encode.zig, ctrlSeq), so programs that

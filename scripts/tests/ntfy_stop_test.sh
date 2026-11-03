@@ -15,10 +15,29 @@
 #     failpush    unwatched, NTFY_URL is a closed port -> "curl exit 7"
 #     goes        unwatched, session killed mid-window  -> "session gone"
 #     grows       unwatched, transcript keeps growing   -> one "grew" line, push
-#     watched     a real client attached in a pty, focus-in sent -> no waiter
+#     watched     a real client attached in a pty, focus-in sent, on
+#                 claude's window of two -> no waiter
 #                 then the same client reports focus-out: a waiter is armed,
 #                 and the line says what it saw ("<tty> not focused, input
 #                 Ns ago"); cancelled before it pushes
+#     elsewhere   a focused client on window 1, claude's pane in window 0
+#                 -> armed ("on window 1 (claude's is 0)"), and pushed
+#     zoomed      a focused client on claude's window, zoomed onto the other
+#                 pane of a split -> armed ("zoomed onto another pane")
+#     panegone    claude's pane killed mid-window, another window keeps the
+#                 session -> "claude's pane %N gone", no push
+#     nopane      $TMUX set, $TMUX_PANE not -> exit 1, the reason on stderr
+#                 and a FAILED line
+#     moved       claude's window moved into another session, where a
+#                 focused client shows it -> watched, no waiter (a client
+#                 counts by the window it shows, not its session)
+#     tmuxfail    tmux failing (a wrapper on PATH, "protocol version
+#                 mismatch") at the hook -> exit 1, stderr, a FAILED line;
+#                 and once a waiter is armed -> a FAILED line, no push --
+#                 never read as "gone", which cancels the push silently
+#
+# Each hook runs as Claude Code runs it, inside the session's pane: $TMUX
+# and $TMUX_PANE (claude's pane, window 0 of its session).
 #
 # Checks the decision log line by line (and that it is an event log under
 # ~/.dotfiles/.logs), what the listener received, and that no lock directory
@@ -61,7 +80,7 @@ t() { tmux -S "$SOCK" "$@"; }
 
 cleanup() {
   [ -n "${listener:-}" ] && kill "$listener" 2>/dev/null
-  [ -n "${client:-}" ] && kill "$client" 2>/dev/null
+  for c in ${clients_pids:-}; do kill "$c" 2>/dev/null; done
   [ -n "${toucher:-}" ] && kill "$toucher" 2>/dev/null
   t kill-server 2>/dev/null
   rm -f "$SOCK"
@@ -111,41 +130,91 @@ new_session() { # prints the session id without its "$"
   t display -p -t "=$1:" '#{session_id}' | tr -d '$'
 }
 
+# pane_of <session id>: the session's first pane, window 0's, where claude
+# runs (the hook's $TMUX_PANE)
+pane_of() { t list-panes -t "\$$1:0" -F '#{pane_id}' | head -1; }
 # hook <session id> <url> [--cancel]: one hook invocation, as Claude Code runs it
 hook() {
   echo "{\"transcript_path\":\"$WORK/transcript\"}" \
-    | env -u TMUX_PANE HOME="$H" TMUX="$SOCK,1,$1" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
+    | env HOME="$H" TMUX="$SOCK,1,$1" TMUX_PANE="$(pane_of "$1")" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
       CLAUDE_NTFY_URL="$2" bash "$HOOK" ${3:+"$3"} >>"$WORK/hook.out"
 }
 
-# --- a focused client for the "watched" scenario -----------------------------
+# --- focused clients ---------------------------------------------------------
 
-# A real tmux client in a pty; the focus-in sequence it is sent is what a
-# terminal emits when its window gains focus, which sets client_flags focused
-# and refreshes client_activity -- exactly what watched() tests.
-sid_watched=$(new_session watched)
-# When $WORK/unfocus appears it sends the focus-out a terminal emits on losing
-# focus, for the second half of the scenario.
-python3 - "$SOCK" "$WORK/unfocus" <<'PYEOF' &
+# focused_client <session> [<file>]: a real tmux client in a pty, attached to
+# the session; the focus-in sequence it is sent is what a terminal emits when
+# its window gains focus, which sets client_flags focused and refreshes
+# client_activity -- exactly what watched() tests. When <file> appears it
+# sends the focus-out a terminal emits on losing focus. Waits until tmux
+# has the client focused; its pid is appended to $clients_pids.
+clients_pids=""
+focused_client() {
+  python3 - "$SOCK" "$1" "${2:-$WORK/never}" <<'PYEOF' &
 import os, pty, select, sys, time
 pid, fd = pty.fork()
 if pid == 0:
     env = {k: v for k, v in os.environ.items() if k not in ("TMUX", "TMUX_PANE")} | {"TERM": "xterm-256color"}
-    os.execvpe("tmux", ["tmux", "-S", sys.argv[1], "attach", "-t", "=watched"], env)
+    os.execvpe("tmux", ["tmux", "-S", sys.argv[1], "attach", "-t", "=" + sys.argv[2]], env)
 time.sleep(1); os.write(fd, b"\x1b[I")
 end = time.time() + 60; unfocused = False
 while time.time() < end:
-    if not unfocused and os.path.exists(sys.argv[2]):
+    if not unfocused and os.path.exists(sys.argv[3]):
         os.write(fd, b"\x1b[O"); unfocused = True
     if select.select([fd], [], [], 0.1)[0]:
         try: os.read(fd, 65536)
         except OSError: break
 PYEOF
-client=$!
-for _ in $(seq 30); do
-  t list-clients -t "\$$sid_watched" -F '#{client_flags}' 2>/dev/null | grep -q focused && break
-  sleep 0.2
-done
+  clients_pids+=" $!"
+  for _ in $(seq 30); do
+    t list-clients -t "=$1" -F '#{client_flags}' 2>/dev/null | grep -q focused && return
+    sleep 0.2
+  done
+}
+
+# watched: claude's window 0 is the current one of two.
+sid_watched=$(new_session watched)
+t new-window -d -t "=watched:" 'sleep 1000'
+focused_client watched "$WORK/unfocus"
+# elsewhere: the client is on window 1, a shell beside claude's.
+sid_else=$(new_session elsewhere)
+t new-window -t "=elsewhere:" 'sleep 1000'
+focused_client elsewhere
+# zoomed: claude's window is current, but zoomed onto its other pane.
+sid_zoom=$(new_session zoomed)
+t split-window -t "=zoomed:0" 'sleep 1000'
+t resize-pane -Z -t "=zoomed:0.1"
+focused_client zoomed
+
+# moved: claude's window 0 moved into another session and made current
+# there, a focused client attached to that one; the hook's $TMUX still names
+# the session claude started in, which keeps a second window.
+sid_moved=$(new_session movedfrom)
+t new-window -d -t "=movedfrom:" 'sleep 1000'
+pane_moved=$(pane_of "$sid_moved")
+new_session movedto >/dev/null
+t move-window -s "=movedfrom:0" -t "=movedto:"
+t select-window -t "$(t display -p -t "$pane_moved" '#{window_id}')"
+focused_client movedto
+
+# tmuxfail: a tmux that fails for the sessions whose id names a flag file
+# ($WORK/tmuxfail.<id>), the real one otherwise. The waiter inherits PATH
+# and $TMUX, so creating the flag after the hook armed it fails its polls.
+mkdir -p "$WORK/failtmux"
+cat >"$WORK/failtmux/tmux" <<EOF
+#!/bin/sh
+if [ -e "$WORK/tmuxfail.\${TMUX##*,}" ]; then
+  echo "protocol version mismatch (client 8, server 9)" >&2
+  exit 1
+fi
+exec $(command -v tmux) "\$@"
+EOF
+chmod +x "$WORK/failtmux/tmux"
+# failhook <session id>: the hook run with that tmux on PATH
+failhook() {
+  echo '{}' | env HOME="$H" PATH="$WORK/failtmux:$PATH" TMUX="$SOCK,1,$1" TMUX_PANE="$(pane_of "$1")" \
+    CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE CLAUDE_NTFY_URL="$OK_URL" bash "$HOOK"
+}
 
 # locks_left: true while any waiter lock of this test's socket exists (the
 # hook names them <socket basename>-<session id>.lock, see lock_path()).
@@ -164,6 +233,11 @@ sid_cancel=$(new_session cancelme)
 sid_fail=$(new_session failpush)
 sid_gone=$(new_session goes)
 sid_grows=$(new_session grows)
+sid_panegone=$(new_session panegone)
+t new-window -d -t "=panegone:" 'sleep 1000'
+sid_nopane=$(new_session nopane)
+sid_tfhook=$(new_session tfhook)
+sid_tfwait=$(new_session tfwait)
 log "scenarios armed (debounce ${DEBOUNCE}s); work dir $WORK"
 
 hook "$sid_ok" "$OK_URL"
@@ -190,6 +264,24 @@ grew() { ntfy_log | grep -F -- "grows (\$$sid_grows)" | grep -qF "wait: transcri
   grew && break
 done) &
 toucher=$!
+hook "$sid_else" "$OK_URL"
+hook "$sid_zoom" "$OK_URL"
+hook "$sid_panegone" "$OK_URL"
+# nopane: as a claude whose environment lost $TMUX_PANE
+echo '{}' | env -u TMUX_PANE HOME="$H" TMUX="$SOCK,1,$sid_nopane" CLAUDE_NTFY_URL="$OK_URL" \
+  bash "$HOOK" >"$WORK/nopane.out" 2>"$WORK/nopane.err"
+nopane_rc=$?
+echo '{}' | env HOME="$H" TMUX="$SOCK,1,$sid_moved" TMUX_PANE="$pane_moved" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
+  CLAUDE_NTFY_URL="$OK_URL" bash "$HOOK" >>"$WORK/hook.out"
+touch "$WORK/tmuxfail.$sid_tfhook"
+failhook "$sid_tfhook" >"$WORK/tfhook.out" 2>"$WORK/tfhook.err"
+tfhook_rc=$?
+failhook "$sid_tfwait" >>"$WORK/hook.out"
+for _ in $(seq 50); do
+  [ -d "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/claude-ntfy/${SOCK##*/}-$sid_tfwait.lock" ] && break
+  sleep 0.1
+done
+touch "$WORK/tmuxfail.$sid_tfwait"
 hook "$sid_watched" "$OK_URL"
 # The same client loses focus: the next Stop arms a waiter, whose line names
 # the client as not focused. Cancelled once its lock is there, or the cancel
@@ -207,7 +299,9 @@ done
 hook "$sid_watched" "$OK_URL" --cancel
 sleep 2
 hook "$sid_cancel" "$OK_URL" --cancel
+hook "$sid_zoom" "$OK_URL" --cancel
 t kill-session -t =goes
+t kill-pane -t "$(pane_of "$sid_panegone")"
 wait "$toucher"
 
 # Wait out the longest window: grows restarts it on each touch.
@@ -227,7 +321,7 @@ has "push-ok (\$$sid_ok)" "wait: coalesced into pending waiter" && pass "push-ok
 has "cancelme (\$$sid_cancel)" "prompt: user replied, pending push cancelled" && pass "cancelme: cancelled by the prompt" || fail "cancelme: no cancel logged"
 has "cancelme (\$$sid_cancel)" "push:" && fail "cancelme: pushed anyway" || pass "cancelme: never pushed"
 has "failpush (\$$sid_fail)" "push: FAILED, curl exit 7" && pass "failpush: failure logged with curl's exit code" || fail "failpush: no 'curl exit 7' line"
-has "goes (\$$sid_gone)" "wait: session gone, no push" && pass "goes: session gone, no push" || fail "goes: no 'session gone' line"
+has "goes (\$$sid_gone)" "wait: session or claude's pane" && pass "goes: session gone, no push" || fail "goes: no 'gone' line"
 [ "$(count "grows (\$$sid_grows)" "wait: transcript grew")" = 1 ] && pass "grows: one 'transcript grew' line for the streak" \
   || fail "grows: $(count "grows (\$$sid_grows)" "wait: transcript grew") 'transcript grew' lines"
 has "grows (\$$sid_grows)" "push: sent via $OK_URL" && pass "grows: pushed after the quiet window" || fail "grows: no push"
@@ -243,8 +337,36 @@ ntfy_log | grep -F "watched (\$$sid_watched) stop: unwatched" | grep -q -E '; (t
   || fail "watched: no 'not focused' evidence: $(ntfy_log | grep -F "watched (\$$sid_watched)")"
 has "watched (\$$sid_watched)" "prompt: user replied, pending push cancelled" && pass "watched: that waiter was cancelled" || fail "watched: waiter not cancelled"
 
+# Windows: watched means claude's own pane is on screen.
+has "elsewhere (\$$sid_else)" "focused, input " && has "elsewhere (\$$sid_else)" ", on window 1 (claude's is 0))" \
+  && pass "elsewhere: a client focused on another window does not count, and the line says where it was" \
+  || fail "elsewhere: $(ntfy_log | grep -F "elsewhere (\$$sid_else)" | head -2)"
+has "elsewhere (\$$sid_else)" "push: sent via $OK_URL" && pass "elsewhere: pushed" || fail "elsewhere: no push"
+has "zoomed (\$$sid_zoom)" "focused, input " && has "zoomed (\$$sid_zoom)" "claude's window zoomed onto another pane)" \
+  && pass "zoomed: a window zoomed onto another pane does not count" \
+  || fail "zoomed: $(ntfy_log | grep -F "zoomed (\$$sid_zoom)" | head -2)"
+has "zoomed (\$$sid_zoom)" "push:" && fail "zoomed: pushed despite the cancel" || pass "zoomed: cancelled, never pushed"
+has "panegone (\$$sid_panegone)" "wait: session or claude's pane %" && ! has "panegone (\$$sid_panegone)" "push:" \
+  && pass "panegone: claude's pane gone, no push" || fail "panegone: $(ntfy_log | grep -F "panegone (\$$sid_panegone)")"
+[ "$nopane_rc" = 1 ] && grep -qF '$TMUX is set but $TMUX_PANE is not' "$WORK/nopane.err" \
+  && has "nopane (\$$sid_nopane)" "stop: FAILED, \$TMUX is set but \$TMUX_PANE is not" \
+  && pass "nopane: no \$TMUX_PANE fails loudly (exit 1, stderr, log)" \
+  || fail "nopane: exit $nopane_rc, stderr '$(cat "$WORK/nopane.err")', log: $(ntfy_log | grep -F nopane)"
+
+has "movedfrom (\$$sid_moved)" "stop: watched now, no push" \
+  && pass "moved: claude's window shown in another session by a focused client counts as watched" \
+  || fail "moved: $(ntfy_log | grep -F "(\$$sid_moved)")"
+[ "$tfhook_rc" = 1 ] && grep -qF 'protocol version mismatch' "$WORK/tfhook.err" \
+  && has "(\$$sid_tfhook)" "stop: FAILED, tmux -S $SOCK: protocol version mismatch" && ! has "(\$$sid_tfhook)" "wait:" \
+  && pass "tmuxfail: tmux failing at the hook fails loudly (exit 1, stderr, log), no waiter" \
+  || fail "tmuxfail at the hook: exit $tfhook_rc, stderr '$(cat "$WORK/tfhook.err")', log: $(ntfy_log | grep -F "(\$$sid_tfhook)")"
+has "(\$$sid_tfwait)" "wait: FAILED, tmux -S $SOCK: protocol version mismatch" && ! has "(\$$sid_tfwait)" "gone" \
+  && ! has "(\$$sid_tfwait)" "push:" \
+  && pass "tmuxfail: tmux failing under an armed waiter is logged as FAILED, not taken for gone" \
+  || fail "tmuxfail under the waiter: $(ntfy_log | grep -F "(\$$sid_tfwait)")"
+
 posts=$(grep -c '^POST /testtopic' "$WORK/listener.out")
-[ "$posts" = 2 ] && pass "listener got exactly 2 pushes" || fail "listener got $posts pushes"
+[ "$posts" = 3 ] && pass "listener got exactly 3 pushes" || fail "listener got $posts pushes"
 grep -qF "title='CC: $(hostname)/push-ok'" "$WORK/listener.out" && pass "push title names host and session" || fail "push title wrong: $(head -1 "$WORK/listener.out")"
 ntfy_log | grep -q testtopic && fail "the topic leaked into the log" || pass "topic never logged"
 

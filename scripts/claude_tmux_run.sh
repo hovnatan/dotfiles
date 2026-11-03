@@ -29,6 +29,9 @@
 #   claude_tmux_run.sh load <name>[/<task>] | --id <id> [--dangerous]
 #                                      idempotently bring up an unmanaged
 #                                      session on an EXISTING conversation,
+#                                      or bring claude back into a live
+#                                      session it exited from (as window 0,
+#                                      beside the windows still open there),
 #                                      resumed where it belongs: <name> alone
 #                                      the one most recently talked in under
 #                                      that name, labeled or not;
@@ -112,9 +115,27 @@
 # The watcher exits as soon as the managed session is missing; the unit's
 # Restart=always then reruns this script.
 #
-# A session can hold more than claude: the user may open a second window in
-# it. Whatever is current there, claude is found by searching the session's
-# panes (claude_pane), never by taking the active one.
+# A session can hold more than claude: the user may open more windows in
+# it (nvim, a shell; prefix C). Claude stays window 0, and whatever is
+# current there, it is found by searching the session's panes
+# (claude_pane), never by taking the active one. With other windows open,
+# claude exiting (/exit, a crash, an OOM kill) leaves the session alive
+# without it:
+#
+#   session api                             claude_pane  claude_launched
+#     0 claude (PANE_CMD), running claude      %4           %4
+#     0 PANE_CMD, its login shell starting     -            %4   (load, restart)
+#     -- claude exited, window gone --         -            -
+#     1 nvim                                  (kept)
+#
+#   load api       live, no claude launched -> resumes into a new window 0
+#                  (new-window -b before the others), the others untouched
+#   serve          the manager's session in that state -> the watcher exits,
+#                  systemd reruns serve, which resumes the manager into it
+#   restart api    nothing to restart -> points at load
+#
+# A pane still starting claude (launched, not yet exec'd) counts as having
+# one: a load or watcher acting then would start a second claude beside it.
 
 set -u
 
@@ -419,6 +440,22 @@ claude_pane() {
   done < <(tmux -L "$SOCKET" list-panes -s -t "$1:" -F '#{pane_id} #{pane_pid} #{pane_current_path}' 2>/dev/null)
 }
 
+# claude_launched <session>: the id of the live pane in that session started
+# with PANE_CMD -- running claude, or its login shell still starting it --
+# or nothing. What claude_pane misses while a launch or a restart is under
+# way (the pane's process is the login shell then, not claude), and what
+# load and serve ask before starting a claude of their own into a session.
+# The start command is how tmux shows it, e.g.
+#   /bin/bash -lc "CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude \"$@\"" bash --resume ...
+# A dead pane does not count: restart's pane-died hook respawns the pane as
+# claude dies, so one left dead is a respawn that failed (its directory
+# gone, ...), and counting it would have load and restart answer "starting"
+# and serve never bring the manager back, for as long as it sits there.
+claude_launched() {
+  tmux -L "$SOCKET" list-panes -s -t "$1:" -F '#{?pane_dead,,#{pane_id} #{pane_start_command}}' 2>/dev/null \
+    | awk -v m="$PANE_MARK" 'index($0, m) { print $1; exit }'
+}
+
 # sessions_under <name>: every tmux session hosting a conversation under
 # <name>, whatever label it carries (<name> or <name>/<task>), one per
 # line, sorted -- several when conversations of one name run side by side
@@ -441,8 +478,14 @@ sessions_under() {
   return 0
 }
 
-# find_session <name>: the first of sessions_under <name>, or nothing.
-find_session() { sessions_under "$1" | head -n 1; }
+# find_session <name>: the first of sessions_under <name>, or nothing; fails
+# as sessions_under does (a pipe into head would report head's status, and
+# a tmux failure would read as "no session").
+find_session() {
+  local out
+  out=$(sessions_under "$1") || return 1
+  echo "${out%%$'\n'*}"
+}
 
 # exact_session <subcommand> <name>[/<task>]: exits, saying why, unless the
 # session of exactly that name is live -- the check stop and restart act
@@ -569,12 +612,18 @@ program() {
 
 # The command every claude pane runs, its claude arguments appended (see
 # launch, and restart, which respawns a pane with it).
-PANE_CMD=("$LOGIN_SHELL" -lc 'CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude "$@"' "${LOGIN_SHELL##*/}")
+PANE_MARK='CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude' # what claude_launched looks for
+PANE_CMD=("$LOGIN_SHELL" -lc "$PANE_MARK"' "$@"' "${LOGIN_SHELL##*/}")
 
 # launch <session name> <dir> <claude args...>: detached pane running the
 # account's login shell (LOGIN_SHELL, from passwd) as a login shell, which execs claude with
 # the given arguments and Remote Control on (claude.ai shows the session's
-# one name, the -n among the arguments).
+# one name, the -n among the arguments). A new session of that name, or,
+# when the session is live (claude gone from it, see the header), a new
+# window 0 in it: before the first window when 0 is taken (renumber-windows
+# closes the gap claude's window left, so it usually is), so claude is
+# window 0 again and the others keep their order. -d: a client typing in
+# nvim there stays where it is.
 # Prints the new pane's id: the handle that survives the rename the
 # pane-title hook applies once claude announces its title (see Naming).
 # tmux hands a multi-word command to the pane as argv, untouched, so the
@@ -614,7 +663,41 @@ launch() {
   # systemd-run would be refused. reap-panes.sh --server-gone stops those
   # pane scopes first and waits for the name to come free; the
   # session-closed hook does the same for every session but the last.
-  local scope=()
+  #
+  # One launch at a time per socket. Callers check for a claude first and
+  # launch after (load and serve, the cold start too), so two of them at
+  # once -- serve reviving the manager while the user loads it, two loads --
+  # would both find none and both start one: two claudes in a session, one
+  # conversation resumed twice (its transcript interleaved). Under the lock
+  # the check is made again, and the second launch refuses. flock, not
+  # tmux's wait-for -L: a launch killed while holding a wait-for lock would
+  # wedge every later one until the server exits; flock's ends with its fd.
+  # The fd is closed for the tmux client that starts the server, which
+  # would otherwise hold the lock for the server's lifetime.
+  #
+  #   launch A --flock--> no claude --> new-window/new-session --> unlock
+  #   launch B --flock (waits)-----------------------------------> claude in
+  #                                                     pane %N: refuse
+  local scope=() at lock pane
+  : "${XDG_RUNTIME_DIR:?launch: XDG_RUNTIME_DIR is unset (no user systemd session?); it holds the launch lock}"
+  exec {lock}>"$XDG_RUNTIME_DIR/claude_tmux_run-$SOCKET.lock" || return 1
+  if ! flock -w 60 "$lock"; then
+    echo "launch: another launch on the $SOCKET socket has held $XDG_RUNTIME_DIR/claude_tmux_run-$SOCKET.lock for 60 s; see who with: fuser -v $XDG_RUNTIME_DIR/claude_tmux_run-$SOCKET.lock" >&2
+    return 1
+  fi
+  if tmux -L "$SOCKET" has-session -t "=$name" 2>/dev/null; then
+    read -r pane _ < <(claude_pane "=$name")
+    pane=${pane:-$(claude_launched "=$name")}
+    if [ -n "$pane" ]; then
+      echo "launch: session $name already has claude in pane $pane (another launch got there first); not starting a second" >&2
+      return 1
+    fi
+    at=(-t "=$name:0")
+    tmux -L "$SOCKET" list-windows -t "=$name:" -F '#{window_index}' | grep -qx 0 && at=(-b "${at[@]}")
+    tmux -L "$SOCKET" new-window -d "${at[@]}" -P -F '#{pane_id}' \
+      -c "$dir" "${PANE_CMD[@]}" "$@" --remote-control
+    return
+  fi
   if ! tmux -L "$SOCKET" list-sessions >/dev/null 2>&1; then
     "$(dirname "$0")/../home/.config/tmux/reap-panes.sh" \
       "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$SOCKET" --server-gone || return 1
@@ -623,7 +706,7 @@ launch() {
       --description="tmux server for the $SOCKET socket (claude_tmux_run.sh)")
   fi
   "${scope[@]}" tmux -L "$SOCKET" new-session -d -P -F '#{pane_id}' \
-    -s "$name" -c "$dir" "${PANE_CMD[@]}" "$@" --remote-control
+    -s "$name" -c "$dir" "${PANE_CMD[@]}" "$@" --remote-control {lock}>&-
 }
 
 # pane_proc <pane>: "<pane_dead> <pane_pid>" of that pane; fails once the
@@ -824,17 +907,28 @@ case "${1:-}" in
     # holds what was asked for -- any conversation of a bare name, the
     # labeled one, the very id; switching it would kill work in flight,
     # which is the user's call, not this script's.
+    #
+    # A live session with no claude in it (it exited beside other windows,
+    # see the header) is not "already running": the conversation is resumed
+    # into it as window 0. One still starting claude is left to finish.
     under=$(sessions_under "${target%%/*}") || exit 1
+    pid=""
     if grep -qxF -e "$target" <<<"$under"; then
-      agents=$(live_agents) || exit 1
       read -r _ pid _ < <(claude_pane "=$target")
-      live=$(agent_name "${pid:-}" <<<"$agents")
+      if [ -z "${pid:-}" ] && starting=$(claude_launched "=$target") && [ -n "$starting" ]; then
+        echo "session $target: claude is starting (or restarting) in pane $starting; wait for it ($0 status)" >&2
+        exit 1
+      fi
+    fi
+    if [ -n "${pid:-}" ]; then
+      agents=$(live_agents) || exit 1
+      live=$(agent_name "$pid" <<<"$agents")
       if [ -n "$spec" ] && [[ "$spec" != */* ]]; then
         ok=1
       elif [ -n "$spec" ]; then
         ok=$([ "$(canon_title "$live")" = "$title" ] && echo 1)
       else
-        ok=$([ "$(agent_id "${pid:-}" <<<"$agents")" = "$id" ] && echo 1)
+        ok=$([ "$(agent_id "$pid" <<<"$agents")" = "$id" ] && echo 1)
       fi
       if [ -n "$ok" ]; then
         echo "session $target already running${live:+ ($live)}"
@@ -842,6 +936,9 @@ case "${1:-}" in
       fi
       echo "session $target is running ${live:-an unknown conversation}, not $title ($id); stop it first ($0 stop $target) or ask for it to finish" >&2
       exit 1
+    fi
+    if grep -qxF -e "$target" <<<"$under"; then
+      echo "session $target is live without claude: resuming its conversation into window 0"
     fi
 
     if [ "$cwd" = - ]; then
@@ -908,7 +1005,11 @@ case "${1:-}" in
     exact_session restart "$s"
     read -r pane pid _ < <(claude_pane "=$s")
     if [ -z "${pane:-}" ]; then
-      echo "restart: no claude running in session $s; $0 stop $s, then $0 load $s" >&2
+      if starting=$(claude_launched "=$s") && [ -n "$starting" ]; then
+        echo "restart: claude is starting (or restarting) in pane $starting of session $s; wait for it ($0 status)" >&2
+      else
+        echo "restart: no claude running in session $s, so nothing to restart; $0 load $s resumes its conversation into it" >&2
+      fi
       exit 1
     fi
 
@@ -1152,23 +1253,43 @@ case "${1:-}" in
       echo "usage: $0 serve  (claude-tmux.service's ExecStart; takes no arguments)" >&2
       exit 1
     fi
-    if [ -z "$(find_session "$MANAGER")" ]; then
+    # The manager's session under whatever label its conversation carries
+    # (manager, manager/<task>), and whether a claude is launched in it.
+    # Gone, or live without one (claude exited beside another window): the
+    # manager is brought up into it, a new session or a new window 0, as at
+    # boot (launch decides which).
+    #   manager_up: true while the session exists with a claude in it --
+    #   running (claude_pane: a claude started there by hand counts, or
+    #   serve would start a second beside it) or being started
+    #   (claude_launched: a launch's or a restart's login shell). A tmux
+    #   failure ends serve with its error rather than reading as "down":
+    #   the unit's Restart=always retries it, and nothing is launched on a
+    #   guess.
+    manager_up() {
+      local s
+      s=$(find_session "$MANAGER") || exit 1
+      [ -n "$s" ] && { [ -n "$(claude_pane "=$s")" ] || [ -n "$(claude_launched "=$s")" ]; }
+    }
+    if ! manager_up; then
+      target=$(find_session "$MANAGER") || exit 1
+      target=${target:-$MANAGER}
       find_conversation resolve "$CONV$MANAGER" \
         "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl
       if [ -n "$id" ]; then
-        resume_session "$MANAGER" "$MANAGER_DIR" --dangerously-skip-permissions || exit 1
+        resume_session "$target" "$MANAGER_DIR" --dangerously-skip-permissions || exit 1
       else
-        start_session "$MANAGER" "$MANAGER_DIR" "new conversation $CONV$MANAGER in $MANAGER_DIR" \
+        start_session "$target" "$MANAGER_DIR" "new conversation $CONV$MANAGER in $MANAGER_DIR" \
           -n "$CONV$MANAGER" --dangerously-skip-permissions || exit 1
       fi
     fi
-    # The managed session under whatever label its conversation carries.
-    # KillMode=process signals only this shell, so a foreground sleep would
-    # outlive it in the unit's cgroup ("left-over process" on the next
-    # start); waited on in the background, the TERM trap can take it along.
+    # Watch until manager_up fails; the unit's Restart=always then reruns
+    # this, which brings the manager back. KillMode=process signals only
+    # this shell, so a foreground sleep would outlive it in the unit's
+    # cgroup ("left-over process" on the next start); waited on in the
+    # background, the TERM trap can take it along.
     nap=""
     trap 'kill "$nap" 2>/dev/null; exit 0' TERM
-    while [ -n "$(find_session "$MANAGER")" ]; do
+    while manager_up; do
       sleep 5 &
       nap=$!
       wait "$nap"

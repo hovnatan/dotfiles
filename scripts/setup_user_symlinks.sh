@@ -500,7 +500,9 @@ if [ "$(uname)" = "Darwin" ]; then
   #   macos-option-as-alt (unset)  -> both Option keys Esc+ (2): unset means
   #                                   Alt on U.S. layouts, so option-p is
   #                                   alt-p, not "pi" (Normal, 0, types that)
-  #   super+j / super+k            -> cmd+j / cmd+k previous / next tab
+  #   super+j / super+k            -> cmd+j / cmd+k previous / next tmux
+  #                                   window (an escape sequence tmux binds)
+  #   ctrl+super+j / ctrl+super+k  -> ctrl+cmd+j / ctrl+cmd+k previous / next tab
   #   titlebar transparent         -> Minimal theme (titlebar in bg colour)
   # mouse-hide-while-typing has no iTerm2 equivalent.
   iterm_profiles="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
@@ -660,23 +662,35 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.googlecode.iterm2 NoSyncBrowserUpsell_selection -int 1
   # Key "<char>-<modifiers>-<keycode>": the char is what the key types with
   # shift applied and option ignored (cmd+option+j -> "j"), modifiers
-  # 0x100000 cmd, 0x80000 option; keycodes 38 = j, 40 = k. Actions: 0 next
-  # tab, 2 previous tab, 33 move tab left, 34 move tab right. The bindings
-  # replace the menu items on the same keys (cmd+j Jump to Selection, cmd+k
-  # Clear Buffer, cmd+option+j Script Console, cmd+option+k Clear Instant
-  # Replay). Not cmd+shift+j/k: Homerow (Brewfile) holds cmd+shift+k (and
-  # its scroll mode cmd+shift+j) as system-wide hotkeys, so iTerm2 never
-  # saw them, even with iTerm2 on Homerow's ignore list. -dict-add keeps
-  # the other entries (shift+enter -> \n, set in the iTerm2 UI).
-  iterm_key() { # $1 char, $2 keycode, $3 modifiers, $4 action
-    defaults write com.googlecode.iterm2 GlobalKeyMap -dict-add \
-      "$(printf '0x%x-0x%x-0x%x' "'$1" "$3" "$2")" \
-      "<dict><key>Action</key><integer>$4</integer><key>Text</key><string></string><key>Version</key><integer>1</integer><key>Keycode</key><integer>$2</integer><key>Modifiers</key><integer>$(($3))</integer></dict>"
+  # 0x100000 cmd, 0x80000 option, 0x40000 ctrl; keycodes 38 = j, 40 = k.
+  # iTerm2 itself saves a binding under that key with "-0x1" appended (see
+  # shift+enter, set in its UI), and kept both forms of the ones written
+  # here, so each is written in both: whichever it reads holds the same.
+  # Actions (iterm2.BindingAction): 0 next tab, 2 previous tab, 10 Send
+  # Escape Sequence (Text without the Esc, which iTerm2 prepends), 33 move
+  # tab left, 34 move tab right. The bindings replace the menu items on the
+  # same keys (cmd+j Jump to Selection, cmd+k Clear Buffer, cmd+option+j
+  # Script Console, cmd+option+k Clear Instant Replay). Not cmd+shift+j/k:
+  # Homerow (Brewfile) holds cmd+shift+k (and its scroll mode cmd+shift+j)
+  # as system-wide hotkeys, so iTerm2 never saw them, even with iTerm2 on
+  # Homerow's ignore list. -dict-add keeps the other entries (shift+enter
+  # -> \n, set in the iTerm2 UI) and replaces an existing key in place.
+  iterm_key() { # $1 char, $2 keycode, $3 modifiers, $4 action, $5 text
+    local key
+    key=$(printf '0x%x-0x%x-0x%x' "'$1" "$3" "$2")
+    for key in "$key" "$key-0x1"; do
+      defaults write com.googlecode.iterm2 GlobalKeyMap -dict-add "$key" \
+        "<dict><key>Action</key><integer>$4</integer><key>Text</key><string>${5:-}</string><key>Version</key><integer>1</integer><key>Keycode</key><integer>$2</integer><key>Modifiers</key><integer>$(($3))</integer></dict>"
+    done
   }
-  iterm_key j 38 0x100000 2  # cmd+j: previous tab
-  iterm_key k 40 0x100000 0  # cmd+k: next tab
-  iterm_key j 38 0x180000 33 # cmd+option+j: move tab left
-  iterm_key k 40 0x180000 34 # cmd+option+k: move tab right
+  # cmd+j / cmd+k: previous / next tmux window (user-keys in ~/.tmux.conf;
+  # outside tmux they do nothing), so the tabs move to ctrl+cmd+j / ctrl+cmd+k
+  iterm_key j 38 0x100000 10 '[5;30001~' # cmd+j: tmux User0, previous window
+  iterm_key k 40 0x100000 10 '[5;30002~' # cmd+k: tmux User1, next window
+  iterm_key j 38 0x140000 2              # ctrl+cmd+j: previous tab
+  iterm_key k 40 0x140000 0              # ctrl+cmd+k: next tab
+  iterm_key j 38 0x180000 33             # cmd+option+j: move tab left
+  iterm_key k 40 0x180000 34             # cmd+option+k: move tab right
   # shift+pageup / shift+pagedown: Scroll One Page Up / Down (actions 9 / 8),
   # the keys the Ctrl-U / Ctrl-D rewrites send on the main screen
   # (home/.hammerspoon/iterm2_keys.lua). They are in iTerm2's

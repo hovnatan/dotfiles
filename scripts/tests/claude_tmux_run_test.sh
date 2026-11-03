@@ -35,6 +35,17 @@
 #   - with the real home/.tmux.conf loaded (the claude server reads it), a
 #     session whose claude exited does not stay (remain-on-exit on would
 #     keep it, and the watcher would never restart the manager)
+#   - the manager's claude exiting beside a second window: the watcher
+#     ends, the unit reruns serve, and serve resumes the manager into the
+#     live session as window 0, the other window untouched; a claude started
+#     there by hand counts as the manager up (no second one); serve with
+#     tmux failing exits with that error instead of launching on a guess
+#   - a session whose claude exited beside another window: restart points
+#     at load, status shows NO CLAUDE, and load (bare, labeled, --id)
+#     resumes the conversation as window 0, the other window keeping its
+#     pid; a load or restart while claude is still starting there refuses,
+#     leaving one claude; a dead claude pane (a failed respawn) is not one
+#     starting; two loads at once launch one claude, the second refusing
 #   - a second window the user opened in a session does not make status
 #     read it as dead (claude is searched across the session's panes), and
 #     status run from inside a session reports every other session's own
@@ -89,7 +100,10 @@
 #     id nothing holds
 #   - a process a session left in the background (setsid) ends when the
 #     session closes, and another session's stays, as does a session born
-#     while the reap runs; with the last session
+#     while the reap runs; per pane too: a pane whose program exits, one
+#     killed (its window kept), a window killed, and a three-window session
+#     closed each stop exactly what they left, claude's scope untouched; a
+#     restart racing another pane's close ends with the new claude up; with the last session
 #     gone, the next cold start stops what is left instead of failing on a
 #     tmux-server-<socket> scope still loaded; each stop is logged; a server
 #     that runs but cannot be reached (its socket file removed) is not taken
@@ -154,6 +168,54 @@ unit_line() {
   echo "${line//%h/$H}"
 }
 
+# orphan_in <session> [<window to split>]: a new pane in the session -- a
+# window of its own, or a split of that window -- whose program leaves a
+# job behind (setsid, as a tool's background job is) and then idles;
+# prints "<orphan pid> <pane id>".
+ORPHAN=$((300000 + $$ % 100000)) # a sleep length nothing else on the box runs
+orphan_in() {
+  # Earlier orphans run the same command: wait for one that was not there.
+  local before p pane cmd="sh -c 'setsid sleep $ORPHAN </dev/null >/dev/null 2>&1 & exec sleep 100000'"
+  before=" $(pgrep -f -x "sleep $ORPHAN" | tr '\n' ' ')"
+  if [ -n "${2:-}" ]; then
+    pane=$(t split-window -d -P -F '#{pane_id}' -t "$2" "$cmd")
+  else
+    pane=$(t new-window -d -P -F '#{pane_id}' -t "=$1:" "$cmd")
+  fi
+  for _ in $(seq 20); do
+    for p in $(pgrep -f -x "sleep $ORPHAN"); do
+      case $before in *" $p "*) ;; *) echo "$p $pane" && return ;; esac
+    done
+    sleep 0.1
+  done
+}
+gone() { # <pid>: true once it has exited, within 5 s
+  for _ in $(seq 50); do
+    kill -0 "$1" 2>/dev/null || return 0
+    sleep 0.1
+  done
+  return 1
+}
+# window_pids <session>: "<index>:<pane pid>" per window, "0:123 1:456 "
+window_pids() { t list-windows -t "=$1:" -F '#{window_index}:#{pane_pid}' 2>/dev/null | tr '\n' ' '; }
+# claude_at0 <session>: true when window 0 runs claude, launched by the script
+claude_at0() {
+  local pid start
+  read -r pid start < <(t display -p -t "=$1:0" '#{pane_pid} #{pane_start_command}' 2>/dev/null)
+  [ "$(ps -o comm= -p "${pid:-0}" 2>/dev/null)" = claude ] && [[ "$start" == *"exec claude"* ]]
+}
+# kill_claude <session>: end the claude in window 0, as /exit or a crash
+# does, and wait for its window to go
+kill_claude() {
+  local w0
+  w0=$(t display -p -t "=$1:0" '#{window_id}')
+  kill "$(t display -p -t "=$1:0" '#{pane_pid}')"
+  for _ in $(seq 50); do
+    t list-windows -t "=$1:" -F '#{window_id}' 2>/dev/null | grep -qxF "$w0" || return 0
+    sleep 0.1
+  done
+}
+
 bgpids=()
 # Tear down everything this run created, whatever state it stopped in.
 cleanup() {
@@ -196,7 +258,8 @@ done
 cp "$(command -v bash)" "$WORK/idle/claude"
 mkfifo "$WORK/idle/never"
 # With $WORK/agents_fail present, `agents --json` fails the way a broken
-# Claude Code update or daemon would; with $WORK/agents.json, it prints that
+# Claude Code update or daemon would; with $WORK/agents_slow, it takes 1 s
+# (holding two loads between their check and their launch); with $WORK/agents.json, it prints that
 # (the restart checks write the pane they act on there). Read at launch,
 # for the restart checks: $WORK/bg starts two children shaped like
 # background shells of claude's Bash tool (in both of its forms: with
@@ -216,6 +279,7 @@ cat >"$H/.local/bin/claude" <<EOF
 #!/bin/bash
 if [ "\${1:-}" = agents ]; then
   [ -e "$WORK/agents_fail" ] && { echo 'agents: daemon did not start' >&2; exit 1; }
+  [ -e "$WORK/agents_slow" ] && sleep 1
   if [ -e "$WORK/agents.json" ]; then cat "$WORK/agents.json"; else echo '[]'; fi
   exit 0
 fi
@@ -270,7 +334,7 @@ if grep -q Traceback <<<"$out"; then fail "history on a HOME without transcripts
 # --- manager from a service-like unit, then a new ---------------------------
 
 start_script=$(unit_line ExecStart) || exit 1
-systemd-run --user --quiet --unit="$UNIT" -p KillMode=process \
+systemd-run --user --quiet --unit="$UNIT" -p KillMode=process -p Restart=always -p RestartSec=1 \
   -E HOME="$H" -E SHELL="$LOGIN_SHELL" -E CLAUDE_TMUX_SOCKET="$SOCK" -E CLAUDE_TMUX_ALIVE_SECONDS=2 \
   /bin/sh -c "$start_script"
 for _ in $(seq 40); do
@@ -314,6 +378,48 @@ want=$(t list-panes -t =manager: -F '#{pane_pid}')
 if grep -q "^== manager \[claude pid $want\]" <<<"$st"; then pass "status from inside ctb reports the manager's own pane"; else
   fail "status from inside ctb, manager pane $want: $(grep '^== manager' <<<"$st")"
 fi
+
+# --- the manager's claude exits beside another window: serve revives it -----
+
+# The watcher ends once the manager's session has no claude launched in it;
+# the unit's Restart=always reruns serve, which resumes the manager into the
+# live session as window 0, the other window untouched.
+t new-window -d -t =manager: sleep 100000
+keep=$(t display -p -t =manager:1 '#{pane_pid}')
+kill_claude manager
+for _ in $(seq 80); do
+  claude_at0 manager && break
+  sleep 0.25
+done
+if claude_at0 manager && [ "$(window_pids manager)" = "0:$(t display -p -t =manager:0 '#{pane_pid}') 1:$keep " ]; then
+  pass "manager's claude exited beside a second window: serve brought it back as window 0, window 1 kept ($(window_pids manager))"
+else
+  fail "manager after its claude exited beside window 1 (pid $keep): windows $(window_pids manager), unit $(systemctl --user is-active "$UNIT")"
+fi
+t kill-window -t =manager:1
+
+# A claude started in the manager's session by hand, not by this script, is
+# a manager up: serve leaves it be rather than start a second beside it
+# (it looked for the script's own launch only, so it reran every 5 s and
+# resumed the conversation into window 0 next to it). Once that claude
+# exits too, the session goes and serve brings the manager back.
+t new-window -d -t =manager: "$H/.local/bin/claude"
+hand=$(t display -p -t =manager:1 '#{pane_pid}')
+kill_claude manager
+sleep 8 # past serve's 5 s poll and the unit's 1 s RestartSec
+panes=$(t list-panes -s -t =manager: -F '#{pane_pid} #{pane_start_command}' 2>/dev/null)
+if [ "$panes" = "$hand $H/.local/bin/claude" ]; then
+  pass "a claude started by hand in the manager's session: serve starts no second one"
+else
+  fail "after a claude was started by hand in the manager's session (pid $hand): panes '$panes', unit $(systemctl --user is-active "$UNIT")"
+fi
+kill "$hand"
+for _ in $(seq 80); do
+  claude_at0 manager && break
+  sleep 0.25
+done
+claude_at0 manager && pass "and once it exits, serve brings the manager back" \
+  || fail "manager not back after the hand-started claude exited: sessions '$(sessions)', unit $(systemctl --user is-active "$UNIT")"
 
 # --- restart: a fresh claude in the same pane, same conversation ------------
 
@@ -392,6 +498,25 @@ check_restarted "restart ctb titled is#1'x"
 start=$(t display -p -t "$pane" '#{pane_start_command}')
 [[ "$start" == *"is#1'x"* ]] && pass "title is#1'x reached the new claude ($start)" \
   || fail "title is#1'x: start command '$start'"
+
+# Another pane of the session closing as the restart respawns: its reap and
+# the restart's stop of the old claude's scope race over that scope. The
+# reap takes it (no live pane runs there), or the restart does, and either
+# finding it gone is no failure.
+read -r o_r pane_r < <(orphan_in ctb)
+(
+  was=$(pid_now)
+  for _ in $(seq 400); do
+    [ "$(pid_now)" != "$was" ] && break
+    sleep 0.02
+  done
+  t kill-pane -t "$pane_r"
+) &
+racer=$!
+restart_ctb
+wait "$racer"
+check_restarted "restart ctb racing another pane's close"
+gone "${o_r:-0}" && pass "... and that pane's orphan (pid $o_r) is stopped" || fail "... the closed pane's orphan ${o_r:-none} survived"
 
 # A claude slow to shut down, within CLAUDE_TMUX_EXIT_SECONDS: waited out,
 # no KILL. (A fixed 10 s give-up unset remain-on-exit and lost the session
@@ -667,8 +792,8 @@ stray=$(ps -A -o pid=,args= | grep -F -e "restart-claude.sh ask $sockpath " -e "
 t new-session -d -s ctnc sleep 100000
 out=$(run restart ctnc 2>&1)
 rc=$?
-[ "$rc" -ne 0 ] && grep -q 'no claude running in session ctnc' <<<"$out" && t has-session -t =ctnc 2>/dev/null \
-  && pass "restart ctnc without claude: refused ($out)" || fail "restart ctnc without claude: rc=$rc ($out)"
+[ "$rc" -ne 0 ] && grep -q 'no claude running in session ctnc.*load ctnc resumes' <<<"$out" && t has-session -t =ctnc 2>/dev/null \
+  && pass "restart ctnc without claude: refused, pointing at load ($out)" || fail "restart ctnc without claude: rc=$rc ($out)"
 t kill-session -t =ctnc
 
 # agents --json without a key every agent carries is a changed format:
@@ -820,6 +945,23 @@ out=$(HOME="$H" PATH="$WORK/badtmux:$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SO
 rc=$?
 [ "$rc" -ne 0 ] && grep -q 'protocol version mismatch' <<<"$out" && pass "stop with tmux failing: refused ($out)" \
   || fail "stop with tmux failing: rc=$rc ($out)"
+# serve too: the failure is its one line, not "no manager" and a launch
+# attempted on that guess. Bounded at 30 s: a serve that misreads the
+# failure as "up" would block in its watch loop.
+HOME="$H" PATH="$WORK/badtmux:$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" \
+  "$REPO/scripts/claude_tmux_run.sh" serve >"$WORK/badserve.out" 2>&1 &
+bad=$!
+for _ in $(seq 100); do
+  kill -0 "$bad" 2>/dev/null || break
+  sleep 0.3
+done
+kill "$bad" 2>/dev/null
+wait "$bad"
+rc=$?
+out=$(cat "$WORK/badserve.out")
+[ "$rc" -eq 1 ] && [ "$(wc -l <<<"$out")" = 1 ] && grep -q 'list-sessions failed: protocol version mismatch' <<<"$out" \
+  && pass "serve with tmux failing: exits with tmux's error, launches nothing ($out)" \
+  || fail "serve with tmux failing: rc=$rc ($out)"
 
 # One live session per FULL name: a labeled conversation starts in its own
 # session beside a live one under the same bare name, named after its title,
@@ -958,6 +1100,120 @@ rc=$?
   || fail "load --id 0000-nothing: rc=$rc ($out)"
 rm -f "$H/.claude/projects/-tmp/"0000-ctn*.jsonl
 
+# --- load brings claude back into a session it exited from -------------------
+
+# Claude exits (/exit, a crash) while the user has nvim open beside it: the
+# session lives on without it. load resumes the conversation into it as
+# window 0 and leaves the other window running; it was "already running"
+# (a false success) before, and restart pointed at stop + load, which
+# kills the other window.
+transcript ctv 0000-ctv
+run load ctv >/dev/null 2>&1 || fail "load ctv"
+t new-window -d -t =ctv: sleep 100000
+keep=$(t display -p -t =ctv:1 '#{pane_pid}')
+kill_claude ctv
+[ "$(window_pids ctv)" = "0:$keep " ] && pass "ctv's claude exited, its other window keeps the session" \
+  || fail "after ctv's claude exited: sessions '$(sessions)', windows $(window_pids ctv)"
+out=$(run restart ctv 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && grep -qF "load ctv resumes its conversation into it" <<<"$out" \
+  && pass "restart ctv without claude points at load ($out)" || fail "restart ctv without claude: rc=$rc ($out)"
+grep -q '^== ctv \[NO CLAUDE' <<<"$(run status 2>&1)" && pass "status shows ctv as NO CLAUDE" || fail "status: $(run status 2>&1 | grep '^== ctv')"
+out=$(run load ctv 2>&1)
+rc=$?
+if [ "$rc" -eq 0 ] && grep -q 'live without claude' <<<"$out" && claude_at0 ctv \
+  && [[ "$(t display -p -t =ctv:0 '#{pane_start_command}')" == *"--resume 0000-ctv "* ]] \
+  && [ "$(window_pids ctv | cut -d' ' -f2)" = "1:$keep" ]; then
+  pass "load ctv: claude resumed as window 0, the other window kept ($(tail -n1 <<<"$out"))"
+else
+  fail "load ctv into the live session: rc=$rc ($out), windows $(window_pids ctv), start $(t display -p -t =ctv:0 '#{pane_start_command}')"
+fi
+out=$(run load ctv 2>&1)
+rc=$?
+[ "$rc" -eq 0 ] && grep -q 'already running' <<<"$out" && [ "$(t list-windows -t =ctv: | wc -l)" = 2 ] \
+  && pass "load ctv again: already running, no third window ($out)" || fail "load ctv again: rc=$rc ($out), windows $(window_pids ctv)"
+
+# A load or restart while claude is still starting there (its login shell
+# slow) leaves it be: a second claude would start beside it.
+kill_claude ctv
+echo 4 >"$WORK/slow_profile"
+run load ctv >"$WORK/slowload.out" 2>&1 &
+slow=$!
+sleep 1.5
+out=$(run load ctv 2>&1)
+rc=$?
+out2=$(run restart ctv 2>&1)
+rc2=$?
+wait "$slow"
+rc_slow=$?
+rm -f "$WORK/slow_profile"
+[ "$rc" -ne 0 ] && grep -q 'claude is starting' <<<"$out" && [ "$rc2" -ne 0 ] && grep -q 'claude is starting' <<<"$out2" \
+  && pass "load and restart while claude starts in ctv: both wait it out ($out)" \
+  || fail "while ctv's claude starts: load rc=$rc ($out); restart rc=$rc2 ($out2)"
+[ "$rc_slow" -eq 0 ] && claude_at0 ctv && [ "$(t list-windows -t =ctv: | wc -l)" = 2 ] \
+  && pass "and the slow start completes: one claude, window 0 ($(window_pids ctv))" \
+  || fail "slow load of ctv: rc=$rc_slow ($(cat "$WORK/slowload.out")), windows $(window_pids ctv)"
+
+# A restart whose respawn failed leaves claude's pane dead (remain-on-exit
+# on, as restart arms it). That is no claude starting: load brings the
+# conversation back beside it (it answered "claude is starting" for as long
+# as the dead pane sat there, and serve would never revive a manager).
+dead=$(t display -p -t =ctv:0 '#{pane_id}')
+t set-option -p -t "$dead" remain-on-exit on
+kill "$(t display -p -t "$dead" '#{pane_pid}')"
+for _ in $(seq 50); do
+  [ "$(t display -p -t "$dead" '#{pane_dead}')" = 1 ] && break
+  sleep 0.1
+done
+out=$(run load ctv 2>&1)
+rc=$?
+[ "$rc" -eq 0 ] && claude_at0 ctv && [ "$(t display -p -t "$dead" '#{pane_dead}')" = 1 ] \
+  && pass "load ctv beside a dead claude pane: resumed as window 0 ($(window_pids ctv))" \
+  || fail "load ctv beside dead pane $dead: rc=$rc ($out), windows $(window_pids ctv)"
+t kill-pane -t "$dead"
+
+# Two loads at once into a session with no claude (each held 1 s between
+# its check and its launch): one launches, the other refuses -- not two
+# claudes in one session resuming one conversation.
+kill_claude ctv
+touch "$WORK/agents_slow"
+run load ctv >"$WORK/race1.out" 2>&1 &
+r1=$!
+run load ctv >"$WORK/race2.out" 2>&1 &
+r2=$!
+wait "$r1"
+rc1=$?
+wait "$r2"
+rc2=$?
+rm -f "$WORK/agents_slow"
+n=$(t list-panes -s -t =ctv: -F '#{pane_start_command}' | grep -cF 'exec claude')
+lost=$(cat "$WORK/race1.out" "$WORK/race2.out")
+if [ "$n" = 1 ] && [ $((rc1 == 0)) != $((rc2 == 0)) ] && grep -qE 'already has claude|claude is starting' <<<"$lost"; then
+  pass "two loads of ctv at once: one claude, the second refused ($(grep -hE 'already has claude|claude is starting' "$WORK/race1.out" "$WORK/race2.out"))"
+else
+  fail "two loads of ctv at once: $n claude panes, rc $rc1/$rc2 ($lost), windows $(window_pids ctv)"
+fi
+t kill-session -t =ctv
+
+# A labeled conversation, and one picked by id, come back the same way.
+transcript ctv/x 0000-ctvx
+run load ctv/x >/dev/null 2>&1 || fail "load ctv/x"
+t new-window -d -t =ctv/x: sleep 100000
+keep=$(t display -p -t =ctv/x:1 '#{pane_pid}')
+kill_claude ctv/x
+out=$(run load ctv/x 2>&1)
+rc=$?
+[ "$rc" -eq 0 ] && claude_at0 ctv/x && [[ "$(t display -p -t =ctv/x:0 '#{pane_start_command}')" == *"--resume 0000-ctvx "* ]] \
+  && [ "$(window_pids ctv/x | cut -d' ' -f2)" = "1:$keep" ] \
+  && pass "load ctv/x: resumed as window 0 beside its other window" || fail "load ctv/x into the live session: rc=$rc ($out), windows $(window_pids ctv/x)"
+kill_claude ctv/x
+out=$(run load --id 0000-ctvx 2>&1)
+rc=$?
+[ "$rc" -eq 0 ] && claude_at0 ctv/x && [ "$(window_pids ctv/x | cut -d' ' -f2)" = "1:$keep" ] \
+  && pass "load --id 0000-ctvx: resumed as window 0 beside its other window" || fail "load --id 0000-ctvx into the live session: rc=$rc ($out), windows $(window_pids ctv/x)"
+t kill-session -t =ctv/x
+rm -f "$H/.claude/projects/-tmp/"0000-ctv*.jsonl
+
 # --- a session ends when its process exits -----------------------------------
 
 kill "$(t list-panes -t =ctb2: -F '#{pane_pid}')"
@@ -973,39 +1229,53 @@ t has-session -t =ctb2 2>/dev/null && fail "ctb2's process exited but the sessio
 # tmux-server-<socket> is refused ("already loaded"), and nothing comes up
 # (2026-10-22: a cloud-sql-proxy a session had left). Last, as it ends the
 # server.
-orphan_in() { # <session>: prints the pid of the orphan it left there
-  # Earlier orphans run the same command: wait for one that was not there.
-  local before p
-  before=" $(pgrep -f -x "sleep $ORPHAN" | tr '\n' ' ')"
-  t new-window -d -t "=$1:" "sh -c 'setsid sleep $ORPHAN </dev/null >/dev/null 2>&1 & exec sleep 100000'"
-  for _ in $(seq 20); do
-    for p in $(pgrep -f -x "sleep $ORPHAN"); do
-      case $before in *" $p "*) ;; *) echo "$p" && return ;; esac
-    done
-    sleep 0.1
-  done
-}
-gone() { # <pid>: true once it has exited, within 5 s
-  for _ in $(seq 50); do
-    kill -0 "$1" 2>/dev/null || return 0
-    sleep 0.1
-  done
-  return 1
-}
-ORPHAN=$((300000 + $$ % 100000)) # a sleep length nothing else on the box runs
 
 t kill-server 2>/dev/null
 sleep 0.5
 run new cl1 /tmp >/dev/null 2>&1 && run new cl2 /tmp >/dev/null 2>&1 \
   || fail "new cl1, cl2 for the orphan checks"
-o1=$(orphan_in cl1)
-o2=$(orphan_in cl2)
+read -r o1 _ < <(orphan_in cl1)
+read -r o2 _ < <(orphan_in cl2)
 t kill-session -t =cl1
 if [ -n "$o1" ] && gone "$o1"; then pass "closing a session stops what it left in the background (pid $o1)"; else
   fail "pid ${o1:-none} outlived its session cl1 ($(ps -o args= -p "${o1:-0}"))"
 fi
 kill -0 "${o2:-0}" 2>/dev/null && pass "and leaves another session's (pid $o2) running" \
   || fail "closing cl1 also ended cl2's background job (pid ${o2:-none})"
+
+# Per pane, not per session: each way a pane closes with its session still
+# up stops what that pane left, at once, and leaves claude's scope alone.
+cl2_claude=$(t display -p -t =cl2:0 '#{pane_pid}')
+cl2_scope=$(sed 's|.*/||' "/proc/$cl2_claude/cgroup")
+read -r o pane < <(orphan_in cl2)
+kill "$(t display -p -t "$pane" '#{pane_pid}')" # its program exits: pane-exited
+gone "${o:-0}" && pass "a pane whose program exits: its orphan (pid $o) stopped, the session still up" \
+  || fail "a pane whose program exited left its orphan (pid ${o:-none}) running"
+# A window of two orphan panes: kill-pane closes one (after-kill-pane, the
+# window kept), kill-window the other (window-unlinked).
+read -r o_a pane_a < <(orphan_in cl2)
+w=$(t display -p -t "$pane_a" '#{window_id}')
+read -r o_b pane_b < <(orphan_in cl2 "$w")
+t kill-pane -t "$pane_b"
+gone "${o_b:-0}" && t list-panes -t "$w" >/dev/null 2>&1 && kill -0 "${o_a:-0}" 2>/dev/null \
+  && pass "kill-pane: its orphan (pid $o_b) stopped; the window, and its other pane's orphan, kept" \
+  || fail "kill-pane: orphan ${o_b:-none} $(kill -0 "${o_b:-0}" 2>/dev/null && echo running || echo gone), window $w $(t list-panes -t "$w" >/dev/null 2>&1 && echo kept || echo GONE), other orphan ${o_a:-none}"
+t kill-window -t "$w"
+gone "${o_a:-0}" && pass "kill-window: the orphan of the pane it closed (pid $o_a) stopped" \
+  || fail "kill-window left its orphan (pid ${o_a:-none}) running"
+# Several at once: a session of three windows, each with an orphan,
+# closed whole -- a reap per window and one for the session, side by side.
+run new cl5 /tmp >/dev/null 2>&1 || fail "new cl5"
+read -r a _ < <(orphan_in cl5)
+read -r b _ < <(orphan_in cl5)
+read -r c _ < <(orphan_in cl5)
+t kill-session -t =cl5
+gone "${a:-0}" && gone "${b:-0}" && gone "${c:-0}" && pass "a three-window session closed: all three orphans stopped ($a $b $c)" \
+  || fail "a three-window session closed: orphans left: $(ps -o pid=,args= -p "${a:-0},${b:-0},${c:-0}" | tr '\n' ';')"
+kill -0 "$cl2_claude" 2>/dev/null && [ "$(systemctl --user show -p ActiveState --value "$cl2_scope")" = active ] \
+  && kill -0 "${o2:-0}" 2>/dev/null \
+  && pass "through every close, cl2's claude and its scope $cl2_scope stayed up, and cl2's own orphan" \
+  || fail "cl2's claude ${cl2_claude} or its scope $cl2_scope ($(systemctl --user show -p ActiveState --value "$cl2_scope")) or orphan ${o2:-none} went"
 # A session started while the hook of one just closed runs is not taken for
 # a leftover: the reaper once listed the live panes before the scopes, and
 # stopped the scope of a pane born in between (`stop` then `new`).

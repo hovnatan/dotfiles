@@ -5,7 +5,7 @@
 # lines of home/.tmux.conf and the scripts they run, in a throwaway tmux
 # server and HOME, with a client in a pty that reports focus as a terminal
 # does. Needs tmux (3.6 or later, for the focus hooks), python3 and fish
-# (report-attach.sh's host report); about 15 s.
+# (report-attach.sh's host report); about 30 s.
 #
 #   sessions   a: sleep           b: a stand-in "claude" (a link to bash,
 #                                    idle on a FIFO; the name and the
@@ -29,6 +29,21 @@
 #   an iTerm2-over-ssh attach to a tty    -> exit 1, the reason in the
 #   this user cannot write (report-          output tmux shows, FAILED ...
 #   attach.sh run as tmux runs a hook)       in the log
+#
+# Then the window rules, on a second server started from the whole
+# home/.tmux.conf, with a client in a pty typing what a terminal would:
+#
+#   one window                        -> no status bar (another session too)
+#   a second window                   -> bar on for that session only; off
+#                                        again at one; closing a middle
+#                                        window renumbers the rest
+#   prefix C n p l w S 0-9, User0/1   -> bound
+#   Cmd-K Cmd-K Cmd-J (\e[5;30002~,   -> windows 1, 2, 1, nothing typed into
+#   \e[5;30001~ as iTerm2 sends them)    the pane; in a one-window session
+#                                        nothing moves and nothing is shown
+#   prefix S                          -> bar off, and kept off while windows
+#                                        come and go; prefix S -> rule back
+#   source-file                       -> the rule applied to every session
 #
 # The socket is named "claude": sync-session-name.sh acts on that one only.
 # Exit 0 = all passed; on failure the work dir is kept and printed.
@@ -60,7 +75,9 @@ fail() {
 cleanup() {
   [ -n "${client:-}" ] && kill "$client" 2>/dev/null
   [ -n "${bystander:-}" ] && kill "$bystander" 2>/dev/null
+  [ -n "${wclient:-}" ] && kill "$wclient" 2>/dev/null
   t kill-server 2>/dev/null
+  [ -n "${WSOCK:-}" ] && tw kill-server 2>/dev/null
   rm -rf "$SOCKDIR"
   if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
 }
@@ -224,6 +241,127 @@ err=$(env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin:$(dirname "$(c
 [ -z "$err" ] && pass "and nothing on stderr" || fail "stderr of the failing hook: $err"
 wait_for " attached $ro_tty session=b: iTerm2 over ssh, FAILED: cannot write to $ro_tty\$" \
   && pass "the failure is logged, naming the tty" || fail "no FAILED line: $(hooks_log)"
+
+# --- windows: the status bar, the bindings, Cmd-J / Cmd-K ------------------------------
+
+# A server of its own, started from the whole home/.tmux.conf (the window
+# rules are spread over it), with a client in a pty that types what it is
+# told: each line written to $WORK/keys is sent as the bytes it spells
+# (Python escapes, "\x01S" = prefix S). Panes run sleep: the config's
+# default-command is fish, and nothing here needs a shell.
+WSOCK="$SOCKDIR/win"
+tw() { env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin" TERM=xterm-256color "$TMUX_BIN" -S "$WSOCK" "$@"; }
+status_of() { tw show -v -t "$1": status 2>&1; }
+current() { tw display -p -t "$1": '#{window_index}'; }
+mkfifo "$WORK/keys"
+tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300' 2>"$WORK/out" \
+  || fail "the server would not start from home/.tmux.conf: $(cat "$WORK/out")"
+tw new-session -d -s solo 'sleep 300'
+[ "$(status_of w)" = off ] && [ "$(status_of solo)" = off ] \
+  && pass "a session of one window has no status bar" || fail "one window: status w=$(status_of w) solo=$(status_of solo)"
+
+python3 - "$TMUX_BIN" "$WSOCK" "$H" "$WORK/keys" "$WORK/screen" <<'PYEOF' &
+import os, pty, select, sys
+tmux, sock, home, keys, screen = sys.argv[1:]
+out = open(screen, "wb", buffering=0)  # what the terminal was sent to draw
+pid, fd = pty.fork()
+if pid == 0:
+    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=w"], {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"})
+kfd = os.open(keys, os.O_RDWR)  # RDWR: no EOF while no writer is open
+buf = b""
+while True:
+    r = select.select([fd, kfd], [], [], 0.1)[0]
+    if kfd in r:
+        buf += os.read(kfd, 4096)
+        while b"\n" in buf:
+            line, buf = buf.split(b"\n", 1)
+            os.write(fd, line.decode().encode("latin-1").decode("unicode_escape").encode("latin-1"))
+    if fd in r:
+        try:
+            data = os.read(fd, 65536)
+        except OSError: break
+        if not data: break
+        out.write(data)
+PYEOF
+wclient=$!
+# send_keys <python escapes>: what the terminal would send; tmux handles it at once,
+# the pause lets the commands it runs (run-shell -C) finish
+send_keys() {
+  printf '%s\n' "$1" >"$WORK/keys"
+  sleep 0.5
+}
+for _ in $(seq 50); do
+  [ -n "$(tw list-clients -t =w -F '#{client_tty}')" ] && break
+  sleep 0.1
+done
+
+tw new-window -d -t =w: 'sleep 300'
+sleep 0.3
+[ "$(status_of w)" = on ] && [ "$(status_of solo)" = off ] \
+  && pass "a second window turns the bar on for that session only" || fail "two windows: w=$(status_of w) solo=$(status_of solo)"
+tw new-window -d -t =w: 'sleep 300'
+tw kill-window -t =w:1
+sleep 0.3
+[ "$(tw list-windows -t =w: -F '#I' | tr '\n' ' ')" = "0 1 " ] && [ "$(status_of w)" = on ] \
+  && pass "closing a middle window renumbers the rest (0 1), the bar stays" \
+  || fail "after closing window 1: windows $(tw list-windows -t =w: -F '#I' | tr '\n' ' '), status $(status_of w)"
+tw kill-window -t =w:1
+sleep 0.3
+[ "$(status_of w)" = off ] && pass "back to one window, the bar goes" || fail "back to one: status $(status_of w)"
+
+missing=""
+for k in C n p l w S 0 1 2 3 4 5 6 7 8 9; do
+  tw list-keys -T prefix "$k" >/dev/null 2>&1 || missing+=" prefix-$k"
+done
+for k in User0 User1; do
+  tw list-keys -T root "$k" >/dev/null 2>&1 || missing+=" $k"
+done
+[ -z "$missing" ] && pass "window bindings: prefix C n p l w S 0-9, User0 User1" || fail "unbound:$missing"
+
+# Cmd-J / Cmd-K, as iTerm2 and Ghostty send them. In a one-window session
+# nothing moves, and tmux draws no "No next window" (an unguarded
+# next-window does, on the client's screen, not in show-messages).
+send_keys '\x1b[5;30002~'
+send_keys '\x1b[5;30001~'
+[ "$(current w)" = 0 ] && ! grep -aq 'No \(next\|previous\) window' "$WORK/screen" \
+  && pass "Cmd-J/K in a one-window session: nothing moves, no message" \
+  || fail "one window: current $(current w), screen: $(grep -ao 'No [a-z]* window' "$WORK/screen" | head -2)"
+tw new-window -d -t =w: 'sleep 300'
+tw new-window -d -t =w: 'sleep 300'
+sleep 0.3
+send_keys '\x1b[5;30002~'
+a=$(current w)
+send_keys '\x1b[5;30002~'
+b=$(current w)
+send_keys '\x1b[5;30001~'
+c=$(current w)
+[ "$a $b $c" = "1 2 1" ] && pass "Cmd-K, Cmd-K, Cmd-J: window 1, 2, 1" || fail "Cmd-K, Cmd-K, Cmd-J landed on $a $b $c"
+pane_text=$(tw capture-pane -p -t =w:1)
+[ -z "$(tr -d ' \n' <<<"$pane_text")" ] && pass "and nothing leaks into the pane" || fail "pane shows: $pane_text"
+
+# prefix S hides the bar, and it stays hidden while windows come and go;
+# prefix S again brings back the automatic rule.
+send_keys '\x01S'
+[ "$(status_of w)" = off ] && pass "prefix S hides the bar at once (3 windows)" || fail "after prefix S: status $(status_of w)"
+tw new-window -d -t =w: 'sleep 300'
+tw kill-window -t =w:3
+tw kill-window -t =w:2
+sleep 0.3
+[ "$(status_of w)" = off ] && pass "hidden, adding and closing windows leaves it off" || fail "hidden, after window changes: status $(status_of w)"
+send_keys '\x01S'
+[ "$(status_of w)" = on ] && pass "prefix S again: the bar is back (2 windows)" || fail "after prefix S again: status $(status_of w)"
+
+# A reload applies the rule to sessions that changed while it was not loaded.
+tw set-option -t =solo: status off
+tw new-window -d -t =solo: 'sleep 300'
+tw set-option -t =solo: status off
+tw source-file "$H/.dotfiles/home/.tmux.conf"
+sleep 0.3
+[ "$(status_of solo)" = on ] && pass "a reload sets the bar for every session" || fail "after reload: solo status $(status_of solo)"
+kill "$wclient"
+wait "$wclient" 2>/dev/null
+wclient=
+tw kill-server 2>/dev/null
 
 # --- the log as a whole ---------------------------------------------------------------
 
