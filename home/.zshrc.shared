@@ -124,9 +124,10 @@ set_terminal_title() {
     fi
     title=$(printf '%.20s' "${title}")
     # Over ssh the tab leads with the machine (hostname up to its first dot),
-    # outside the 20-column budget: "(<host>) ~/.dotfiles". fish and tmux titles
-    # do the same.
-    [[ -n $SSH_CONNECTION ]] && title="(${HOST%%.*}) $title"
+    # outside the 20-column budget: "(<host>) ~/.dotfiles". fish and nvim titles
+    # do the same. Not inside tmux, where the title names the window in the
+    # bar and tmux's set-titles-string names the host.
+    [[ -n $SSH_CONNECTION && -z $TMUX ]] && title="(${HOST%%.*}) $title"
     print -Pn "\e]0;$title\a"
 }
 
