@@ -8,6 +8,8 @@ venv_python_neovim
 *.swp
 # Test logs also stay untracked on CI and machines without the global ignore.
 .logs/
+# vagrant/Vagrantfile's machine state
+.vagrant/
 # machine-local symlink into Dropbox; see scripts/setup_user_symlinks.sh
 home/.hammerspoon/local_hammerspoon.lua
 # machine-local links to the light or dark variant; see scripts/appearance.sh

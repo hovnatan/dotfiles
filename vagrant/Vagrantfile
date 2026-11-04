@@ -1,0 +1,70 @@
+# Local Ubuntu guest for this repo's Linux-only checks: real systemd --user and
+# per-pane scopes, with no live sessions to disturb and nothing to reach over
+# the network. Mac (VirtualBox), run from this folder:
+#
+#   vagrant up                     first time: about 10 minutes, then ready
+#   vagrant rsync                  copy the working tree in again after an edit
+#   vagrant ssh -c 'cd ~/.dotfiles && scripts/check.sh'    what CI runs
+#   vagrant ssh -c 'cd ~/.dotfiles && scripts/tests/claude_tmux_test.sh'
+#   vagrant halt                   stop it, disk kept; vagrant destroy -f removes it
+#   vagrant provision --provision-with claude   real claude, see the end of this file
+#
+#   Mac working tree --vagrant rsync--> guest ~/.dotfiles
+#   a guest write stays there: the copy is one-way, so it cannot reach the checkout
+#
+# After a change to nix/flake.lock, in the guest: nix profile upgrade nix
+# No real claude here, as it has no login: the tests use their stub.
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-26.04"
+  config.vm.hostname = "dotfiles-test"
+
+  # The copy is the working tree, uncommitted work included, less what the guest
+  # rebuilds or must keep. Vagrant's default args add --copy-links, which would
+  # follow the machine-local links into Dropbox.
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.synced_folder "..", "/home/vagrant/.dotfiles", type: "rsync",
+    rsync__args: ["--archive", "--delete", "-z"],
+    rsync__exclude: [".logs/", ".venv/", ".ruff_cache/", ".vagrant/", "__pycache__/"]
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "dotfiles-linux-test"
+    vb.cpus = 6
+    vb.memory = 8192
+  end
+
+  # Why each piece: tmux from the Nix set, as Ubuntu's may make no scope per pane
+  # and the checks would pass without testing; Nix installed as README.md says;
+  # linger for the user systemd manager the tests start units on; Docker for
+  # test:apt_bundle.
+  config.vm.provision "shell", privileged: false, inline: <<~'SHELL'
+    set -euo pipefail
+    export DEBIAN_FRONTEND=noninteractive
+    sudo -E apt-get update -qq
+    sudo -E apt-get install -y -qq curl xz-utils git docker.io >/dev/null
+    sudo usermod -aG docker "$USER"
+    sudo loginctl enable-linger "$USER"
+
+    sh <(curl -fsSL https://releases.nixos.org/nix/nix-2.35.2/install) --daemon --yes </dev/null
+    echo 'experimental-features = nix-command flakes' | sudo tee -a /etc/nix/nix.conf >/dev/null
+    sudo systemctl restart nix-daemon
+    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+    nix profile add "path:$HOME/.dotfiles/nix" </dev/null
+
+    # The set first on PATH for `vagrant ssh -c`, which runs a login shell.
+    echo 'export PATH=$HOME/.nix-profile/bin:$PATH' >>~/.profile
+  SHELL
+
+  # Real claude and this repo's real config, for what the stub cannot show: boot,
+  # Remote Control. On demand, so a plain guest holds no login. It needs one login
+  # by hand after, in `vagrant ssh`: cd ~/.dotfiles && claude. The login stays on
+  # the guest's disk until `vagrant destroy`, and no ntfy topic means no phone push.
+  config.vm.provision "claude", type: "shell", run: "never", privileged: false, inline: <<~'SHELL'
+    set -euo pipefail
+    curl -fsSL https://claude.ai/install.sh | bash
+
+    # A fish run by the checks leaves a real folder where the installer links one,
+    # which it refuses. Nothing in a guest's is worth keeping.
+    [ -L ~/.config/fish ] || rm -rf ~/.config/fish
+    bash ~/.dotfiles/scripts/setup_user_symlinks.sh
+  SHELL
+end
