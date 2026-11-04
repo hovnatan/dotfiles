@@ -95,7 +95,7 @@ def has_dir(login: str, path: str) -> bool:
 
 def save(tabs: list[Tab]) -> list[str]:
     """Return the lines saving `tabs` gives."""
-    plans = [arr.plan(t, i, frozenset({LOCAL})) for i, t in enumerate(tabs, 1)]
+    plans = [arr.plan(t, i, frozenset({LOCAL}), {}) for i, t in enumerate(tabs, 1)]
     return arr.lines(plans, lookup, has_dir)
 
 
@@ -160,7 +160,7 @@ def _() -> None:
     # Its host is still the local one, and its path is ssh's local directory.
     tab = Tab(1, "ssh", "ssh vm", "fish:~/.dotfiles", "/Users/me/.dotfiles", LOCAL)
     assert save([tab]) == ["ssh vm"]
-    p = arr.plan(tab, 3, frozenset({LOCAL}))
+    p = arr.plan(tab, 3, frozenset({LOCAL}), {})
     assert "tab 3: its far side reported no host or directory" in p.note, p
 
 
@@ -384,6 +384,7 @@ class FakeSession:
             "name": "fish",
             "path": "/home/me",
             "hostname": LOCAL,
+            "tty": "/dev/ttys001",
         }
 
     async def async_get_variable(self, var: str) -> str:
@@ -420,7 +421,7 @@ def _() -> None:
     app.windows = [FakeWindow(FakeTab([a], [b]))]
     [(_, tabs)] = asyncio.run(arr.read_windows(app, None))
     assert tabs[0].panes == 2, tabs
-    error = error_of(lambda: arr.plan(tabs[0], 1, frozenset({LOCAL})))
+    error = error_of(lambda: arr.plan(tabs[0], 1, frozenset({LOCAL}), {}))
     assert "2 panes" in error, error
 
 
@@ -637,6 +638,82 @@ def _() -> None:
     for line in [attach, arr.dir_line("ssh vm", "/a b"), "ssh vm", "cd '/tmp'"]:
         made = arr.landing_of("t", line, s, local) is not None
         assert arr.is_request(line) is made, line
+
+
+LOCAL_LINE = "tmux -L claude new-session -A -s 'api' -c '/Users/me'"
+CLIENTS = {"/dev/ttys005": arr.Client("claude", "api", "/Users/me")}
+
+
+@case("a local tmux tab is saved as its session, told by its tty, not as a cd")
+def _() -> None:
+    tab = Tab(1, "tmux", "tmux", "[Mac/api]", "/a", LOCAL, "/dev/ttys005")
+    assert arr.plan(tab, 1, frozenset({LOCAL}), CLIENTS).line == LOCAL_LINE
+    # Inside it ssh may run: the tab still holds the local session.
+    tab = Tab(1, "ssh", "ssh vm", "[Mac/api]", "/a", LOCAL, "/dev/ttys005")
+    assert arr.plan(tab, 1, frozenset({LOCAL}), CLIENTS).line == LOCAL_LINE
+    # Another tab with the same title, on no client's tty, is still a cd.
+    tab = Tab(1, "fish", "-fish", "[Mac/api]", "/a", LOCAL, "/dev/ttys006")
+    assert arr.plan(tab, 1, frozenset({LOCAL}), CLIENTS).line == "cd '/a'"
+
+
+@case("read_windows reads each tab's tty")
+def _() -> None:
+    app = types.SimpleNamespace(current_window=None)
+    app.windows = [FakeWindow(FakeTab([FakeSession("A")], []))]
+    [(_, tabs)] = asyncio.run(arr.read_windows(app, None))
+    assert tabs[0].tty == "/dev/ttys001", tabs
+
+
+@case("a local line survives the file, and a socket of no use fails its parse")
+def _() -> None:
+    [window] = arr.parse_file(f"window: t\n{LOCAL_LINE}\n")
+    assert window.lines == [LOCAL_LINE], window
+    bad = "window: t\ntmux -L other new-session -A -s 'a' -c '/x'\n"
+    assert "line 2 uses tmux socket 'other'" in error_of(lambda: arr.parse_file(bad))
+
+
+@case("a restored local tab waits for its session, on either socket")
+def _() -> None:
+    local = frozenset({LOCAL})
+    s = in_dir("/x", 0)
+    got = arr.landing_of("t", LOCAL_LINE, s, local)
+    assert got is not None
+    assert got.want == "[<host>/api]", got
+    plain = "tmux new-session -A -s 'main' -c '/x'"
+    got = arr.landing_of("t", plain, s, local)
+    assert got is not None
+    assert got.want == "[main]", got
+    assert arr.is_request(LOCAL_LINE), LOCAL_LINE
+
+
+@case("a local tab not landed is said as local, not as an ssh that ended")
+def _() -> None:
+    # stuck() holds neither hostname nor jobName: stage_of must not be asked.
+    s = stuck({"name": "fish"})
+    tab = arr.landing_of("w1 t1", LOCAL_LINE, s, frozenset({LOCAL}))
+    assert tab is not None
+    error = error_of(lambda: wait([tab]))
+    assert "local tmux, not attached:" in error, error
+    assert "w1 t1: want [<host>/api], title reads 'fish'" in error, error
+    assert "ssh ended" not in error, error
+
+
+@case("a gone local session with its directory gone stops a replace before it closes")
+def _() -> None:
+    def no_launch() -> list[str]:
+        msg = "got past the check"
+        raise AssertionError(msg)
+
+    saved = arr.load, arr.alive, arr.launch_argv
+    gone = "tmux new-session -A -s 'x' -c '/no/such/dir'"
+    arr.load = lambda _name: [arr.Saved("", [gone])]
+    arr.alive = lambda _client: False
+    arr.launch_argv = no_launch
+    try:
+        error = error_of(lambda: arr.replace("x"))
+    finally:
+        arr.load, arr.alive, arr.launch_argv = saved
+    assert "local tmux session 'x' is gone" in error, error
 
 
 @case("a dir tab on any of this Mac's names has not landed, though in the path")
@@ -1057,7 +1134,7 @@ def _() -> None:
 @case("an ssh tab whose far side said nothing is local by any of the local names")
 def _() -> None:
     tab = Tab(1, "ssh", "ssh vm", "fish:~", "/Users/me", "Mac")
-    p = arr.plan(tab, 1, frozenset({LOCAL, "Mac"}))
+    p = arr.plan(tab, 1, frozenset({LOCAL, "Mac"}), {})
     assert (p.login, p.path) == ("ssh vm", ""), p
     assert "saved as the login" in p.note, p
 

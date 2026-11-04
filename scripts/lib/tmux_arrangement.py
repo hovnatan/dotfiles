@@ -21,6 +21,7 @@ import re
 import subprocess
 import sys
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import quote, unquote
@@ -34,6 +35,12 @@ SOCKETS = ("claude", "default")  # tmux_attach_requested.fish accepts these
 # as tmux formats; must match ~/.tmux.conf's set-titles-string.
 TITLED = {"claude": "#{host}/#{session_name}", "default": "#{session_name}"}
 SESSION_FIELDS = 3  # a list_sessions_argv line: socket, session, shown name
+LIST_CLIENTS_FIELDS = 3  # a local_clients line: tty, session, directory
+# tmux list-clients on a socket with no server: nothing attached, no error.
+NO_SERVER = re.compile(r"no server running|error connecting to")
+LOCAL_LINE = re.compile(
+    r"tmux(?: -L (\S+))? new-session -A -s '((?:[^'\\]|\\.)*)' -c '((?:[^'\\]|\\.)*)'",
+)
 SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
 # Two weeks of them (14 x 144) at Hammerspoon's one per 10 minutes
 # (snapshots.lua): long enough that a run of snapshots taken after a drop,
@@ -52,6 +59,15 @@ Lookup = Callable[[str], tuple[dict[str, list[tuple[str, str]]], str]]
 
 class ArrangementError(Exception):
     """A save or restore that would leave the wrong thing; the message says what."""
+
+
+@dataclass
+class Client:
+    """A local tmux client: the session it shows, and that session's directory."""
+
+    socket: str
+    session: str
+    path: str
 
 
 def log(msg: str) -> None:
@@ -281,3 +297,139 @@ def stale_snapshots(names: list[str], directory: Path) -> list[str]:
             raise ArrangementError(msg) from e
         taken.append((when, name))
     return [name for _, name in sorted(taken, reverse=True)[SNAPSHOT_KEEP:]]
+
+
+# --- local tmux, and this process ---------------------------------------------
+
+
+def run(argv: list[str], timeout: float) -> subprocess.CompletedProcess[str]:
+    """Run `argv`, capturing its output; a hang is an error, not a stuck snapshot."""
+    try:
+        return subprocess.run(  # noqa: S603 - argv of fixed tools
+            argv,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as e:
+        msg = f"`{' '.join(argv[:2])}` gave no answer in {timeout:.0f}s"
+        raise ArrangementError(msg) from e
+
+
+def fish_unquote(quoted: str) -> str:
+    r"""Undo fish_quote() on what was between the quotes: "it\'s" -> "it's"."""
+    return re.sub(r"\\(.)", r"\1", quoted)
+
+
+def local_line(client: Client) -> str:
+    r"""Return the line that attaches a local session, or creates it if it is gone.
+
+    Client("claude", "api", "/Users/me/it's")
+      -> tmux -L claude new-session -A -s 'api' -c '/Users/me/it\'s'
+    """
+    session, path = fish_quote(client.session), fish_quote(client.path)
+    return f"{tmux(client.socket)} new-session -A -s {session} -c {path}"
+
+
+def local_request(line: str) -> Client | None:
+    """Return what local_line() asks for, or None for any other line."""
+    m = LOCAL_LINE.fullmatch(line)
+    if not m:
+        return None
+    socket = m[1] or "default"
+    if socket not in SOCKETS:
+        msg = f"uses tmux socket {socket!r}, not one of {', '.join(SOCKETS)}: {line}"
+        raise ArrangementError(msg)
+    return Client(socket, fish_unquote(m[2]), fish_unquote(m[3]))
+
+
+def parse_clients(socket: str, text: str) -> dict[str, Client]:
+    """Return {tty: Client} from `tmux list-clients` in LIST_CLIENTS format.
+
+    "/dev/ttys005:api:/Users/me" -> {"/dev/ttys005": Client(socket, "api", ...)}
+    Neither a tty nor a session name holds a ":"; a directory may.
+    """
+    clients = {}
+    for line in text.splitlines():
+        fields = line.split(":", LIST_CLIENTS_FIELDS - 1)
+        if len(fields) != LIST_CLIENTS_FIELDS:
+            msg = f"tmux -L {socket} list-clients printed {line!r}"
+            raise ArrangementError(msg)
+        clients[fields[0]] = Client(socket, fields[1], fields[2])
+    return clients
+
+
+def local_clients() -> dict[str, Client]:
+    """Return {tty: Client} of every local tmux client, on every socket."""
+    clients: dict[str, Client] = {}
+    for socket in SOCKETS:
+        form = "#{client_tty}:#{session_name}:#{session_path}"
+        done = run([*tmux(socket).split(), "list-clients", "-F", form], 10)
+        if done.returncode == 0:
+            clients |= parse_clients(socket, done.stdout)
+        elif not NO_SERVER.search(done.stderr):
+            msg = f"tmux -L {socket} list-clients failed: {done.stderr.strip()}"
+            raise ArrangementError(msg)
+    return clients
+
+
+def alive(client: Client) -> bool:
+    """Tell whether a local session exists; a socket with no server has none."""
+    target = f"={client.session}"
+    argv = [*tmux(client.socket).split(), "has-session", "-t", target]
+    return run(argv, 10).returncode == 0
+
+
+def check_local(
+    line: str,
+    is_alive: Callable[[Client], bool],
+    is_dir: Callable[[str], bool],
+) -> None:
+    """Say what a saved local line will do; fail now if it cannot be done.
+
+    A local session a reboot ended is created empty in its saved directory,
+    logged by name, its programs being gone. Its directory gone too is an
+    error, for the caller to raise before any tab opens. Any other line passes.
+    """
+    client = local_request(line)
+    if client is None or is_alive(client):
+        return
+    if not is_dir(client.path):
+        msg = (
+            f"local tmux session {client.session!r} is gone, and its directory"
+            f" {client.path} is too; create the directory or remove the line"
+        )
+        raise ArrangementError(msg)
+    log(f"recreating empty, its programs are gone: {client.session}")
+
+
+def ancestor(
+    pid: int,
+    parent: Callable[[int], tuple[int, str]],
+    is_terminal: Callable[[str], bool],
+) -> str | None:
+    """Return the process `pid` runs under that is_terminal(its name) picks; else None.
+
+    Said as "<pid> <path>"; parent(pid) -> (its parent's pid, its executable
+    path), as ps says. A replace closes the terminal app's windows, so it must
+    not run under one. A tmux server forks off to launchd, so its panes run
+    under no terminal, whichever one started it, and survive a client's close.
+    """
+    while pid > 1:
+        ppid, path = parent(pid)
+        if is_terminal(Path(path).name):
+            return f"{pid} {path}"
+        pid = ppid
+    return None
+
+
+def ps_parent(pid: int) -> tuple[int, str]:
+    """Return (parent pid, executable path) of process `pid`, from ps."""
+    done = run(["ps", "-o", "ppid=,comm=", "-p", str(pid)], 10)
+    if done.returncode != 0:
+        msg = f"ps -p {pid} failed (exit {done.returncode}): {done.stderr.strip()}"
+        raise ArrangementError(msg)
+    ppid, path = done.stdout.strip().split(None, 1)
+    return int(ppid), path

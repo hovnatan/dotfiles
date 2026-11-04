@@ -156,9 +156,15 @@ def foreground_picks_ssh() -> None:
 
 
 def clients_parse() -> None:
-    got = arr.parse_clients("default", "/dev/ttys1:a/b:/Users/me:odd\n")
+    got = arr.tmux_arrangement.parse_clients(
+        "default",
+        "/dev/ttys1:a/b:/Users/me:odd\n",
+    )
     assert got == {"/dev/ttys1": Client("default", "a/b", "/Users/me:odd")}
-    raises("printed", lambda: arr.parse_clients("default", "nonsense\n"))
+    raises(
+        "printed",
+        lambda: arr.tmux_arrangement.parse_clients("default", "nonsense\n"),
+    )
 
 
 def windows_parse() -> None:

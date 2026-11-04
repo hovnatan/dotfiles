@@ -16,9 +16,13 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
                                 (home/.hammerspoon/iterm2_snapshots.lua)
     iTerm2 (Python API) --> per window, the key window first: its title
                             template, and per tab: panes, jobName,
-                            commandLine, title, path, hostname (read_windows)
+                            commandLine, title, path, hostname, tty
+                            (read_windows)
       |
       v  plan(): what each tab is
+    tty a local tmux client  -> tmux [-L <socket>] new-session -A -s <session>
+      (tmux list-clients)         -c <its directory>; attaches it, or creates
+                                  it empty if a reboot ended it (check_local)
     ssh, title "[<shown>]"   -> remote tmux; which socket holds the session
                                 shown, and under what name, is asked of the
                                 host (one ssh per host)
@@ -58,7 +62,8 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
     iTerm2 quit and launched, so it holds nothing else. Run from another
     terminal app, since it quits iTerm2 (replace):
 
-      parse the file              a bad one fails here, before anything closes
+      parse the file              a bad one fails here, before anything closes,
+                                  as does a local session past recreating
       refuse under iTerm2         its quit would end this run halfway
       close every window          so the quit asks no "Quit iTerm2?" and
                                   leaves no windows to restore at launch;
@@ -159,11 +164,19 @@ from tmux_arrangement import (
     SNAPSHOT_KEEP,
     SNAPSHOT_PREFIX,
     ArrangementError,
+    Client,
     Lookup,
+    alive,
+    ancestor,
     attach_for,
     attach_request,
+    check_local,
     fish_quote,
+    local_clients,
+    local_line,
+    local_request,
     log,
+    ps_parent,
     remote_lookup,
     send_line,
     sent_value,
@@ -193,7 +206,7 @@ USAGE = (
 )
 MAX_ARGS = 3  # save <name> <prefix>
 # What read_windows asks of a tab's first pane, in Tab's field order.
-TAB_VARIABLES = ("jobName", "commandLine", "name", "path", "hostname")
+TAB_VARIABLES = ("jobName", "commandLine", "name", "path", "hostname", "tty")
 
 
 @dataclass
@@ -206,6 +219,7 @@ class Tab:
     title: str
     path: str
     host: str  # iTerm2's hostname: the last one reported in the tab
+    tty: str = ""  # its terminal, which tells a local tmux client
 
 
 @dataclass
@@ -263,6 +277,7 @@ def parse_file(text: str) -> list[Saved]:
                 raise ArrangementError(msg)
             try:
                 attach_request(line)
+                local_request(line)
             except ArrangementError as e:
                 msg = f"line {n} {e}"
                 raise ArrangementError(msg) from e
@@ -295,8 +310,15 @@ def dir_request(line: str) -> str | None:
     return sent_value(line, "LC_LOGIN_DIR")
 
 
-def plan(tab: Tab, index: int, local_hosts: frozenset[str]) -> Plan:
+def plan(
+    tab: Tab,
+    index: int,
+    local_hosts: frozenset[str],
+    clients: dict[str, Client],
+) -> Plan:
     """Return what tab number `index` is; `local_hosts` are iTerm2's names for this Mac.
+
+    `clients` are the local tmux clients by tty (local_clients).
 
     A split tab or an ssh line ssh_command.py will not re-parse is an error:
     saving it as something else would restore the wrong thing.
@@ -304,6 +326,11 @@ def plan(tab: Tab, index: int, local_hosts: frozenset[str]) -> Plan:
     if tab.panes != 1:
         msg = f"tab {index} has {tab.panes} panes; only one-pane tabs can be saved"
         raise ArrangementError(msg)
+
+    # Told by its tty, which is exact, where any program can set a title.
+    if client := clients.get(tab.tty):
+        return Plan("local", line=local_line(client))
+
     if tab.job != "ssh":
         if not tab.path:
             msg = f"tab {index}: iTerm2 reports no directory for it"
@@ -622,10 +649,11 @@ async def save(
     # a file missing a window would restore less than was there, silently.
     # Every tab is planned before any host is asked, so each host is asked
     # about all its tabs' directories in one ssh.
+    clients = local_clients()
     plans_of = []
     for wi, (template, tabs) in enumerate(windows, 1):
         with naming(wi, template):
-            plans_of.append([plan(t, i, local) for i, t in enumerate(tabs, 1)])
+            plans_of.append([plan(t, i, local, clients) for i, t in enumerate(tabs, 1)])
     all_plans = [p for plans in plans_of for p in plans]
     has_dir = remote_dirs(all_plans, unattended=snapshot)
     lookup = remote_lookup(unattended=snapshot)
@@ -703,6 +731,13 @@ def load(name: str) -> list[Saved]:
     except ArrangementError as e:
         msg = f"{file}: {e}"
         raise ArrangementError(msg) from e
+
+
+def check_locals(windows: list[Saved]) -> None:
+    """Say what becomes of each local session, before any window opens."""
+    for w in windows:
+        for line in w.lines:
+            check_local(line, alive, os.path.isdir)
 
 
 async def restore(
@@ -845,6 +880,7 @@ class Landing:
     want: str  # what it must come to show, as the error says it
     session: iterm2.Session
     reach: Reach
+    on_mac: bool = False  # a local tmux session: no ssh stage to tell
 
 
 def tmux_landing(
@@ -852,6 +888,8 @@ def tmux_landing(
     socket: str,
     name: str,
     session: iterm2.Session,
+    *,
+    on_mac: bool = False,
 ) -> Landing:
     """Return the landing of a tab that attaches tmux session `name` on `socket`.
 
@@ -873,7 +911,7 @@ def tmux_landing(
             landed = shown == name
         return landed, f"title reads {title!r}"
 
-    return Landing(label, f"[{shows}]", session, reach)
+    return Landing(label, f"[{shows}]", session, reach, on_mac)
 
 
 def dir_landing(
@@ -901,7 +939,11 @@ def dir_landing(
 
 def is_request(line: str) -> bool:
     """Tell whether a typed `line` is one landing_of waits on (a request)."""
-    return attach_request(line) is not None or dir_request(line) is not None
+    return (
+        attach_request(line) is not None
+        or local_request(line) is not None
+        or dir_request(line) is not None
+    )
 
 
 def landing_of(
@@ -916,6 +958,8 @@ def landing_of(
     """
     if request := attach_request(line):
         return tmux_landing(label, *request, session)
+    if client := local_request(line):
+        return tmux_landing(label, client.socket, client.session, session, on_mac=True)
     if (where := dir_request(line)) is not None:
         return dir_landing(label, where, local, session)
     return None
@@ -968,7 +1012,7 @@ async def wait_landed(
 #                               far side's (tmux: can't find session)
 #   other    any       FAR      a shell there reported in: its event logs say
 #                               what became of the request
-SSH_UP, ENDED, FAR = "ssh up", "ended", "far"
+SSH_UP, ENDED, FAR, ON_MAC = "ssh up", "ended", "far", "on mac"
 
 
 async def stage_of(label: str, s: iterm2.Session, local: frozenset[str]) -> str:
@@ -992,7 +1036,8 @@ async def not_landed(
 ) -> str:
     """Return the error for `tabs`, which did not land in `timeout` s.
 
-    A group per stage (stage_of), each its tabs, then what to look at:
+    A group per stage (stage_of; ON_MAC for a local tmux session), each its
+    tabs, then what to look at:
 
         2 tabs did not land in 30 s.
         ssh runs, on this Mac's host ('Mac', 'Mac.local'), but no shell
@@ -1000,7 +1045,10 @@ async def not_landed(
           window 1 tab 1: want [<host>/x], title reads 'ssh'
           <what to look at>
     """
-    stages = {t.label: await stage_of(t.label, t.session, local) for t in tabs}
+    stages = {
+        t.label: ON_MAC if t.on_mac else await stage_of(t.label, t.session, local)
+        for t in tabs
+    }
     names = ", ".join(repr(h) for h in sorted(local))
     logs = (
         "the far side's tmux_attach_requested and login_dir_requested event"
@@ -1013,6 +1061,7 @@ async def not_landed(
         ),
         ENDED: f"ssh ended, the tab back on this Mac ({names}):",
         FAR: "on the far side, not landed there:",
+        ON_MAC: "local tmux, not attached:",
     }
     looks = {
         SSH_UP: (
@@ -1036,6 +1085,7 @@ async def not_landed(
             " AcceptEnv, or the host runs no fish with those functions: dotup"
             " it); a line says what was refused."
         ),
+        ON_MAC: "The tab shows why: tmux's error, or a shell that ran no line.",
     }
 
     out = [f"{len(tabs)} tabs did not land in {timeout:g} s."]
@@ -1058,31 +1108,12 @@ def iterm2_ancestor(pid: int, parent: Callable[[int], tuple[int, str]]) -> str |
     tab's shell runs under iTermServer, under iTerm2:
         fish -> iTermServer-3.7.6 -> iTerm2       -> "95610 .../iTermServer-3.7.6"
         fish -> Terminal                          -> None
-    A tmux server forks off to launchd, so its panes run under no iTerm2,
-    whichever terminal started it.
     """
-    while pid > 1:
-        ppid, path = parent(pid)
-        exe = Path(path).name
-        if exe == "iTerm2" or exe.startswith("iTermServer"):
-            return f"{pid} {path}"
-        pid = ppid
-    return None
-
-
-def ps_parent(pid: int) -> tuple[int, str]:
-    """Return (parent pid, executable path) of process `pid`, from ps."""
-    done = subprocess.run(  # noqa: S603 - fixed argv
-        ["ps", "-o", "ppid=,comm=", "-p", str(pid)],  # noqa: S607 - ps from PATH
-        capture_output=True,
-        text=True,
-        check=False,
+    return ancestor(
+        pid,
+        parent,
+        lambda exe: exe == "iTerm2" or exe.startswith("iTermServer"),
     )
-    if done.returncode != 0:
-        msg = f"ps -p {pid} failed (exit {done.returncode}): {done.stderr.strip()}"
-        raise ArrangementError(msg)
-    ppid, path = done.stdout.strip().split(None, 1)
-    return int(ppid), path
 
 
 def osascript(script: str) -> str:
@@ -1211,6 +1242,7 @@ def replace(name: str) -> None:
     # Every check comes before anything closes: a run that stops later
     # leaves no windows, or no iTerm2, and nothing restored.
     windows = load(name)
+    check_locals(windows)
     launch = launch_argv()
     if under := iterm2_ancestor(os.getpid(), ps_parent):
         msg = (
@@ -1320,6 +1352,7 @@ def main() -> None:
             connected(lambda _c, app: snapshot(app))
         elif command == "restore":
             windows = load(name)
+            check_locals(windows)
             connected(lambda c, app: restore(c, app, name, windows))
         else:
             replace(name)
