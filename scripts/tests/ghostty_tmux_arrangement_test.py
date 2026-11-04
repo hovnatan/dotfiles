@@ -256,6 +256,19 @@ def snapshots_prune_in_the_given_folder() -> None:
     raises("/x/auto-x.txt", lambda: shared.stale_snapshots(["auto-x"], Path("/x")))
 
 
+def test_a_window_listed_twice_fails_the_read() -> None:
+    raises(
+        "listed a window twice",
+        lambda: arr.parse_windows("window\x1fa\nwindow\x1fa\n"),
+    )
+
+
+def test_the_window_read_fetches_each_list_whole() -> None:
+    # Live Ghostty is not here to reorder: the script's text is what can be held.
+    for part in ["windows", "tabs of w", "terminals of t"]:
+        assert f"in (get {part})" in arr.READ_WINDOWS, part
+
+
 def test_idle_is_a_bare_shell_or_nothing() -> None:
     for command in ["", "-fish", "fish", "/bin/zsh", "-zsh", "bash"]:
         assert arr.idle(command), command

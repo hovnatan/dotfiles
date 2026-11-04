@@ -115,15 +115,18 @@ TITLE = re.compile(r"(?:\(\S+\) )?\[(.+)\]")
 # The fields of one terminal a line, " " for the unit separator shown here:
 #   window <id>
 #   terminal <id> /dev/ttys005 [vm/api]
+# Each list is fetched whole, as ids, by `get`: a bare `repeat with w in windows`
+# asks for window 1, 2, 3... of a list Ghostty reorders meanwhile, which doubled
+# one window and dropped another in 4 of 25 reads (2026-11-04).
 READ_WINDOWS = """
 with timeout of 20 seconds
   set sep to character id 31
   set out to ""
   tell application "Ghostty"
-    repeat with w in windows
+    repeat with w in (get windows)
       set out to out & "window" & sep & (id of w) & linefeed
-      repeat with t in tabs of w
-        repeat with s in terminals of t
+      repeat with t in (get tabs of w)
+        repeat with s in (get terminals of t)
           set out to out & "terminal" & sep & (id of s) & sep & (tty of s)
           set out to out & sep & (name of s) & linefeed
         end repeat
@@ -309,6 +312,12 @@ def parse_windows(text: str) -> list[Window]:
         elif line:
             msg = f"Ghostty's window list has a line of no known shape: {line!r}"
             raise ArrangementError(msg)
+
+    # A window twice means another went unread: a save would lose its session.
+    ids = [w.id for w in windows]
+    if len(set(ids)) != len(ids):
+        msg = f"Ghostty listed a window twice, so the read missed one: {ids}"
+        raise ArrangementError(msg)
     return windows
 
 
