@@ -46,8 +46,9 @@ command -v lftp >/dev/null || {
   exit 1
 }
 
-# ControlMaster must be off: with it, every segment would ride the one
-# multiplexed TCP connection from ~/.ssh/config and the whole point is lost.
+# ControlMaster must be off: with one set for the host in ~/.ssh/local_config,
+# every segment would ride a single multiplexed TCP connection and the whole
+# point is lost.
 # BatchMode makes a missing key fail immediately instead of hanging on a
 # password prompt.
 connect_program='ssh -a -x -o ControlMaster=no -o ControlPath=none -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=4'

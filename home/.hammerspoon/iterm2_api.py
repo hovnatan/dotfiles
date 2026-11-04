@@ -389,8 +389,8 @@ async def cmd_t(
     The new tab goes through the shell, not a tab "command", so exiting ssh
     leaves a local shell, as if the login had been typed by hand. It uses
     the default profile, as iTerm2's New Tab does, in the window the key was
-    pressed in. ControlMaster in ~/.ssh/config makes the second connection
-    instant.
+    pressed in. A host with ControlMaster in ~/.ssh/local_config makes the
+    second connection instant.
     """
     session = app.get_session_by_id(session_id)
     if session is None:

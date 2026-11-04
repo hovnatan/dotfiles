@@ -53,7 +53,9 @@ failure mode below comes from that. The safe path is a script file.
 
 ## Connection
 
-- The master connection dies when the box sleeps. Test with `ssh -o BatchMode=yes host echo ok`.
+- The shared master connection comes from the host's `Host` block in `~/.ssh/local_config`;
+  `~/.ssh/config` sets none. It dies when the box sleeps. Test with
+  `ssh -o BatchMode=yes host echo ok`.
   If the box uses password auth, only the user can re-open it: ask them to type
   `! ssh -o ControlPersist=4h host exit` in the prompt.
 - A sleeping box cannot be woken from here unless a NIC is wake-armed. Say so and wait.
