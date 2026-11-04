@@ -43,6 +43,9 @@ log, M.logDir = require("event_log").new("iterm2_snapshots")
 -- Whether iTerm2 runs, which iterm2_api.lua already tracks.
 local iterm2Api = require("iterm2_api")
 
+-- guarded() runs each tick; see M.timer below.
+local _, guarded = require("failure").new("iterm2_snapshots", log)
+
 -- Whether the last snapshot failed: the next failure is then no news.
 M.failing = false
 
@@ -123,7 +126,13 @@ function M.snapshot()
   end)
 end
 
-M.timer = hs.timer.doEvery(INTERVAL, M.snapshot)
+-- Guarded, because hs.timer.doEvery stops for good when its callback raises,
+-- with the error in the Console alone: snapshots stopped silently that way
+-- on 2026-11-02, for 38 hours. An error now costs one snapshot, and alerts
+-- and logs what went wrong.
+M.timer = hs.timer.doEvery(INTERVAL, function()
+  guarded(M.snapshot)
+end)
 log("loaded: a snapshot every %ds", INTERVAL)
 
 return M
