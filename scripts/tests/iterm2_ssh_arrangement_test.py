@@ -55,6 +55,7 @@ assert spec
 assert spec.loader
 arr = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(arr)
+shared = arr.tmux_arrangement  # what both terminals' scripts use
 Tab, Saved, ArrangementError = arr.Tab, arr.Saved, arr.ArrangementError
 Landing = arr.Landing
 LOCAL = "Mac.local"  # iTerm2's host for a local session here
@@ -80,7 +81,7 @@ HOSTS = {
 def lookup(login: str) -> tuple[dict[str, list[str]], str]:
     """Return a fake host's sessions and raw output."""
     raw = HOSTS[login]
-    return arr.parse_sessions(raw), raw
+    return shared.parse_sessions(raw), raw
 
 
 # The directories each fake host has: any but these are none there.
@@ -247,14 +248,14 @@ def _() -> None:
 
 @case("attach_request reads back what attach_line wrote, and nothing else")
 def _() -> None:
-    for socket in arr.SOCKETS:
-        line = arr.attach_line("ssh -p 2222 vm", socket, "api/docs")
+    for socket in shared.SOCKETS:
+        line = shared.attach_line("ssh -p 2222 vm", socket, "api/docs")
         got = arr.attach_request(line)
         assert got == (socket, "api/docs"), (line, got)
     for line in ["ssh vm", "cd '/tmp'", "LC_TMUX_ATTACH=x:y ssh vm"]:
         assert arr.attach_request(line) is None, line
         assert arr.dir_request(line) is None, line
-    assert arr.dir_request(arr.attach_line("ssh vm", "claude", "x")) is None
+    assert arr.dir_request(shared.attach_line("ssh vm", "claude", "x")) is None
 
 
 @case("a split tab is refused")
@@ -290,7 +291,7 @@ def _() -> None:
     conf = (REPO / "home/.tmux.conf").read_text()
     titles = re.findall(r"^set-option -g set-titles-string (.+)$", conf, re.MULTILINE)
     assert len(titles) == 1, titles
-    for socket, shown in arr.TITLED.items():
+    for socket, shown in shared.TITLED.items():
         assert f"[{shown}]" in titles[0], (socket, shown, titles[0])
 
 
@@ -327,7 +328,7 @@ def _() -> None:
 
 @case("a tmux session name that would need quoting is refused")
 def _() -> None:
-    error = error_of(lambda: arr.attach_line("ssh vm", "default", "my session"))
+    error = error_of(lambda: shared.attach_line("ssh vm", "default", "my session"))
     assert "rename it" in error, error
 
 
@@ -358,7 +359,7 @@ def _() -> None:
 
 @case("the remote tmux ls: one word for ssh, quoted for a remote sh or fish")
 def _() -> None:
-    got = arr.list_sessions_argv("ssh -p 2222 vm", unattended=False)
+    got = shared.list_sessions_argv("ssh -p 2222 vm", unattended=False)
     assert got == [
         "ssh",
         "-p",
@@ -623,7 +624,7 @@ def _() -> None:
 def _() -> None:
     s = in_dir("/x", 0)
     local = frozenset({LOCAL, "Mac"})
-    attach = arr.attach_line("ssh vm", "claude", "api/docs")
+    attach = shared.attach_line("ssh vm", "claude", "api/docs")
     got = arr.landing_of("t", attach, s, local)
     assert got is not None, attach
     assert got.want == "[<host>/api/docs]", got
@@ -782,7 +783,7 @@ SAVED = arr.parse_file(
     "window: a\n"
     + arr.dir_line("ssh vm", "/home/me/d")
     + "\n"
-    + arr.attach_line("ssh vm", "claude", "x")
+    + shared.attach_line("ssh vm", "claude", "x")
     + "\nwindow: b\ncd '/tmp'\n",
 )
 
@@ -828,7 +829,7 @@ def _() -> None:
     # host would file it under the far side.
     app = RestoredApp()
     stub.Window.async_create = app.create
-    lines = [arr.attach_line("ssh vm", "claude", x) for x in ("x", GONE)]
+    lines = [shared.attach_line("ssh vm", "claude", x) for x in ("x", GONE)]
     timeout, arr.LANDING_TIMEOUT = arr.LANDING_TIMEOUT, 0.05
     try:
         error = error_of(
@@ -1094,11 +1095,11 @@ def _() -> None:
 
 @case("a snapshot's ssh asks for nothing and gives up on a host that is down")
 def _() -> None:
-    got = arr.list_sessions_argv("ssh -p 2222 vm", unattended=True)
+    got = shared.list_sessions_argv("ssh -p 2222 vm", unattended=True)
     want = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "-p", "2222", "vm"]
     assert got[:-1] == want, got
     got = arr.dirs_argv("ssh vm", unattended=True)
-    assert got[:-1] == ["ssh", *arr.UNATTENDED_SSH, "vm"], got
+    assert got[:-1] == ["ssh", *shared.UNATTENDED_SSH, "vm"], got
 
 
 log(f"{passed} passed, {failed} failed")

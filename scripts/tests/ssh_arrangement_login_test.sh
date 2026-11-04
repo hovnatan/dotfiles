@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.config/fish/functions/tmux_attach_requested.fish home/.config/fish/functions/login_dir_requested.fish home/.config/fish/functions/__ssh_arrangement_note.fish home/.config/fish/config.fish scripts/lib/iterm2_ssh_arrangement.py scripts/lib/*
+# check.sh covers: home/.config/fish/functions/tmux_attach_requested.fish home/.config/fish/functions/login_dir_requested.fish home/.config/fish/functions/__ssh_arrangement_note.fish home/.config/fish/config.fish scripts/lib/iterm2_ssh_arrangement.py scripts/lib/tmux_arrangement.py scripts/lib/*
 # The far side of a restored iTerm2 ssh arrangement's lines, end to end but
 # for the network: the line attach_line or dir_line writes, typed into a
 # local fish, reaches a login fish's config.fish through a stub ssh that
@@ -133,8 +133,8 @@ spec.loader.exec_module(arr)
 args = sys.argv[2:]
 $code" "$REPO" "$@"
 }
-lines=$(arrangement 'for socket in arr.SOCKETS:
-    print(socket, arr.attach_line("ssh -p 2222 vm", socket, "api/docs"))')
+lines=$(arrangement 'for socket in arr.tmux_arrangement.SOCKETS:
+    print(socket, arr.tmux_arrangement.attach_line("ssh -p 2222 vm", socket, "api/docs"))')
 [ -n "$lines" ] || {
   log "FAIL  attach_line gave no lines"
   exit 1

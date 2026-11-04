@@ -1,4 +1,5 @@
--- iterm2_snapshots.lua, the real module, against Hammerspoon doubles:
+-- snapshots.lua, through the real iterm2_snapshots.lua and ghostty_snapshots.lua,
+-- against Hammerspoon doubles:
 --
 --   test --tick()--> doubled hs.timer --> M.snapshot --> doubled hs.task
 --                         |                  |
@@ -38,6 +39,12 @@ local function stubHs()
       show = function(msg)
         table.insert(world.alerts, msg)
         note("alert: %s", msg)
+      end,
+    },
+    application = {
+      get = function(bundleID)
+        assert(bundleID == "com.mitchellh.ghostty", "asked for " .. bundleID)
+        return world.ghosttyRuns and {} or nil
       end,
     },
     timer = {
@@ -84,9 +91,13 @@ local function tick()
   end
 end
 
-local function load()
+local function load(module, setup)
   world = { alerts = {}, tasks = {}, logged = {} }
-  package.loaded.iterm2_snapshots = nil
+  for k, v in pairs(setup or {}) do
+    world[k] = v
+  end
+  package.loaded[module or "iterm2_snapshots"] = nil
+  package.loaded.snapshots = nil
   package.loaded.failure = nil
   package.preload.iterm2_api = function()
     return { itermRunning = true }
@@ -106,7 +117,7 @@ local function load()
   package.loaded.iterm2_api = nil
   package.loaded.event_log = nil
   _G.hs = stubHs()
-  return require("iterm2_snapshots")
+  return require(module or "iterm2_snapshots")
 end
 
 local function logged(pattern)
@@ -155,6 +166,20 @@ test("an error in a tick is alerted and in the event log, naming the error", fun
   assert(#world.alerts == 1, "expected one alert, got " .. #world.alerts)
   assert(world.alerts[1]:find("boom in hs.task.new", 1, true), "the alert does not name the error")
   assert(logged("boom in hs.task.new"), "the event log does not name the error")
+end)
+
+test("Ghostty's timer runs its own script while Ghostty runs", function()
+  load("ghostty_snapshots", { ghosttyRuns = true })
+  tick()
+  assert(#world.tasks == 1, "no snapshot task started")
+  assert(world.tasks[1].args[1]:find("ghostty_tmux_arrangement.sh", 1, true), "not the Ghostty script")
+end)
+
+test("Ghostty's timer skips while Ghostty is not running", function()
+  load("ghostty_snapshots", { ghosttyRuns = false })
+  tick()
+  assert(#world.tasks == 0, "a snapshot started with Ghostty not running")
+  assert(logged("skipped: Ghostty is not running"), "the skip is not logged")
 end)
 
 os.exit(failures == 0 and 0 or 1)

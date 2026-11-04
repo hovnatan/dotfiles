@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/iterm2_snapshots.lua home/.hammerspoon/failure.lua scripts/tests/iterm2_snapshots_test.lua scripts/lib/*
-# The Hammerspoon snapshot timer against doubles, so no macOS UI, iTerm2 or
+# check.sh covers: home/.hammerspoon/snapshots.lua home/.hammerspoon/iterm2_snapshots.lua home/.hammerspoon/ghostty_snapshots.lua home/.hammerspoon/failure.lua scripts/tests/iterm2_snapshots_test.lua scripts/lib/*
+# The Hammerspoon snapshot timers against doubles, so no macOS UI, iTerm2 or
 # Hammerspoon is needed and it runs in CI on Linux and macOS: an error in one
 # tick is alerted and logged, and the next tick still runs.
 set -euo pipefail

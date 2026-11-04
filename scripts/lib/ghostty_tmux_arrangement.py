@@ -1,0 +1,667 @@
+r"""The logic behind scripts/ghostty_tmux_arrangement.sh, on Ghostty's AppleScript.
+
+Save which tmux sessions Ghostty's windows hold, and bring them back in new
+windows. Only tmux tabs are saved: a plain shell has nothing to come back to.
+
+  save [<name>]    every window (<name> defaults to "all")
+  snapshot         every window, as "auto-<UTC YYYYMMDD_HHMMSS>", then all but
+                   the newest 2016 (two weeks) removed; run every 10 minutes
+                   by Hammerspoon (home/.hammerspoon/ghostty_snapshots.lua)
+  restore [<name>] the saved windows, beside what is open
+
+    Ghostty (AppleScript) --> per terminal: id, tty, name (read_windows)
+      |
+      v  line_of(): what each terminal is
+    tty is a local tmux client  -> tmux [-L <socket>] new-session -A -s <session>
+      (tmux list-clients)            -c <its directory>
+    ssh, title "[<shown>]" or   -> LC_TMUX_ATTACH=<socket>:<session> \
+      "(<host>) [<shown>]"           ssh -o SendEnv=LC_TMUX_ATTACH <login>
+                                   (the host is asked which socket: attach_for)
+    anything else               -> skipped, and logged
+      |
+      v
+    ~/.local/state/ghostty_tmux_arrangements/<name>.txt: plain text, to read
+    or edit by hand; a "window:" line per window, then one command per tab
+
+  restore: the file --> plan_restore() --> a new window per block, a tab per
+           line, each line typed into the tab's shell, so leaving tmux leaves
+           a local shell --> wait_landed(): each title shows its session,
+           else the restore fails, naming them
+
+What restore does with a session (plan_restore):
+
+    already open in Ghostty      skipped: a second client adds nothing
+    local, alive                 attached
+    local, gone (a reboot ended  created empty in its saved directory, and
+      the tmux server)           logged by name: its programs are not back
+    local, gone, directory gone  an error before anything opens
+    over ssh, gone               the far side refuses; the tab fails to land
+
+The terminal's own name is read, not its tab's or window's: Ghostty puts its
+bell mark in those, before the title, which would hide a session.
+
+Lines typed into a tab are for fish, the shell of the default profile.
+Imported without running (scripts/tests/ghostty_tmux_arrangement_test.py) it
+only defines its functions.
+"""
+
+# A script beside its shell wrapper, no license header, as in scripts/tests.
+# ruff: noqa: INP001, CPY001
+
+import os
+import re
+import subprocess
+import sys
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tmux_arrangement
+from tmux_arrangement import (
+    LOG,
+    SNAPSHOT_KEEP,
+    SNAPSHOT_PREFIX,
+    SOCKETS,
+    ArrangementError,
+    Lookup,
+    attach_for,
+    attach_request,
+    fish_quote,
+    log,
+    remote_lookup,
+    snapshot_name,
+    ssh_command,
+    tmux,
+)
+
+DIR = Path.home() / ".local/state/ghostty_tmux_arrangements"
+LANDING_TIMEOUT = 30.0  # s for every restored tab to show its session
+OSASCRIPT_TIMEOUT = 30  # s; it takes under a second, longer while macOS asks
+PROGRESS_EVERY = 5.0  # s between the lines a restore logs while it waits
+USAGE = "usage: ghostty_tmux_arrangement.sh save [<name>] | restore [<name>] | snapshot"
+MAX_ARGS = 2  # <command> <name>
+LIST_CLIENTS_FIELDS = 3  # a local_clients line: tty, session, directory
+# tmux list-clients on a socket with no server: nothing attached, no error.
+NO_SERVER = re.compile(r"no server running|error connecting to")
+# "[main]" and, for an ssh client on the default socket, "(vm) [main]"
+# (~/.tmux.conf's set-titles-string, which reads @ssh outside iTerm2).
+TITLE = re.compile(r"(?:\(\S+\) )?\[(.+)\]")
+LOCAL_LINE = re.compile(
+    r"tmux(?: -L (\S+))? new-session -A -s '((?:[^'\\]|\\.)*)' -c '((?:[^'\\]|\\.)*)'",
+)
+
+# The fields of one terminal a line, " " for the unit separator shown here:
+#   window <id>
+#   terminal <id> /dev/ttys005 [vm/api]
+READ_WINDOWS = """
+with timeout of 20 seconds
+  set sep to character id 31
+  set out to ""
+  tell application "Ghostty"
+    repeat with w in windows
+      set out to out & "window" & sep & (id of w) & linefeed
+      repeat with t in tabs of w
+        repeat with s in terminals of t
+          set out to out & "terminal" & sep & (id of s) & sep & (tty of s)
+          set out to out & sep & (name of s) & linefeed
+        end repeat
+      end repeat
+    end repeat
+  end tell
+  return out
+end timeout
+"""
+# Opens a tab typing `line`, in window `winId`, or a new window if that is "".
+OPEN_TAB = """
+on run argv
+  set winId to item 1 of argv
+  set typed to item 2 of argv
+  with timeout of 20 seconds
+    tell application "Ghostty"
+      set cfg to new surface configuration
+      set initial input of cfg to typed & linefeed
+      if winId is "" then
+        set w to new window with configuration cfg
+        set t to selected tab of w
+      else
+        set w to first window whose id is winId
+        set t to new tab in w with configuration cfg
+      end if
+      return (id of w) & character id 31 & (id of focused terminal of t)
+    end tell
+  end timeout
+end run
+"""
+ACTIVATE = """
+on run argv
+  with timeout of 20 seconds
+    tell application "Ghostty"
+      activate window (first window whose id is (item 1 of argv))
+    end tell
+  end timeout
+end run
+"""
+
+
+@dataclass
+class Terminal:
+    """What Ghostty reports of one terminal."""
+
+    id: str
+    tty: str
+    name: str
+
+
+@dataclass
+class Window:
+    """A Ghostty window: its terminals, every tab's, in order."""
+
+    id: str
+    terminals: list[Terminal]
+
+
+@dataclass
+class Client:
+    """A local tmux client: the session it shows, and that session's directory."""
+
+    socket: str
+    session: str
+    path: str
+
+
+@dataclass
+class Opening:
+    """A tab to open: the line to type, and the session it should come to show."""
+
+    line: str
+    session: str
+
+
+# --- what a terminal is: pure ---------------------------------------------------
+
+
+def title_session(title: str) -> str | None:
+    """Return the name a terminal's title shows for its tmux session, or None.
+
+    "[vm/api/docs]" -> "vm/api/docs"; "(vm) [main]" -> "main"; "fish:~" -> None.
+    """
+    m = TITLE.fullmatch(title)
+    return m[1] if m else None
+
+
+def local_line(client: Client) -> str:
+    r"""Return the line that attaches a local session, or creates it if it is gone.
+
+    Client("claude", "api", "/Users/me/it's")
+      -> tmux -L claude new-session -A -s 'api' -c '/Users/me/it\'s'
+    """
+    session, path = fish_quote(client.session), fish_quote(client.path)
+    return f"{tmux(client.socket)} new-session -A -s {session} -c {path}"
+
+
+def local_request(line: str) -> Client | None:
+    """Return what local_line() asks for, or None for any other line."""
+    m = LOCAL_LINE.fullmatch(line)
+    if not m:
+        return None
+    socket = m[1] or "default"
+    if socket not in SOCKETS:
+        msg = f"uses tmux socket {socket!r}, not one of {', '.join(SOCKETS)}: {line}"
+        raise ArrangementError(msg)
+    return Client(socket, fish_unquote(m[2]), fish_unquote(m[3]))
+
+
+def fish_unquote(quoted: str) -> str:
+    r"""Undo fish_quote() on what was between the quotes: "it\'s" -> "it's"."""
+    return re.sub(r"\\(.)", r"\1", quoted)
+
+
+def line_of(
+    index: int,
+    terminal: Terminal,
+    client: Client | None,
+    foreground: str,
+    lookup: Lookup,
+) -> str | None:
+    """Return the saved line of terminal number `index`, or None if it is no tmux.
+
+    `client` is the local tmux client on its tty, `foreground` its foreground
+    command line. A tmux tab whose ssh cannot be replayed is an error: skipping
+    it would lose the session without a word.
+    """
+    if client:
+        return local_line(client)
+    if not foreground or Path(foreground.split(maxsplit=1)[0]).name != "ssh":
+        return None
+    shown = title_session(terminal.name)
+    if shown is None:
+        return None
+    try:
+        login = ssh_command.interactive(foreground)
+    except ssh_command.NotReplayableError as e:
+        msg = f"tab {index}: ssh command line cannot be replayed: {e}"
+        raise ArrangementError(msg) from e
+    return attach_for(index, login, shown, lookup)
+
+
+def foreground_of(ps_output: str) -> str:
+    r"""Return the foreground command of a tty, an ssh one first, from `ps` output.
+
+    "Ss  -fish\nS+  ssh vm\n" -> "ssh vm"; "S+  -fish\n" -> "-fish"; "" -> "".
+    A foreground process has a "+" in its state. There can be several, a
+    pipeline; ssh is what a tab is saved by, so it wins.
+    """
+    found = []
+    for line in ps_output.splitlines():
+        stat, _, command = line.strip().partition(" ")
+        if "+" in stat:
+            found.append(command.strip())
+    for command in found:
+        if command and Path(command.split()[0]).name == "ssh":
+            return command
+    return found[0] if found else ""
+
+
+def parse_clients(socket: str, text: str) -> dict[str, Client]:
+    """Return {tty: Client} from `tmux list-clients` in LIST_CLIENTS format.
+
+    "/dev/ttys005:api:/Users/me" -> {"/dev/ttys005": Client(socket, "api", ...)}
+    Neither a tty nor a session name holds a ":"; a directory may.
+    """
+    clients = {}
+    for line in text.splitlines():
+        fields = line.split(":", LIST_CLIENTS_FIELDS - 1)
+        if len(fields) != LIST_CLIENTS_FIELDS:
+            msg = f"tmux -L {socket} list-clients printed {line!r}"
+            raise ArrangementError(msg)
+        clients[fields[0]] = Client(socket, fields[1], fields[2])
+    return clients
+
+
+def parse_windows(text: str) -> list[Window]:
+    """Return the windows of READ_WINDOWS's output; any other line is an error."""
+    windows: list[Window] = []
+    for line in text.splitlines():
+        kind, *fields = line.split("\x1f")
+        if kind == "window" and len(fields) == 1:
+            windows.append(Window(fields[0], []))
+        elif kind == "terminal" and len(fields) == 3 and windows:  # noqa: PLR2004
+            windows[-1].terminals.append(Terminal(*fields))
+        elif line:
+            msg = f"Ghostty's window list has a line of no known shape: {line!r}"
+            raise ArrangementError(msg)
+    return windows
+
+
+# --- the file: pure -------------------------------------------------------------
+
+
+def render(name: str, saved_at: str, windows: list[list[str]]) -> str:
+    """Return the file's text for `windows`, a list of lines per window."""
+    out = [
+        f'# Ghostty tmux arrangement "{name}", saved {saved_at}; restore with:',
+        f"#   ~/.dotfiles/scripts/ghostty_tmux_arrangement.sh restore {name}",
+        "# Each window: one command per tab. The first window is restored in front.",
+    ]
+    for lines in windows:
+        out += ["", "window:", *lines]
+    return "\n".join(out) + "\n"
+
+
+def parse_file(text: str) -> list[list[str]]:
+    r"""Return the lines of each window of the file's text.
+
+    "window:\nLC_TMUX_ATTACH=...\n" -> [["LC_TMUX_ATTACH=..."]]. A line before
+    the first "window:", a line that is no tmux request, or a window with no
+    tabs is an error: a hand edit gone wrong, caught before any tab opens.
+    """
+    windows: list[list[str]] = []
+    for n, line in enumerate(text.splitlines(), 1):
+        if line == "window:":
+            windows.append([])
+        elif line and not line.startswith("#"):
+            if not windows:
+                msg = f'line {n} is a command before any "window:" line: {line}'
+                raise ArrangementError(msg)
+            try:
+                known = attach_request(line) or local_request(line)
+            except ArrangementError as e:
+                msg = f"line {n} {e}"
+                raise ArrangementError(msg) from e
+            if not known:
+                msg = f"line {n} attaches no tmux session: {line}"
+                raise ArrangementError(msg)
+            windows[-1].append(line)
+    if not windows:
+        msg = 'no "window:" line'
+        raise ArrangementError(msg)
+    for i, lines in enumerate(windows, 1):
+        if not lines:
+            msg = f"window {i} has no tabs"
+            raise ArrangementError(msg)
+    return windows
+
+
+# --- what a restore does: pure --------------------------------------------------
+
+
+def session_key(line: str) -> tuple[str, ...]:
+    """Return what makes two saved lines the same session.
+
+    A remote line is its own key, the host being part of it. A local line is
+    its socket and session, not its directory, which may have moved on.
+    """
+    client = local_request(line)
+    return ("local", client.socket, client.session) if client else ("remote", line)
+
+
+def session_of(line: str) -> str:
+    """Return the session a saved line brings back."""
+    client = local_request(line)
+    if client:
+        return client.session
+    request = attach_request(line)
+    if request is None:
+        msg = f"attaches no tmux session: {line}"
+        raise ArrangementError(msg)
+    return request[1]
+
+
+def plan_restore(
+    windows: list[list[str]],
+    open_lines: list[str],
+    alive: Callable[[Client], bool],
+    is_dir: Callable[[str], bool],
+) -> list[list[Opening]]:
+    """Return the tabs to open per window: see the docstring's table.
+
+    A window whose sessions are all open is dropped. A local session to
+    create in a directory that is gone is an error, raised before any tab
+    opens, and `alive` and `is_dir` are asked only of what will be opened.
+    """
+    open_keys = {session_key(line) for line in open_lines}
+    plan = []
+    for lines in windows:
+        tabs = []
+        for line in lines:
+            if session_key(line) in open_keys:
+                log(f"already open, skipped: {session_of(line)}")
+                continue
+            client = local_request(line)
+            if client and not alive(client):
+                if not is_dir(client.path):
+                    msg = (
+                        f"local tmux session {client.session!r} is gone, and its"
+                        f" directory {client.path} is too; create the directory"
+                        " or remove the line"
+                    )
+                    raise ArrangementError(msg)
+                log(f"recreating empty, its programs are gone: {client.session}")
+            tabs.append(Opening(line, session_of(line)))
+        if tabs:
+            plan.append(tabs)
+    return plan
+
+
+def landed(session: str, title: str) -> bool:
+    """Tell whether a title shows `session`.
+
+    On the claude socket a title reads "<host>/<session>", and a session name
+    may hold a "/" itself:
+        ("api/docs", "[vm/api/docs]") -> True; ("api", "fish:~") -> False
+    """
+    shown = title_session(title)
+    return shown is not None and (shown == session or shown.endswith(f"/{session}"))
+
+
+# --- Ghostty, tmux and ps -------------------------------------------------------
+
+
+def run(argv: list[str], timeout: float) -> subprocess.CompletedProcess[str]:
+    """Run `argv`, capturing its output; a hang is an error, not a stuck snapshot."""
+    try:
+        return subprocess.run(  # noqa: S603 - argv of fixed tools
+            argv,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as e:
+        msg = f"`{' '.join(argv[:2])}` gave no answer in {timeout:.0f}s"
+        raise ArrangementError(msg) from e
+
+
+def osascript(script: str, *args: str) -> str:
+    """Run AppleScript `script` with `args`; its failure is an error, saying why."""
+    done = run(["osascript", "-e", script, *args], OSASCRIPT_TIMEOUT)
+    if done.returncode != 0:
+        hint = ""
+        if "-1743" in done.stderr:
+            hint = (
+                "; allow this app to control Ghostty in System Settings >"
+                " Privacy & Security > Automation"
+            )
+        msg = f"osascript failed: {done.stderr.strip()}{hint}"
+        raise ArrangementError(msg)
+    return done.stdout.rstrip("\n")
+
+
+def require_ghostty() -> None:
+    """Fail unless Ghostty runs: `tell application` would launch it instead."""
+    if run(["pgrep", "-x", "ghostty"], OSASCRIPT_TIMEOUT).returncode != 0:
+        msg = "Ghostty is not running; start it first"
+        raise ArrangementError(msg)
+
+
+def read_windows() -> list[Window]:
+    """Return Ghostty's windows, the front one first."""
+    return parse_windows(osascript(READ_WINDOWS))
+
+
+def local_clients() -> dict[str, Client]:
+    """Return {tty: Client} of every local tmux client, on every socket."""
+    clients: dict[str, Client] = {}
+    for socket in SOCKETS:
+        form = "#{client_tty}:#{session_name}:#{session_path}"
+        done = run([*tmux(socket).split(), "list-clients", "-F", form], 10)
+        if done.returncode == 0:
+            clients |= parse_clients(socket, done.stdout)
+        elif not NO_SERVER.search(done.stderr):
+            msg = f"tmux -L {socket} list-clients failed: {done.stderr.strip()}"
+            raise ArrangementError(msg)
+    return clients
+
+
+def foreground(tty: str) -> str:
+    """Return the foreground command line of `tty`, "" if it has none."""
+    short = tty.removeprefix("/dev/")
+    return foreground_of(run(["ps", "-t", short, "-o", "stat=,command="], 10).stdout)
+
+
+def alive(client: Client) -> bool:
+    """Tell whether a local session exists; a socket with no server has none."""
+    target = f"={client.session}"
+    argv = [*tmux(client.socket).split(), "has-session", "-t", target]
+    return run(argv, 10).returncode == 0
+
+
+def saved_lines(windows: list[Window], lookup: Lookup) -> list[list[str]]:
+    """Return the lines of every window, those with no tmux tab left out."""
+    clients = local_clients()
+    out = []
+    index = 0
+    for w in windows:
+        lines = []
+        for t in w.terminals:
+            index += 1
+            fg = foreground(t.tty)
+            line = line_of(index, t, clients.get(t.tty), fg, lookup)
+            if line is None:
+                log(f"tab {index}: no tmux ({t.name!r}, running {fg!r}), skipped")
+            else:
+                log(f"tab {index}: {line}")
+                lines.append(line)
+        if lines:
+            out.append(lines)
+    return out
+
+
+def write(name: str, windows: list[list[str]]) -> None:
+    """Write arrangement `name`, by a rename so a kill cannot leave half a file."""
+    DIR.mkdir(parents=True, exist_ok=True)
+    saved_at = f"{datetime.now(UTC):%Y-%m-%dT%H:%M:%SZ}"
+    file = DIR / f"{name}.txt"
+    temp = file.with_suffix(".tmp")
+    temp.write_text(render(name, saved_at, windows))
+    temp.replace(file)
+    log(f"saved {file}")
+
+
+def save(name: str) -> None:
+    """Save every tmux tab as `name`; none at all is an error, nothing to save."""
+    windows = saved_lines(read_windows(), remote_lookup(unattended=False))
+    if not windows:
+        msg = "no Ghostty tab holds a tmux session"
+        raise ArrangementError(msg)
+    write(name, windows)
+
+
+def snapshot() -> None:
+    """Save a new snapshot, then drop all but the newest SNAPSHOT_KEEP.
+
+    Windows with no tmux at all are no failure, and write nothing: the last
+    snapshot that held something stays the newest.
+    """
+    windows = saved_lines(read_windows(), remote_lookup(unattended=True))
+    if not windows:
+        log("no Ghostty tab holds a tmux session: nothing saved")
+        return
+    write(snapshot_name(datetime.now(UTC)), windows)
+    names = [p.stem for p in DIR.glob(f"{SNAPSHOT_PREFIX}*.txt")]
+    stale = tmux_arrangement.stale_snapshots(names, DIR)
+    for name in stale:
+        (DIR / f"{name}.txt").unlink()
+    log(f"removed {len(stale)} snapshots past the newest {SNAPSHOT_KEEP}")
+
+
+def load(name: str) -> list[list[str]]:
+    """Return the windows of arrangement `name`; a missing or bad file is an error."""
+    file = DIR / f"{name}.txt"
+    if not file.exists():
+        names = sorted(p.stem for p in DIR.glob("*.txt")) if DIR.exists() else []
+        kept = [n for n in names if not n.startswith(SNAPSHOT_PREFIX)]
+        msg = (
+            f"no arrangement {name!r}: {file} does not exist; saved: {kept or '(none)'}"
+            f" and {len(names) - len(kept)} snapshots"
+        )
+        raise ArrangementError(msg)
+    try:
+        return parse_file(file.read_text())
+    except ArrangementError as e:
+        msg = f"{file}: {e}"
+        raise ArrangementError(msg) from e
+
+
+def open_tabs(plan: list[list[Opening]]) -> tuple[list[str], dict[str, str]]:
+    """Open `plan`; return the windows made and {terminal id: its session}."""
+    made = []
+    waiting = {}
+    for tabs in plan:
+        window = ""
+        for tab in tabs:
+            window, terminal = osascript(OPEN_TAB, window, tab.line).split("\x1f")
+            waiting[terminal] = tab.session
+            log(f"opened {tab.session} in {window}")
+        made.append(window)
+    return made, waiting
+
+
+def wait_landed(waiting: dict[str, str]) -> None:
+    """Wait for each opened terminal's title to show its session, else fail."""
+    left = dict(waiting)
+    start = time.monotonic()
+    said = start
+    names: dict[str, str] = {}
+    while left:
+        names = {t.id: t.name for w in read_windows() for t in w.terminals}
+        left = {
+            t: s for t, s in left.items() if t not in names or not landed(s, names[t])
+        }
+        now = time.monotonic()
+        if left and now - start > LANDING_TIMEOUT:
+            stuck = ", ".join(
+                f"{s} (title {names.get(t, 'its tab closed')!r})"
+                for t, s in left.items()
+            )
+            msg = f"{len(left)} tabs never showed their session: {stuck}"
+            raise ArrangementError(msg)
+        if left and now - said >= PROGRESS_EVERY:
+            log(f"waiting on {len(left)} tabs: {', '.join(left.values())}")
+            said = now
+        if left:
+            time.sleep(0.5)
+
+
+def restore(name: str) -> None:
+    """Open the saved windows beside what is open, and see each session land."""
+    windows = load(name)
+    current = saved_lines(read_windows(), remote_lookup(unattended=False))
+    plan = plan_restore(
+        windows,
+        [line for lines in current for line in lines],
+        alive,
+        os.path.isdir,
+    )
+    if not plan:
+        log(f"every session of {name} is already open")
+        return
+    made, waiting = open_tabs(plan)
+    wait_landed(waiting)
+    osascript(ACTIVATE, made[0])
+    log(f"restored {len(waiting)} tabs in {len(made)} windows from {name}")
+
+
+def main() -> None:
+    """Parse argv (<event log> <command> [<name>]) and act."""
+    LOG.append(Path(sys.argv[1]))
+    args = sys.argv[2:]
+    command, name = [*args, None, None][:2]
+    if (
+        command not in ("save", "restore", "snapshot")
+        or len(args) > MAX_ARGS
+        or (command == "snapshot" and name)
+    ):
+        log(f"ERROR: {USAGE}")
+        sys.exit(1)
+    name = name or "all"
+    if not re.fullmatch(r"[\w.-]+", name, re.ASCII):
+        log(f"ERROR: name {name!r}: use letters, digits, '.', '_', '-'")
+        sys.exit(1)
+    # Snapshots are pruned by this prefix: a save under it would be pruned,
+    # or, not named by a time, stop every snapshot's pruning.
+    if command == "save" and name.startswith(SNAPSHOT_PREFIX):
+        log(f"ERROR: name {name!r}: {SNAPSHOT_PREFIX!r} is for snapshots alone")
+        sys.exit(1)
+
+    # An ArrangementError is a finding about the windows, the file or
+    # Ghostty, said in one line; anything else is a bug and keeps its traceback.
+    try:
+        require_ghostty()
+        if command == "save":
+            save(name)
+        elif command == "snapshot":
+            snapshot()
+        else:
+            restore(name)
+    except ArrangementError as e:
+        log(f"ERROR: {e}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
