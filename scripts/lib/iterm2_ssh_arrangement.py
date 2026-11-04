@@ -79,8 +79,8 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
 <login> is ssh_command.py's replay of the tab's ssh command line (Cmd-T's
 parser): the options and destination, never a remote command or forward.
 The "[<shown>]" title is ~/.tmux.conf's set-titles-string for an iTerm2
-client: the session name on the default socket, and on claude_tmux_run.sh's
-"claude" one the conversation's full name, "<hostname>/<session>" (TITLED).
+client: the session name on the default socket, and on the retired "claude"
+one the conversation's full name, "<hostname>/<session>" (TITLED).
 The title does not say which socket, hence the lookup, which also maps
 the shown name back to the session to attach:
 

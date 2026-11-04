@@ -7,8 +7,8 @@ It is kept short on purpose - every line here is paid on every session.
 
 - `home/` mirrors `$HOME`: entries install at the same relative path under `~`
   (`home/.tmux.conf` -> `~/.tmux.conf`). Everything outside `home/` (`scripts/`,
-  `claude_tmux_session/`, `nix/`, `apt/`, `docs/`, `.devcontainer/`, `docker/`) is repo tooling
-  that never lands in `$HOME`; all executables live in `scripts/` and are invoked by
+  `claude_tmux_session/`, `nix/`, `apt/`, `docs/`, `.devcontainer/`, `docker/`, `vagrant/`) is
+  repo tooling that never lands in `$HOME`; all executables live in `scripts/` and are invoked by
   absolute path, nothing here is on `PATH`. `scripts/setup_user_symlinks.sh` is the authoritative
   install map - add a line there when adding a file under `home/`.
   It is safe to re-run; `scripts/update.sh` (alias `dotup`) pulls and re-runs it
@@ -23,7 +23,7 @@ It is kept short on purpose - every line here is paid on every session.
   apt (daemons such as docker), applied by `scripts/apt_bundle.sh`. Read the
   relevant header before any `nix profile` change, brew install, uninstall
   or cask adopt, or apt install.
-- Changing `scripts/claude_tmux_run.sh`, the claude-tmux unit,
+- Changing `scripts/claude_manager_start.sh`, the claude-tmux unit,
   `home/.claude/ntfy-stop.sh` or a tmux hook (`home/.config/tmux/`, the
   `set-hook` lines): extend `scripts/tests/` with the new behaviour. A new
   test needs a `# check.sh covers:` line (format in `scripts/check.sh`); it
@@ -37,8 +37,10 @@ It is kept short on purpose - every line here is paid on every session.
 - `scripts/check.sh` runs every check CI runs, and the `pre-push` hook runs it on
   each pushed commit (`scripts/git-hooks/`, wired by the installer): when it stops a
   push, fix what it names and push again. `scripts/check.sh --changed <paths>` checks
-  before committing. Vendored skills are ignored in `.markdownlint-cli2.yaml`:
-  add a skill there when vendoring it.
+  before committing. Linux-only tests skip on a Mac: run them in the local Ubuntu guest,
+  `vagrant/Vagrantfile` (commands in its header), which has no live sessions to disturb.
+  Vendored skills are ignored in `.markdownlint-cli2.yaml`: add a skill there when
+  vendoring it.
 - `home/.codex/config.toml` is linked as `~/.codex/config.toml`, and Codex and
   the ChatGPT app write machine-local state into it (model, app paths, MCP
   servers, `notify`), so it often shows as modified. Never stage or commit it

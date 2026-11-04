@@ -12,7 +12,7 @@
 #
 # tmux runs it in the background every status-interval and draws what it
 # prints, so a failure is printed, not logged: it shows in the bar where the
-# numbers would be. By full path: the claude server's systemd unit may not
+# numbers would be. By full path: the tmux server's systemd unit may not
 # have the Nix profile on PATH. -i 2 is the CPU sample, 2 s. Nothing is
 # written to an event log: it acts on nothing, and runs every 15 s.
 set -u

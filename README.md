@@ -70,6 +70,10 @@ whose `# check.sh covers:` line names a changed path. A failure stops the push;
 `git push --no-verify` skips it once, and CI still runs everything. The
 script's header says how each piece is picked.
 
+The Linux-only tests are skipped on a Mac. `vagrant/Vagrantfile` runs them there, in a
+local Ubuntu guest with the Nix set, Docker and a copy of the working tree; its header
+has the commands.
+
 ## Nix packages
 
 Command-line tools come from Nix, the same set at the same versions on
@@ -170,8 +174,8 @@ and the fleet policy in `claude_tmux_session/AGENTS.md` stay separate steps.
 
 Starts a manager tmux session `manager` at boot: Claude Code with
 permissions bypassed, started in `~/.dotfiles/claude_tmux_session`. Nothing
-watches it after: a manager that quits stays down until you bring it back
-(below). Ask it (e.g. over Remote Control) to bring up other
+watches it after: a manager that quits leaves its shell at a prompt, the
+session up, until you bring it back (below). Ask it (e.g. over Remote Control) to bring up other
 sessions: per `claude_tmux_session/AGENTS.md` it resumes the conversation
 named `<hostname>/<name>` -- also its Remote Control name on claude.ai -- in
 a tmux session `<name>` running in auto permission mode (permissions
@@ -185,18 +189,33 @@ bash -x ~/.dotfiles/scripts/setup_claude_tmux_service.sh
 
 On a fresh machine, run `claude` once in `~/.dotfiles` first and accept the
 workspace trust dialog; the manager starts inside the repo and would
-otherwise sit at that prompt, invisible, in its detached pane.
+otherwise sit at that prompt, invisible, in its detached pane. Window 0 of
+every session is a plain shell with claude typed into it: quitting claude
+keeps the session, and `claude --resume` there brings it back. The boot start
+opens a new conversation. Remote Control and the agent view are set for every
+claude in `home/.claude/settings.json`.
+
+To also run a Remote Control server (`claude remote-control`) in a second window
+of `manager`, name its folder in a machine-local file, as an absolute path. With
+no file there is no window; a path that is not a folder fails the start. The next
+start of a `manager` session reads it. Answer two one-time prompts first, or the
+server waits at them, invisible in its detached window: run `claude` in that folder
+and accept the trust dialog, then `claude remote-control` and answer
+`Enable Remote Control?` with `y`.
 
 ```bash
-tmux -L claude attach -t manager                 # attach (any session name works)
-~/.dotfiles/scripts/claude_tmux_run.sh status    # is it up? (claude in each session)
-systemctl --user start claude-tmux               # start the manager if its session is gone
-~/.dotfiles/scripts/claude_tmux_run.sh load manager --dangerous
-                                                 # ...or bring claude back into its session
-journalctl --user -u claude-tmux                 # what the boot start did
-~/.dotfiles/scripts/claude_tmux_run.sh stop      # stop the manager (until the next boot)
-systemctl --user disable claude-tmux             # no manager at boot any more
-sudo loginctl disable-linger $USER               # also stop the user manager at boot
+mkdir -p ~/.config/claude-tmux
+echo "$HOME/<folder>" >~/.config/claude-tmux/remote-control-dir
+```
+
+```bash
+tmux attach -t manager                 # attach (any session name works)
+tmux ls; pgrep -a -x claude            # is it up? (sessions, and claude in them)
+systemctl --user start claude-tmux     # start the manager if its session is gone
+journalctl --user -u claude-tmux       # what the boot start did
+tmux kill-session -t =manager          # stop the manager (until the next boot)
+systemctl --user disable claude-tmux   # no manager at boot any more
+sudo loginctl disable-linger $USER     # also stop the user manager at boot
 ```
 
 To leave the manager running, detach (prefix `d`) rather than quitting it.

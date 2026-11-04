@@ -3,33 +3,37 @@
 This directory is the working directory of the "manager" tmux session
 started at boot by claude-tmux.service (see
 `../home/.config/systemd/user/claude-tmux.service` and
-`../scripts/claude_tmux_run.sh`). That session runs Claude Code with
+`../scripts/claude_manager_start.sh`). That session runs Claude Code with
 permissions bypassed and acts as the manager for the other Claude Code tmux
 sessions on this machine.
 
 ## The setup
 
-- All sessions live on a dedicated tmux server: `tmux -L claude ...`.
+- All sessions live on the default tmux server, so plain `tmux ...` reaches
+  them, beside anything started there by hand. `tmux kill-server` ends every
+  one of them.
 - Only the "manager" session comes from systemd: the service starts it at
   boot, and on `systemctl --user start claude-tmux` when its session is
   missing. Nothing watches it after; nothing recreates it, or any other
   session, that exits. Every other session is created on demand -- by you,
   when asked. Stopping or restarting the service leaves every session alone.
+- Every claude on this machine starts with Remote Control on, the agent view
+  off and auto permission mode, from `home/.claude/settings.json`: no flags to
+  pass for those.
 - tmux session names are short (letters, digits, `-` and `_` only; the
   window title shows the first two characters). The Claude Code conversation
-  behind a session is named `<hostname>/<session name>`. A session has ONE
-  name: the prompt bar, `/list-agents` (what SendMessage addresses), the
+  behind a session is named `<hostname>/<session name>`. A conversation has
+  ONE name: the prompt bar, `/list-agents` (what SendMessage addresses), the
   `/resume` picker and claude.ai all show it, and `/rename` from any of
   them changes it everywhere; claude.ai lists every machine's sessions,
-  hence the hostname. `claude_tmux_run.sh` passes the name with `-n` on
-  every launch, resumes included (a resume by id alone reverts the peer
-  name to an auto-generated directory-based one). If a running session
-  still shows an auto-generated peer name,
-  `/rename <hostname>/<session name>` inside it fixes it live.
+  hence the hostname. Pass the name with `-n` on every launch, resumes
+  included (a resume by id alone reverts the peer name to an auto-generated
+  directory-based one). If a running session still shows an auto-generated
+  peer name, `/rename <hostname>/<session name>` inside it fixes it live.
 - Until 2026-10-22 the form was `<hostname>-<session name>`, and older
-  conversations and running sessions still carry it. Every command below
-  still finds them, and the next `load` or `restart` of one renames it to
-  the `/` form. Address a running one by the name `ListAgents` shows.
+  conversations and running sessions still carry it. The search below finds
+  them, and a resume with `-n` renames one to the `/` form. Address a running
+  one by the name `ListAgents` shows.
 - A conversation is LABELED with its task once the task is clear:
   `/rename <hostname>/<session name>/<task>` inside the session (task: the
   session-name alphabet, letters, digits, `-` and `_`, e.g.
@@ -38,158 +42,149 @@ sessions on this machine.
   prompt bar, the status line and claude.ai show; without it every
   conversation a name accumulates (one per `/clear`) reads the same. The
   peer name carries the label too, so address a labeled session by its
-  full name (`ListAgents` shows it). Resumes keep the label, and so does
-  `/clear`: the fresh conversation inherits it, so relabel it (or
-  `/rename` back to the bare name) once its own task is clear. Until then
-  two conversations carry one label, and `load <name>/<task>` refuses.
-- The tmux session follows its conversation's name, label included:
-  `backend/fix-login` while that conversation runs, `backend`
-  again once it is renamed to the bare name (mechanism: Naming in
-  `claude_tmux_run.sh`). tmux
-  targets without `=` prefix-match, so `-t backend` reaches the session
-  whatever its label; `=backend` matches only the unlabeled name.
+  full name (`ListAgents` shows it). A resume keeps the label only when `-n`
+  carries it, and `/clear` keeps it: the fresh conversation inherits it, so
+  relabel it (or `/rename` back to the bare name) once its own task is clear.
+- A tmux session keeps the name it was created under: a `/rename` changes
+  the conversation's name, not the session's, so session `backend` can hold
+  `<hostname>/backend/fix-login`. tmux targets without `=` prefix-match;
+  `=backend` matches exactly that name.
 - A prompt-bar color (`/color`) does not survive `/clear`; only a resume
   brings it back (Claude Code does that itself).
-- What a pane starts ends with it. Each pane runs in a systemd scope of
-  its own, and when a pane closes, however it closes (its program exits,
-  `kill-pane`, `kill-window`, its session closing), its scope is stopped
-  (`home/.config/tmux/reap-panes.sh`, logged in the tmux hooks' log): a
-  `setsid nohup` job, a proxy, a watcher started from a pane does not
-  survive it. Nor does it survive a `restart` (or `prefix C-r`), which
-  stops the old claude's scope once the new one runs. A job meant to
-  outlive its pane runs as a unit of its own:
-  `systemd-run --user --unit=<name> <command>` (then
+- What a pane starts ends with it, in every tmux pane on this machine. Each
+  pane runs in a systemd scope of its own, and when a pane closes, however it
+  closes (its program exits, `kill-pane`, `kill-window`, its session closing),
+  its scope is stopped (`home/.config/tmux/reap-panes.sh`, logged in the tmux
+  hooks' log): a `setsid nohup` job, a proxy, a watcher started from a pane
+  does not survive it. A job meant to outlive its pane runs as a unit of its
+  own: `systemd-run --user --unit=<name> <command>` (then
   `systemctl --user status <name>`, `journalctl --user -u <name>`).
-- A session may hold more windows than claude's: the user opens nvim or a
-  shell beside it (`prefix C`; Cmd-J/K switch). Claude stays window 0. A
-  second `claude` in the same session is unsupported: both would rename
-  the session after their own conversation.
-- A manager claude that quits stays down.
-  `~/.dotfiles/scripts/claude_tmux_run.sh load manager --dangerous`
-  resumes its conversation, into its session as window 0 when other
-  windows keep that alive. With the session gone,
-  `systemctl --user start claude-tmux` does the same, and starts a new
-  conversation when the manager has none (where load refuses).
+- Window 0 of a session is a plain shell, and claude is a command typed into
+  it. Claude quitting or crashing leaves that shell at its prompt and the
+  session up, windows and clients included, until claude is typed in again.
+- A session may hold more windows: the user opens nvim or a shell beside it
+  (`prefix C`; Cmd-J/K switch). Keep to one `claude` per session, the
+  manager's Remote Control window aside.
+- On a machine whose `~/.config/claude-tmux/remote-control-dir` names a folder,
+  the manager's start also opens window `remote-control` there, with
+  `claude remote-control --spawn=same-dir --name <hostname>/remote-control` typed
+  into its shell.
+  It lets claude.ai and the phone start sessions in that folder, in the
+  settings' permission mode, and those sessions are not tmux sessions. A server
+  that exits stays at its shell, nothing restarts it, and a `manager` session
+  already up is left as it is: type that command there, or open the window by
+  hand, when it is missing.
+- A manager claude that quits stays at its shell; resume it there like any
+  session, with `--dangerously-skip-permissions`. With the session gone,
+  `systemctl --user start claude-tmux` starts it again. That start, and each
+  boot, opens a NEW conversation; the earlier ones stay on disk to resume.
 
 ## Bringing up a session
 
-Two commands bring a session up. To resume an existing conversation
-(e.g. "bring up backend"):
+Sessions are plain tmux, and nothing guards them: the checks below are yours
+to make. First see what runs, as nothing here refuses to open a conversation
+that is already open. `-n` in each claude's arguments is the name it was
+launched under; a later `/rename` does not show there:
 
 ```bash
-~/.dotfiles/scripts/claude_tmux_run.sh load <name>[/<task>]
+tmux ls
+pgrep -a -x claude
 ```
 
-It is idempotent. `load <name>` resumes the conversation most recently
-talked in under `<hostname>/<name>`, labeled or not, in the directory that
-conversation belongs to; `load <name>/<task>` pins the conversation
-carrying that label (found with `history`, below) and refuses when the
-`<name>/<task>` session is live with a different one -- switching means
-killing work in flight, which is the user's call. With no such
-conversation it refuses and points at `new`. `load` also revives a
-session's claude: when claude exited from a session that other windows
-keep alive, `load <name>` resumes the conversation into it as window 0
-and leaves the other windows as they are (`status` shows such a session
-as `NO CLAUDE`).
-
-To start a fresh conversation (e.g. "a new backend session"):
+Then see what exists under the name, most recently written first (the id is
+the file name, the second line the conversation's directory):
 
 ```bash
-~/.dotfiles/scripts/claude_tmux_run.sh new <name>[/<task>] <dir>
-```
-
-It always starts fresh, whatever the name already owns -- `new backend`
-beside a live `backend/fix-login` gives an unlabeled `backend` --
-and refuses when the session of that exact name is live, or when the
-label already belongs to a conversation (load that one). `<dir>` is
-required; ask which directory if it was not said and no earlier
-conversation of the name shows it (`history`). Both run sessions in auto
-permission mode with Remote Control enabled. Append `--dangerous` only
-when the user explicitly asks for a session with permissions bypassed --
-never choose it yourself.
-
-One LIVE session per FULL name, label included: `api`, `api/login` and
-`api/docs` are three names and run side by side, each in a session of its
-own name; a second session of one of them is what must not exist. Never
-launch a session by hand (`tmux new-session ... claude`); `new` and `load`
-start one beside its siblings and refuse a second session of an exact
-name.
-
-One name can own SEVERAL conversations: a `/clear` inside a session, or
-a `new` under a used name, starts a fresh conversation beside the old
-one, and `load` resumes whichever was talked in last (by last message,
-not file time: a picker rename touches a file without anyone talking in
-it). A resumed id that differs from the one resumed earlier that day is
-therefore normal, not a bug -- but say so when it happens, since the user
-may have wanted the older thread. An unlabeled conversation that is not
-the newest under its name is reached only by `load --id`, so label work
-once its task is clear. To see them all, newest first, each with its label and opening
-prompt:
-
-```bash
-~/.dotfiles/scripts/claude_tmux_run.sh history <name>
-```
-
-Resuming a specific older one is `load <name>/<task>` when it is labeled,
-else `load --id <id>` with an id from `history` (any of a conversation's
-ids: a resume continues it in a new transcript, and the newest is
-resumed). When two conversations carry one label, `load <name>/<task>`
-refuses and lists both ids: load the right one with `--id`, and relabel
-the other. Never resume by hand with `claude --resume`: that skips the
-double-open guard and the session naming.
-
-Before starting a NEW conversation, list what already exists:
-
-```bash
-~/.dotfiles/scripts/claude_tmux_run.sh conversations [pattern]
+grep -lE "\"customTitle\":\"$(hostname)[/-]<name>[/\"]" ~/.claude/projects/*/*.jsonl | xargs -r ls -t
+grep -m1 -o '"cwd":"[^"]*"' <file>
 ```
 
 A session name says nothing about the directory behind it -- work on a
 subfolder is usually done from a session rooted higher up, so the history
-for `proj/sub/tool` lives in `alpha`, rooted at
-`~/work`. `new` under a name nobody used before always succeeds,
-so a name that merely sounds right silently creates an empty second
-conversation next to the one holding the work. If the listing shows a
-plausible owner under another name, say so and offer it rather than
+for `proj/sub/tool` lives in `alpha`, rooted at `~/work`. Before starting a
+NEW conversation, also search by directory or topic across all of
+`~/.claude/projects`. A name that merely sounds right silently creates an
+empty second conversation next to the one holding the work. If the search
+shows a plausible owner under another name, say so and offer it rather than
 starting from nothing.
 
-To stop a session:
-`~/.dotfiles/scripts/claude_tmux_run.sh stop <name>[/<task>]`. It kills
-the session of exactly that name and nothing else: a labeled session holds
-a different conversation, so `stop backend` never reaches
-`backend/fix-login` -- pass the full name. When nothing matches it
-lists the labeled sessions under that name. Never
-`tmux -L claude kill-session -t <name>`: a bare tmux target prefix-matches
-ANY session, so with `api` gone it kills `api3`. `status` prints the
-exact names. `capture-pane` does NOT accept the `=name` exact form ("can't
-find pane") -- resolve pane ids first with
-`tmux -L claude list-panes -a -F '#{session_name} #{pane_id}'`.
+To start a fresh conversation (e.g. "a new backend session"), with `<dir>`
+an absolute path; ask which directory if it was not said and no earlier
+conversation of the name shows it:
+
+```bash
+tmux new-session -d -s <name> -c <dir>
+tmux send-keys -t '=<name>:0' "claude -n $(hostname)/<name>" Enter
+```
+
+To resume one (e.g. "bring up backend"), open the session in the
+conversation's directory and type the resume, with the full name, label
+included. A resume only finds a conversation from its own directory. When
+the session is up with its claude gone, skip the `new-session`:
+
+```bash
+tmux new-session -d -s <name> -c <dir>
+tmux send-keys -t '=<name>:0' "claude --resume <id> -n $(hostname)/<name>[/<task>]" Enter
+```
+
+`:0` is claude's shell only while that shell lives: when it exits with another
+window open, `renumber-windows` makes that window 0, and typed keys go into nvim
+or `claude remote-control`. In a session already up, check first that window 0
+shows the shell (`fish`):
+
+```bash
+tmux list-windows -t '=<name>:' -F '#I #W #{pane_current_command}'
+```
+
+Append `--dangerously-skip-permissions` only when the user explicitly asks
+for a session with permissions bypassed -- never choose it yourself.
+
+One LIVE session per FULL name, label included: `api`, `api/login` and
+`api/docs` are three names and run side by side, each in a session of its
+own name; a second session of one of them is what must not exist.
+
+One name can own SEVERAL conversations: a `/clear` inside a session, or a
+fresh start under a used name, starts a new conversation beside the old one.
+Pick by last message, not file time (a picker rename touches a file without
+anyone talking in it), and say which you resumed, since the user may have
+wanted the older thread. A resume continues a conversation in a new
+transcript, so its id can differ from the one seen before.
+
+To stop a session: `tmux kill-session -t '=<name>'`, with the `=`: a bare tmux
+target prefix-matches ANY session, so with `api` gone it kills `api3`.
+`capture-pane` does NOT accept the `=name` exact form ("can't find pane") --
+resolve pane ids first with `tmux list-panes -a -F '#{session_name} #{pane_id}'`.
 
 ## Reloading sessions after a Claude Code update
 
-Reload with `~/.dotfiles/scripts/claude_tmux_run.sh restart <name>[/<task>]`
-(the exact name, as `status` prints it). It ends the old claude and resumes
-the same conversation in the same tmux pane, with the permission mode the
-session was launched with, so attached clients stay where they are. The
-user does the same from tmux with `prefix C-r` on the session in view
-(on any tmux server, C-r also restarts a claude typed at a shell's prompt,
-resuming it at that prompt).
-The conversation is unchanged, though a resume writes into a NEW transcript
-file, so its id can differ from the one you saw before (see above). Each
-restart logs its steps under `~/.dotfiles/.logs/<UTC>_claude_tmux_restart/`.
+A session runs a new build only once its claude starts again. Reload one by
+exiting its claude and resuming it in the same shell. The session, its other
+windows, attached clients and what its panes started all stay; only the claude
+process goes. Read its flags first, as `pgrep -a -x claude` is the only record
+of them, and pass `--dangerously-skip-permissions` back only for a session that
+had it:
 
-`restart` refuses a BUSY session and leaves it running: a turn, or a
-background shell claude still tracks, which `claude agents` also reports
-as busy, the turn long over. `--check` prints that work without
-restarting, one item per line, followed by the detached processes the
-restart would end, by the full path of their program
-(`detached: /usr/bin/ssh`), which never refuse; `--force` restarts over
-the work -- only on the user's say, after reading the pane.
-`prefix C-r` lists both in its y/n popup.
+```bash
+tmux send-keys -t <pane id> /exit Enter
+shell=$(tmux display -p -t <pane id> '#{pane_pid}')
+while pgrep -P "$shell" -x claude >/dev/null; do sleep 1; done
+tmux send-keys -t <pane id> "claude --resume <id> -n $(hostname)/<name>[/<task>]" Enter
+```
 
-Reload only IDLE sessions. A reload buys a fresh binary; it is never worth
-killing work in flight, and "reload all sessions" does not authorise that.
-Capture every target's pane first and leave a session alone when it shows:
+The wait matters: keys sent while claude shuts down are lost in its exiting
+screen, which leaves a bare prompt that looks reloaded. An exit can take 30
+seconds; past that, look at the pane rather than typing on.
+
+A session launched before window 0 became a shell has no shell under its
+claude: exiting ends the session, windows and all, and it then has to be
+started anew. To tell the two apart, read `pane_start_command`: `fish` for a
+shell-first pane, and it holds `exec claude` for the older kind.
+
+Reload only IDLE sessions. Nothing checks or refuses: exiting ends what claude
+is running, so these checks are the only guard. A reload buys a fresh
+binary; it is never worth killing work in flight, and "reload all sessions"
+does not authorise that. Capture every target's pane first and leave a
+session alone when it shows:
 
 - a turn in progress -- a spinner with an elapsed timer at the bottom.
   Capture twice a few seconds apart: an advancing timer means it is
@@ -200,21 +195,18 @@ Capture every target's pane first and leave a session alone when it shows:
   Tracked means a live CHILD of the session's `claude` pid. A process merely
   carrying that session's `CLAUDE_PID`/`TMUX_PANE` env but reparented to
   systemd was detached on purpose (`setsid nohup ... > log`): nothing was
-  tracking it, so it is NOT a reason to skip, but the restart ends it with
-  the old claude's scope (see The setup). Name such processes in the report
-  (`restart --check` lists them), so the user can start again what still
-  matters. Grep the session's transcript for how it was launched before
+  tracking it, so it is NOT a reason to skip: its pane stays, so it survives
+  the reload (a session of the older kind closes, and ends it; see The
+  setup). Grep the session's transcript for how it was launched before
   believing an env stamp.
 
-`restart` finds both itself (a tracked shell is a child of claude's pid);
-the list says what the pane shows when it refuses. Reload the idle ones,
-then name the ones you skipped and why, and offer to come back for them
-once they go quiet.
+Reload the idle ones, then name the ones you skipped and why, and offer to
+come back for them once they go quiet.
 
 Which build each session actually runs:
 
 ```bash
-tmux -L claude list-panes -a -F '#{session_name} #{pane_pid}' |
+tmux list-panes -a -F '#{session_name} #{pane_pid}' |
   while read s p; do
     for q in $p $(pgrep -P $p) $(pgrep -P $p | xargs -r -I{} pgrep -P {}); do
       e=$(readlink /proc/$q/exe); case "$e" in */versions/*) echo "$s ${e##*/}"; break;; esac
@@ -229,35 +221,31 @@ instead.
 
 - The installer can flip that symlink mid-reload, so sessions spawned
   seconds apart land on different builds. Check versions after reloading a
-  batch and restart the stragglers.
-- A kill discards text the user typed into the prompt but never sent -- but
+  batch and reload the stragglers.
+- An exit discards text the user typed into the prompt but never sent, and
+  `/exit` sent on top of it is not a command -- but
   the input box ALSO renders Claude Code's suggested-action hint, which
   echoes the recap's next step ("commit this" under a recap ending "next is
   committing them"). `capture-pane -p` strips the styling that separates the
   two, so a line in the box is not proof of pending input. Quote it back and
   ask; never skip a reload over it. (`-e` keeps the SGR codes to compare.)
+- A pane in copy mode takes typed keys as copy-mode commands. Check
+  `#{pane_in_mode}` is 0 before typing into one.
 - A reload resets per-process runtime state even though the conversation is
   intact: effort drops to the configured default (`modelSettings` in
   `home/.claude/settings.json`) and the session's cwd returns to its
   launch directory. Report both so the user can restore
   them.
-- This manager session cannot reload itself: it is in a turn whenever it
-  runs anything, so `restart manager` refuses. Tell the user to press
-  `prefix C-r` in its pane once it is idle; that ends what the manager left
-  running in the background (see The setup). Restarting the service does
-  not reload it: the service only starts a manager that is missing. A
-  pulled change to the unit file needs `systemctl --user daemon-reload`
-  (`dotup` runs it) before the next boot or restart uses it.
+- This manager session cannot reload itself: exiting ends the turn doing the
+  reload, before its resume. Tell the user to `/exit` it once it is idle, then
+  resume it in its shell, with `--dangerously-skip-permissions`. Restarting
+  the service does not reload it: the service only starts a manager whose
+  session is missing. A pulled change to the unit file needs
+  `systemctl --user daemon-reload` (`dotup` runs it) before the next boot or
+  restart uses it.
 - A pulled change to `home/.tmux.conf` (a hook, the title format) reaches
-  the claude sessions' server only on
-  `tmux -L claude source-file ~/.tmux.conf`: a plain `tmux source-file`
-  reloads the default server, and nothing reloads either on its own.
-
-`claude_tmux_run.sh start` is the systemd entrypoint: it starts the
-manager only when its session is missing, so from inside it there is
-nothing for you to call it for. Never `pkill -f` on the script's name: the
-pattern matches every load and restart in flight. Read the script when you
-need its usage.
+  the server only on `tmux source-file ~/.tmux.conf`: nothing reloads it on
+  its own.
 
 ## Daily work log
 
@@ -375,12 +363,13 @@ script re-enables it; on a new GPU box enable it along with the guard.
 - Do not kill or restart sessions you were not asked to touch, and do not
   kill the tmux server (it hosts all of them).
 - Permissions bypass is reserved for this manager session and for
-  sessions the user explicitly requested with it (`--dangerous`).
+  sessions the user explicitly requested with it
+  (`--dangerously-skip-permissions`).
 - Never use background agents in this flow. Every session is an interactive
-  Claude Code process in a tmux window, started by `claude_tmux_run.sh`.
+  Claude Code process in a tmux window.
   Do not run `claude --bg`, do not dispatch work from the `claude agents`
   view, and do not leave a daemon running: a background agent holds the
-  conversation's transcript open, so the next load of that name is refused
+  conversation's transcript open, so a resume of it is refused
   ("already open in another claude process"), and the daemon respawns a
   worker you kill with a signal, under a new pid. Note that merely opening
   `claude agents` starts a transient daemon -- if you open it (it is the
@@ -388,14 +377,10 @@ script re-enables it; on a new GPU box enable it along with the guard.
   the row, `ctrl+x`), run `claude daemon stop --any` afterwards.
   `claude daemon stop --any` terminates every background session and the
   supervisor; interactive tmux sessions are unaffected.
-- Sessions are launched with `CLAUDE_CODE_DISABLE_AGENT_VIEW=1`, which
-  turns off `claude agents`, `--bg`, `/background` and the supervisor for
-  them -- including the left arrow that opens the agent strip, which
-  otherwise starts a daemon and leaves a background session behind on every
-  press. The variable is inherited by anything a session runs, and under it
-  `claude agents --json` prints a refusal and exits 0, so the load guard
-  calls it via `env -u CLAUDE_CODE_DISABLE_AGENT_VIEW` -- keep that wrapper,
-  or the guard goes blind and double-opens a conversation.
+- `CLAUDE_CODE_DISABLE_AGENT_VIEW=1` is set in `home/.claude/settings.json`,
+  which turns off `claude agents`, `--bg`, `/background` and the supervisor --
+  including the left arrow that opens the agent strip, which otherwise starts
+  a daemon and leaves a background session behind on every press.
 - A turn can resume long after the previous one, on a machine that rebooted
   in between: the VM gets deallocated and started again, and systemd
   recreates this session. Before explaining current state by something you

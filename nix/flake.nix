@@ -227,7 +227,7 @@
             pkgs.playwright-test
             # PDF utilities (pdftotext, pdfinfo, ...) from poppler
             pkgs.poppler-utils
-            # python3 -- stdlib-only scripts and tests (claude_tmux_run.sh,
+            # python3 -- stdlib-only scripts and tests (tmux_hooks_test.sh,
             # ntfy_stop_test.sh); the Mac's replaces the python.org 3.12 in
             # /usr/local/bin, and on Linux it wins over /usr/bin/python3.
             # Packages go in uv projects or `uv run` scripts, not a global pip

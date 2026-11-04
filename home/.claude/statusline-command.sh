@@ -211,7 +211,7 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
 fi
 
 # Session name (set via -n or /rename; absent on unnamed sessions), whole:
-# "<hostname>/<name>/<task>" as claude_tmux_run.sh names it, the same string
+# "<hostname>/<name>/<task>" as claude_tmux_session/AGENTS.md names it, the same string
 # the prompt bar, /resume and claude.ai show, so one conversation never
 # reads two ways. Neither shortened nor stripped of the hostname.
 sname=""

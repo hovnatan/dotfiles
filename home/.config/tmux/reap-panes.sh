@@ -1,34 +1,32 @@
 #!/usr/bin/env bash
-# tmux hook for every pane that closes (declared in ~/.tmux.conf), and the
-# first step of a cold start in scripts/claude_tmux_run.sh (launch): on the
-# claude socket, stop the systemd scope of every pane that no longer
-# exists, ending whatever a pane left running in the background there.
+# tmux hook for every pane that closes and every server that starts (declared
+# in ~/.tmux.conf): on the socket it is given, stop the systemd scope of every
+# pane that no longer exists, ending whatever a pane left running in the
+# background there. On a Mac, which has no scopes, reap-panes-macos.sh does
+# what it can instead.
 #
-#   reap-panes.sh <socket path> [--server-gone]
+#   reap-panes.sh <socket path>
 #
-# A scope is kept while it holds a live pane's own process (the pane_pid
-# tmux reports) and stopped otherwise: its pane closed, with its session,
-# or the pane was respawned into a scope of its own. A process started from
-# the pane, detached or not, stays in the scope it was born in.
+# A scope is kept while it holds a live pane's own process, and a pane's own
+# process is the one thing in a scope whose parent is a tmux server. A process
+# started from the pane, detached or not, stays in the scope it was born in.
+# So does a tmux server started from a pane; with sessions of its own to lose,
+# its scope is kept too.
 #
-#   tmux-spawn-a.scope  claude (pane %3's process), a proxy it detached  -> kept
-#   tmux-spawn-b.scope  a proxy, its pane %1 closed                      -> stopped
-#   tmux-spawn-c.scope  a job left by %3's earlier claude (respawned)    -> stopped
+#   tmux-spawn-a.scope  fish (child of a tmux server), a proxy it detached  -> kept
+#   tmux-spawn-b.scope  a proxy, its pane closed (parent: systemd)          -> stopped
 #
-# `restart` stops a respawned pane's old scope itself, right after the
-# respawn (scripts/claude_tmux_run.sh); this catches what a restart that
-# died midway left.
+# Only this socket's scopes are looked at, however its server started. tmux
+# names the server in each scope's description, "tmux child pane 812 launched
+# by process 4021" (see ours, below, for a server that has since gone). A server
+# that cannot be reached is a live server of some other socket here, and loses
+# nothing.
 #
-# tmux 3.7 runs each pane in a scope of its own, PartOf the server's scope
-# (see launch in scripts/claude_tmux_run.sh). A process a session detached
-# -- setsid, nohup, a tool's background job -- stays in its pane's scope
-# when the pane closes, so the scope stays active, and through PartOf it
-# keeps the server's scope loaded even once the server has exited. The next
-# cold start then cannot create tmux-server-<socket> again and nothing
-# comes up (seen 2026-10-22, held by a cloud-sql-proxy):
+# tmux 3.7 runs each pane in a scope of its own. A process a session detached
+# -- setsid, nohup, a tool's background job -- stays in its pane's scope when
+# the pane closes, so the scope stays active, seen 2026-10-22 held by a
+# cloud-sql-proxy:
 #
-#   tmux-server-claude.scope        inactive, dead: the server exited
-#     ^ PartOf
 #   tmux-spawn-<uuid>.scope         active: its pane is gone, but
 #     `- cloud-sql-proxy ...        a session's background job is not
 #
@@ -42,19 +40,12 @@
 #                     killed                 |   no live pane's own process
 #   session-closed    the backstop          /
 #
-#   (a restart's respawn fires only pane-died: claude_tmux_run.sh stops the
-#   old claude's scope itself)
-#
-#   launch, no server (claude_tmux_run.sh) -> reap-panes.sh <socket> --server-gone
-#       all of them -- the hook cannot be relied on for the last session,
-#       whose server exits with it -- then waits for the server's scope to
-#       unload, and fails naming what still holds it
-#   either, the server's scope up but tmux unable to reach it (socket file
-#   removed, a tmux the server rejects) -> stops nothing, fails loudly
-#
+#   server start      a server's last session  -> reap-panes.sh <socket>
+#                     takes the hook with it,
+#                     so the next one sweeps
 # Not the closed pane's own scope alone: by hook time its pid is gone, so
-# /proc can no longer say which scope it ran in, and the diff against the
-# live panes finds exactly that scope, plus anything an earlier reap missed.
+# /proc can no longer say which scope it ran in. Looking at every scope finds
+# that one, plus anything an earlier reap missed.
 # One close fires several of these (kill-session: one window-unlinked per
 # window, then session-closed), which then run side by side; see the loop
 # below for why that is safe.
@@ -66,25 +57,18 @@
 #   2026-10-22T19:36:30Z reaped tmux-spawn-7c10....scope: 2130207 cloud-sql-proxy --auto-iam-authn ...
 set -u
 
-sock=${1:?usage: reap-panes.sh <socket path> [--server-gone]}
-server_gone=${2:-}
-name=${sock##*/}
-# Only the claude socket (or the one a test names): its server, and only
-# its server, runs in tmux-server-<socket>.scope. And only under systemd:
-# a Mac has no scopes, and its tmux leaves nothing like this behind.
-[ "$name" = "${CLAUDE_TMUX_SOCKET:-claude}" ] || exit 0
-command -v systemctl >/dev/null || exit 0
-server_unit="tmux-server-$name.scope"
+sock=${1:?usage: reap-panes.sh <socket path>}
+
+[ "$(uname)" != Darwin ] || exec "${0%/*}/reap-panes-macos.sh" "$sock"
+
+# No user manager, as in a container: no scopes, so nothing to stop. A server
+# started from an ssh login may lack the variable systemctl --user needs, while
+# tmux gives its panes scopes all the same.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+[ -S "$XDG_RUNTIME_DIR/systemd/private" ] || exit 0
 
 # shellcheck source=scripts/lib/event_log.sh
 . "${0%/*}/../../../scripts/lib/event_log.sh"
-
-# The pane scopes, listed BEFORE anything is asked of the server: a scope
-# only exists once tmux has forked its pane, so every pane a listed scope
-# can belong to is in the list-panes below. The other order stopped a pane
-# born in between. Likewise a server started after this listing has its
-# scope active by the time --server-gone checks it below.
-units=$(systemctl --user show -p ConsistsOf --value "$server_unit")
 
 # unit_up <unit>: true while the unit is loaded and not inactive or failed.
 unit_up() {
@@ -106,63 +90,68 @@ no_procs() {
   echo "reap-panes.sh: $1 is up but its processes cannot be read under /sys/fs/cgroup$(systemctl --user show -p ControlGroup --value "$1"); this needs the unified cgroup v2 hierarchy at /sys/fs/cgroup" >&2
   exit 1
 }
-# server_runs: true while the tmux server process is in its scope. Not the
-# scope's own state: the hooks the server runs (this one included) live in
-# that scope too and keep it up for a moment after the server has gone.
-server_runs() {
-  local f pid
-  unit_up "$server_unit" || return 1
-  f=$(procs_of "$server_unit") || no_procs "$server_unit"
+# ours <unit> <file listing its processes>: true when the scope is this
+# socket's. A server gone leaves one record of its socket, the TMUX variable
+# its panes passed on; a job that cleared its environment has none, and stays.
+#
+#   process 4021 is the server at this socket   -> ours
+#   process 4021 is another live tmux server    -> not ours
+#   no such server: a process has TMUX=<this socket>,...   -> ours
+ours() {
+  local desc owner pid vars
+  desc=$(systemctl --user show -p Description --value "$1")
+  owner=${desc##* launched by process }
+  case $owner in
+    "" | *[!0-9]*)
+      unit_up "$1" || return 1
+      event_log_note tmux_hooks "FAILED to read the server of $1 from: $desc"
+      echo "reap-panes.sh: $1 is described as '$desc', naming no server; has tmux changed that text?" >&2
+      exit 1
+      ;;
+  esac
+  [ "$owner" = "$server" ] && return 0
+  [ "$(cat "/proc/$owner/comm" 2>/dev/null)" = "tmux: server" ] && return 1
   while read -r pid; do
-    [ "$(cat "/proc/$pid/comm" 2>/dev/null)" = "tmux: server" ] && return 0
-  done <"$f"
+    vars=$(tr '\0' '\n' 2>/dev/null <"/proc/$pid/environ") || continue
+    case $'\n'$vars in *$'\n'"TMUX=$sock,"*) return 0 ;; esac
+  done <"$2"
   return 1
 }
-# unreachable <client error>: the server runs and this cannot reach it --
-# not the same as a server gone. Stop nothing.
-unreachable() {
-  event_log_note tmux_hooks "REFUSED to reap: the tmux server in $server_unit runs but $sock cannot reach it ($1)"
-  echo "reap-panes.sh: no tmux server answers at $sock ($1), but one runs in $server_unit: it cannot be reached (its socket file removed? a tmux the server's protocol rejects?). Nothing stopped. Check: systemctl --user status $server_unit; ls -l $sock" >&2
-  exit 1
+
+# holds_pane <file listing a scope's processes>: true when one of them is a
+# child of a tmux server, as a pane's own process and nothing else there is,
+# or a tmux server itself.
+# By status, not stat: "tmux: server" has a space, which shifts stat's fields.
+holds_pane() {
+  local pid parent
+  while read -r pid; do
+    [ "$(cat "/proc/$pid/comm" 2>/dev/null)" = "tmux: server" ] && return 0
+    parent=$(sed -n 's/^PPid:[[:space:]]*//p' "/proc/$pid/status" 2>/dev/null)
+    [ -n "$parent" ] && [ "$(cat "/proc/$parent/comm" 2>/dev/null)" = "tmux: server" ] && return 0
+  done <"$1"
+  return 1
 }
 
-# The scopes the live panes' own processes run in, " tmux-spawn-a.scope
-# ... " -- none once the server is gone. The scope is the last component of
-# the unified (cgroup v2) line of /proc/<pid>/cgroup:
-# "0::/user.slice/.../tmux-spawn-a.scope".
-live_scopes=" "
-if [ -n "$server_gone" ]; then
-  server_runs && unreachable "no server answers"
-else
-  # A failed list-panes is never read as "no panes", which would stop every
-  # pane's scope. The server exiting with its last session is the one
-  # benign failure: it is gone within moments, and what it leaves
-  # is the next cold start's (launch runs this with --server-gone).
-  if ! out=$(tmux -S "$sock" list-panes -a -F '#{pane_pid}' 2>&1); then
-    for _ in $(seq 50); do
-      server_runs || {
-        event_log_note tmux_hooks "server gone with its last session; its pane scopes are the next start's to stop"
-        exit 0
-      }
-      sleep 0.1
-    done
-    unreachable "$(tr '\n' ' ' <<<"$out")"
-  fi
-  while read -r pid; do
-    cg=$(sed -n 's/^0:://p' "/proc/$pid/cgroup" 2>/dev/null) && live_scopes+="${cg##*/} "
-  done <<<"$out"
+if ! units=$(systemctl --user list-units --type=scope --all --plain --no-legend 'tmux-spawn-*.scope'); then
+  event_log_note tmux_hooks "FAILED to list the pane scopes for $sock"
+  echo "reap-panes.sh: systemctl --user could not list the pane scopes" >&2
+  exit 1
 fi
+units=$(awk '{print $1}' <<<"$units")
+
+# No answer is a server gone, or one that cannot be reached: ours sorts those.
+server=$(tmux -S "$sock" display-message -p '#{pid}' 2>/dev/null) || server=""
 
 # Several sessions closing at once run several of these side by side, so a
 # unit can go between the listing and any step here: one no longer up is
 # skipped (and one up whose processes cannot be read fails, see no_procs).
 for unit in $units; do
-  case $unit in tmux-spawn-*.scope) ;; *) continue ;; esac
-  case $live_scopes in *" $unit "*) continue ;; esac
   if ! procs_file=$(procs_of "$unit"); then
     unit_up "$unit" && no_procs "$unit"
     continue
   fi
+  ours "$unit" "$procs_file" || continue
+  holds_pane "$procs_file" && continue
   procs=$(xargs -r ps -o pid=,args= -p <"$procs_file" 2>/dev/null | tr -s ' \n' ' ' | cut -c1-300)
   if systemctl --user stop "$unit" 2>/dev/null; then
     event_log_note tmux_hooks "reaped $unit:${procs:- (empty)}"
@@ -172,13 +161,3 @@ for unit in $units; do
     exit 1
   fi
 done
-
-[ -n "$server_gone" ] || exit 0
-# A stopped transient unit is unloaded once nothing references it; the
-# server's scope goes a moment after its last pane scope.
-for _ in $(seq 50); do
-  [ "$(systemctl --user show -p LoadState --value "$server_unit")" = loaded ] || exit 0
-  sleep 0.1
-done
-echo "reap-panes.sh: $server_unit is still loaded ($(systemctl --user show -p ActiveState,ConsistsOf --value "$server_unit" | tr '\n' ' ')); a new tmux server cannot take its name. Inspect it with: systemctl --user status $server_unit" >&2
-exit 1

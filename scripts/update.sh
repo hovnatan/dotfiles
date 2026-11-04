@@ -216,13 +216,14 @@ main() {
   # Nothing running re-reads its config on its own; say what to poke.
   echo "--- reload as needed"
   echo "  tmux:        tmux source-file ~/.tmux.conf"
-  # The claude sessions run on a tmux server of their own, which the line
-  # above does not reach: its hooks and title format change only on this.
-  [ -e ~/.config/systemd/user/claude-tmux.service ] \
+  # A server still on the retired claude socket, which the line above does not
+  # reach: until reloaded it keeps hooks that name deleted scripts.
+  tmux -L claude has-session 2>/dev/null \
     && echo "  claude tmux: tmux -L claude source-file ~/.tmux.conf"
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
-  echo "  claude:      prefix C-r on a claude in tmux restarts it in place (a new binary, settings, hooks)"
+  [ -e ~/.config/systemd/user/claude-tmux.service ] \
+    && echo "  claude:      /exit in a session's claude, wait for its shell prompt, then claude --resume <id> -n <host>/<name> there, starts it afresh (a new binary, settings, hooks)"
   return "$status"
 }
 

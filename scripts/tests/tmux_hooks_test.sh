@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.tmux.conf home/.config/tmux/* scripts/appearance.sh scripts/claude_tmux_run.sh scripts/lib/*
+# check.sh covers: home/.tmux.conf home/.config/tmux/* scripts/appearance.sh scripts/lib/*
 #
 # tmux_hooks_test.sh -- end-to-end checks for the tmux hooks' log: the hook
 # lines of home/.tmux.conf and the scripts they run, in a throwaway tmux
@@ -21,9 +21,6 @@
 #                                            client tmux had last, so every
 #                                            line of two tabs read the same)
 #   switch-client to b                    -> session-changed ... session=b
-#   a's pane title "* <host>/renamed"     -> session $N renamed a -> renamed
-#   then "* <host>-old" (the form before  -> renamed renamed -> old
-#   2026-10-22)
 #   client dies                           -> detached ... session=b
 #                                            synthetic focus-out to %N (b)
 #   an iTerm2-over-ssh attach to a tty    -> exit 1, the reason in the
@@ -56,7 +53,6 @@
 #   source-file over the old rule     -> its hooks and per-session values
 #   (bar only with 2+ windows)           cleared: the bar on everywhere
 #
-# The socket is named "claude": sync-session-name.sh acts on that one only.
 # Exit 0 = all passed; on failure the work dir is kept and printed.
 
 set -uo pipefail
@@ -73,7 +69,7 @@ WORK=$(mktemp -d)
 H="$WORK/home"
 # Unix socket paths are capped near 104 bytes, so not under $WORK.
 SOCKDIR=$(mktemp -d /tmp/hooktest.XXXXXX)
-SOCK="$SOCKDIR/claude"
+SOCK="$SOCKDIR/hooks"
 TMUX_BIN=$(command -v tmux)
 
 failures=0
@@ -191,21 +187,11 @@ wrong=$(hooks_log | grep -E 'Z focus-(in|out) ' | grep -c -v -F " $client_tty se
   && pass "each names the client that reported it ($client_tty, not the bystander $bystander_tty)" \
   || fail "$wrong focus line(s) name another client than $client_tty: $(hooks_log | grep -E 'Z focus-(in|out) ')"
 
-# --- session switch, rename, detach -------------------------------------------------
+# --- session switch, detach ---------------------------------------------------------
 
 t switch-client -c "$client_tty" -t b
 wait_for ' session-changed [^ ]+ session=b: not iTerm2, local: @ssh unset$' \
   && pass "a session switch is logged" || fail "no session-changed line: $(hooks_log)"
-
-t select-pane -t a -T "* $HOSTNAME/renamed"
-wait_for " session \\\$[0-9]+ renamed a -> renamed \\(pane title \"\\* $HOSTNAME/renamed\"\\)\$" \
-  && pass "a rename from the pane title is logged" || fail "no rename line: $(hooks_log)"
-[ "$(t list-sessions -F '#{session_name}' | sort | tr '\n' ' ')" = "b renamed " ] \
-  && pass "and the session is renamed" || fail "sessions: $(t list-sessions -F '#{session_name}' | tr '\n' ' ')"
-# A conversation not yet reloaded still carries "<host>-<name>".
-t select-pane -t renamed -T "* $HOSTNAME-old"
-wait_for " session \\\$[0-9]+ renamed renamed -> old \\(pane title \"\\* $HOSTNAME-old\"\\)\$" \
-  && pass "the old <host>-<name> title still renames the session" || fail "no rename from $HOSTNAME-old: $(hooks_log)"
 
 # wait: without it bash prints the killed job, heredoc and all.
 kill "$client"
@@ -278,6 +264,18 @@ cat >"$H/.nix-profile/bin/tmux-mem-cpu-load" <<EOF
 printf '73.98%%   7.8%%\000\n'
 EOF
 chmod +x "$H/.nix-profile/bin/tmux-mem-cpu-load"
+# tw_stop: end the server and wait until it has gone: a client started while
+# it dies gets "server exited unexpectedly".
+tw_stop() {
+  local pid
+  pid=$(tw display-message -p '#{pid}' 2>/dev/null) || return 0
+  tw kill-server
+  for _ in $(seq 50); do
+    kill -0 "$pid" 2>/dev/null || return 0
+    sleep 0.1
+  done
+  fail "tmux server $pid outlived kill-server by 5 s"
+}
 stats() { env -i HOME="$H" PATH=/usr/bin:/bin "$H/.dotfiles/home/.config/tmux/status-stats.sh" 2>&1; }
 out=$(stats)
 rc=$?
@@ -479,7 +477,106 @@ sleep 0.3
 kill "$wclient"
 wait "$wclient" 2>/dev/null
 wclient=
-tw kill-server 2>/dev/null
+tw_stop
+
+# --- a Mac: what a closed pane left -------------------------------------------------
+
+# reap-panes-macos.sh by way of the real hooks. The job is this bash, not an
+# Apple binary, whose environment ps would hide; its parent exits, so it is
+# detached. Each carries a number of its own, to be found by.
+if [ "$(uname)" = Darwin ]; then
+  BASH_BIN=$(command -v bash)
+  GONE=$((300000 + $$ % 100000)) STAY=$((GONE + 100000)) RETRY=$((GONE + 200000)) # numbers no other run holds
+  # detached_job <timeout>: a pane that leaves a job behind and idles; prints
+  # the pane's id.
+  detached_job() {
+    tw new-window -d -P -F '#{pane_id}' -t =w: \
+      "sh -c '(nohup $BASH_BIN -c \"read -r -t $1 <>$WORK/never\" </dev/null >/dev/null 2>&1 &) ; exec sleep 300'"
+  }
+  job_of() { # <timeout>: the job's pid, once it is up. Anchored: the pane's
+    # own sh -c line holds the same words until it execs.
+    for _ in $(seq 30); do
+      pgrep -f -- "^$BASH_BIN -c read -r -t $1 " && return
+      sleep 0.1
+    done
+  }
+  ended() { # <pid>: true once it has exited, within 6 s
+    for _ in $(seq 60); do
+      kill -0 "$1" 2>/dev/null || return 0
+      sleep 0.1
+    done
+    return 1
+  }
+
+  tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300'
+  gone_pane=$(detached_job "$GONE")
+  stay_pane=$(detached_job "$STAY")
+  gone_job=$(job_of "$GONE")
+  stay_job=$(job_of "$STAY")
+  tw kill-pane -t "$gone_pane"
+  [ -n "$gone_job" ] && ended "$gone_job" && pass "a closed pane's detached job ended with it" \
+    || fail "job ${gone_job:-none} outlived its pane: $(ps -o command= -p "${gone_job:-0}")"
+  kill -0 "$stay_job" 2>/dev/null && [ "$(tw display -p -t "$stay_pane" '#{pane_id}')" = "$stay_pane" ] \
+    && pass "a live pane's job stayed" || fail "job ${stay_job:-none} of the live pane $stay_pane is gone"
+  hooks_log | grep -q "reaped pid $gone_job (pane %" && pass "the stop is logged with the pane" \
+    || fail "no reap line for $gone_job: $(hooks_log | tail -n2)"
+
+  # A failed list-panes is not "no live panes": the server answers, the list
+  # does not, the live pane's job stays and the failure is said. $WORK/fails
+  # holds how many list-panes calls fail.
+  mkdir "$WORK/flaky"
+  cat >"$WORK/flaky/tmux" <<STUB
+#!/bin/sh
+case "\$*" in *list-panes*)
+  n=\$(cat "$WORK/fails")
+  [ "\$n" -gt 0 ] && { echo \$((n - 1)) >"$WORK/fails"; exit 1; } ;;
+esac
+exec "$TMUX_BIN" "\$@"
+STUB
+  chmod +x "$WORK/flaky/tmux"
+  flaky_reap() { HOME="$H" PATH="$WORK/flaky:$PATH" "$H/.dotfiles/home/.config/tmux/reap-panes.sh" "$WSOCK" 2>&1; }
+  echo 100 >"$WORK/fails"
+  out=$(flaky_reap)
+  rc=$?
+  sleep 1.5
+  [ "$rc" -ne 0 ] && [[ "$out" == *"lists no panes"* ]] && kill -0 "$stay_job" 2>/dev/null \
+    && pass "a list-panes that keeps failing stops nothing, and says so" \
+    || fail "a list-panes that keeps failing: exit $rc, job ${stay_job:-none}, output: $out"
+  hooks_log | grep -q 'FAILED to list the panes' && pass "and the failure is logged" \
+    || fail "no FAILED line for list-panes: $(hooks_log | tail -n2)"
+
+  # A socket file lost, and a new server on its path: the old server runs on,
+  # so its pane's job is not a dead server's, however the new one's sweep reads it.
+  mv "$WSOCK" "$WSOCK.away"
+  tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w3 -x 120 -y 30 'sleep 300'
+  sleep 1.5
+  kill -0 "$stay_job" 2>/dev/null && pass "a new server on a lost socket leaves the old server's job" \
+    || fail "job ${stay_job:-none} of a live server ended in a new server's sweep"
+  tw_stop
+  mv "$WSOCK.away" "$WSOCK"
+
+  # The server goes with its last session and no hook is left to run: its
+  # job ends at the next server's start.
+  tw_stop
+  tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w2 -x 120 -y 30 'sleep 300'
+  [ -n "$stay_job" ] && ended "$stay_job" && pass "the next server's start ended what the last one left" \
+    || fail "job $stay_job outlived its server and the next start"
+  tw_stop
+
+  # The start sweep on a server with no session yet: its list-panes fails at
+  # first, and the job is stopped all the same. No config, so no sweep but this.
+  tw -f /dev/null new-session -d -s w -x 120 -y 30 'sleep 300'
+  detached_job "$RETRY" >/dev/null
+  retry_job=$(job_of "$RETRY")
+  tw_stop
+  tw -f /dev/null new-session -d -s w -x 120 -y 30 'sleep 300'
+  echo 3 >"$WORK/fails"
+  out=$(flaky_reap)
+  [ -n "$retry_job" ] && ended "$retry_job" && pass "a list-panes that fails at first is waited for" \
+    || fail "job ${retry_job:-none} outlived a reap whose list-panes failed 3 times: $out"
+  tw_stop
+  pkill -f -- "read -r -t ($GONE|$STAY|$RETRY) " # a failure above leaves them
+fi
 
 # --- the log as a whole ---------------------------------------------------------------
 

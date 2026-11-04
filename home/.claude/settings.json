@@ -3,7 +3,8 @@
   "env": {
     "CLAUDE_CODE_TMUX_TRUECOLOR": "1",
     "CLAUDE_CODE_AUTO_CONNECT_IDE": "false",
-    "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1"
+    "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
+    "CLAUDE_CODE_DISABLE_AGENT_VIEW": "1"
   },
   "permissions": {
     "allow": [
@@ -165,7 +166,7 @@
   "precomputeCompactionEnabled": true,
   "showTurnDuration": true,
   "showMessageTimestamps": true,
-  "remoteControlAtStartup": false,
+  "remoteControlAtStartup": true,
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
