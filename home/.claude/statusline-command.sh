@@ -25,10 +25,10 @@
 #                                          apart by the label)
 #   dim            | separators            the only dim element: values stay
 #                                          readable
-#   plain          clock                   dim was too faint to read at a
-#                  gauges under 20%        glance for either of these: gauges
-#                  cache >10m, "na"        below their threshold, or an unset
-#                  "Ctx--"                 cache countdown or context gauge
+#   plain          gauges under 20%        dim was too faint to read at a
+#                  cache >10m, "na"        glance for either of these: gauges
+#                  "Ctx--"                 below their threshold, or an unset
+#                                          cache countdown or context gauge
 #
 # Clean/dirty is a binary, so it is a glyph rather than a hue. Yellow was the
 # obvious candidate and it does not work: GitLab Light has to darken yellow to
@@ -47,9 +47,10 @@
 # raw control characters jq rejects, \\ collapses), so one such escape anywhere
 # in the payload blanked every field. A missing key becomes "", a value of the
 # wrong shape becomes "" or "na" rather than an error, since any jq error here
-# would blank the whole line. The clock comes from the same pass (`now`), so
-# nothing below calls `date` -- which also keeps the transcript fallback off
-# GNU-only `date -d`, the one thing that made it silently dead on macOS.
+# would blank the whole line. The current time comes from the same pass (`now`,
+# for the cache countdown), so nothing below calls `date` -- which also keeps
+# the transcript fallback off GNU-only `date -d`, the one thing that made it
+# silently dead on macOS.
 # shellcheck disable=SC2154  # the variables below are assigned by this eval
 eval "$(jq -r '
   def s(f): (f // "" | tostring);
@@ -62,11 +63,6 @@ eval "$(jq -r '
   @sh "session_name=\(s(.session_name))",
   @sh "transcript=\(s(.transcript_path))",
   @sh "now=\(now | floor)",
-  # Clock with its zone, US daylight/standard pairs shortened to the generic
-  # name: 12:55 ET on a Mac in New York (EDT or EST), 16:55 UTC on a VM.
-  @sh "clock=\(now | strflocaltime("%H:%M") + " " + (now | strflocaltime("%Z")
-    | {EDT: "ET", EST: "ET", CDT: "CT", CST: "CT", MDT: "MT", MST: "MT",
-       PDT: "PT", PST: "PT"}[.] // .))",
   @sh "cache_expires=\(if .prompt_cache == null then ""
                        else ((.prompt_cache.expires_at | numbers | floor | tostring) // "na") end)",
   @sh "cache_mark=\(if ((.prompt_cache // {}) | has("recache_tokens_if_cold") and .recache_tokens_if_cold == null)
@@ -377,10 +373,4 @@ else
 fi
 cache=" \033[2m|\033[0m ${pcolor}${cache_mark}${cache_txt}\033[0m"
 
-# Wall clock, last and plain: the line is redrawn every 60s, so it is also the
-# proof the refresh is alive. Local time of the machine running this script
-# (jq's strflocaltime honours TZ) with its zone, so a remote session's clock
-# reads as its own: "12:55 ET" on the Mac, "16:55 UTC" on a UTC box.
-clk=" \033[2m|\033[0m ${clock}"
-
-printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache" "$clk"
+printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache"
