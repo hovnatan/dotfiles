@@ -6,6 +6,7 @@ CI has no Ghostty, tmux or ssh:
     osascript, tmux, ps text --> parse_*() --> line_of(fake lookup) --> lines
     saved windows --> render() --> parse_file() --> the same windows
     saved windows, what is open --> plan_restore() --> the tabs to open
+    replace(), Ghostty and tmux faked --> the order of what it opened and closed
 
     python3 ghostty_tmux_arrangement_test.py <repo> <event log>
 """
@@ -16,7 +17,8 @@ CI has no Ghostty, tmux or ssh:
 
 import importlib.util
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -254,6 +256,155 @@ def snapshots_prune_in_the_given_folder() -> None:
     raises("/x/auto-x.txt", lambda: shared.stale_snapshots(["auto-x"], Path("/x")))
 
 
+def test_idle_is_a_bare_shell_or_nothing() -> None:
+    for command in ["", "-fish", "fish", "/bin/zsh", "-zsh", "bash"]:
+        assert arr.idle(command), command
+    for command in ["vim", "fish build.fish", "sleep 100", "ssh vm"]:
+        assert not arr.idle(command), command
+
+
+def test_busy_terminals_names_what_a_close_would_kill() -> None:
+    commands = {
+        "/dev/t1": "ignored: a local tmux client",
+        "/dev/t2": "ssh vm",  # a tmux title: its session stays on the far side
+        "/dev/t3": "ssh vm",  # no tmux title: a login is lost
+        "/dev/t4": "-fish",
+        "/dev/t5": "vim notes",
+    }
+    window = arr.Window(
+        "w",
+        [
+            Terminal("1", "/dev/t1", "[main]"),
+            Terminal("2", "/dev/t2", "[vm/api]"),
+            Terminal("3", "/dev/t3", "vm: ~"),
+            Terminal("4", "/dev/t4", "fish"),
+            Terminal("5", "/dev/t5", "notes"),
+        ],
+    )
+    clients = {"/dev/t1": Client("default", "main", "/")}
+    got = arr.busy_terminals([window], clients, commands.__getitem__)
+    assert got == ["'vm: ~' (ssh vm)", "'notes' (vim notes)"], got
+
+
+def test_ancestor_finds_ghostty_above_login_not_above_a_tmux_pane() -> None:
+    app = "/Applications/Ghostty.app/Contents/MacOS/ghostty"
+    procs = {
+        30: (20, "-fish"),
+        20: (10, "/usr/bin/login"),
+        10: (1, app),
+        60: (50, "fish"),
+        50: (1, "tmux"),
+    }
+
+    def is_ghostty(exe: str) -> bool:
+        return exe == "ghostty"
+
+    assert shared.ancestor(30, procs.__getitem__, is_ghostty) == f"10 {app}"
+    assert shared.ancestor(60, procs.__getitem__, is_ghostty) is None
+
+
+@contextmanager
+def patched(**fakes: object) -> Generator[None]:
+    """Put `fakes` in the script's namespace for the block, then take them back."""
+    saved = {k: getattr(arr, k) for k in fakes}
+    for k, v in fakes.items():
+        setattr(arr, k, v)
+    try:
+        yield
+    finally:
+        for k, v in saved.items():
+            setattr(arr, k, v)
+
+
+def replacing(  # noqa: PLR0913 - what a run differs by, each with its usual value
+    *,
+    running: bool = True,
+    under: str | None = None,
+    land: Callable[[dict[str, str]], None] = lambda _waiting: None,
+    command: str = "-fish",
+    lines: tuple[str, ...] = (SHELL_LOCAL,),
+    is_alive: bool = True,
+) -> tuple[list[str], str]:
+    """Run replace() on fakes: return what it did, in order, and its error."""
+    done: list[str] = []
+    old = [arr.Window("old1", [Terminal("t1", "/dev/t1", "x")]), arr.Window("old2", [])]
+
+    def osascript(script: str, *args: str) -> str:
+        verb = {arr.CLOSE_WINDOW: "close", arr.ACTIVATE: "activate"}[script]
+        done.append(f"{verb} {args[0]}")
+        return ""
+
+    def open_tabs(plan: list[list[object]]) -> tuple[list[str], dict[str, str]]:
+        done.append(f"open {len(plan)}")
+        return ["new1"], {"t9": "notes"}
+
+    def launch() -> list[object]:
+        done.append("launch")
+        return old[:1]
+
+    with patched(
+        load=lambda _name: [list(lines)],
+        ancestor=lambda *_args: under,
+        alive=lambda _client: is_alive,
+        ghostty_running=lambda: running,
+        launch=launch,
+        read_windows=lambda: old,
+        local_clients=dict,
+        foreground=lambda _tty: command,
+        open_tabs=open_tabs,
+        wait_landed=land,
+        osascript=osascript,
+    ):
+        try:
+            arr.replace("x")
+        except ArrangementError as e:
+            return done, str(e)
+    return done, ""
+
+
+def test_replace_closes_the_old_windows_only_after_the_new_ones_land() -> None:
+    done, error = replacing()
+    assert not error, error
+    assert done == ["open 1", "close old1", "close old2", "activate new1"], done
+
+
+def test_replace_that_does_not_land_closes_nothing() -> None:
+    def never(_waiting: dict[str, str]) -> None:
+        msg = "1 tabs never showed their session: notes"
+        raise ArrangementError(msg)
+
+    done, error = replacing(land=never)
+    assert done == ["open 1"], done
+    assert "never showed their session: notes" in error, error
+    assert "the 2 windows open before are left" in error, error
+
+
+def test_replace_refuses_a_busy_terminal_before_opening_anything() -> None:
+    done, error = replacing(command="vim notes")
+    assert not done, done
+    assert "would kill 'x' (vim notes)" in error, error
+
+
+def test_replace_refuses_to_run_under_ghostty() -> None:
+    done, error = replacing(under="10 /Applications/Ghostty.app/.../ghostty")
+    assert not done, done
+    assert "runs under Ghostty" in error, error
+
+
+def test_replace_launches_ghostty_and_closes_its_startup_window() -> None:
+    # A login not yet a shell would read as busy: a launch's window is not asked.
+    done, error = replacing(running=False, command="login -flp me")
+    assert not error, error
+    assert done == ["launch", "open 1", "close old1", "activate new1"], done
+
+
+def test_replace_with_a_dead_directory_fails_before_any_launch() -> None:
+    gone = "tmux new-session -A -s 'x' -c '/no/such/dir'"
+    done, error = replacing(running=False, lines=(gone,), is_alive=False)
+    assert not done, done
+    assert "local tmux session 'x' is gone" in error, error
+
+
 for name, fn in [(k, v) for k, v in list(globals().items()) if callable(v)]:
     if getattr(fn, "__module__", "") == "__main__" and name not in (
         "log",
@@ -263,6 +414,8 @@ for name, fn in [(k, v) for k, v in list(globals().items()) if callable(v)]:
         "check",
         "yes",
         "no",
+        "patched",
+        "replacing",
     ):
         check(name.replace("_", " "), fn)
 

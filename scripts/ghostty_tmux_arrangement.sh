@@ -7,6 +7,10 @@
 #                                                 to "all"
 #   ghostty_tmux_arrangement.sh restore [<name>]  a new window per saved one,
 #                                                 skipping sessions already open
+#   ghostty_tmux_arrangement.sh replace [<name>]  the saved windows in place of
+#                                                 every window open; refused
+#                                                 under Ghostty, or where a
+#                                                 running program would die
 #   ghostty_tmux_arrangement.sh snapshot          every window as auto-<UTC time>,
 #                                                 keeping the newest 2016;
 #                                                 Hammerspoon runs it every 10

@@ -8,6 +8,7 @@ windows. Only tmux tabs are saved: a plain shell has nothing to come back to.
                    the newest 2016 (two weeks) removed; run every 10 minutes
                    by Hammerspoon (home/.hammerspoon/ghostty_snapshots.lua)
   restore [<name>] the saved windows, beside what is open
+  replace [<name>] the saved windows, in place of every window open
 
     Ghostty (AppleScript) --> per terminal: id, tty, name (read_windows)
       |
@@ -36,6 +37,19 @@ What restore does with a session (plan_restore):
       the tmux server)           logged by name: its programs are not back
     local, gone, directory gone  an error before anything opens
     over ssh, gone               the far side refuses; the tab fails to land
+
+replace opens before it closes, so a failure costs no window:
+
+    parse the file, plan_restore   a bad file or a dead directory fails here
+    refuse under Ghostty           closing its windows would end this run
+    Ghostty not running?           launched by open_clean.sh; its startup
+                                   window is the only one to close
+    refuse a busy terminal         one outside tmux, running something, would
+                                   die with its window (busy_terminals)
+    open the saved windows, wait   a session that never lands fails here, the
+                                   windows that were open left as they were
+    close the windows of before    their tmux clients go; the sessions stay,
+                                   attached from the new windows
 
 The terminal's own name is read, not its tab's or window's: Ghostty puts its
 bell mark in those, before the title, which would hide a session.
@@ -67,6 +81,7 @@ from tmux_arrangement import (
     Client,
     Lookup,
     alive,
+    ancestor,
     attach_for,
     attach_request,
     check_local,
@@ -74,6 +89,7 @@ from tmux_arrangement import (
     local_line,
     local_request,
     log,
+    ps_parent,
     remote_lookup,
     run,
     snapshot_name,
@@ -81,10 +97,16 @@ from tmux_arrangement import (
 )
 
 DIR = Path.home() / ".local/state/ghostty_tmux_arrangements"
+OPEN_CLEAN = Path(__file__).resolve().parents[1] / "macos/open_clean.sh"
+IDLE_SHELLS = frozenset({"bash", "fish", "sh", "zsh"})
 LANDING_TIMEOUT = 30.0  # s for every restored tab to show its session
 OSASCRIPT_TIMEOUT = 30  # s; it takes under a second, longer while macOS asks
 PROGRESS_EVERY = 5.0  # s between the lines a restore logs while it waits
-USAGE = "usage: ghostty_tmux_arrangement.sh save [<name>] | restore [<name>] | snapshot"
+LAUNCH_TIMEOUT = 30.0  # s for a launched Ghostty to show its startup window
+USAGE = (
+    "usage: ghostty_tmux_arrangement.sh save [<name>] | restore [<name>]"
+    " | replace [<name>] | snapshot"
+)
 MAX_ARGS = 2  # <command> <name>
 # "[main]" and, for an ssh client on the default socket, "(vm) [main]"
 # (~/.tmux.conf's set-titles-string, which reads @ssh outside iTerm2).
@@ -128,6 +150,15 @@ on run argv
         set t to new tab in w with configuration cfg
       end if
       return (id of w) & character id 31 & (id of focused terminal of t)
+    end tell
+  end timeout
+end run
+"""
+CLOSE_WINDOW = """
+on run argv
+  with timeout of 20 seconds
+    tell application "Ghostty"
+      close window (first window whose id is (item 1 of argv))
     end tell
   end timeout
 end run
@@ -195,7 +226,7 @@ def line_of(
     """
     if client:
         return local_line(client)
-    if not foreground or Path(foreground.split(maxsplit=1)[0]).name != "ssh":
+    if not is_ssh(foreground):
         return None
     shown = title_session(terminal.name)
     if shown is None:
@@ -206,6 +237,46 @@ def line_of(
         msg = f"tab {index}: ssh command line cannot be replayed: {e}"
         raise ArrangementError(msg) from e
     return attach_for(index, login, shown, lookup)
+
+
+def is_ssh(command: str) -> bool:
+    """Tell whether a command line runs ssh: "/usr/bin/ssh vm" -> True, "" -> False."""
+    return bool(command) and Path(command.split(maxsplit=1)[0]).name == "ssh"
+
+
+def idle(command: str) -> bool:
+    """Tell whether a tty's foreground command is a shell at its prompt, or nothing.
+
+    "-fish" and "/bin/zsh" are; "" is; "fish build.fish" and "vim" are not. A
+    shell that shows arguments is running them.
+    """
+    words = command.split()
+    return not words or (
+        len(words) == 1 and Path(words[0]).name.lstrip("-") in IDLE_SHELLS
+    )
+
+
+def busy_terminals(
+    windows: list[Window],
+    clients: dict[str, Client],
+    foreground: Callable[[str], str],
+) -> list[str]:
+    """Return what closing `windows` would kill, said a terminal each.
+
+    A tmux tab, local or over ssh, keeps its session when its window closes,
+    and a shell at its prompt holds nothing: anything else is lost.
+        Terminal("1", "/dev/ttys005", "vim"), foreground "vim x" -> ["'vim' (vim x)"]
+    """
+    busy = []
+    for window in windows:
+        for terminal in window.terminals:
+            if terminal.tty in clients:
+                continue
+            command = foreground(terminal.tty)
+            over_ssh = is_ssh(command) and title_session(terminal.name) is not None
+            if not over_ssh and not idle(command):
+                busy.append(f"{terminal.name!r} ({command})")
+    return busy
 
 
 def foreground_of(ps_output: str) -> str:
@@ -221,7 +292,7 @@ def foreground_of(ps_output: str) -> str:
         if "+" in stat:
             found.append(command.strip())
     for command in found:
-        if command and Path(command.split()[0]).name == "ssh":
+        if is_ssh(command):
             return command
     return found[0] if found else ""
 
@@ -371,9 +442,14 @@ def osascript(script: str, *args: str) -> str:
     return done.stdout.rstrip("\n")
 
 
+def ghostty_running() -> bool:
+    """Tell whether Ghostty runs."""
+    return run(["pgrep", "-x", "ghostty"], OSASCRIPT_TIMEOUT).returncode == 0
+
+
 def require_ghostty() -> None:
     """Fail unless Ghostty runs: `tell application` would launch it instead."""
-    if run(["pgrep", "-x", "ghostty"], OSASCRIPT_TIMEOUT).returncode != 0:
+    if not ghostty_running():
         msg = "Ghostty is not running; start it first"
         raise ArrangementError(msg)
 
@@ -525,13 +601,84 @@ def restore(name: str) -> None:
     log(f"restored {len(waiting)} tabs in {len(made)} windows from {name}")
 
 
+def launch() -> list[Window]:
+    """Launch Ghostty, with a Dock launch's environment; return its startup windows."""
+    log("launching Ghostty")
+    done = run([str(OPEN_CLEAN), "-a", "Ghostty"], LAUNCH_TIMEOUT)
+    if done.returncode != 0:
+        msg = f"launching Ghostty failed: {done.stderr.strip()}"
+        raise ArrangementError(msg)
+
+    # Its windows are asked for only once it runs: `tell application` before
+    # that would be a second way to launch it, with this run's environment.
+    deadline = time.monotonic() + LAUNCH_TIMEOUT
+    while time.monotonic() < deadline:
+        windows = read_windows() if ghostty_running() else []
+        if windows:
+            return windows
+        time.sleep(0.5)
+    msg = (
+        f"Ghostty showed no window {LAUNCH_TIMEOUT:g} s after its launch;"
+        " is initial-window off in its config?"
+    )
+    raise ArrangementError(msg)
+
+
+def windows_to_replace() -> list[Window]:
+    """Return the windows a replace will close, Ghostty launched if it is not running.
+
+    A terminal that would lose a running program is an error, naming it. A
+    launch's startup window is left out of that check: it holds nothing yet,
+    and its shell may not have reached a prompt.
+    """
+    if not ghostty_running():
+        return launch()
+    windows = read_windows()
+    if busy := busy_terminals(windows, local_clients(), foreground):
+        msg = (
+            f"closing every window would kill {', '.join(busy)}: finish or close"
+            " them first, or `restore` to add the windows to those open"
+        )
+        raise ArrangementError(msg)
+    return windows
+
+
+def replace(name: str) -> None:
+    """Open the saved windows in place of every window open: see the docstring."""
+    # Every check comes before anything opens: past them a failure leaves
+    # windows to clean up, and past the close there is no going back.
+    windows = load(name)
+    if under := ancestor(os.getpid(), ps_parent, lambda exe: exe == "ghostty"):
+        msg = (
+            f"runs under Ghostty ({under}), so closing its windows would end it"
+            " before the restore; run it from a tmux pane or another terminal"
+            " app, or `restore` to add the windows to those open"
+        )
+        raise ArrangementError(msg)
+    plan = plan_restore(windows, [], alive, os.path.isdir)
+    old = windows_to_replace()
+
+    made, waiting = open_tabs(plan)
+    try:
+        wait_landed(waiting)
+    except ArrangementError as e:
+        msg = f"{e}; the {len(old)} windows open before are left, beside the new ones"
+        raise ArrangementError(msg) from e
+
+    for window in old:
+        osascript(CLOSE_WINDOW, window.id)
+        log(f"closed {window.id}")
+    osascript(ACTIVATE, made[0])
+    log(f"replaced {len(old)} windows with {len(made)} from {name}")
+
+
 def main() -> None:
     """Parse argv (<event log> <command> [<name>]) and act."""
     LOG.append(Path(sys.argv[1]))
     args = sys.argv[2:]
     command, name = [*args, None, None][:2]
     if (
-        command not in ("save", "restore", "snapshot")
+        command not in ("save", "restore", "replace", "snapshot")
         or len(args) > MAX_ARGS
         or (command == "snapshot" and name)
     ):
@@ -550,6 +697,9 @@ def main() -> None:
     # An ArrangementError is a finding about the windows, the file or
     # Ghostty, said in one line; anything else is a bug and keeps its traceback.
     try:
+        if command == "replace":
+            replace(name)
+            return
         require_ghostty()
         if command == "save":
             save(name)
