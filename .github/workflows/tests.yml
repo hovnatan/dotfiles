@@ -34,7 +34,7 @@ jobs:
         run: |
           nix profile add --inputs-from "path:$PWD/nix" \
             nixpkgs#tmux nixpkgs#bashInteractive nixpkgs#python3 nixpkgs#lua5_4 nixpkgs#fish \
-            nixpkgs#fzf
+            nixpkgs#fzf nixpkgs#zsh
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
 
       # systemd-run --user and systemctl --user need the runner's user
@@ -48,5 +48,7 @@ jobs:
           [ -S "$rt/bus" ] || { echo "::error::user manager bus $rt/bus never appeared"; exit 1; }
           echo "XDG_RUNTIME_DIR=$rt" >> "$GITHUB_ENV"
 
-      - run: tmux -V; bash --version | head -1; python3 --version; fish --version; fzf --version
+      - run: |
+          tmux -V; bash --version | head -1; python3 --version
+          fish --version; fzf --version; zsh --version
       - run: scripts/check.sh tests

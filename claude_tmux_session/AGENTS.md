@@ -171,7 +171,9 @@ Reload with `~/.dotfiles/scripts/claude_tmux_run.sh restart <name>[/<task>]`
 (the exact name, as `status` prints it). It ends the old claude and resumes
 the same conversation in the same tmux pane, with the permission mode the
 session was launched with, so attached clients stay where they are. The
-user does the same from tmux with `prefix C-r` on the session in view.
+user does the same from tmux with `prefix C-r` on the session in view
+(on any tmux server, C-r also restarts a claude typed at a shell's prompt,
+resuming it at that prompt).
 The conversation is unchanged, though a resume writes into a NEW transcript
 file, so its id can differ from the one you saw before (see above). Each
 restart logs its steps under `~/.dotfiles/.logs/<UTC>_claude_tmux_restart/`.

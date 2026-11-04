@@ -222,8 +222,7 @@ main() {
     && echo "  claude tmux: tmux -L claude source-file ~/.tmux.conf"
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
-  [ -e ~/.config/systemd/user/claude-tmux.service ] \
-    && echo "  claude:      prefix C-r in a claude session restarts its claude (a new binary, settings, hooks)"
+  echo "  claude:      prefix C-r on a claude in tmux restarts it in place (a new binary, settings, hooks)"
   return "$status"
 }
 

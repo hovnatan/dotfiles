@@ -66,10 +66,14 @@
 #     a multi-call one; argv[0] where the kernel hides the path), never
 #     refused, and ended with the old claude's scope (logged); prefix C-r,
 #     typed into an attached client, lists both in a popup, restarts on y,
-#     and shows the verdict; restart-claude.sh refuses a socket that is not
-#     claude's, asks nothing for a client that is gone, restarts nothing
-#     when tmux will not open the popup (another one open) or the client
-#     is too small for it, asks again about a turn begun under the popup,
+#     and shows the verdict; with a pane in view that runs no claude (nvim
+#     in a second window) it asks about the session's claude; on a server
+#     that is not the claude socket it says such a pane has none (the
+#     restart of a claude typed at a shell's prompt, on any server, is
+#     claude_restart_shell_test.sh's); restart-claude.sh asks nothing for
+#     a client that is gone, restarts nothing when tmux will not open the
+#     popup (another one open) or the client is too small for it, asks
+#     again about a turn begun under the popup,
 #     cuts a long item to 3 rows and a list to what fits (pointing at the
 #     full one), and leaves nothing waiting on a popup left unanswered
 #   - an agents --json entry missing a key fails status, not reads as ""
@@ -699,11 +703,12 @@ wait_for() {
   done
   return 1
 }
-# ask_cr <client>: prefix C-r's helper on ctb, for that client, its popup
-# text file in $WORK (so a stray popup is told from a live one's).
+# ask_cr <client> [<pane>]: prefix C-r's helper on ctb, for that client,
+# with that pane in view (ctb's claude pane), its popup text file in $WORK
+# (so a stray popup is told from a live one's).
 ask_cr() {
   HOME="$H" PATH="$H/.local/bin:$PATH" CLAUDE_TMUX_SOCKET="$SOCK" TMPDIR="$WORK" \
-    "$REPO/home/.config/tmux/restart-claude.sh" ask "$sockpath" ctb "$1" 2>&1
+    "$REPO/home/.config/tmux/restart-claude.sh" ask "$sockpath" ctb "$1" "${2:-$pane}" 2>&1
 }
 for _ in $(seq 40); do
   client=$(t list-clients -F '#{client_name}' | head -1)
@@ -736,12 +741,16 @@ for p in "${detached_pids[@]}"; do kill -0 "$p" 2>/dev/null && gone=""; done
   || fail "detached jobs after the restart: $(ps -o pid=,args= -p "${detached_pids[*]}"); log: $(grep -h 'stopped' "$H"/.dotfiles/.logs/*_claude_tmux_restart/events.log)"
 pid=$(pid_now)
 
-# The helper refuses a socket that is not claude's, and asks nothing for a
-# client that is gone.
+# On a server that is not the claude socket, the helper acts on the pane in
+# view alone: one with no claude in its foreground stands for no session,
+# and is said so. It asks nothing for a client that is gone.
+spane=$(t new-window -d -P -F '#{pane_id}' -t =ctb: sleep 100000)
 mark=$(wc -c <"$WORK/client.out")
-CLAUDE_TMUX_SOCKET=other HOME="$H" "$REPO/home/.config/tmux/restart-claude.sh" ask "$sockpath" ctb "$client"
-wait_for "$mark" 'not a claude session (tmux socket '"$SOCK"')' \
-  && pass "restart-claude.sh on another socket: refused on the message line" || fail "no refusal on the message line for another socket"
+CLAUDE_TMUX_SOCKET=other HOME="$H" PATH="$H/.local/bin:$PATH" \
+  "$REPO/home/.config/tmux/restart-claude.sh" ask "$sockpath" ctb "$client" "$spane"
+wait_for "$mark" "no claude in the foreground of pane $spane (ctb)" \
+  && pass "restart-claude.sh on another server, no claude in view: said so" || fail "no 'no claude' on the message line for another server: $(since "$mark" | grep -ao 'C-r: [^\[]*' | tail -1)"
+t kill-window -t "$spane"
 out=$(ask_cr /dev/pts/999999)
 rc=$?
 [ "$rc" -eq 0 ] && [ -z "$out" ] && [ "$(t display -p -t "$pane" '#{pane_in_mode}')" = 0 ] \
@@ -763,10 +772,15 @@ wait "$blocker"
 
 # What starts while the popup is open was never shown: after the y it is
 # asked about, the popup marked as changed, and n there restarts nothing.
+# Asked from a second window running no claude, which stands for the
+# session's claude: the popup names the session.
+spane=$(t new-window -d -P -F '#{pane_id}' -t =ctb: sleep 100000)
 mark=$(wc -c <"$WORK/client.out")
-ask_cr "$client" >"$WORK/popup.out" &
+ask_cr "$client" "$spane" >"$WORK/popup.out" &
 popup_job=$!
 wait_for "$mark" 'any other key' || fail "no C-r popup for the changed-list check: $(since "$mark" | tail -c 300)"
+since "$mark" | grep -qF ' restart claude in ctb? ' \
+  && pass "C-r from a window with no claude: asks about the session's" || fail "C-r from a window with no claude: $(since "$mark" | grep -ao 'restart claude in.\{0,40\}' | head -1)"
 agents_json "$pid" busy
 press y
 wait_for "$mark" '(changed since you answered) The restart kills:' && since "$mark" | grep -qF 'busy: a turn' \
@@ -776,6 +790,7 @@ wait "$popup_job"
 rc=$?
 [ "$rc" -eq 0 ] && [ "$(pid_now)" = "$pid" ] && [ ! -s "$WORK/popup.out" ] \
   && pass "n on the changed list: nothing restarted" || fail "n on the changed list: rc=$rc ($(cat "$WORK/popup.out")), pid $pid -> $(pid_now)"
+t kill-window -t "$spane"
 
 # Cut to fit. A 500-column item (a status that long is no real claude's,
 # but any one item of it is) on 30x10: no room for even one of its 3 rows
@@ -1124,7 +1139,7 @@ start=$(start_of ctn/y)
 t kill-session -t =ctn/y 2>/dev/null
 out=$(run load --id 0000-nothing 2>&1)
 rc=$?
-[ "$rc" -ne 0 ] && grep -q 'no titled conversation has id 0000-nothing' <<<"$out" && pass "load --id 0000-nothing: refused ($out)" \
+[ "$rc" -ne 0 ] && grep -q 'no conversation has id 0000-nothing' <<<"$out" && pass "load --id 0000-nothing: refused ($out)" \
   || fail "load --id 0000-nothing: rc=$rc ($out)"
 rm -f "$H/.claude/projects/-tmp/"0000-ctn*.jsonl
 

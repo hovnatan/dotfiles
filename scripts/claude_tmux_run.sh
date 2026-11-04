@@ -43,6 +43,7 @@
 #                                      is reported only once the session has
 #                                      survived startup (see wait_alive).
 #   claude_tmux_run.sh restart [--check|--force] <name>[/<task>]
+#   claude_tmux_run.sh restart [--check|--force] --pane <socket path> <pane id>
 #                                      restart claude IN PLACE in the session
 #                                      of exactly that name: same tmux
 #                                      session and pane (attached clients stay
@@ -54,9 +55,16 @@
 #                                      checks, printing that work and the
 #                                      detached processes the restart ends
 #                                      (never a refusal), one per line,
-#                                      programs by full path. prefix C-r in
-#                                      ~/.tmux.conf runs it on the session in
-#                                      view.
+#                                      programs by full path. --pane: the
+#                                      claude in that pane's foreground, on
+#                                      any tmux server; one typed at a
+#                                      shell's prompt is resumed at that
+#                                      prompt. prefix C-r in ~/.tmux.conf
+#                                      runs it on what in-view picks.
+#   claude_tmux_run.sh in-view <socket path> <pane id>
+#                                      what prefix C-r restarts with that
+#                                      pane in view: prints "pane" (restart
+#                                      --pane) or "session" (restart <name>)
 #   claude_tmux_run.sh status [lines]  every session on the socket: whether
 #                                      claude is really running in it, which
 #                                      conversation, and the tail of its pane
@@ -138,6 +146,11 @@
 set -u
 
 SOCKET="${CLAUDE_TMUX_SOCKET:-claude}" # overridable so tests don't touch the live server
+# The tmux server every command here talks to: the claude socket's, or,
+# for `restart --pane`, the one at the socket path it is given (any server:
+# a Mac's default one).
+TMUX_SERVER=(-L "$SOCKET")
+tm() { tmux "${TMUX_SERVER[@]}" "$@"; }
 HOST=$(hostname)
 MANAGER_DIR="$HOME/.dotfiles/claude_tmux_session"
 ALIVE_SECONDS="${CLAUDE_TMUX_ALIVE_SECONDS:-6}" # startup window new/load wait out
@@ -169,14 +182,27 @@ EXIT_SECONDS="${CLAUDE_TMUX_EXIT_SECONDS:-30}"
 # The passwd shell, not $SHELL: a launch issued from another shell (fish, a
 # tool's bash) must still launch what the account logs in with. It has to
 # take `-lc <script> <$0> <args...>` like sh does; fish does not. Checked
-# up front, so no subcommand gets halfway before finding out.
-LOGIN_SHELL=$(getent passwd "$(id -un)" | cut -d: -f7)
-case "${LOGIN_SHELL##*/}" in
-  bash | zsh | sh | dash | ksh) ;;
-  *)
-    echo "claude_tmux_run.sh: login shell '${LOGIN_SHELL:-<none>}' cannot run 'sh -lc'-style commands; use bash or zsh as the login shell" >&2
-    exit 1
-    ;;
+# up front, so no subcommand gets halfway before finding out -- but for
+# restart, which checks once it knows it respawns a pane with PANE_CMD: a
+# claude typed at a shell's prompt is resumed at that prompt (a Mac's fish
+# under tmux), whatever the login shell. macOS has no getent; its
+# directory service holds the same field.
+case $(uname) in
+  Darwin) LOGIN_SHELL=$(dscl . -read "/Users/$(id -un)" UserShell 2>/dev/null | sed -n 's/^UserShell: //p') ;;
+  *) LOGIN_SHELL=$(getent passwd "$(id -un)" | cut -d: -f7) ;;
+esac
+login_shell_ok() {
+  case "${LOGIN_SHELL##*/}" in
+    bash | zsh | sh | dash | ksh) ;;
+    *)
+      echo "claude_tmux_run.sh: login shell '${LOGIN_SHELL:-<none>}' cannot run 'sh -lc'-style commands; use bash or zsh as the login shell" >&2
+      return 1
+      ;;
+  esac
+}
+case "${1:-}" in
+  restart | in-view) ;;
+  *) login_shell_ok || exit 1 ;;
 esac
 
 # Every subcommand reads `claude agents --json` (live_agents) or launches
@@ -214,13 +240,22 @@ fi
 #   history  the listing behind the history subcommand, one row per
 #            conversation -- files sharing their first user message (a
 #            resume into a second transcript) fold onto the newest
-#   resolve  the conversation to resume for the name: three lines (id, cwd,
-#            title) of the newest match, or nothing; fails when a label is
-#            carried by several conversations (folded as for history), as
-#            no one of them is the one asked for
-#   resolve-id  the same three lines for the conversation holding that
+#   resolve  the conversation to resume for the name: four lines (id, cwd,
+#            title, permission mode: "-", read for resolve-id only) of the
+#            newest match, or nothing; fails when a label is carried by
+#            several conversations (folded as for history), as no one of
+#            them is the one asked for
+#   resolve-id  the same four lines for the conversation holding that
 #            session id (the key in place of a name), resolved to its newest
-#            transcript, or nothing
+#            transcript, or nothing. Untitled ones count here (title ""): a
+#            claude started by hand at a prompt, never renamed, has only the
+#            auto-generated name claude agents shows, and an AI title of its
+#            own. The permission mode is the last one a prompt of the
+#            transcript of that very id recorded ("permissionMode", Shift-Tab
+#            changes included), read through the whole file, as one long turn
+#            pushes the last prompt out of any tail; "-" when it holds none.
+#            A newer untitled transcript folded onto a titled one keeps the
+#            title
 transcripts() {
   CTR_HOST="$HOST" python3 - "$@" <<'PYEOF'
 import json, os, sys
@@ -277,7 +312,16 @@ def sibling_cwd(path):
                            for c in [head_cwd(os.path.join(d, f))] if c), None)
     return dir_cwd[d]
 
+def last_mode(path):
+    mode = "-"
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            if '"type":"user"' in line:
+                mode = quoted(line, "permissionMode") or mode
+    return mode
+
 rows = []
+by_id = mode == "resolve-id"
 for path in paths:
     title = sid = ts = None
     for line in reversed(tail(path)):
@@ -288,7 +332,11 @@ for path in paths:
             ts = quoted(line, "timestamp")   # a message: the picker orders by these too
         if title is not None and ts is not None:
             break
-    if not title or (conv and title != conv and not title.startswith(conv + "/")):
+    if not title and by_id:
+        # The file is named after the session id the custom-title record
+        # would carry: <id>.jsonl.
+        title, sid = "", os.path.basename(path)[:-len(".jsonl")]
+    if not title and not by_id or (conv and title != conv and not title.startswith(conv + "/")):
         continue
     if ts is None:
         ts = datetime.fromtimestamp(os.path.getmtime(path), timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
@@ -330,12 +378,15 @@ def fold(rows):
         k = r["uuid"] or r["id"]
         if k in folded:
             folded[k].setdefault("also", []).append(r["id"])
+            folded[k]["title"] = folded[k]["title"] or r["title"]
         else:
             folded[k] = r
     return list(folded.values())
 
 if mode in ("resolve", "resolve-id"):
+    exact = None
     if mode == "resolve-id":
+        exact = next((r for r in rows if r["id"] == key), None)
         rows = [r for r in fold(rows) if key == r["id"] or key in r.get("also", [])]
     elif "/" in conv.removeprefix(HOST + "/"):
         carriers = fold([r for r in rows if r["title"] == conv])
@@ -344,7 +395,8 @@ if mode in ("resolve", "resolve-id"):
                      + ", ".join(r["id"] for r in carriers)
                      + "); pick one with load --id <id> (history tells them apart), and relabel the others")
     if rows:
-        print(rows[0]["id"], rows[0]["cwd"], rows[0]["title"], sep="\n")
+        print(rows[0]["id"], rows[0]["cwd"], rows[0]["title"],
+              last_mode((exact or rows[0])["path"]) if by_id else "-", sep="\n")
     sys.exit()
 
 def size(n):
@@ -363,9 +415,10 @@ PYEOF
 }
 
 # find_conversation resolve|resolve-id <name or id> <files...>: sets id,
-# cwd and title of the conversation to resume (see transcripts), all empty
-# when there is none. Exits on a failure -- a label several conversations
-# carry -- which inside a bare $(...) could not stop the script.
+# cwd, title and pmode (its last permission mode, resolve-id only) of the
+# conversation to resume (see transcripts), all empty when there is none.
+# Exits on a failure -- a label several conversations carry -- which inside
+# a bare $(...) could not stop the script.
 find_conversation() {
   local found
   found=$(transcripts "$@") || exit 1
@@ -373,6 +426,7 @@ find_conversation() {
     read -r id
     read -r cwd
     read -r title
+    read -r pmode
   } <<<"$found"
 }
 
@@ -435,7 +489,7 @@ claude_pane() {
       echo "$id $pid $cwd"
       return
     fi
-  done < <(tmux -L "$SOCKET" list-panes -s -t "$1:" -F '#{pane_id} #{pane_pid} #{pane_current_path}' 2>/dev/null)
+  done < <(tm list-panes -s -t "$1:" -F '#{pane_id} #{pane_pid} #{pane_current_path}' 2>/dev/null)
 }
 
 # claude_launched <session>: the id of the live pane in that session started
@@ -450,7 +504,7 @@ claude_pane() {
 # gone, ...), and counting it would have load and restart answer "starting"
 # for as long as it sits there.
 claude_launched() {
-  tmux -L "$SOCKET" list-panes -s -t "$1:" -F '#{?pane_dead,,#{pane_id} #{pane_start_command}}' 2>/dev/null \
+  tm list-panes -s -t "$1:" -F '#{?pane_dead,,#{pane_id} #{pane_start_command}}' 2>/dev/null \
     | awk -v m="$PANE_MARK" 'index($0, m) { print $1; exit }'
 }
 
@@ -464,7 +518,7 @@ claude_launched() {
 # leading "-", which grep would parse as an option.
 sessions_under() {
   local out
-  if ! out=$(tmux -L "$SOCKET" list-sessions -F '#{session_name}' 2>&1); then
+  if ! out=$(tm list-sessions -F '#{session_name}' 2>&1); then
     case "$out" in
       "no server running on "* | "error connecting to "*"(No such file or directory)" | \
         "error connecting to "*"(Connection refused)") return 0 ;;
@@ -608,6 +662,49 @@ program() {
   if [ "${base:0:15}" = "$comm" ]; then echo "$exe"; else echo "$exe ($comm)"; fi
 }
 
+# fg_claude <pane pid>: the pid of the process group holding that pane's
+# terminal when it is a claude (comm is a full path on macOS), else nothing.
+fg_claude() {
+  local fg comm
+  fg=$(ps -o tpgid= -p "$1" 2>/dev/null | tr -d ' ')
+  comm=$(ps -o comm= -p "${fg:-0}" 2>/dev/null)
+  [ "${comm##*/}" != claude ] || echo "$fg"
+}
+
+# cwd_of <pid>: the working directory of that process, from /proc on Linux
+# and lsof on macOS, which has no /proc; nothing when it cannot be read.
+cwd_of() {
+  if [ -d /proc/self ]; then
+    readlink "/proc/$1/cwd"
+  else
+    lsof -a -d cwd -p "$1" -Fn 2>/dev/null | sed -n 's/^n//p'
+  fi
+}
+
+# shell_words <shell> <words...>: the words as one command line that
+# shell's parser splits back into exactly them, for typing at its prompt.
+# Plain words go as they are (no leading "=", which zsh expands); others
+# in single quotes, which every shell here takes literally but for fish's
+# two escapes in them, \\ and \' -- in the POSIX shells a ' ends them, so
+# one is written '\'':
+#   fish  claude -n "it's a\b"  ->  claude -n 'it\'s a\\b'
+#   bash  claude -n "it's a\b"  ->  claude -n 'it'\''s a\b'
+shell_words() {
+  local sh=$1 w out=""
+  shift
+  for w in "$@"; do
+    if [[ "$w" =~ ^[A-Za-z0-9_./:@+,-][A-Za-z0-9_./:@+,=-]*$ ]]; then
+      out+=" $w"
+    elif [ "$sh" = fish ]; then
+      w=${w//\\/\\\\} w=${w//\'/\\\'}
+      out+=" '$w'"
+    else
+      out+=" '${w//\'/\'\\\'\'}'"
+    fi
+  done
+  printf '%s' "${out# }"
+}
+
 # The command every claude pane runs, its claude arguments appended (see
 # launch, and restart, which respawns a pane with it).
 PANE_MARK='CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude' # what claude_launched looks for
@@ -683,7 +780,7 @@ launch() {
     echo "launch: another launch on the $SOCKET socket has held $XDG_RUNTIME_DIR/claude_tmux_run-$SOCKET.lock for 60 s; see who with: fuser -v $XDG_RUNTIME_DIR/claude_tmux_run-$SOCKET.lock" >&2
     return 1
   fi
-  if tmux -L "$SOCKET" has-session -t "=$name" 2>/dev/null; then
+  if tm has-session -t "=$name" 2>/dev/null; then
     read -r pane _ < <(claude_pane "=$name")
     pane=${pane:-$(claude_launched "=$name")}
     if [ -n "$pane" ]; then
@@ -691,25 +788,25 @@ launch() {
       return 1
     fi
     at=(-t "=$name:0")
-    tmux -L "$SOCKET" list-windows -t "=$name:" -F '#{window_index}' | grep -qx 0 && at=(-b "${at[@]}")
-    tmux -L "$SOCKET" new-window -d "${at[@]}" -P -F '#{pane_id}' \
+    tm list-windows -t "=$name:" -F '#{window_index}' | grep -qx 0 && at=(-b "${at[@]}")
+    tm new-window -d "${at[@]}" -P -F '#{pane_id}' \
       -c "$dir" "${PANE_CMD[@]}" "$@" --remote-control
     return
   fi
-  if ! tmux -L "$SOCKET" list-sessions >/dev/null 2>&1; then
+  if ! tm list-sessions >/dev/null 2>&1; then
     "$(dirname "$0")/../home/.config/tmux/reap-panes.sh" \
       "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$SOCKET" --server-gone || return 1
     scope=(systemd-run --user --scope --quiet --collect
       --unit="tmux-server-$SOCKET"
       --description="tmux server for the $SOCKET socket (claude_tmux_run.sh)")
   fi
-  "${scope[@]}" tmux -L "$SOCKET" new-session -d -P -F '#{pane_id}' \
+  "${scope[@]}" tmux "${TMUX_SERVER[@]}" new-session -d -P -F '#{pane_id}' \
     -s "$name" -c "$dir" "${PANE_CMD[@]}" "$@" --remote-control {lock}>&-
 }
 
 # pane_proc <pane>: "<pane_dead> <pane_pid>" of that pane; fails once the
 # pane is gone (its process exited and nothing kept it).
-pane_proc() { tmux -L "$SOCKET" display-message -p -t "$1" '#{pane_dead} #{pane_pid}' 2>/dev/null; }
+pane_proc() { tm display-message -p -t "$1" '#{pane_dead} #{pane_pid}' 2>/dev/null; }
 
 # wait_alive <pane id>: whether claude came up in that pane and survived
 # the startup window. new-session and respawn-pane return as soon as they
@@ -747,8 +844,8 @@ started() {
   local pane=$1 what=$2 rc=0
   wait_alive "$pane" || rc=$?
   case $rc in
-    0) echo "session $(tmux -L "$SOCKET" display-message -p -t "$pane" '#{session_name}'): $what" ;;
-    2) echo "pane $pane: $what -- but its login shell has not started claude after 60 s; see what it is stuck on (tmux -L $SOCKET capture-pane -p -t $pane)" >&2 ;;
+    0) echo "session $(tm display-message -p -t "$pane" '#{session_name}'): $what" ;;
+    2) echo "pane $pane: $what -- but its login shell has not started claude after 60 s; see what it is stuck on (tmux ${TMUX_SERVER[*]} capture-pane -p -t $pane)" >&2 ;;
     *) echo "pane $pane: $what -- but claude exited during startup; nothing is running there" >&2 ;;
   esac
   [ "$rc" -eq 0 ]
@@ -826,7 +923,7 @@ case "${1:-}" in
       s="$2"
       exact_session stop "$s"
     fi
-    tmux -L "$SOCKET" kill-session -t "=$s" && echo "stopped session $s"
+    tm kill-session -t "=$s" && echo "stopped session $s"
     exit
     ;;
   new)
@@ -873,7 +970,7 @@ case "${1:-}" in
       parse_args "$usage" 1 "${@:3}"
       find_conversation resolve-id "${rest[0]}" "$HOME"/.claude/projects/*/*.jsonl
       if [ -z "$id" ]; then
-        echo "load: no titled conversation has id ${rest[0]} ($0 history <name> lists them)" >&2
+        echo "load: no conversation has id ${rest[0]} ($0 history <name> lists them)" >&2
         exit 1
       fi
     else
@@ -895,7 +992,9 @@ case "${1:-}" in
     # session.
     target=${title#"$CONV"}
     if [ "$target" = "$title" ] || [[ ! "$target" =~ $NAME_RE ]]; then
-      echo "load: conversation $id is titled '$title', which names no session ($CONV<name>[/<task>]); rename it from the /resume picker (Ctrl+R) first" >&2
+      named="titled '$title'"
+      [ -n "$title" ] || named=untitled
+      echo "load: conversation $id is $named, which names no session ($CONV<name>[/<task>]); rename it from the /resume picker (Ctrl+R) first" >&2
       exit 1
     fi
 
@@ -946,12 +1045,47 @@ case "${1:-}" in
     resume_session "$target" "$cwd" "${mode[@]}"
     exit
     ;;
+  in-view)
+    # What prefix C-r restarts with <pane> in view. "pane" anywhere but on
+    # the claude socket, whose every session is one conversation: there
+    # "session", its claude wherever in it the user is (nvim in a second
+    # window), but for a claude in view it did not launch -- typed at a
+    # shell's prompt in a window of the session -- which is "pane".
+    if [ $# -ne 3 ]; then
+      echo "usage: $0 in-view <tmux socket path> <pane id>" >&2
+      exit 1
+    fi
+    TMUX_SERVER=(-S "$2")
+    if [ "${2##*/}" != "$SOCKET" ]; then
+      echo pane
+      exit 0
+    fi
+    read -r pane_pid start < <(tm display-message -p -t "$3" '#{pane_pid} #{pane_start_command}' 2>/dev/null)
+    if [ -n "$(fg_claude "${pane_pid:-0}")" ] && [[ "${start:-}" != *"$PANE_MARK"* ]]; then
+      echo pane
+    else
+      echo session
+    fi
+    exit 0
+    ;;
   restart)
-    # A fresh claude in the same pane, on the same conversation: what a
-    # Claude Code update needs. stop + load does it too, but destroys the
-    # session, so every client attached to it detaches (or jumps to another
-    # session) and has to be pointed back. Here the pane survives, and tmux
-    # itself does the respawn, from a pane-died hook armed before the kill:
+    # A fresh claude on the same conversation, in place: what a Claude Code
+    # update needs. stop + load does it too, but destroys the session, so
+    # every client attached to it detaches (or jumps to another session) and
+    # has to be pointed back. Here the pane survives. The claude to restart:
+    #
+    #   restart <name>                    the claude of that session on the
+    #                                     claude socket (window 0's)
+    #   restart --pane <socket> <pane>    the claude in the foreground of
+    #                                     that pane, on any tmux server (a
+    #                                     Mac's default one): what prefix C-r
+    #                                     passes for the pane in view
+    #
+    # and the pane's shape, which decides how it comes back:
+    #
+    #   respawn  claude IS the pane's process, launched here (PANE_CMD), as
+    #            every claude socket session's is. tmux respawns the pane
+    #            from a pane-died hook armed before the kill:
     #
     #   checks   all before the kill; a refusal leaves claude running
     #   arm      this pane only: remain-on-exit on, pane-died hook
@@ -963,10 +1097,37 @@ case "${1:-}" in
     #            own, and what the old one left detached there ends now
     #   report   wait_alive on the new claude
     #
-    # The respawn and the disarm are one command list the server runs, so
-    # once TERM is sent the restart completes and the pane ends up as before
-    # whatever happens to this script: interrupted (Esc on the manager's
-    # Bash call), killed, or timed out waiting on a slow shutdown.
+    #            The respawn and the disarm are one command list the server
+    #            runs, so once TERM is sent the restart completes and the
+    #            pane ends up as before whatever happens to this script:
+    #            interrupted (Esc on the manager's Bash call), killed, or
+    #            timed out waiting on a slow shutdown.
+    #
+    #   shell    claude runs in the foreground of an interactive shell, as
+    #            one typed at its prompt does. The shell stays -- claude was
+    #            started from it, with its environment (a venv, an export) --
+    #            and the resume is typed at its prompt, as the user would:
+    #
+    #   checks   as above, and: its parent is a shell, in the directory of
+    #            the conversation (where `claude --resume <id>` finds it)
+    #   TERM --> claude exits; still up after EXIT_SECONDS: KILL
+    #   wait     for the shell to take the terminal back (its prompt)
+    #   type     claude --resume <id> [-n <name>] <mode>, Enter
+    #   report   a claude in the pane's foreground again, up ALIVE_SECONDS,
+    #            and among agents --json, on the conversation or a new id
+    #
+    #            -n only for a conversation that has a custom title: on
+    #            any other, the auto-generated name agents --json shows would
+    #            become one, for good, in place of its AI title. The mode is
+    #            the one the conversation was last in, from its
+    #            transcript (a prompt records it, Shift-Tab changes too);
+    #            other flags it was started with (--model, --add-dir) are
+    #            not carried, as macOS's ps cannot give a process's argv back
+    #            word for word. Nothing types the resume should this script
+    #            die after the TERM: the log holds the command, and C-r runs
+    #            it under tmux's run-shell, out of reach of claude's Esc. The
+    #            pane's scope holds the shell, so nothing is stopped: what the
+    #            old claude detached stays, as after a quit by hand.
     #
     # Refused unless --force: work a restart would kill -- a turn, or a
     # background shell claude tracks (bg_shells) -- read just before
@@ -980,62 +1141,135 @@ case "${1:-}" in
     # with that work but never refuse: a reload ends them by design, as
     # closing the session would (home/.config/tmux/reap-panes.sh), and a job
     # meant to outlive both runs as its own unit (systemd-run --user
-    # --unit=<name>). Always refused: a conversation also open in another process
-    # (two writers corrupt one transcript), and a pane not launched here,
-    # whose start command names no permission mode to keep (auto, or bypass
-    # for --dangerous).
+    # --unit=<name>). Always refused: a conversation also open in another
+    # process (two writers corrupt one transcript), and a respawn pane not
+    # launched here, whose start command names no permission mode to keep
+    # (auto, or bypass for --dangerous).
     # The directory is the conversation's own, from its transcript
     # (find_conversation), not claude's cwd, which EnterWorktree moves.
-    usage="usage: $0 restart [--check|--force] <name>[/<task>]  (the exact session name, as status prints it)"
-    check="" force="" operands=()
+    usage="usage: $0 restart [--check|--force] <name>[/<task>]  (the exact session name, as status prints it)
+   or: $0 restart [--check|--force] --pane <tmux socket path> <pane id>  (%N, as #{pane_id} prints it)"
+    check="" force="" by_pane="" operands=()
     for a in "${@:2}"; do
       case "$a" in
         --check) check=1 ;;
         --force) force=1 ;;
+        --pane) by_pane=1 ;;
         *) operands+=("$a") ;;
       esac
     done
-    if [ "${#operands[@]}" -ne 1 ]; then
+    want=1
+    [ -z "$by_pane" ] || want=2
+    if [ "${#operands[@]}" -ne "$want" ] || { [ -n "$by_pane" ] && [[ ! "${operands[1]}" =~ ^%[0-9]+$ ]]; }; then
       echo "$usage" >&2
       exit 1
     fi
-    s=${operands[0]}
-    exact_session restart "$s"
-    read -r pane pid _ < <(claude_pane "=$s")
-    if [ -z "${pane:-}" ]; then
-      if starting=$(claude_launched "=$s") && [ -n "$starting" ]; then
-        echo "restart: claude is starting (or restarting) in pane $starting of session $s; wait for it ($0 status)" >&2
-      else
-        echo "restart: no claude running in session $s, so nothing to restart; $0 load $s resumes its conversation into it" >&2
+
+    # The pane and the claude in it ($where names them in every message).
+    # --pane: the claude in the pane's foreground (fg_claude): the pane's
+    # own process (respawn), or a job of the shell in it (shell).
+    if [ -n "$by_pane" ]; then
+      TMUX_SERVER=(-S "${operands[0]}")
+      pane=${operands[1]}
+      if ! read -r pane_pid s < <(tm display-message -p -t "$pane" '#{pane_pid} #{session_name}' 2>/dev/null) \
+        || [ -z "${pane_pid:-}" ]; then
+        echo "restart: no pane $pane on the tmux server at ${operands[0]}" >&2
+        exit 1
       fi
-      exit 1
+      where="pane $pane ($s)"
+      agents=$(live_agents) || exit 1
+      pid=$(fg_claude "$pane_pid")
+      if [ -z "$pid" ]; then
+        if [[ "$(tm display-message -p -t "$pane" '#{pane_start_command}')" == *"$PANE_MARK"* ]]; then
+          echo "restart: claude is starting (or restarting) in $where; wait for it ($0 status)" >&2
+        else
+          echo "restart: no claude in the foreground of $where, so nothing to restart" >&2
+        fi
+        exit 1
+      fi
+      if [ "$pid" = "$pane_pid" ]; then shape=respawn; else shape=shell; fi
+    else
+      s=${operands[0]}
+      exact_session restart "$s"
+      read -r pane pid _ < <(claude_pane "=$s")
+      if [ -z "${pane:-}" ]; then
+        if starting=$(claude_launched "=$s") && [ -n "$starting" ]; then
+          echo "restart: claude is starting (or restarting) in pane $starting of session $s; wait for it ($0 status)" >&2
+        else
+          echo "restart: no claude running in session $s, so nothing to restart; $0 load $s resumes its conversation into it" >&2
+        fi
+        exit 1
+      fi
+      where="session $s"
+      agents=$(live_agents) || exit 1
+      shape=respawn
     fi
 
-    # The conversation that claude has open, and how its pane was launched.
-    agents=$(live_agents) || exit 1
+    # The conversation that claude has open.
     live_id=$(agent_id "$pid" <<<"$agents")
     live_title=$(agent_name "$pid" <<<"$agents")
     if [ -z "$live_id" ]; then
-      echo "restart: claude $pid in session $s is not among 'claude agents --json'; cannot tell which conversation to resume" >&2
+      echo "restart: claude $pid in $where is not among 'claude agents --json'; cannot tell which conversation to resume" >&2
       exit 1
     fi
     if awk -F'\t' -v pid="$pid" -v id="$live_id" '$2 == id && $1 != pid { f = 1 } END { exit !f }' <<<"$agents"; then
       echo "restart: conversation $live_title ($live_id) is also open in another claude process; close that one first" >&2
       exit 1
     fi
-    start=$(tmux -L "$SOCKET" display-message -p -t "$pane" '#{pane_start_command}') || exit 1
-    case " $start " in
-      *" --dangerously-skip-permissions "*) mode=(--dangerously-skip-permissions) ;;
-      *" --permission-mode auto "*) mode=(--permission-mode auto) ;;
-      *)
-        echo "restart: session $s was not started by $0 (its pane runs: $start); restart it by hand" >&2
-        exit 1
-        ;;
-    esac
     find_conversation resolve-id "$live_id" "$HOME"/.claude/projects/*/*.jsonl
     if [ -z "$id" ] || [ "$cwd" = - ]; then
-      echo "restart: no titled transcript with a directory holds conversation $live_id (claude $pid in session $s); left running" >&2
+      echo "restart: no transcript with a directory holds conversation $live_id (claude $pid in $where); left running" >&2
       exit 1
+    fi
+
+    # What the new claude is started with, per shape.
+    if [ "$shape" = respawn ]; then
+      login_shell_ok || exit 1
+      start=$(tm display-message -p -t "$pane" '#{pane_start_command}') || exit 1
+      case " $start " in
+        *" --dangerously-skip-permissions "*) mode=(--dangerously-skip-permissions) ;;
+        *" --permission-mode auto "*) mode=(--permission-mode auto) ;;
+        *)
+          echo "restart: $where was not started by $0 (its pane runs: $start); restart it by hand" >&2
+          exit 1
+          ;;
+      esac
+    else
+      # The shell claude was typed at: its parent, which must be a shell
+      # shell_words can quote for, and must hold the terminal again once
+      # claude is gone (host_pgid). A login shell's comm is "-fish".
+      host=$(ps -o ppid= -p "$pid" | tr -d ' ')
+      host_pgid=$(ps -o pgid= -p "$host" | tr -d ' ')
+      sh_name=$(ps -o comm= -p "$host")
+      sh_name=${sh_name##*/} sh_name=${sh_name#-}
+      case $sh_name in
+        fish | bash | zsh | sh | dash | ksh) ;;
+        *)
+          echo "restart: claude $pid in $where runs under ${sh_name:-nothing} (pid $host), not a shell to type the resume at; restart it by hand" >&2
+          exit 1
+          ;;
+      esac
+      case $pmode in
+        bypassPermissions) mode=(--dangerously-skip-permissions) ;;
+        default | acceptEdits | plan | auto | dontAsk) mode=(--permission-mode "$pmode") ;;
+        *)
+          echo "restart: conversation $live_id records no permission mode claude takes ('$pmode', in its transcript); restart it by hand" >&2
+          exit 1
+          ;;
+      esac
+      # `claude --resume <id>` finds a conversation only from its own
+      # directory: /tmp/x and /private/tmp/x are one on a Mac, hence -P.
+      # A directory since removed resolves to nothing, on either side.
+      here=$(cwd_of "$host")
+      real_here=$(cd "$here" 2>/dev/null && pwd -P)
+      real_cwd=$(cd "$cwd" 2>/dev/null && pwd -P)
+      if [ -z "$real_here" ] || [ "$real_here" != "$real_cwd" ]; then
+        echo "restart: the $sh_name claude $pid runs under is in ${here:-a directory it cannot read}, but conversation $live_id belongs to $cwd, where claude --resume has to run; restart it by hand" >&2
+        exit 1
+      fi
+      resume=(claude --resume "$live_id")
+      [ -z "$title" ] || resume+=(-n "$(canon_title "$live_title")")
+      typed=$(shell_words "$sh_name" "${resume[@]}" "${mode[@]}")
     fi
 
     # idle_check: what a restart would kill, as one line in "work" --
@@ -1051,7 +1285,10 @@ case "${1:-}" in
     # to the log).
     # Asked after the slow transcript lookup, so that little can start
     # between it and the arming (a remote-control message could start a turn).
-    old_scope=$(scope_of "$pid")
+    # The old scope only for respawn: a shell's claude shares its pane's
+    # scope with the shell, which stays, so what is detached there stays too.
+    old_scope=""
+    [ "$shape" != respawn ] || old_scope=$(scope_of "$pid")
     case $old_scope in tmux-spawn-*.scope) ;; *) old_scope="" ;; esac
     idle_check() {
       local state shells left programs
@@ -1074,7 +1311,7 @@ case "${1:-}" in
         [ -z "$shells" ] || cut -d' ' -f2- <<<"$shells" | sed 's/^/background shell: /'
         [ -z "$gone" ] || sed 's/^/detached: /' <<<"$programs"
       elif [ -n "$work" ] && [ -z "$force" ]; then
-        echo "restart: session $s is not idle ($work), which a restart kills; wait for it (Esc ends a turn), or --force" >&2
+        echo "restart: $where is not idle ($work), which a restart kills; wait for it (Esc ends a turn), or --force" >&2
         exit 1
       fi
     }
@@ -1085,25 +1322,97 @@ case "${1:-}" in
     . "$(dirname "$0")/lib/event_log.sh"
     event_log_start claude_tmux_restart || exit 1
     echo "log: $EVENT_LOG_FILE"
-    say() { log "$s: $*"; }
+    say() { log "$where: $*"; }
     die() {
-      log "$s: FAILED $*" >&2
+      log "$where: FAILED $*" >&2
       exit 1
     }
     say "claude $pid, conversation $live_id ($live_title), dir $cwd, ${mode[*]}${work:+; forced over $work}${gone:+; ending $gone}"
 
+    # shell: TERM, wait for the prompt, type the resume (see the top).
+    if [ "$shape" = shell ]; then
+      say "once it exits, typing at the prompt of $sh_name $host: $typed"
+      kill -TERM "$pid" || say "TERM to claude $pid failed: it already exited"
+      say "sent TERM to claude $pid"
+      # exited <seconds>: whether claude is gone within that long.
+      exited() {
+        local i
+        for ((i = 0; i < $1 * 4; i++)); do
+          kill -0 "$pid" 2>/dev/null || return 0
+          sleep 0.25
+        done
+        return 1
+      }
+      if ! exited "$EXIT_SECONDS"; then
+        say "claude $pid still up $EXIT_SECONDS s after TERM; sending KILL"
+        kill -KILL "$pid"
+        exited 5 || die "claude $pid survived KILL; nothing typed. Once it exits, type there: $typed"
+      fi
+
+      # The shell back at its prompt: its process group holds the terminal.
+      for ((i = 0; ; i++)); do
+        kill -0 "$host" 2>/dev/null || die "$sh_name $host exited with claude; nothing typed"
+        [ "$(ps -o tpgid= -p "$host" | tr -d ' ')" = "$host_pgid" ] && break
+        [ "$i" -lt 40 ] || die "$sh_name $host has not taken the terminal back 10 s after claude exited; nothing typed. Type there: $typed"
+        sleep 0.25
+      done
+      # Scrolled back, the pane is in copy mode, where these keys would be
+      # commands: one opens a prompt, which holds send-keys for good.
+      if [ "$(tm display-message -p -t "$pane" '#{pane_in_mode}')" = 1 ]; then
+        tm send-keys -t "$pane" -X cancel
+        [ "$(tm display-message -p -t "$pane" '#{pane_in_mode}')" = 0 ] \
+          || die "$where stays in a mode tmux would not leave; nothing typed. Type there: $typed"
+        say "left copy mode"
+      fi
+      if ! tm send-keys -t "$pane" -l -- "$typed" || ! tm send-keys -t "$pane" Enter; then
+        die "could not type into $where (gone?); type there: $typed"
+      fi
+      say "typed the resume"
+
+      # The new claude: the shell's next foreground job, a claude (comm is
+      # a full path on macOS), up through the startup window -- which a
+      # claude refusing the resume ("No conversation found") exits within --
+      # and then among agents --json. Under any id: a resume can continue
+      # in a new transcript (see ../claude_tmux_session/AGENTS.md).
+      new=""
+      for ((i = 0; ; i++)); do
+        f=$(ps -o tpgid= -p "$host" | tr -d ' ')
+        c=$(ps -o comm= -p "${f:-0}" 2>/dev/null)
+        if [ -n "$f" ] && [ "$f" != "$host_pgid" ] && [ "$f" != "$pid" ] && [ "${c##*/}" = claude ]; then
+          new=$f
+          break
+        fi
+        [ "$i" -lt 240 ] || die "no claude in the foreground of $where 60 s after typing the resume; see the pane"
+        sleep 0.25
+      done
+      for ((i = 0; i < ALIVE_SECONDS; i++)); do
+        sleep 1
+        kill -0 "$new" 2>/dev/null || die "claude $new exited during startup; see the pane"
+      done
+      for ((i = 0; ; i++)); do
+        agents=$(live_agents) || die "cannot tell whether claude $new resumed $live_id"
+        new_id=$(agent_id "$new" <<<"$agents")
+        [ -n "$new_id" ] && break
+        [ "$i" -lt 30 ] || die "claude $new is up, but not among agents --json 30 s on; see the pane"
+        sleep 1
+      done
+      [ "$new_id" = "$live_id" ] || say "the resume continues under id $new_id"
+      log "$where: restarted conversation $live_id ($live_title) in $cwd (${mode[*]})"
+      exit 0
+    fi
+
     # Arm. Until TERM goes out a signal disarms, so an interrupted restart
     # leaves no hook behind to resume a claude that exits later on its own.
     disarm() {
-      tmux -L "$SOCKET" set-hook -p -u -t "$pane" pane-died
-      tmux -L "$SOCKET" set-option -p -u -t "$pane" remain-on-exit
+      tm set-hook -p -u -t "$pane" pane-died
+      tm set-option -p -u -t "$pane" remain-on-exit
     }
     trap 'disarm; die "interrupted before the kill; claude $pid left running"' INT TERM HUP
     hook="respawn-pane -t $pane -c $(tmux_quote "$cwd") $(tmux_quote "${PANE_CMD[@]}" \
       --resume "$live_id" -n "$(canon_title "$live_title")" "${mode[@]}" --remote-control)"
     hook+=" ; set-hook -p -u -t $pane pane-died ; set-option -p -u -t $pane remain-on-exit"
-    if ! tmux -L "$SOCKET" set-option -p -t "$pane" remain-on-exit on \
-      || ! tmux -L "$SOCKET" set-hook -p -t "$pane" pane-died "$hook"; then
+    if ! tm set-option -p -t "$pane" remain-on-exit on \
+      || ! tm set-hook -p -t "$pane" pane-died "$hook"; then
       disarm 2>/dev/null
       die "could not arm pane $pane (gone?); claude $pid left running"
     fi
@@ -1160,7 +1469,7 @@ case "${1:-}" in
     # holds, and where its pane got to -- the three things worth knowing after
     # a new, a load or a reboot, in one command.
     lines="${2:-6}"
-    names=$(tmux -L "$SOCKET" list-sessions -F '#{session_name}' 2>/dev/null | sort)
+    names=$(tm list-sessions -F '#{session_name}' 2>/dev/null | sort)
     if [ -z "$names" ]; then
       echo "no sessions on tmux socket $SOCKET"
       exit 0
@@ -1170,7 +1479,7 @@ case "${1:-}" in
       # The claude pane wherever it is; with none, the session's first pane
       # (the one it was created with) shows what runs instead.
       pane=$(claude_pane "=$s")
-      [ -n "$pane" ] || pane=$(tmux -L "$SOCKET" list-panes -s -t "=$s:" \
+      [ -n "$pane" ] || pane=$(tm list-panes -s -t "=$s:" \
         -F '#{pane_id} #{pane_pid} #{pane_current_path}' | head -1)
       read -r pane_id pane_pid pane_cwd <<<"$pane"
       comm=$(ps -o comm= -p "$pane_pid" 2>/dev/null)
@@ -1189,7 +1498,7 @@ case "${1:-}" in
       # that, so drop the last six lines and then any remaining rule -- the
       # box's top rule carries the session name, so "has no alphanumerics" is
       # not enough to recognise it on its own.
-      tmux -L "$SOCKET" capture-pane -p -t "$pane_id" 2>/dev/null \
+      tm capture-pane -p -t "$pane_id" 2>/dev/null \
         | head -n -6 | grep -E '[A-Za-z0-9]' \
         | tail -n "$lines" | cut -c1-160 | sed 's/^/   | /'
       echo

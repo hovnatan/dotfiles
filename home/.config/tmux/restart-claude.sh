@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# prefix C-r (~/.tmux.conf): restart the claude in the session in view, in
-# place -- `claude_tmux_run.sh restart`, behind a confirm popup that lists
-# what the restart would kill (a turn, background shells, the processes the
-# old claude left detached, by full path), one per line, with its verdict on
+# prefix C-r (~/.tmux.conf): restart the claude in view, in place --
+# `claude_tmux_run.sh restart`, behind a confirm popup that lists what the
+# restart would kill (a turn, background shells, the processes the old
+# claude left detached, by full path), one per line, with its verdict on
 # the message line.
 #
-#   restart-claude.sh ask <socket path> <session> <client>   the binding
-#   restart-claude.sh popup <text file>                      inside the popup
+#   restart-claude.sh ask <socket path> <session> <client> <pane>   the binding
+#   restart-claude.sh popup <text file>                             inside the popup
 #
-#   C-r --> ask: the claude socket? ---- no ---------> "not a claude session"
-#                the client attached? -- no ---------> nothing (nobody to ask)
-#           +--> big enough to ask? ---- no ---------> "too small"
+# The claude in view, on any tmux server: `claude_tmux_run.sh in-view` picks
+# the pane in view (`restart --pane`), or on the claude socket the session
+# (`restart <session>`), and says why.
+#
+#   C-r --> ask: the target: the pane in view, or its session (above)
+#           +--> the client attached? -- no ---------> nothing (nobody to ask)
+#           |    big enough to ask? ---- no ---------> "too small"
 #           |    restart --check ------- refused ----> its reason
 #           |    all of it shown already? -- yes ----> restart --force
 #           |    display-popup, blocking until it         |
@@ -41,10 +45,8 @@
 # list a `restart --check` away. Only the title is a format, hence "#"
 # doubled there.
 #
-# Only the claude socket (or the one a test names): elsewhere -- a default
-# tmux server, a Mac, which has no claude socket -- claude_tmux_run.sh has
-# no session to act on and its errors would only mislead. The restart logs
-# every step under ~/.dotfiles/.logs/<UTC>_claude_tmux_restart/.
+# The claude socket is the one of that name (or the one a test names). The
+# restart logs every step under ~/.dotfiles/.logs/<UTC>_claude_tmux_restart/.
 #
 # A refusal is reported on the message line and exits 0: run-shell answers
 # a non-zero exit by opening a "returned 1" view over the pane, which hides
@@ -62,11 +64,11 @@ if [ "${1:-}" = popup ] && [ $# -eq 2 ]; then
   exit 3
 fi
 
-[ $# -eq 4 ] && [ "$1" = ask ] || {
-  echo "usage: restart-claude.sh ask <socket path> <session> <client>" >&2
+[ $# -eq 5 ] && [ "$1" = ask ] || {
+  echo "usage: restart-claude.sh ask <socket path> <session> <client> <pane>" >&2
   exit 2
 }
-socket=$2 session=$3 client=$4
+socket=$2 session=$3 client=$4 pane=$5
 run="$HOME/.dotfiles/scripts/claude_tmux_run.sh"
 
 say() { tmux -S "$socket" display-message -l -d 8000 -c "$client" "C-r: $1"; }
@@ -103,18 +105,20 @@ cut_to() {
   echo "$line..."
 }
 
-if [ "${socket##*/}" != "${CLAUDE_TMUX_SOCKET:-claude}" ]; then
-  say "not a claude session (tmux socket ${socket##*/}); nothing to restart"
+# The target. A session by id, which a rename leaves alone.
+[ "${socket##*/}" != "${CLAUDE_TMUX_SOCKET:-claude}" ] || export CLAUDE_TMUX_SOCKET="${socket##*/}"
+if ! kind=$("$run" in-view "$socket" "$pane" 2>&1); then
+  say "$(tail -n 1 <<<"$kind")"
   exit 0
 fi
-export CLAUDE_TMUX_SOCKET="${socket##*/}"
-
-# The session by id, which a rename leaves alone.
-sid=$(tmux -S "$socket" list-sessions -F '#{session_name}'$'\t''#{session_id}' \
-  | awk -F'\t' -v s="$session" '$1 == s { print $2 }')
-if [ -z "$sid" ]; then
-  say "session $session is gone; nothing to restart"
-  exit 0
+sid=""
+if [ "$kind" = session ]; then
+  sid=$(tmux -S "$socket" list-sessions -F '#{session_name}'$'\t''#{session_id}' \
+    | awk -F'\t' -v s="$session" '$1 == s { print $2 }')
+  if [ -z "$sid" ]; then
+    say "session $session is gone; nothing to restart"
+    exit 0
+  fi
 fi
 textfile=$(mktemp "${TMPDIR:-/tmp}/restart-claude.XXXXXX") || exit 0
 trap 'rm -f "$textfile"' EXIT
@@ -123,11 +127,24 @@ shown="" note=""
 while :; do
   read -r cw ch < <(client_size)
   [ -n "${cw:-}" ] || exit 0
-  if ! session=$(tmux -S "$socket" display-message -p -t "$sid" '#{session_name}' 2>/dev/null); then
-    say "the session is gone; nothing restarted"
-    exit 0
+  # What the popup calls it, read again on every round (a /rename renames
+  # the session): "api", or for a pane "mbp/dotfiles:0", its window.
+  if [ -n "$sid" ]; then
+    if ! label=$(tmux -S "$socket" display-message -p -t "$sid" '#{session_name}' 2>/dev/null); then
+      say "the session is gone; nothing restarted"
+      exit 0
+    fi
+    target=("$label")
+  else
+    # A pane gone is no error here either: the format just comes out blank.
+    label=$(tmux -S "$socket" display-message -p -t "$pane" '#{session_name}:#{window_index}' 2>/dev/null)
+    if [ -z "${label%:}" ]; then
+      say "the pane is gone; nothing restarted"
+      exit 0
+    fi
+    target=(--pane "$socket" "$pane")
   fi
-  if ! kills=$("$run" restart --check "$session" 2>&1); then
+  if ! kills=$("$run" restart --check "${target[@]}" 2>&1); then
     say "$(tail -n 1 <<<"$kills")"
     exit 0
   fi
@@ -150,9 +167,9 @@ while :; do
   # to 3 rows of it, and the items to the rows left once the rest (border,
   # heading, blank, key line, and the hint for when anything is cut) has
   # its own; what does not fit is counted instead, on a row kept for that.
-  title=" restart claude in $session? "
+  title=" restart claude in $label? "
   key=" y: restart   any other key: cancel"
-  hint=" full list: ${run/#"$HOME"/\~} restart --check $session"
+  hint=" full list: ${run/#"$HOME"/\~} restart --check ${target[*]}"
   if [ -n "$kills" ]; then
     head=" ${note:+$note }The restart kills:"
     items="   ${kills//$'\n'/$'\n'   }"
@@ -214,6 +231,6 @@ while :; do
 done
 
 # The verdict is the restart's last line, its log stamp dropped.
-say "restarting claude in $session ..."
-out=$("$run" restart --force "$session" 2>&1)
+say "restarting claude in $label ..."
+out=$("$run" restart --force "${target[@]}" 2>&1)
 say "$(tail -n 1 <<<"$out" | sed 's/^[0-9]*-[0-9]*-[0-9]*T[0-9:]*Z //')"
