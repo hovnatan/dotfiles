@@ -9,22 +9,15 @@
 # lists every machine's sessions, hence the hostname. The name is passed
 # with -n on every launch, resumes included.
 #
-#   claude_tmux_run.sh serve           ExecStart: ensure the managed "manager"
-#                                      session exists, then watch;
-#                                      blocks while it lives, never run by hand
-#   claude_tmux_run.sh serve-check     whether claude-tmux.service's serve runs
-#                                      this script as it is on disk now: exit
-#                                      0 current, 2 replaced since serve
-#                                      started (prints the kill that reruns
-#                                      it), 1 anything else; scripts/update.sh
-#                                      asks after a pull. Linux only
+#   claude_tmux_run.sh start           ExecStart, at boot: start the managed
+#                                      "manager" session unless it exists,
+#                                      then return; nothing watches it after
 #   claude_tmux_run.sh stop [name[/task]]
 #                                      kill the session of exactly that name
 #                                      (never a prefix of another name, and a
 #                                      bare <name> never a labeled
 #                                      <name>/<task>); no name: the managed
 #                                      "manager" session, labeled or not
-#                                      (ExecStop)
 #   claude_tmux_run.sh new <name>[/<task>] <dir> [--dangerous]
 #                                      start an unmanaged session on a FRESH
 #                                      conversation in <dir>, whatever the
@@ -89,7 +82,7 @@
 # <name>/<task> the moment claude announces its title, and again on every
 # /rename after -- so `tmux ls` and the status bar show the label too. A full name, label included, is what has one
 # live session: new, load and stop act on the exact name (api/docs runs
-# beside api/login), and only the watcher looks the manager up by its bare
+# beside api/login), and only start and a bare stop look the manager up by its bare
 # name (sessions_under; tmux targets without "=" prefix-match as well). The
 # label rides on the same record as the name, so load treats the bare
 # name as a prefix: "backend" resumes whichever of vm/backend and
@@ -104,9 +97,11 @@
 # on sessions of this socket, where every conversation is named this way.
 #
 # The manager runs in ~/.dotfiles/claude_tmux_session with permissions
-# bypassed; the AGENTS.md there tells it when to call new and load. Those
-# sessions are unmanaged: nothing recreates one that exits, and a service
-# stop leaves them alone.
+# bypassed; the AGENTS.md there tells it when to call new and load. Nothing
+# recreates a session that exits, the manager included: the unit starts
+# the manager at boot (and on `systemctl --user start claude-tmux`, when
+# its session is gone) and watches nothing after, and a service stop leaves
+# every session alone.
 #
 # The unit launches ExecStart through the account's login shell (whatever
 # passwd says), so the tmux server forked from here inherits the full login
@@ -117,9 +112,6 @@
 # execs claude; no rc file is involved, so bash and zsh accounts behave the
 # same. With "exit-empty on" the dedicated server dies with the last session,
 # so a full cold start always reapplies this login environment.
-#
-# The watcher exits as soon as the managed session is missing; the unit's
-# Restart=always then reruns this script.
 #
 # A session can hold more than claude: the user may open more windows in
 # it (nvim, a shell; prefix C). Claude stays window 0, and whatever is
@@ -136,12 +128,12 @@
 #
 #   load api       live, no claude launched -> resumes into a new window 0
 #                  (new-window -b before the others), the others untouched
-#   serve          the manager's session in that state -> the watcher exits,
-#                  systemd reruns serve, which resumes the manager into it
+#   start          the manager's session in that state -> left alone (it
+#                  exists); `load manager --dangerous` resumes it into it
 #   restart api    nothing to restart -> points at load
 #
 # A pane still starting claude (launched, not yet exec'd) counts as having
-# one: a load or watcher acting then would start a second claude beside it.
+# one: a load acting then would start a second claude beside it.
 
 set -u
 
@@ -203,7 +195,7 @@ fi
 # ~/.claude/projects/<its cwd with every character outside [A-Za-z0-9]
 # replaced by "-"; past 200 characters, cut there plus a hash (2.1.303)> as
 # <session id>.jsonl -- so a lookup by id globs every project directory
-# rather than building the name (serve's MANAGER_DIR is short): its LAST
+# rather than building the name (start's MANAGER_DIR is short): its LAST
 # {"type":"custom-title","customTitle":...,"sessionId":...} record is its
 # name (renames append), the last record with a "timestamp" is when it was
 # last talked in, and its head carries the cwd and the first prompt. Only
@@ -450,13 +442,13 @@ claude_pane() {
 # with PANE_CMD -- running claude, or its login shell still starting it --
 # or nothing. What claude_pane misses while a launch or a restart is under
 # way (the pane's process is the login shell then, not claude), and what
-# load and serve ask before starting a claude of their own into a session.
+# load and launch ask before starting a claude of their own into a session.
 # The start command is how tmux shows it, e.g.
 #   /bin/bash -lc "CLAUDE_CODE_DISABLE_AGENT_VIEW=1 exec claude \"$@\"" bash --resume ...
 # A dead pane does not count: restart's pane-died hook respawns the pane as
 # claude dies, so one left dead is a respawn that failed (its directory
 # gone, ...), and counting it would have load and restart answer "starting"
-# and serve never bring the manager back, for as long as it sits there.
+# for as long as it sits there.
 claude_launched() {
   tmux -L "$SOCKET" list-panes -s -t "$1:" -F '#{?pane_dead,,#{pane_id} #{pane_start_command}}' 2>/dev/null \
     | awk -v m="$PANE_MARK" 'index($0, m) { print $1; exit }'
@@ -468,7 +460,7 @@ claude_launched() {
 # (api, api/login, api/docs). Nothing when no server is running, the one
 # failure that means "none". Any other (a client too old to talk to the
 # server, ...) is reported and returns 1: read as "none", it would let
-# ExecStop report success with the manager still up. -e: NAME_RE allows a
+# a bare stop report success with the manager still up. -e: NAME_RE allows a
 # leading "-", which grep would parse as an option.
 sessions_under() {
   local out
@@ -650,11 +642,11 @@ launch() {
   # tmux >= 3.7 marks every pane's scope PartOf= the unit its server was
   # started from. Forked from ExecStart that unit is claude-tmux.service, so
   # `systemctl --user stop|restart claude-tmux` would take down every session
-  # -- the unmanaged ones included -- where it should kill only the manager.
+  # -- the manager's included -- where it should touch none.
   # The new-session that starts the server therefore runs in a scope of its
   # own, which then owns the panes:
   #
-  #   claude-tmux.service        watch loop; ExecStop kills only "manager"
+  #   claude-tmux.service        oneshot: start ran and returned, no process
   #   tmux-server-claude.scope   tmux server  <--PartOf--  tmux-spawn-*.scope
   #                                                        (one per pane)
   #
@@ -671,8 +663,8 @@ launch() {
   # session-closed hook does the same for every session but the last.
   #
   # One launch at a time per socket. Callers check for a claude first and
-  # launch after (load and serve, the cold start too), so two of them at
-  # once -- serve reviving the manager while the user loads it, two loads --
+  # launch after (load and start, the cold start too), so two of them at
+  # once -- start at boot while the user loads the manager, two loads --
   # would both find none and both start one: two claudes in a session, one
   # conversation resumed twice (its transcript interleaved). Under the lock
   # the check is made again, and the second launch refuses. flock, not
@@ -819,7 +811,7 @@ resume_session() {
 # "=$name" pins a tmux target to an exact name match.
 case "${1:-}" in
   stop)
-    # Without a name (ExecStop): the manager, whatever label it carries, and
+    # Without a name: the manager, whatever label it carries, and
     # a missing one is fine. With one: the session of exactly that name,
     # killed by "=" -- a bare tmux target prefix-matches, so
     # `kill-session -t api` with no api left kills api2 -- and a bare
@@ -1250,135 +1242,46 @@ case "${1:-}" in
     transcripts history "$CONV$name" "$HOME"/.claude/projects/*/*.jsonl
     exit 0
     ;;
-  serve-check)
-    # Whether the unit's serve runs this script as it is on disk now. serve
-    # parses itself once and runs that copy for as long as it lives (its
-    # arm below), so a pull that replaces this file leaves the unit on the
-    # old rules until serve reruns -- prefix C-r restarts claude, not serve.
-    # An Oct 2026 serve waited for the manager's session to vanish; with
-    # windows that session outlives its claude, and a manager quit beside a
-    # second window was never brought back. Bash keeps its script open
-    # (fd 255), and -ef against the path tells that file from a new one:
+  start)
+    # ExecStart, at boot: the manager's session unless it exists, under
+    # whatever label its conversation carries (manager, manager/<task>).
+    # Nothing watches it after: a manager that quits or crashes stays down
+    # until the next boot, `systemctl --user start claude-tmux` once its
+    # session is gone (another window may keep it alive), or
+    # `load manager --dangerous`, which also resumes it into a live session.
     #
-    #   fd -> .../claude_tmux_run.sh            same inode     exit 0
-    #   fd -> .../claude_tmux_run.sh (deleted)  git replaced it exit 2, and
-    #       "kill -TERM <serve pid>": serve's trap exits 0, Restart=always
-    #       reruns it on the new file, and ExecStop, finding no MAINPID,
-    #       kills nothing -- every session stays, the manager's claude too
-    #   unit not active, or none of its processes holds the script  exit 1
+    #   no session          -> started: the conversation resumed, or a new one
+    #   session, any state  -> left alone
     #
-    # The unit's processes from its cgroup, not pgrep: the tests run serves
-    # of their own on other sockets. CLAUDE_TMUX_UNIT is for those tests.
+    # A tmux failure is its error, not "no session": nothing is launched on
+    # a guess, and the unit fails with it.
     if [ $# -ne 1 ]; then
-      echo "usage: $0 serve-check  (takes no arguments)" >&2
+      echo "usage: $0 start  (claude-tmux.service's ExecStart; takes no arguments)" >&2
       exit 1
     fi
-    unit="${CLAUDE_TMUX_UNIT:-claude-tmux}"
-    state=$(systemctl --user show -p ActiveState --value "$unit") || exit 1
-    if [ "$state" != active ]; then
-      echo "serve-check: $unit.service is ${state:-unknown}, not active; see: systemctl --user status $unit" >&2
-      exit 1
-    fi
-    cg=$(systemctl --user show -p ControlGroup --value "$unit") || exit 1
-    procs="/sys/fs/cgroup$cg/cgroup.procs"
-    if [ -z "$cg" ] || [ ! -r "$procs" ]; then
-      echo "serve-check: cannot read the processes of $unit.service ('$procs'; cgroup v2 expected)" >&2
-      exit 1
-    fi
-
-    # Every process of the unit that holds the script open, and those whose
-    # copy is not the file at that path any more. A process or fd may be
-    # gone by the time it is read (serve's 5 s sleep, a $(...) subshell
-    # forked from serve and holding its fds): that one is skipped, it was
-    # never serve itself, or serve has just exited and the rerun is due.
-    held=() stale=()
-    while read -r pid; do
-      for fd in /proc/"$pid"/fd/*; do
-        target=$(readlink "$fd" 2>/dev/null) || continue
-        path=${target% (deleted)}
-        [ "${path##*/}" = claude_tmux_run.sh ] || continue
-        held+=("$pid")
-        [ "$fd" -ef "$path" ] || stale+=("$pid")
-        break
-      done
-    done <"$procs"
-    if [ ${#held[@]} -eq 0 ]; then
-      echo "serve-check: no process of $unit.service ($(tr '\n' ' ' <"$procs")) holds claude_tmux_run.sh open; its ExecStart should run '$0 serve' (home/.config/systemd/user/claude-tmux.service)" >&2
-      exit 1
-    fi
-    if [ ${#stale[@]} -eq 0 ]; then
-      echo "$unit.service: serve (pid ${held[*]}) runs the current claude_tmux_run.sh"
+    s=$(find_session "$MANAGER") || exit 1
+    if [ -n "$s" ]; then
+      echo "manager session $s exists; leaving it (whether claude runs in it: $0 status; bring claude back into it: $0 load manager --dangerous)"
       exit 0
     fi
-
-    # serve is the stale process whose parent is not one of them: the
-    # others are its subshells, which a TERM would not stop.
-    serve_pid=""
-    for pid in "${stale[@]}"; do
-      ppid=$(ps -o ppid= -p "$pid" | tr -d ' ')
-      [[ " ${stale[*]} " == *" $ppid "* ]] || serve_pid=$pid
-    done
-    echo "$unit.service: serve (pid $serve_pid) runs a claude_tmux_run.sh replaced since it started; rerun it on the new one, every session staying: kill -TERM $serve_pid"
-    exit 2
-    ;;
-  serve)
-    # ExecStart. An explicit subcommand, so no mistyped or bare call reaches
-    # a loop that blocks forever. Being one case arm, it is parsed whole --
-    # the exit included -- before it runs: the watcher never reads this file
-    # again, so an edit to it mid-run cannot feed it half a new script.
-    if [ $# -ne 1 ]; then
-      echo "usage: $0 serve  (claude-tmux.service's ExecStart; takes no arguments)" >&2
-      exit 1
+    find_conversation resolve "$CONV$MANAGER" \
+      "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl
+    if [ -n "$id" ]; then
+      resume_session "$MANAGER" "$MANAGER_DIR" --dangerously-skip-permissions || exit 1
+    else
+      start_session "$MANAGER" "$MANAGER_DIR" "new conversation $CONV$MANAGER in $MANAGER_DIR" \
+        -n "$CONV$MANAGER" --dangerously-skip-permissions || exit 1
     fi
-    # The manager's session under whatever label its conversation carries
-    # (manager, manager/<task>), and whether a claude is launched in it.
-    # Gone, or live without one (claude exited beside another window): the
-    # manager is brought up into it, a new session or a new window 0, as at
-    # boot (launch decides which).
-    #   manager_up: true while the session exists with a claude in it --
-    #   running (claude_pane: a claude started there by hand counts, or
-    #   serve would start a second beside it) or being started
-    #   (claude_launched: a launch's or a restart's login shell). A tmux
-    #   failure ends serve with its error rather than reading as "down":
-    #   the unit's Restart=always retries it, and nothing is launched on a
-    #   guess.
-    manager_up() {
-      local s
-      s=$(find_session "$MANAGER") || exit 1
-      [ -n "$s" ] && { [ -n "$(claude_pane "=$s")" ] || [ -n "$(claude_launched "=$s")" ]; }
-    }
-    if ! manager_up; then
-      target=$(find_session "$MANAGER") || exit 1
-      target=${target:-$MANAGER}
-      find_conversation resolve "$CONV$MANAGER" \
-        "$HOME/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"/*.jsonl
-      if [ -n "$id" ]; then
-        resume_session "$target" "$MANAGER_DIR" --dangerously-skip-permissions || exit 1
-      else
-        start_session "$target" "$MANAGER_DIR" "new conversation $CONV$MANAGER in $MANAGER_DIR" \
-          -n "$CONV$MANAGER" --dangerously-skip-permissions || exit 1
-      fi
-    fi
-    # Watch until manager_up fails; the unit's Restart=always then reruns
-    # this, which brings the manager back. KillMode=process signals only
-    # this shell, so a foreground sleep would outlive it in the unit's
-    # cgroup ("left-over process" on the next start); waited on in the
-    # background, the TERM trap can take it along.
-    nap=""
-    trap 'kill "$nap" 2>/dev/null; exit 0' TERM
-    while manager_up; do
-      sleep 5 &
-      nap=$!
-      wait "$nap"
-    done
     exit 0
     ;;
   *)
     {
-      echo "usage: $0 serve|serve-check|new|load|restart|stop|status|conversations|history ...  (got '${1:-}'; the header of $0 lists each one's arguments)"
-      # The unit ran this bare before serve existed, and systemd keeps a
-      # unit as it last read it.
-      [ -n "${1:-}" ] || echo "  claude-tmux.service runs '$0 serve'; a unit calling it bare was loaded before that: systemctl --user daemon-reload && systemctl --user restart claude-tmux"
+      echo "usage: $0 start|new|load|restart|stop|status|conversations|history ...  (got '${1:-}'; the header of $0 lists each one's arguments)"
+      # The unit ran this bare, then as serve (a watch loop), before start;
+      # systemd keeps a unit as it last read it.
+      case ${1:-} in
+        "" | serve) echo "  claude-tmux.service runs '$0 start'; a unit calling it '${1:-}' was loaded before that: systemctl --user daemon-reload && systemctl --user restart claude-tmux" ;;
+      esac
     } >&2
     exit 1
     ;;

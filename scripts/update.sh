@@ -199,8 +199,8 @@ main() {
 
   # systemd runs a unit as it last read it: a pulled change to an installed
   # claude-tmux.service (opt-in, scripts/setup_claude_tmux_service.sh) would
-  # otherwise wait for a manual reload, and its next restart cycle would run
-  # the old ExecStart against the new script. Cheap and idempotent.
+  # otherwise wait for a manual reload, and the next boot would run the old
+  # ExecStart against the new script. Cheap and idempotent.
   if [ "$(uname)" = Linux ] && [ -e ~/.config/systemd/user/claude-tmux.service ]; then
     echo "--- systemctl --user daemon-reload (claude-tmux.service is installed)"
     systemctl --user daemon-reload || status=1
@@ -224,30 +224,7 @@ main() {
   echo "  shells:      exec zsh"
   [ -e ~/.config/systemd/user/claude-tmux.service ] \
     && echo "  claude:      prefix C-r in a claude session restarts its claude (a new binary, settings, hooks)"
-  if [ "$(uname)" = Linux ] && [ -e ~/.config/systemd/user/claude-tmux.service ]; then
-    serve_check || status=1
-  fi
   return "$status"
-}
-
-# Whether claude-tmux.service's watch loop still runs the claude_tmux_run.sh
-# the pull just replaced: it read the script once, at its start, and keeps
-# its old rules until it reruns, which prefix C-r (a claude restart) never
-# does. claude_tmux_run.sh serve-check tells, and prints the kill that
-# reruns it with every session kept:
-#   exit 0   current                  "claude-tmux.service: serve ... current"
-#   exit 2   replaced since it began  that line, with the kill -TERM <pid>
-#   else     the unit not active, ... its error; the update fails
-serve_check() {
-  local out rc=0
-  out=$(~/.dotfiles/scripts/claude_tmux_run.sh serve-check 2>&1) || rc=$?
-  case $rc in
-    0 | 2) echo "  claude-tmux: $out" ;;
-    *)
-      echo "error: $out" >&2
-      return 1
-      ;;
-  esac
 }
 
 # The pull replaces this very file mid-run. Bash reads a script as it goes,

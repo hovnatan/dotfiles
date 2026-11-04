@@ -1,29 +1,39 @@
 [Unit]
-Description=tmux session "manager" running the Claude Code manager
+Description=tmux session "manager" running the Claude Code manager, started at boot
 Documentation=man:tmux(1)
 After=default.target
-# Safety valve: if claude exits immediately (bad auth, bad config), give up
-# after 10 restarts in 5 minutes instead of looping forever.
+# The retry below gives up after 5 failed starts in 5 minutes rather than
+# trying for as long as the cause lasts.
 StartLimitIntervalSec=300
-StartLimitBurst=10
+StartLimitBurst=5
 
 [Service]
-Type=simple
+# Start the manager at boot and return; nothing watches it after. A manager
+# that quits or crashes stays down until the next boot, a
+# `systemctl --user start claude-tmux` once its session is gone (with
+# another window keeping the session alive, start leaves it be), or
+# `~/.dotfiles/scripts/claude_tmux_run.sh load manager --dangerous`.
+# The unit goes inactive once start returns, so a later start runs it
+# again (RemainAfterExit=yes would keep it "active (exited)", a start a
+# no-op); `systemctl --user status claude-tmux` shows how the last run went,
+# not whether the manager is up (`claude_tmux_run.sh status` does).
+Type=oneshot
+RemainAfterExit=no
+# A start that fails (claude exiting in its startup window with no network
+# yet at boot, a tmux error) is tried again 10 s later. That retries the
+# start only: a start that succeeded ends the unit, and a manager quitting
+# later is not one.
+Restart=on-failure
+RestartSec=10
 
 # The one managed session is "manager", started in
 # ~/.dotfiles/claude_tmux_session; the AGENTS.md there documents how that
-# session starts and resumes the other, unmanaged Claude Code sessions
-# (conversations named "<hostname>/<tmux name>") on this server.
+# session starts and resumes the other Claude Code sessions (conversations
+# named "<hostname>/<tmux name>") on this server.
 
 # The sessions run on a dedicated socket (tmux -L claude), not the default
 # one, so this service never shares a server with interactive tmux sessions.
 # Attach with: tmux -L claude attach -t <name>
-#
-# systemd still has to track the *session*, not the server: the server
-# daemonizes out of ExecStart, so the watch loop in claude_tmux_run.sh is
-# what keeps the unit alive, and it exits when the "manager" session
-# disappears, which is what triggers Restart=always. ExecStop kills just
-# that session, so the unmanaged sessions survive a service stop.
 #
 # The login shell matters: the tmux server forks from it and inherits the
 # full login environment for every future pane -- claude_tmux_run.sh's
@@ -35,27 +45,14 @@ Type=simple
 # `default-command fish`.
 # A change to this file reaches a running systemd only through
 # `systemctl --user daemon-reload` (scripts/update.sh runs it).
-ExecStart=/bin/sh -c 'exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh serve"'
-# ExecStop runs on EVERY deactivation, including the self-exit restart
-# cycles the watcher relies on (systemd.service: "the stop operation is
-# always performed ... even if the processes in the service terminated on
-# their own"). Killing the session is only wanted on a real stop request,
-# so guard on ${MAINPID}: it is unset when the watcher already exited by
-# itself (restart cycle), set when a live service is being stopped.
-# Through the login shell like ExecStart: the manager's own PATH has neither
-# ~/.local/bin (the script refuses to run without claude) nor the Nix
-# profile (apt's older tmux cannot talk to a newer server).
-ExecStop=/bin/sh -c 'test -z "${MAINPID}" || exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh stop"'
+ExecStart=/bin/sh -c 'exec "$SHELL" -lc "%h/.dotfiles/scripts/claude_tmux_run.sh start"'
 
-# Kill only the watcher when the unit deactivates: the tmux server
-# daemonizes into this cgroup, and the default control-group kill would
-# take down every session -- including the unmanaged ones -- on each
-# watcher-exit/restart cycle. ExecStop above already kills precisely the
-# managed session.
+# No ExecStop: stopping the unit leaves every session, the manager's too,
+# so a restart only starts the manager again where it is missing. The tmux
+# server runs in a scope of its own (claude_tmux_run.sh, launch), so the
+# unit's cgroup is empty once start returns; KillMode=process keeps a stop
+# from taking the server down should it ever have been started in here.
 KillMode=process
-
-Restart=always
-RestartSec=5
 
 [Install]
 WantedBy=default.target

@@ -10,6 +10,13 @@ build differs from the plan below:
   gone; the config clears them from a server that loaded them.
   Windows show as `0 <name> | 1 <name>`, each named after the title its
   program reports (`fish:~/x`, `nvim: init.lua`), not after the program.
+- Superseded 2026-11-03: nothing watches the manager any more. The
+  `serve` watch loop is gone; claude-tmux.service is a oneshot whose
+  `claude_tmux_run.sh start` starts the manager at boot when its session
+  is missing, with no `Restart=` and no `ExecStop` (part 4's "resumed by
+  the `serve` watcher" is gone). A manager claude that quits stays down
+  until `load manager --dangerous`, a boot, or a service start with its
+  session gone.
 - The status-bar hooks act on `#{hook_session}` through `run-shell -C`: in
   `window-unlinked` the plain `session_*` formats describe another session,
   and `set-option -t "#{hook_session}"` is not expanded (`home/.tmux.conf`).

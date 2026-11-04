@@ -168,15 +168,16 @@ and the fleet policy in `claude_tmux_session/AGENTS.md` stay separate steps.
 
 ## Claude Code in tmux from boot (VMs)
 
-Runs an always-on manager tmux session `manager` at boot: Claude Code with
-permissions bypassed, started in `~/.dotfiles/claude_tmux_session`, restarted
-whenever it exits. Ask it (e.g. over Remote Control) to bring up other
+Starts a manager tmux session `manager` at boot: Claude Code with
+permissions bypassed, started in `~/.dotfiles/claude_tmux_session`. Nothing
+watches it after: a manager that quits stays down until you bring it back
+(below). Ask it (e.g. over Remote Control) to bring up other
 sessions: per `claude_tmux_session/AGENTS.md` it resumes the conversation
 named `<hostname>/<name>` -- also its Remote Control name on claude.ai -- in
 a tmux session `<name>` running in auto permission mode (permissions
-bypassed only on explicit request). Spawned sessions are
-unmanaged: they survive service restarts and stops, and nothing recreates one
-that exits. Opt-in per machine:
+bypassed only on explicit request). No session is
+recreated when it exits, and the service's restarts and stops leave every
+session alone. Opt-in per machine:
 
 ```bash
 bash -x ~/.dotfiles/scripts/setup_claude_tmux_service.sh
@@ -187,15 +188,17 @@ workspace trust dialog; the manager starts inside the repo and would
 otherwise sit at that prompt, invisible, in its detached pane.
 
 ```bash
-tmux -L claude attach -t manager           # attach (any session name works)
-systemctl --user status claude-tmux        # is it up?
-journalctl --user -u claude-tmux -f        # logs
-systemctl --user stop claude-tmux          # stop until next boot
-systemctl --user disable --now claude-tmux # off for good
-sudo loginctl disable-linger $USER         # also stop the user manager at boot
+tmux -L claude attach -t manager                 # attach (any session name works)
+~/.dotfiles/scripts/claude_tmux_run.sh status    # is it up? (claude in each session)
+systemctl --user start claude-tmux               # start the manager if its session is gone
+~/.dotfiles/scripts/claude_tmux_run.sh load manager --dangerous
+                                                 # ...or bring claude back into its session
+journalctl --user -u claude-tmux                 # what the boot start did
+~/.dotfiles/scripts/claude_tmux_run.sh stop      # stop the manager (until the next boot)
+systemctl --user disable claude-tmux             # no manager at boot any more
+sudo loginctl disable-linger $USER               # also stop the user manager at boot
 ```
 
-Quitting claude inside the manager session makes systemd recreate it after
-~10s. To leave it running instead, detach (prefix `d`) rather than quitting.
+To leave the manager running, detach (prefix `d`) rather than quitting it.
 Since the manager runs with permissions bypassed from boot, only enable this
 on a machine whose SSH access you trust.

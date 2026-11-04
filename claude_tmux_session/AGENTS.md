@@ -1,7 +1,7 @@
 # Claude Code tmux manager session
 
-This directory is the working directory of the always-on "manager" tmux
-session started at boot by claude-tmux.service (see
+This directory is the working directory of the "manager" tmux session
+started at boot by claude-tmux.service (see
 `../home/.config/systemd/user/claude-tmux.service` and
 `../scripts/claude_tmux_run.sh`). That session runs Claude Code with
 permissions bypassed and acts as the manager for the other Claude Code tmux
@@ -10,10 +10,11 @@ sessions on this machine.
 ## The setup
 
 - All sessions live on a dedicated tmux server: `tmux -L claude ...`.
-- Only the "manager" session is managed by systemd (recreated when it dies,
-  killed by `systemctl --user stop claude-tmux`). Every other session is
-  created on demand -- by you, when asked -- and survives service restarts
-  and stops; nothing recreates one that exits.
+- Only the "manager" session comes from systemd: the service starts it at
+  boot, and on `systemctl --user start claude-tmux` when its session is
+  missing. Nothing watches it after; nothing recreates it, or any other
+  session, that exits. Every other session is created on demand -- by you,
+  when asked. Stopping or restarting the service leaves every session alone.
 - tmux session names are short (letters, digits, `-` and `_` only; the
   window title shows the first two characters). The Claude Code conversation
   behind a session is named `<hostname>/<session name>`. A session has ONE
@@ -63,6 +64,12 @@ sessions on this machine.
   shell beside it (`prefix C`; Cmd-J/K switch). Claude stays window 0. A
   second `claude` in the same session is unsupported: both would rename
   the session after their own conversation.
+- A manager claude that quits stays down.
+  `~/.dotfiles/scripts/claude_tmux_run.sh load manager --dangerous`
+  resumes its conversation, into its session as window 0 when other
+  windows keep that alive. With the session gone,
+  `systemctl --user start claude-tmux` does the same, and starts a new
+  conversation when the manager has none (where load refuses).
 
 ## Bringing up a session
 
@@ -234,24 +241,21 @@ instead.
   them.
 - This manager session cannot reload itself: it is in a turn whenever it
   runs anything, so `restart manager` refuses. Tell the user to press
-  `prefix C-r` in its pane once it is idle, or run
-  `systemctl --user restart claude-tmux`, which recreates the session and
-  resumes this conversation. Either ends what the manager left running in
-  the background (see The setup). A pulled change to the unit file
-  needs `systemctl --user daemon-reload` first (`dotup` runs it); until then
-  a restart runs the unit as systemd last read it.
+  `prefix C-r` in its pane once it is idle; that ends what the manager left
+  running in the background (see The setup). Restarting the service does
+  not reload it: the service only starts a manager that is missing. A
+  pulled change to the unit file needs `systemctl --user daemon-reload`
+  (`dotup` runs it) before the next boot or restart uses it.
 - A pulled change to `home/.tmux.conf` (a hook, the title format) reaches
   the claude sessions' server only on
   `tmux -L claude source-file ~/.tmux.conf`: a plain `tmux source-file`
   reloads the default server, and nothing reloads either on its own.
 
-Never run `claude_tmux_run.sh serve` -- that is the systemd entrypoint,
-which blocks forever in a watch loop (a bare call only prints the usage)
--- and never `pkill -f` on
-its name, because the pattern matches the service's own process. Read the
-script when you need its usage. (Killing the service is survivable: its
-ExecStop only kills the manager session when MAINPID is still set, so a
-signalled service auto-restarts without taking the session down.)
+`claude_tmux_run.sh start` is the systemd entrypoint: it starts the
+manager only when its session is missing, so from inside it there is
+nothing for you to call it for. Never `pkill -f` on the script's name: the
+pattern matches every load and restart in flight. Read the script when you
+need its usage.
 
 ## Daily work log
 
