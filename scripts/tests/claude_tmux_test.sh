@@ -206,8 +206,14 @@ fi
 state=$(systemctl --user show "$UNIT" -p ActiveState -p SubState --value | paste -sd ' ' -)
 [ "$state" = "inactive dead" ] && pass "the unit: $state once start returned" || fail "the unit after start: '$state'"
 
-read -r pane_cmd pane_dir < <(t display -p -t =manager:0 '#{pane_current_command} #{pane_current_path}')
+# Until it execs the shell, a new pane's process is a fork of the server, named
+# "tmux: server": the unit returning does not mean the shell has started.
 shell_pid=$(t display -p -t =manager:0 '#{pane_pid}')
+for _ in $(seq 50); do
+  [ "$(ps -o comm= -p "$shell_pid")" = fish ] && break
+  sleep 0.1
+done
+read -r pane_cmd pane_dir < <(t display -p -t =manager:0 '#{pane_current_command} #{pane_current_path}')
 [ "$(ps -o comm= -p "$shell_pid")" = fish ] && pass "window 0 runs a shell ($pane_cmd)" \
   || fail "window 0 runs $(ps -o comm= -p "$shell_pid")"
 [ "$(readlink -f "$pane_dir")" = "$(readlink -f "$MANAGER_DIR")" ] && pass "in the session folder" \
@@ -396,8 +402,13 @@ gone "${o_other:-0}" && pass "the reap of its own socket stops it" \
   || fail "the reap of its own socket left job ${o_other:-none}"
 
 # A hand-started server, without the variable a login gives: the hook finds
-# systemd all the same.
-hand() { env -u XDG_RUNTIME_DIR HOME="$H" tmux -L hand "$@"; }
+# systemd all the same. A login's bus address stays: tmux reaches systemd through
+# it to give panes scopes, and a CI runner, which has none of its own, would leave
+# this server's panes with no scope for the hook to stop.
+hand() {
+  env -u XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus" \
+    HOME="$H" tmux -L hand "$@"
+}
 hand new-session -d -s h1 sleep 100000
 hand new-session -d -s h2 sleep 100000
 read -r o_h _ < <(orphan_in h1 "" hand)
