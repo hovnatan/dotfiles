@@ -54,6 +54,7 @@
 #   click on a window in the bar      -> that window selected
 #   Ctrl-click on one                 -> it and the current window swapped
 #   a bell in a window out of view    -> its label on a red background
+#   prefix c from window 0 of 3       -> new window at 1, the rest move up
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
 #                                        prefix S -> back on
@@ -427,7 +428,7 @@ for k in User0 User1; do
 done
 [ -z "$missing" ] && pass "window bindings: prefix c C n p l C-s w s S 0-9, User0 User1" || fail "unbound:$missing"
 [ -z "$(what_key prefix z)" ] || fail "what_key reads prefix z, which the config leaves unbound, as bound: '$(what_key prefix z)'"
-[[ "$(what_key prefix c)" == "new-window -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
+[[ "$(what_key prefix c)" == "new-window -a -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
   && [ "$(what_key prefix C-s)" = last-window ] && [ "$(what_key prefix l)" = last-window ] \
   && [ "$(what_key prefix s)" = "choose-tree -Zs" ] \
   && pass "prefix c: new window, C: new session, C-s and l: last window, s: session picker" \
@@ -543,6 +544,16 @@ tw new-window -d -t =w: "printf '\\a'; exec sleep 100"
 sleep 0.5
 grep -aq '48;2;204;36;29' "$WORK/screen" && pass "a bell paints its window's label red in the bar" \
   || fail "no red background drawn; flags: $(tw list-windows -t =w -F '#{window_index}:#{window_bell_flag}' | tr '\n' ' ')"
+
+# prefix c from window 0 of three: the new window takes number 1, the old 1 moves to
+# 2. The panes need no shell, so the new one runs sleep in place of the config's fish.
+tw set-option -g default-command 'sleep 300'
+tw select-window -t =w:0
+was_1=$(tw display -p -t =w:1 '#{window_id}')
+send_keys '\x01c'
+got="$(current w) $(tw display -p -t =w:2 '#{window_id}')"
+[ "$got" = "1 $was_1" ] && pass "prefix c opens the new window next to the current one" \
+  || fail "prefix c: current window and window 2 are $got, wanted 1 $was_1"
 
 kill "$wclient"
 wait "$wclient" 2>/dev/null
