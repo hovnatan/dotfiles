@@ -38,7 +38,7 @@
 #   --yes apt shows the removals and asks first.
 # - Package scripts may run `systemctl daemon-reload`. On a GPU box not yet
 #   on docker's cgroupfs driver that kills CUDA inside running containers
-#   (fleet policy in claude_tmux_session/AGENTS.md): install only while no
+#   (fleet policy in claude_tmux_session/fleet.md): install only while no
 #   GPU container is running.
 # - `install` refuses a repo that another file in /etc/apt already lists
 #   (docker.list, on a box set up by the retired scripts/install_docker.sh)

@@ -142,7 +142,7 @@ Gotchas:
 
 - The installer runs `systemctl daemon-reload`. On a GPU box not yet
   switched to docker's cgroupfs driver, that kills CUDA inside running
-  containers (fleet policy in `claude_tmux_session/AGENTS.md`): install
+  containers (fleet policy in `claude_tmux_session/fleet.md`): install
   only while no GPU container is running.
 - A running tmux server keeps the binary it was started with, and mixing
   versions works one way only (checked 2026-09-23): a 3.7c client talks to
@@ -168,18 +168,18 @@ format, how to add a package or a repository, and the gotchas.
 
 `dotup` prints the `check` report on Ubuntu and never installs. The script
 does nothing past the packages: the docker group, `/etc/docker/daemon.json`
-and the fleet policy in `claude_tmux_session/AGENTS.md` stay separate steps.
+and the fleet policy in `claude_tmux_session/fleet.md` stay separate steps.
 
 ## Claude Code in tmux from boot (VMs)
 
 Starts a manager tmux session `manager` at boot: Claude Code with
 permissions bypassed, started in `~/.dotfiles/claude_tmux_session`. Nothing
 watches it after: a manager that quits leaves its shell at a prompt, the
-session up, until you bring it back (below). Ask it (e.g. over Remote Control) to bring up other
-sessions: per `claude_tmux_session/AGENTS.md` it resumes the conversation
-named `<hostname>/<name>` -- also its Remote Control name on claude.ai -- in
-a tmux session `<name>` running in auto permission mode (permissions
-bypassed only on explicit request). No session is
+session up, until you bring it back (below). Ask it (e.g. over Remote Control) to open other
+sessions: per `claude_tmux_session/AGENTS.md` it opens a tmux session `<name>` in a folder
+and starts claude there, as conversation `<hostname>/<name>` -- also its Remote Control name
+on claude.ai -- in auto permission mode (permissions bypassed only on explicit request).
+`/resume` and `/rename` are yours from there. No session is
 recreated when it exits, and the service's restarts and stops leave every
 session alone. Opt-in per machine:
 

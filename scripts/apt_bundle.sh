@@ -25,7 +25,7 @@
 #          install: `apt-get install` of the ones not installed
 #
 # Packages only: what one needs set up afterwards (the docker group,
-# /etc/docker/daemon.json, the fleet policy in claude_tmux_session/AGENTS.md)
+# /etc/docker/daemon.json, the fleet policy in claude_tmux_session/fleet.md)
 # stays a separate step.
 #
 # Exit status:
