@@ -20,6 +20,13 @@ export COLORTERM=truecolor
 # ripgrep reads its defaults only from this variable (home/.config/ripgrep/rc)
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/rc"
 
+# Claude Code's Bash tool runs bash 5 from Nix on every machine, whatever $SHELL names:
+# commands are written for bash, and zsh does not word-split `$files`. A path that stops
+# existing is not an error, Claude Code silently falls back to $SHELL. Check from a tool
+# call with `ps -o comm= -p $$`. A launch that reads no profile (`zsh -c claude`) gets the
+# same fallback.
+export CLAUDE_CODE_SHELL="$HOME/.nix-profile/bin/bash"
+
 MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"
 export MAKEFLAGS
 
