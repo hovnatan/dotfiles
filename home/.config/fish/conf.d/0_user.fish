@@ -1,28 +1,3 @@
-# ctrl-d: with text on the line, move forward a word (which also accepts one
-# word of an autosuggestion). On an empty line, exit only on a second press
-# within ~2s, so a stray ctrl-d (say, one meant for a REPL that already
-# ended) does not close the shell. date +%s is whole seconds, so the window
-# is 2-3s.
-#   empty line, ctrl-d            -> "Press ctrl-d again to exit"
-#   empty line, ctrl-d ctrl-d     -> exit
-#   empty line, ctrl-d ... ctrl-d -> hint again (window expired)
-function forward-word-or-exit
-    # "$(...)" joins a multi-line command line into one string for test
-    if test -n "$(commandline)"
-        commandline -f forward-word
-        return
-    end
-
-    set -l now (date +%s)
-    if set -q __ctrl_d_armed_at; and test (math $now - $__ctrl_d_armed_at) -le 2
-        exit
-    end
-    set -g __ctrl_d_armed_at $now
-    echo
-    echo "Press ctrl-d again to exit"
-    commandline -f repaint
-end
-
 # ctrl-p/ctrl-n: fish's up-or-search/down-or-search, but the history search
 # matches only at the start of the line. With "git pu" typed:
 #   up-or-search          -> "echo git pu inside", "git pull --rebase", ...
@@ -67,8 +42,13 @@ function hybrid_bindings --description "Vi-style bindings that inherit emacs-sty
     bind \cn down-or-prefix-search
     bind -M insert \cp up-or-prefix-search
     bind -M insert \cn down-or-prefix-search
-    bind \cd forward-word-or-exit
-    bind -M insert \cd forward-word-or-exit
+    # ctrl-d never closes the shell: fish's preset exits on an empty line, and a
+    # stray press meant for a REPL that already ended lands here. With text on
+    # the line it moves forward a word, which also accepts one word of an
+    # autosuggestion; on an empty line it does nothing. `exit` closes the shell.
+    bind \cd forward-word
+    bind -M insert \cd forward-word
+    bind -M visual \cd forward-word
     #    bind -M insert -m default jk backward-char force-repaint
     #    bind -m insert \e force-repaint
 end

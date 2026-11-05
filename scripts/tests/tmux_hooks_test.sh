@@ -460,6 +460,26 @@ sleep 0.3
 send_keys '\x01S'
 [ "$(status_of w)" = on ] && pass "prefix S again: the bar is back (2 windows)" || fail "after prefix S again: status $(status_of w)"
 
+# Ctrl-d through a real client, as send-keys skips the key tables. Each pane records
+# the bytes it is sent, under a name tmux reports as its command: `claude` on Linux,
+# the version on macOS, where Delete (ESC [ 3 ~) replaces Ctrl-d. Anything else keeps it.
+# They are copies: macOS reports a link to bash as `bash`.
+mkdir "$WORK/named"
+for name in claude 2.1.318 other-program; do cp "$(command -v bash)" "$WORK/named/$name"; done
+ctrl_d_reaches() {
+  tw new-window -t =w: "'$WORK/named/$1' -c 'stty raw -echo; cat >\"$WORK/ctrl_d_got\"; :'"
+  sleep 0.5
+  send_keys '\x04'
+  od -An -tx1 "$WORK/ctrl_d_got" | tr -d ' '
+  tw kill-window
+}
+for name in claude 2.1.318; do
+  got=$(ctrl_d_reaches "$name")
+  [ "$got" = 1b5b337e ] && pass "Ctrl-d in $name arrives as Delete" || fail "Ctrl-d in $name sent: $got"
+done
+got=$(ctrl_d_reaches other-program)
+[ "$got" = 04 ] && pass "Ctrl-d in any other program stays Ctrl-d" || fail "Ctrl-d in other-program sent: $got"
+
 kill "$wclient"
 wait "$wclient" 2>/dev/null
 wclient=
