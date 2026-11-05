@@ -24,12 +24,14 @@
 #   windows      each window gets each `set` line of the theme, in order
 #   refused      a window answering false fails the run
 #   theme file   a line that is not a `set` fails the run
-#   tmux         the theme lines of home/.config/tmux/tmux.conf (four hooks, the two
-#                dim colours, the two reload lines), in a throwaway server:
-#                a client in a pty reports its theme as a terminal does
-#                (CSI ? 997 ; 2 n = light, ; 1 n = dark), the links and the
-#                inactive panes' background (window-style) follow; a reload
-#                from that client's keys sets the background again
+#   tmux         the theme lines of home/.config/tmux/tmux.conf (six hooks, the
+#                dim colours and bar styles, the bar's default, four reload
+#                lines), in a throwaway server: a client in a pty reports its
+#                theme as a terminal does (CSI ? 997 ; 2 n = light, ; 1 n =
+#                dark), the links, the inactive panes' background (window-style)
+#                and the bar's colours (status-style, and what the client is
+#                sent to draw) follow; a reload from that client's keys sets
+#                both styles again
 #
 # Exit 0 = all passed; on failure the work dir is kept and printed.
 
@@ -216,10 +218,10 @@ sed -i.bak '$d' "$H/.config/zathura/gruvbox-dark" # the map line from above
 rm "$H/bin/zathura"
 mkdir -p "$H/.dotfiles"
 ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
-grep -E "^(set-hook -g client-(dark|light)-theme(\[[0-9]+\])? |set-option -g @dim_|if-shell -F '#\{==:#\{client_theme\})" \
+grep -E "^(set-hook -g client-(dark|light)-theme(\[[0-9]+\])? |set-option -g @(dim|bar)_|set-option -gF status-style |if-shell -F '#\{==:#\{client_theme\})" \
   "$REPO/home/.config/tmux/tmux.conf" >"$WORK/hooks.conf"
-if [ "$(wc -l <"$WORK/hooks.conf")" -eq 8 ]; then
-  pass "tmux: home/.config/tmux/tmux.conf has the eight theme lines"
+if [ "$(wc -l <"$WORK/hooks.conf")" -eq 15 ]; then
+  pass "tmux: home/.config/tmux/tmux.conf has the fifteen theme lines"
 else
   fail "tmux: hooks in home/.config/tmux/tmux.conf: $(cat "$WORK/hooks.conf")"
 fi
@@ -227,6 +229,8 @@ t() { env -i HOME="$H" PATH=/usr/bin:/bin XDG_RUNTIME_DIR="$SOCKDIR" TERM=xterm-
 t -f /dev/null new-session -d -s t
 # the reload as prefix r does it, from a client's keys (C-b R here)
 t bind-key R source-file "$WORK/hooks.conf"
+# RGB, so the bar's colours reach the pty as written, not as a 256-colour match
+t set-option -as terminal-features ',xterm*:RGB'
 if t source-file "$WORK/hooks.conf" 2>"$WORK/out"; then
   pass "tmux: $("$TMUX_BIN" -V) takes the hooks"
 else
@@ -234,54 +238,67 @@ else
 fi
 
 # A client in a pty, reporting light, then dark, then light; after each it
-# waits for both links and the inactive panes' background (window-style),
-# and prints "<mode> ok" or what it found instead. Then it clears the
-# background, as a server reloaded after the attach's report had it, and
-# reloads from its keys: "reload ok" once the light one is back.
+# waits for both links, both styles (window-style, status-style) and the bar
+# drawn in its new colour, as an option can change with nothing redrawn, and
+# prints "<mode> ok" or what it found instead. Then it clears the styles, as
+# a server reloaded after the attach's report had them, and reloads from its
+# keys: "reload ok" once the light ones are back. The reload runs the lines
+# in file order, so a reload line above the bar's default would lose to it.
 python3 - "$TMUX_BIN" "$SOCKDIR/tmux" "$H" >"$WORK/client.out" 2>&1 <<'PYEOF'
 import os, pty, select, subprocess, sys, time
 tmux, sock, home = sys.argv[1:]
 links = {home + "/.claude/themes/gruvbox.json": "gruvbox-%s.json", home + "/.config/zathura/theme": "gruvbox-%s"}
-dim = {"light": "bg=#ebdbb2", "dark": "bg=#1d2021"}
+want = {"light": {"window-style": "bg=#ebdbb2", "status-style": "fg=#3c3836,bg=#d5c4a1"},
+        "dark": {"window-style": "bg=#1d2021", "status-style": "fg=#ebdbb2,bg=#504945"}}
+bar_sgr = {"light": b"48;2;213;196;161", "dark": b"48;2;80;73;69"}  # the bg above, as the pty sees it
+drawn = b""  # what the client was sent since the last report
 pid, fd = pty.fork()
 if pid == 0:
     env = {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"}
     os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=t"], env)
 
 def drain(seconds):
+    global drawn
     end = time.time() + seconds
     while time.time() < end:
         if select.select([fd], [], [], 0.1)[0]:
-            try: os.read(fd, 65536)
+            try: drawn += os.read(fd, 65536)
             except OSError: return
 
 def found():
     return {l: (os.readlink(l) if os.path.islink(l) else None) for l in links}
 
-def style():
-    return subprocess.run([tmux, "-S", sock, "show-options", "-gwv", "window-style"],
-                          capture_output=True, text=True, env={"HOME": home, "PATH": "/usr/bin:/bin"}).stdout.strip()
+def styles():
+    # window-style is a window option, status-style a session one
+    get = lambda flags, name: subprocess.run([tmux, "-S", sock, "show-options", flags, name], capture_output=True,
+                                             text=True, env={"HOME": home, "PATH": "/usr/bin:/bin"}).stdout.strip()
+    return {"window-style": get("-gwv", "window-style"), "status-style": get("-gv", "status-style")}
 
 drain(1)
 for mode, report in (("light", b"\x1b[?997;2n"), ("dark", b"\x1b[?997;1n"), ("light", b"\x1b[?997;2n")):
+    drawn = b""
     os.write(fd, report)
     end = time.time() + 5
-    while time.time() < end and (any(found()[l] != links[l] % mode for l in links) or style() != dim[mode]):
+    while time.time() < end and (any(found()[l] != links[l] % mode for l in links) or styles() != want[mode]
+                                 or bar_sgr[mode] not in drawn):
         drain(0.1)
     wrong = {l: t for l, t in found().items() if t != links[l] % mode}
-    if style() != dim[mode]:
-        wrong["window-style"] = style()
+    if styles() != want[mode]:
+        wrong.update(styles())
+    if bar_sgr[mode] not in drawn:
+        wrong["drawn"] = "no %r" % bar_sgr[mode]
     print(mode, "ok" if not wrong else "not followed: %s" % wrong, flush=True)
 
 subprocess.run([tmux, "-S", sock, "set-option", "-wgu", "window-style"], env={"HOME": home, "PATH": "/usr/bin:/bin"})
+subprocess.run([tmux, "-S", sock, "set-option", "-gu", "status-style"], env={"HOME": home, "PATH": "/usr/bin:/bin"})
 os.write(fd, b"\x02R")
 end = time.time() + 5
-while time.time() < end and style() != dim["light"]:
+while time.time() < end and styles() != want["light"]:
     drain(0.1)
-print("reload", "ok" if style() == dim["light"] else "left window-style at %r" % style(), flush=True)
+print("reload", "ok" if styles() == want["light"] else "left the styles at %r" % styles(), flush=True)
 PYEOF
 if [ "$(tr '\n' ' ' <"$WORK/client.out")" = "light ok dark ok light ok reload ok " ]; then
-  pass "tmux: the links and the dimmed panes follow the client's theme, light, dark, light, and a reload"
+  pass "tmux: the links, the dimmed panes and the bar's colours follow the client's theme, light, dark, light, and a reload"
 else
   fail "tmux: $(cat "$WORK/client.out")"
 fi
