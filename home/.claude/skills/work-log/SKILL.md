@@ -14,11 +14,21 @@ repo is not cloned on this machine, so ask for it rather than guessing.
 
 ## Prerequisites
 
-`gws` (the Google Workspace CLI) must be installed and authenticated. Check
-with `gws auth status`; if it is missing or exits 2, run
-`~/.dotfiles/scripts/install_gws.sh`, which installs the CLI and prints the
-one-time browser auth steps. Its credentials are machine-local and in no
-repo, so a new machine always needs the auth flow run on it.
+`gws` (the Google Workspace CLI) must be installed and authenticated. It
+keeps one account per config directory and the default directory is not in
+use here, so first ask the user which config directory to use, offering what
+`ls -d ~/.config/gws-*` lists, and wait for the answer: the account behind it
+must own the log doc. Export the answer as `GOOGLE_WORKSPACE_CLI_CONFIG_DIR`
+in every shell call that runs `gws`, since shell state does not carry between
+calls.
+
+With that set, read `token_valid` from `gws auth status`; the command exits 0
+whatever the state, so the field is the check. If `gws` is missing, it comes
+from `nix/flake.nix`: run `dotup`. If `token_valid` is not `true`, ask the user
+to run `gws auth login` with that directory set, and stop until it is.
+Credentials are machine-local and in no repo, so a new machine always needs
+`gws auth setup` (GCP project and OAuth client, needs gcloud) before that
+login, and the login must be as the account that owns the doc.
 
 `gh` must be authenticated as the user with the `repo` scope (`gh auth
 status`): the day's commits are read from GitHub, not from local clones.
@@ -37,6 +47,7 @@ has rolled over create it first with `addDocumentTab`
 `gws docs +write` is append-only and therefore wrong here.
 
 ```bash
+export GOOGLE_WORKSPACE_CLI_CONFIG_DIR=<config directory the user chose>
 ID=$(cat ~/.config/claude-worklog/doc-id)
 # tab titles and ids
 gws docs documents get --params "{\"documentId\":\"$ID\",\"includeTabsContent\":true}" |
