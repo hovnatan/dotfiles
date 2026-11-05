@@ -47,6 +47,13 @@
 #   Cmd-K Cmd-K Cmd-J (\e[5;30002~,   -> windows 1, 2, 1, nothing typed into
 #   \e[5;30001~ as iTerm2 sends them)    the pane; in a one-window session
 #                                        nothing moves and nothing is shown
+#   Ctrl-u, then Ctrl-d, in a plain   -> copy mode half a page up; back at
+#   pane                                 the bottom, copy mode gone
+#   wheel up, up, down, down          -> copy mode 5 lines up, then 10; back
+#                                        at the bottom, copy mode gone
+#   click on a window in the bar      -> that window selected
+#   Ctrl-click on one                 -> it and the current window swapped
+#   a bell in a window out of view    -> its label on a red background
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
 #                                        prefix S -> back on
@@ -479,6 +486,63 @@ for name in claude 2.1.318; do
 done
 got=$(ctrl_d_reaches other-program)
 [ "$got" = 04 ] && pass "Ctrl-d in any other program stays Ctrl-d" || fail "Ctrl-d in other-program sent: $got"
+
+# Ctrl-u in a plain pane: copy mode, half a page up, the step Ctrl-u and Ctrl-d take
+# inside copy mode. Ctrl-d then lands back on the bottom line, which leaves copy mode.
+tw new-window -t =w: "seq 500; exec sleep 100"
+sleep 0.5
+half=$(($(tw display -p -t =w: '#{pane_height}') / 2))
+send_keys '\x15'
+got=$(tw display -p -t =w: '#{pane_in_mode} #{scroll_position}')
+[ "$got" = "1 $half" ] && pass "Ctrl-u: copy mode, half a page up" || fail "Ctrl-u: mode and position $got, wanted 1 $half"
+send_keys '\x04'
+got=$(tw display -p -t =w: '#{pane_in_mode}')
+[ "$got" = 0 ] && pass "Ctrl-d back to the bottom leaves copy mode" || fail "after Ctrl-d: pane_in_mode $got"
+
+# The wheel, as SGR mouse reports (button 64 up, 65 down, at column 10, row 10): the
+# notch that opens copy mode moves 5 lines, the same as a notch inside it.
+send_keys '\x1b[<64;10;10M'
+got=$(tw display -p -t =w: '#{pane_in_mode} #{scroll_position}')
+[ "$got" = "1 5" ] && pass "first wheel notch up: copy mode, 5 lines up" || fail "first wheel notch: mode and position $got, wanted 1 5"
+send_keys '\x1b[<64;10;10M'
+got=$(tw display -p -t =w: '#{pane_in_mode} #{scroll_position}')
+[ "$got" = "1 10" ] && pass "next wheel notch up: 5 lines more" || fail "next wheel notch: mode and position $got, wanted 1 10"
+send_keys '\x1b[<65;10;10M'
+send_keys '\x1b[<65;10;10M'
+got=$(tw display -p -t =w: '#{pane_in_mode}')
+[ "$got" = 0 ] && pass "wheel back to the bottom leaves copy mode" || fail "after wheel down: pane_in_mode $got"
+tw kill-window
+
+# A click on a window's name in the bar (top row, status-left empty, so column 2 is the
+# first window's label), as an SGR press and release. The new window is the current one.
+tw new-window -t =w: "exec sleep 100"
+sleep 0.5
+first=$(tw list-windows -t =w -F '#{window_index}' | head -1)
+last=$(tw display -p -t =w: '#{window_index}')
+send_keys '\x1b[<0;2;1M'
+send_keys '\x1b[<0;2;1m'
+got=$(tw display -p -t =w: '#{window_index}')
+[ "$first" != "$last" ] && [ "$got" = "$first" ] \
+  && pass "a click on a window in the bar selects it" \
+  || fail "click on the bar: window $got, wanted $first (was on $last)"
+
+# Ctrl-click (SGR button 16) on that label, from the last window: the two trade numbers.
+first_id=$(tw display -p -t "=w:$first" '#{window_id}')
+last_id=$(tw display -p -t "=w:$last" '#{window_id}')
+tw select-window -t "=w:$last"
+send_keys '\x1b[<16;2;1M'
+send_keys '\x1b[<16;2;1m'
+got="$(tw display -p -t "=w:$first" '#{window_id}') $(tw display -p -t "=w:$last" '#{window_id}')"
+[ "$got" = "$last_id $first_id" ] && pass "a Ctrl-click on a window in the bar swaps it with the current one" \
+  || fail "Ctrl-click on the bar: windows $first and $last hold $got, wanted $last_id $first_id"
+tw kill-window -t "$last_id"
+
+# A bell in a window out of view: its label is drawn on a red background (#cc241d, as
+# the RGB parameters the client is sent).
+tw new-window -d -t =w: "printf '\\a'; exec sleep 100"
+sleep 0.5
+grep -aq '48;2;204;36;29' "$WORK/screen" && pass "a bell paints its window's label red in the bar" \
+  || fail "no red background drawn; flags: $(tw list-windows -t =w -F '#{window_index}:#{window_bell_flag}' | tr '\n' ' ')"
 
 kill "$wclient"
 wait "$wclient" 2>/dev/null
