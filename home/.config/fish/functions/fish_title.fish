@@ -13,7 +13,7 @@ function fish_title
     # passing for a local one. Not in iTerm2, whose titles name no host
     # (iterm2_report_host), and not in tmux: there this title names the
     # window in the bar, where every window is on this machine, and tmux
-    # titles the terminal itself, host included (~/.tmux.conf,
+    # titles the terminal itself, host included (~/.config/tmux/tmux.conf,
     # set-titles-string):
     #   ssh, no tmux   "(<host>) fish:~/x"
     #   ssh, tmux      "fish:~/x"  (window "1 fish:~/x")

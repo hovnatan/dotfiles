@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tmux hook for every pane that closes and every server that starts (declared
-# in ~/.tmux.conf): on the socket it is given, stop the systemd scope of every
+# in ~/.config/tmux/tmux.conf): on the socket it is given, stop the systemd scope of every
 # pane that no longer exists, ending whatever a pane left running in the
 # background there. On a Mac, which has no scopes, reap-panes-macos.sh does
 # what it can instead.
@@ -34,7 +34,7 @@
 # later session does:
 #
 #   pane-exited       its program exited    \
-#   after-kill-pane   kill-pane              |  (~/.tmux.conf)
+#   after-kill-pane   kill-pane              |  (~/.config/tmux/tmux.conf)
 #   window-unlinked   kill-window, and each  |-> reap-panes.sh <socket>
 #                     window of a session    |   every pane scope that holds
 #                     killed                 |   no live pane's own process

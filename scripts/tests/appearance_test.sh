@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/appearance.sh scripts/lib/* home/.tmux.conf home/.config/tmux/* home/.claude/themes/* home/.config/zathura/*
+# check.sh covers: scripts/appearance.sh scripts/lib/* home/.config/tmux/* home/.claude/themes/* home/.config/zathura/*
 #
 # appearance_test.sh -- end-to-end checks for scripts/appearance.sh, which
 # points Claude Code's theme and zathura's colours at light or dark. Runs the
@@ -24,7 +24,7 @@
 #   windows      each window gets each `set` line of the theme, in order
 #   refused      a window answering false fails the run
 #   theme file   a line that is not a `set` fails the run
-#   tmux         the theme lines of home/.tmux.conf (four hooks, the two
+#   tmux         the theme lines of home/.config/tmux/tmux.conf (four hooks, the two
 #                dim colours, the two reload lines), in a throwaway server:
 #                a client in a pty reports its theme as a terminal does
 #                (CSI ? 997 ; 2 n = light, ; 1 n = dark), the links and the
@@ -209,7 +209,7 @@ fi
 
 # --- tmux ---------------------------------------------------------------------
 
-# The hooks as home/.tmux.conf has them, and nothing else of it. They name
+# The hooks as home/.config/tmux/tmux.conf has them, and nothing else of it. They name
 # ~/.dotfiles/scripts/appearance.sh, so the throwaway HOME gets that path.
 # The server's PATH is the system's: the machine's zathura stays out of reach.
 sed -i.bak '$d' "$H/.config/zathura/gruvbox-dark" # the map line from above
@@ -217,11 +217,11 @@ rm "$H/bin/zathura"
 mkdir -p "$H/.dotfiles"
 ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
 grep -E "^(set-hook -g client-(dark|light)-theme(\[[0-9]+\])? |set-option -g @dim_|if-shell -F '#\{==:#\{client_theme\})" \
-  "$REPO/home/.tmux.conf" >"$WORK/hooks.conf"
+  "$REPO/home/.config/tmux/tmux.conf" >"$WORK/hooks.conf"
 if [ "$(wc -l <"$WORK/hooks.conf")" -eq 8 ]; then
-  pass "tmux: home/.tmux.conf has the eight theme lines"
+  pass "tmux: home/.config/tmux/tmux.conf has the eight theme lines"
 else
-  fail "tmux: hooks in home/.tmux.conf: $(cat "$WORK/hooks.conf")"
+  fail "tmux: hooks in home/.config/tmux/tmux.conf: $(cat "$WORK/hooks.conf")"
 fi
 t() { env -i HOME="$H" PATH=/usr/bin:/bin XDG_RUNTIME_DIR="$SOCKDIR" TERM=xterm-256color "$TMUX_BIN" -S "$SOCKDIR/tmux" "$@"; }
 t -f /dev/null new-session -d -s t

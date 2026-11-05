@@ -49,7 +49,7 @@ shell-integration-features = no-ssh-env,no-ssh-terminfo
 # use TERM=xterm-256color ssh <host> there until it is installed.
 
 # Cmd-J / Cmd-K: previous / next tmux window. macOS never passes Cmd to the
-# program, so they send the sequences ~/.tmux.conf reads as User0 / User1
+# program, so they send the sequences ~/.config/tmux/tmux.conf reads as User0 / User1
 # (fish outside tmux ignores them); the tabs move to Ctrl-Cmd-J / Ctrl-Cmd-K.
 # iTerm2 gets the same keys from scripts/setup_user_symlinks.sh.
 keybind = super+j=text:\x1b[5;30001~

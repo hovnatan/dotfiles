@@ -21,8 +21,13 @@ warn() {
 
 cd ~ || exit 1
 
+# tmux reads ~/.config/tmux/tmux.conf; ~/.tmux.conf, its home until 2026-11-05, goes
+# so a machine is not left with a dead link. The file is linked rather than the
+# directory, as ~/.config/tmux can be a real one. Where it is already a link into
+# this repo the config is reached through it, and a link here would point at itself.
 rm -rf ~/.tmux.conf
-ln -s ~/.dotfiles/home/.tmux.conf ~/.tmux.conf
+mkdir -p ~/.config/tmux
+[ -L ~/.config/tmux ] || ln -sfn ~/.dotfiles/home/.config/tmux/tmux.conf ~/.config/tmux/tmux.conf
 
 [ -L ~/.zshrc ] && rm -f ~/.zshrc
 if ! grep -qs '\.dotfiles/home/\.zshrc\.shared' ~/.zshrc; then
@@ -686,7 +691,7 @@ if [ "$(uname)" = "Darwin" ]; then
         "<dict><key>Action</key><integer>$4</integer><key>Text</key><string>${5:-}</string><key>Version</key><integer>1</integer><key>Keycode</key><integer>$2</integer><key>Modifiers</key><integer>$(($3))</integer></dict>"
     done
   }
-  # cmd+j / cmd+k: previous / next tmux window (user-keys in ~/.tmux.conf;
+  # cmd+j / cmd+k: previous / next tmux window (user-keys in ~/.config/tmux/tmux.conf;
   # outside tmux they do nothing), so the tabs move to ctrl+cmd+j / ctrl+cmd+k
   iterm_key j 38 0x100000 10 '[5;30001~' # cmd+j: tmux User0, previous window
   iterm_key k 40 0x100000 10 '[5;30002~' # cmd+k: tmux User1, next window
@@ -717,7 +722,7 @@ fi
 # A Mac is asked for its appearance, and Hammerspoon keeps the links in step
 # from then on (home/.hammerspoon/appearance.lua). Linux cannot be asked, so
 # the links are made once, dark; from then on they follow the terminal
-# attached to tmux (home/.tmux.conf), or `scripts/appearance.sh light`.
+# attached to tmux (home/.config/tmux/tmux.conf), or `scripts/appearance.sh light`.
 if [ "$(uname)" = "Darwin" ]; then
   ~/.dotfiles/scripts/appearance.sh >/dev/null || warn "scripts/appearance.sh failed (message above)"
 elif [ ! -L ~/.claude/themes/gruvbox.json ] || [ ! -L ~/.config/zathura/theme ]; then

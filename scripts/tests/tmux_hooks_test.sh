@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.tmux.conf home/.config/tmux/* scripts/appearance.sh scripts/lib/*
+# check.sh covers: home/.config/tmux/* scripts/appearance.sh scripts/lib/*
 #
 # tmux_hooks_test.sh -- end-to-end checks for the tmux hooks' log: the hook
-# lines of home/.tmux.conf and the scripts they run, in a throwaway tmux
+# lines of home/.config/tmux/tmux.conf and the scripts they run, in a throwaway tmux
 # server and HOME, with a client in a pty that reports focus as a terminal
 # does. Needs tmux (3.6 or later, for the focus hooks), python3 and fish
 # (report-attach.sh's host report); about 30 s.
@@ -28,7 +28,7 @@
 #   attach.sh run as tmux runs a hook)       in the log
 #
 # Then the window rules, on a second server started from the whole
-# home/.tmux.conf, with a client in a pty typing what a terminal would:
+# home/.config/tmux/tmux.conf, with a client in a pty typing what a terminal would:
 #
 #   one window, two windows           -> the bar on, on top, "cpu N% mem
 #                                        N% | <date time zone>" on the
@@ -127,12 +127,12 @@ wait_for() {
 ln -s "$(command -v bash)" "$WORK/claude"
 mkfifo "$WORK/never"
 grep -E '^set-hook -g (client-(attached|detached|session-changed|focus-in|focus-out)|pane-title-changed)' \
-  "$REPO/home/.tmux.conf" >"$WORK/hooks.conf"
+  "$REPO/home/.config/tmux/tmux.conf" >"$WORK/hooks.conf"
 t -f /dev/null new-session -d -s a 'sleep 300'
 t new-session -d -s b "$WORK/claude -c 'read -r -t 300 <>$WORK/never'"
 t set -g focus-events on
 if t source-file "$WORK/hooks.conf" 2>"$WORK/out"; then
-  pass "$("$TMUX_BIN" -V) takes the $(wc -l <"$WORK/hooks.conf" | tr -d ' ') hook lines of home/.tmux.conf"
+  pass "$("$TMUX_BIN" -V) takes the $(wc -l <"$WORK/hooks.conf" | tr -d ' ') hook lines of home/.config/tmux/tmux.conf"
 else
   fail "hook lines refused: $(cat "$WORK/out")"
 fi
@@ -249,7 +249,7 @@ wait_for " attached $ro_tty session=b: iTerm2 over ssh, FAILED: cannot write to 
 
 # --- windows: the status bar, the bindings, Cmd-J / Cmd-K ------------------------------
 
-# A server of its own, started from the whole home/.tmux.conf (the window
+# A server of its own, started from the whole home/.config/tmux/tmux.conf (the window
 # rules are spread over it), with a client in a pty that types what it is
 # told: each line written to $WORK/keys is sent as the bytes it spells
 # (Python escapes, "\x01S" = prefix S). Panes run sleep: the config's
@@ -299,8 +299,8 @@ out=$(env -i HOME="$WORK/nohome" PATH=/usr/bin:/bin "$H/.dotfiles/home/.config/t
 rc=$?
 [ "$rc" = 1 ] && grep -qF "no $WORK/nohome/.nix-profile/bin/tmux-mem-cpu-load" <<<"$out" \
   && pass "status-stats.sh without the tool says so: '$out'" || fail "status-stats.sh without the tool: rc=$rc '$out'"
-tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300' 2>"$WORK/out" \
-  || fail "the server would not start from home/.tmux.conf: $(cat "$WORK/out")"
+tw -f "$H/.dotfiles/home/.config/tmux/tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300' 2>"$WORK/out" \
+  || fail "the server would not start from home/.config/tmux/tmux.conf: $(cat "$WORK/out")"
 tw new-session -d -s solo 'sleep 300'
 [ "$(status_of w)" = on ] && [ "$(status_of solo)" = on ] && [ "$(tw show -gv status-position)" = top ] \
   && pass "a session of one window has the bar, on top" \
@@ -589,7 +589,7 @@ if [ "$(uname)" = Darwin ]; then
     return 1
   }
 
-  tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300'
+  tw -f "$H/.dotfiles/home/.config/tmux/tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300'
   gone_pane=$(detached_job "$GONE")
   stay_pane=$(detached_job "$STAY")
   gone_job=$(job_of "$GONE")
@@ -629,7 +629,7 @@ STUB
   # A socket file lost, and a new server on its path: the old server runs on,
   # so its pane's job is not a dead server's, however the new one's sweep reads it.
   mv "$WSOCK" "$WSOCK.away"
-  tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w3 -x 120 -y 30 'sleep 300'
+  tw -f "$H/.dotfiles/home/.config/tmux/tmux.conf" new-session -d -s w3 -x 120 -y 30 'sleep 300'
   sleep 1.5
   kill -0 "$stay_job" 2>/dev/null && pass "a new server on a lost socket leaves the old server's job" \
     || fail "job ${stay_job:-none} of a live server ended in a new server's sweep"
@@ -639,7 +639,7 @@ STUB
   # The server goes with its last session and no hook is left to run: its
   # job ends at the next server's start.
   tw_stop
-  tw -f "$H/.dotfiles/home/.tmux.conf" new-session -d -s w2 -x 120 -y 30 'sleep 300'
+  tw -f "$H/.dotfiles/home/.config/tmux/tmux.conf" new-session -d -s w2 -x 120 -y 30 'sleep 300'
   [ -n "$stay_job" ] && ended "$stay_job" && pass "the next server's start ended what the last one left" \
     || fail "job $stay_job outlived its server and the next start"
   tw_stop

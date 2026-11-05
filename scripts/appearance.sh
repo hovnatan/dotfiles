@@ -7,7 +7,7 @@
 #   appearance.sh            the system's appearance (macOS only)
 #   appearance.sh light|dark that one; the only form on Linux
 #
-#   home/.hammerspoon/appearance.lua     home/.tmux.conf hooks       by hand,
+#   home/.hammerspoon/appearance.lua     home/.config/tmux/tmux.conf hooks       by hand,
 #   (macOS: the switch, load, wake)      (the attached terminal's    install
 #                     \                   theme; reaches over ssh)     /
 #                      v                          v                   v

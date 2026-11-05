@@ -3,7 +3,7 @@ My linux config files
 ## Layout
 
 `home/` mirrors `$HOME`: each entry is installed at the same relative path
-under `~`, e.g. `home/.tmux.conf` -> `~/.tmux.conf`, `home/.config/git` ->
+under `~`, e.g. `home/.vimrc` -> `~/.vimrc`, `home/.config/git` ->
 `~/.config/git`, `home/Library/LaunchAgents/com.hovnatan.keyremap.plist` ->
 `~/Library/LaunchAgents/com.hovnatan.keyremap.plist`. A few entries are
 installed selectively or handled specially (`~/.zshrc` / `~/.zprofile` /

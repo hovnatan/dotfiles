@@ -215,7 +215,7 @@ main() {
 
   # Nothing running re-reads its config on its own; say what to poke.
   echo "--- reload as needed"
-  echo "  tmux:        tmux source-file ~/.tmux.conf"
+  echo "  tmux:        tmux source-file ~/.config/tmux/tmux.conf"
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
   [ -e ~/.config/systemd/user/claude-tmux.service ] \

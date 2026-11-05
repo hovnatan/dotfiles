@@ -286,9 +286,9 @@ def _() -> None:
         assert "line 3" in error, error
 
 
-@case("~/.tmux.conf's title shows the bare session, whatever the socket")
+@case("~/.config/tmux/tmux.conf's title shows the bare session, whatever the socket")
 def _() -> None:
-    conf = (REPO / "home/.tmux.conf").read_text()
+    conf = (REPO / "home/.config/tmux/tmux.conf").read_text()
     titles = re.findall(r"^set-option -g set-titles-string (.+)$", conf, re.MULTILINE)
     assert len(titles) == 1, titles
     assert "[#{session_name}]" in titles[0], titles

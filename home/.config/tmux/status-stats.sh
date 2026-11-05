@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # status-stats.sh -- CPU and memory use for the tmux status bar
-# (home/.tmux.conf, status-right), labelled:
+# (home/.config/tmux/tmux.conf, status-right), labelled:
 #
 #   tmux-mem-cpu-load -a 0 -m 2 -g 0 -i 2   ->  "74.94%  18.5%"   (memory, CPU)
 #   this script                             ->  "cpu 18.5% mem 74.9%"

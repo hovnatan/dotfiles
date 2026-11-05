@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tmux client-attached / client-session-changed hook (declared in
-# ~/.tmux.conf): report each attach to the client's terminal. The tab names
+# ~/.config/tmux/tmux.conf): report each attach to the client's terminal. The tab names
 # this machine while the last attach came in over ssh, as the shells' titles
 # do over ssh; iTerm2 gets the host report instead and names no host:
 #

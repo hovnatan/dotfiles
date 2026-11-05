@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/claude_manager_start.sh scripts/lib/* home/.config/systemd/user/claude-tmux.service home/.profile.shared home/.config/tmux/reap-panes.sh home/.tmux.conf
+# check.sh covers: scripts/claude_manager_start.sh scripts/lib/* home/.config/systemd/user/claude-tmux.service home/.profile.shared home/.config/tmux/reap-panes.sh home/.config/tmux/tmux.conf
 # check.sh runs-on: Linux
 #
 # claude_tmux_test.sh -- end-to-end checks of the manager's boot start and of
@@ -167,7 +167,8 @@ if [ -f "$HOME/.dotfiles/home/.profile.shared" ]; then
   . "$HOME/.dotfiles/home/.profile.shared"
 fi
 PROFILE
-ln -s "$REPO/home/.tmux.conf" "$H/.tmux.conf"
+mkdir -p "$H/.config/tmux"
+ln -s "$REPO/home/.config/tmux/tmux.conf" "$H/.config/tmux/tmux.conf"
 
 resolved=$(env -i HOME="$H" USER="$USER" PATH=/usr/bin:/bin "$LOGIN_SHELL" -lc 'command -v claude')
 if [ "$resolved" != "$H/.local/bin/claude" ]; then
@@ -229,7 +230,7 @@ args=$(cat "$WORK/args.$c1")
   || fail "windows with no folder named: $(t list-windows -t =manager: -F '#W' | tr '\n' ' ')"
 
 on_exit=$(t show -gv remain-on-exit)
-[ "$on_exit" = off ] && pass "remain-on-exit off with home/.tmux.conf loaded" || fail "remain-on-exit is '$on_exit'"
+[ "$on_exit" = off ] && pass "remain-on-exit off with home/.config/tmux/tmux.conf loaded" || fail "remain-on-exit is '$on_exit'"
 server=$(t display -p '#{pid}')
 cgroup=$(cat "/proc/$server/cgroup")
 [[ "$cgroup" == */run-*.scope ]] && pass "the server is in a scope of its own: ${cgroup##*/}" \

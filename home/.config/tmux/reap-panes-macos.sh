@@ -44,7 +44,7 @@ fi
 
 # No answer is a server gone with its last session, or one that cannot be
 # reached: nothing here can tell what is live, so stop nothing. The next
-# server's start comes back here (~/.tmux.conf).
+# server's start comes back here (~/.config/tmux/tmux.conf).
 server=$(tmux -S "$sock" display-message -p '#{pid}' 2>/dev/null) || exit 0
 
 # A server that answers but gives no list stops nothing, and says so. Until its

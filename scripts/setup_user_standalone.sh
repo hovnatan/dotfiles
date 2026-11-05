@@ -8,7 +8,8 @@ cd ~
 
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.zshrc -o ~/.zshrc
 
-curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.tmux.conf -o ~/.tmux.conf
+mkdir -p ~/.config/tmux
+curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.config/tmux/tmux.conf -o ~/.config/tmux/tmux.conf
 
 curl https://raw.githubusercontent.com/hovnatan/dotfiles/main/home/.vimrc -o ~/.vimrc
 

@@ -147,7 +147,7 @@ def an_ssh_tab_is_saved_from_its_title() -> None:
 
 
 def an_ssh_title_with_the_host_prefix_still_reads() -> None:
-    # Outside iTerm2 tmux prefixes the host (.tmux.conf).
+    # Outside iTerm2 tmux prefixes the host (tmux.conf).
     line = arr.line_of(1, terminal("(vm) [main]"), None, "ssh vm", lookup)
     assert line == "LC_TMUX_ATTACH=default:main ssh -o SendEnv=LC_TMUX_ATTACH vm"
 

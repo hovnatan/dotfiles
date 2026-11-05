@@ -74,7 +74,7 @@ end
 
 -- Ctrl-U / Ctrl-D: on the main screen (a shell, Claude Code), page iTerm2's
 -- scrollback up and down; a full-screen program (onAlternateScreen) gets
--- them and pages itself, tmux into its copy mode (~/.tmux.conf). Ctrl-D
+-- them and pages itself, tmux into its copy mode (~/.config/tmux/tmux.conf). Ctrl-D
 -- scrolls only while the view is scrolled back, so at the bottom it is
 -- Ctrl-D again: EOF still exits a shell.
 --

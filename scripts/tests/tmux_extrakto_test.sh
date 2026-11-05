@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.tmux.conf home/.config/tmux/vendor/extrakto/*
+# check.sh covers: home/.config/tmux/tmux.conf home/.config/tmux/vendor/extrakto/*
 #
 # tmux_extrakto_test.sh -- end-to-end check of prefix Tab, the vendored
-# extrakto: its lines of home/.tmux.conf in a throwaway tmux server and
+# extrakto: its lines of home/.config/tmux/tmux.conf in a throwaway tmux server and
 # HOME, pressed by a client in a pty as a terminal sends the keys, with
 # extrakto's fzf running in the popup. Needs tmux, fzf and python3; ~5 s.
 #
@@ -79,14 +79,14 @@ fzf_up() { pgrep -f 'fzf --multi --print-query' >/dev/null && sleep 0.3; }
 press() { printf '%b' "$1" >"$WORK/keys"; }
 
 grep -E '^(set-option -g prefix |set-option -g @extrakto_|run-shell .*/extrakto\.tmux)' \
-  "$REPO/home/.tmux.conf" >"$WORK/extrakto.conf"
+  "$REPO/home/.config/tmux/tmux.conf" >"$WORK/extrakto.conf"
 t -f /dev/null new-session -d -s a -x 120 -y 40 "printf 'alpha reconcile_ledger.py beta\n'; sleep 300"
 t split-window -t a "exec cat"
 # tab_bound: extrakto.tmux's bind-key has run (run-shell may finish after
 # source-file returns; `list-keys -T prefix Tab` prints nothing on 3.7c)
 tab_bound() { t list-keys -T prefix | grep -qE '^bind-key +-T prefix Tab .*extrakto/scripts/open\.sh'; }
 if t source-file "$WORK/extrakto.conf" 2>"$WORK/out" && until_ok 5 tab_bound; then
-  pass "$("$TMUX_BIN" -V) loads extrakto from home/.tmux.conf: prefix Tab is bound"
+  pass "$("$TMUX_BIN" -V) loads extrakto from home/.config/tmux/tmux.conf: prefix Tab is bound"
 else
   fail "extrakto not loaded: $(cat "$WORK/extrakto.conf" "$WORK/out")"
 fi

@@ -109,7 +109,7 @@ USAGE = (
 )
 MAX_ARGS = 2  # <command> <name>
 # "[main]" and, for an ssh client, "(vm) [main]"
-# (~/.tmux.conf's set-titles-string, which reads @ssh outside iTerm2).
+# (~/.config/tmux/tmux.conf's set-titles-string, which reads @ssh outside iTerm2).
 TITLE = re.compile(r"(?:\(\S+\) )?\[(.+)\]")
 
 # The fields of one terminal a line, " " for the unit separator shown here:

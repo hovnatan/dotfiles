@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One line in the tmux hooks' log, for a hook that has only something to
-# say (declared in ~/.tmux.conf; the hooks that also do something log from
+# say (declared in ~/.config/tmux/tmux.conf; the hooks that also do something log from
 # their own scripts, into the same file):
 #
 #   log-event.sh focus-in /dev/pts/1 session=backend

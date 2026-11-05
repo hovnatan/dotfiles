@@ -43,7 +43,7 @@ if status --is-interactive
 
     # When a command taking > 1s finishes, ring the terminal bell: tmux window
     # flag, Ghostty/iTerm2 dock bounce + tab mark. tmux forwards the bell
-    # natively (monitor-bell/bell-action, .tmux.conf), so it needs no
+    # natively (monitor-bell/bell-action, tmux.conf), so it needs no
     # passthrough wrapping. No desktop notification on purpose: it doubled
     # iTerm2's dock count and tmux dropped it for hidden panes. Same behaviour
     # as the zsh hook in .zshrc.shared; fish hands postexec $CMD_DURATION (ms).

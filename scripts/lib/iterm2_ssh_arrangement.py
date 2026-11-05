@@ -77,7 +77,7 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
 
 <login> is ssh_command.py's replay of the tab's ssh command line (Cmd-T's
 parser): the options and destination, never a remote command or forward.
-The "[<session>]" title is ~/.tmux.conf's set-titles-string for an iTerm2
+The "[<session>]" title is ~/.config/tmux/tmux.conf's set-titles-string for an iTerm2
 client. It does not say which socket, hence the lookup:
 
     "[main]"             -> default:main
@@ -888,8 +888,9 @@ def tmux_landing(
 ) -> Landing:
     """Return the landing of a tab that attaches tmux session `name`.
 
-    Landed once its title shows the session, on whichever socket (~/.tmux.conf's
-    set-titles-string for an iTerm2 client): "[main]" for main.
+    Landed once its title shows the session, on whichever socket
+    (~/.config/tmux/tmux.conf's set-titles-string for an iTerm2 client):
+    "[main]" for main.
     """
 
     async def reach(s: iterm2.Session) -> tuple[bool, str]:
