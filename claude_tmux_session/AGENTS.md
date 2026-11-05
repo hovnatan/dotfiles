@@ -20,17 +20,6 @@ them; the user takes it from there, with `/resume`, `/rename` and the rest.
 - Every claude on this machine starts with Remote Control on, the agent view
   off and auto permission mode, from `home/.claude/settings.json`: no flags to
   pass for those.
-- tmux session names are short (letters, digits, `-` and `_` only; the
-  window title shows the first two characters). The Claude Code conversation
-  behind a session is named `<hostname>/<session name>`, hence `-n` at launch:
-  claude.ai lists every machine's sessions. The user may label it with
-  `/rename <hostname>/<session name>/<task>`. Conversations from before
-  2026-10-22 use `<hostname>-<session name>`. `ListAgents` shows the name to
-  address a running one by.
-- A tmux session keeps the name it was created under: a `/rename` changes
-  the conversation's name, not the session's, so session `backend` can hold
-  `<hostname>/backend/fix-login`. tmux targets without `=` prefix-match;
-  `=backend` matches exactly that name.
 - What a pane starts ends with it, in every tmux pane on this machine. Each
   pane runs in a systemd scope of its own, and when a pane closes, however it
   closes (its program exits, `kill-pane`, `kill-window`, its session closing),
@@ -61,46 +50,15 @@ them; the user takes it from there, with `/resume`, `/rename` and the rest.
 
 ## Opening a session
 
-Sessions are plain tmux, and nothing guards them: these checks are yours to
-make. First see what runs, as nothing refuses a second session of one name.
-`-n` in each claude's arguments is the name it was launched under:
-
-```bash
-tmux ls
-pgrep -a -x claude
-```
-
-With `<dir>` an absolute path; ask which directory if it was not said. A resume
-only finds a conversation from its own directory, so a session opened to reach
-an old conversation opens in that conversation's folder:
-
-```bash
-tmux new-session -d -s <name> -c <dir>
-tmux send-keys -t '=<name>:0' "claude -n $(hostname)/<name>" Enter
-```
-
-`:0` is claude's shell only while that shell lives: when it exits with another
-window open, `renumber-windows` makes that window 0, and typed keys go into nvim
-or `claude remote-control`. In a session already up, check first that window 0
-shows the shell (`fish`):
-
-```bash
-tmux list-windows -t '=<name>:' -F '#I #W #{pane_current_command}'
-```
-
-Append `--dangerously-skip-permissions` only when the user explicitly asks
-for a session with permissions bypassed -- never choose it yourself.
+Start claude with `--dangerously-skip-permissions` only when the user
+explicitly asks for a session with permissions bypassed -- never choose it
+yourself.
 
 A folder claude has not opened before stops at a trust prompt, with or without
 that flag, and its default is `No, exit`, so look at the pane after launching.
 Answer yes (`Down`, then `Enter`) only for a folder the user named in the
 request; for any other, ask them first. Trusting a folder lets its own settings
 and hooks run on this machine.
-
-To stop a session: `tmux kill-session -t '=<name>'`, with the `=`: a bare tmux
-target prefix-matches ANY session, so with `api` gone it kills `api3`.
-`capture-pane` does NOT accept the `=name` exact form ("can't find pane") --
-resolve pane ids first with `tmux list-panes -a -F '#{session_name} #{pane_id}'`.
 
 ## Daily work log
 
@@ -126,9 +84,3 @@ setup, or a GPU box.
   (`--dangerously-skip-permissions`).
 - Every session is an interactive Claude Code process in a tmux window; the
   background agents (`claude --bg`, `claude agents`) are off on this machine.
-- A turn can resume long after the previous one, on a machine that rebooted
-  in between: the VM gets deallocated and started again, and systemd
-  recreates this session. Before explaining current state by something you
-  did earlier, re-establish the clock -- `date`, `uptime -s`,
-  `journalctl --list-boots`. A VM running now is not evidence that an
-  earlier deallocate failed.

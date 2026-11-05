@@ -177,8 +177,8 @@ permissions bypassed, started in `~/.dotfiles/claude_tmux_session`. Nothing
 watches it after: a manager that quits leaves its shell at a prompt, the
 session up, until you bring it back (below). Ask it (e.g. over Remote Control) to open other
 sessions: per `claude_tmux_session/AGENTS.md` it opens a tmux session `<name>` in a folder
-and starts claude there, as conversation `<hostname>/<name>` -- also its Remote Control name
-on claude.ai -- in auto permission mode (permissions bypassed only on explicit request).
+and starts claude there, in auto permission mode (permissions bypassed only on explicit
+request).
 `/resume` and `/rename` are yours from there. No session is
 recreated when it exits, and the service's restarts and stops leave every
 session alone. Opt-in per machine:

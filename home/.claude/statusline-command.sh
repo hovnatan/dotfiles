@@ -211,9 +211,8 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
 fi
 
 # Session name (set via -n or /rename; absent on unnamed sessions), whole:
-# "<hostname>/<name>/<task>" as claude_tmux_session/AGENTS.md names it, the same string
-# the prompt bar, /resume and claude.ai show, so one conversation never
-# reads two ways. Neither shortened nor stripped of the hostname.
+# the same string the prompt bar, /resume and claude.ai show, so one
+# conversation never reads two ways. Not shortened.
 sname=""
 if [ -n "$session_name" ]; then
   sname="\033[1m${session_name}\033[0m \033[2m|\033[0m "

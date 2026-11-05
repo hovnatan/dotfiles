@@ -36,9 +36,8 @@
 # watched()): a client left focused on a locked screen must not suppress
 # the push. The human-readable name
 # is resolved in hook mode for the log lines, and again at push time for
-# the title (a /rename may have labeled the session meanwhile), whose
-# <hostname>/<name> form matches the conversation/peer naming of
-# claude_tmux_session/AGENTS.md.
+# the title (a /rename may have labeled the session meanwhile), in the
+# form <hostname>/<name>.
 #
 # The topic is read from ~/.config/claude-ntfy/topic, which stays OUTSIDE
 # the dotfiles repo on purpose: an ntfy.sh topic name is a capability --

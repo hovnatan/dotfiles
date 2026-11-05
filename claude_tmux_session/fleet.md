@@ -14,6 +14,13 @@ default command timeout, after which it is still running in the background
 rather than finished. Give it an explicit long timeout and wait. A call that
 timed out tells you nothing about any VM's state -- do not report from it.
 
+A turn can resume long after the previous one, on a machine that rebooted
+in between: the VM gets deallocated and started again, and systemd
+recreates the manager session. Before explaining current state by something
+you did earlier, re-establish the clock -- `date`, `uptime -s`,
+`journalctl --list-boots`. A VM running now is not evidence that an earlier
+deallocate failed.
+
 ## Fleet policy: docker on cgroupfs, apt upgrades at boot only
 
 Every fleet VM -- new and existing, CPU and GPU alike -- runs docker on
