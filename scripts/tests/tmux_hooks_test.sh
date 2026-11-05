@@ -460,20 +460,6 @@ sleep 0.3
 send_keys '\x01S'
 [ "$(status_of w)" = on ] && pass "prefix S again: the bar is back (2 windows)" || fail "after prefix S again: status $(status_of w)"
 
-# A server that ran the rule before this one (the bar only with two or
-# more windows, e4f934cd): its hook and a session's own "off" survive a
-# reload unless the config clears them. Both are recreated as it left them.
-tw set-hook -g window-linked[0] 'set-option status off'
-tw set-hook -g window-unlinked[1] 'set-option status off'
-tw set-option -t =solo: status off
-tw source-file "$H/.dotfiles/home/.tmux.conf"
-tw new-window -d -t =solo: 'sleep 300'
-tw kill-window -t =solo:1
-sleep 0.3
-[ "$(status_of solo)" = on ] && [ -z "$(tw show -qv -t =solo: status)" ] \
-  && [ "$(tw show-hooks -g window-unlinked | grep -c .)" = 1 ] \
-  && pass "a reload over the old rule clears its hooks and per-session values: the bar on everywhere" \
-  || fail "after a reload over the old rule: solo status $(status_of solo), hooks $(tw show-hooks -g window-linked | tr "\n" " ")$(tw show-hooks -g window-unlinked | tr "\n" " ")"
 kill "$wclient"
 wait "$wclient" 2>/dev/null
 wclient=

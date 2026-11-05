@@ -216,10 +216,6 @@ main() {
   # Nothing running re-reads its config on its own; say what to poke.
   echo "--- reload as needed"
   echo "  tmux:        tmux source-file ~/.tmux.conf"
-  # A server still on the retired claude socket, which the line above does not
-  # reach: until reloaded it keeps hooks that name deleted scripts.
-  tmux -L claude has-session 2>/dev/null \
-    && echo "  claude tmux: tmux -L claude source-file ~/.tmux.conf"
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
   [ -e ~/.config/systemd/user/claude-tmux.service ] \
