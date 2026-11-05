@@ -23,10 +23,9 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
     tty a local tmux client  -> tmux [-L <socket>] new-session -A -s <session>
       (tmux list-clients)         -c <its directory>; attaches it, or creates
                                   it empty if a reboot ended it (check_local)
-    ssh, title "[<shown>]"   -> remote tmux; which socket holds the session
-                                shown, and under what name, is asked of the
-                                host (one ssh per host)
-                                -> LC_TMUX_ATTACH=claude:<session> \
+    ssh, title "[<session>]" -> remote tmux; which socket holds the session
+                                is asked of the host (one ssh per host)
+                                -> LC_TMUX_ATTACH=<socket>:<session> \
                                      ssh -o SendEnv=LC_TMUX_ATTACH <login>
     ssh, any other title     -> the far side's directory, if it reported one
                                 -> LC_LOGIN_DIR=<dir, %-encoded> \
@@ -78,14 +77,11 @@ lost it: a reboot, a Cmd-Q, or an upgrade without session restoration.
 
 <login> is ssh_command.py's replay of the tab's ssh command line (Cmd-T's
 parser): the options and destination, never a remote command or forward.
-The "[<shown>]" title is ~/.tmux.conf's set-titles-string for an iTerm2
-client: the session name on the default socket, and on the retired "claude"
-one the conversation's full name, "<hostname>/<session>" (TITLED).
-The title does not say which socket, hence the lookup, which also maps
-the shown name back to the session to attach:
+The "[<session>]" title is ~/.tmux.conf's set-titles-string for an iTerm2
+client. It does not say which socket, hence the lookup:
 
     "[main]"             -> default:main
-    "[vm/api/docs]"      -> claude:api/docs   (host "vm")
+    "[api/docs]"         -> work:api/docs
 
 The attach goes through the remote login shell, not a remote command: over
 Tailscale SSH a remote command gets a pty that stays root's, and the
@@ -94,9 +90,9 @@ iTerm2 host report to it. A plain login runs login(1), which hands the pty
 to the user; the login fish then attaches what LC_TMUX_ATTACH names
 (home/.config/fish/functions/tmux_attach_requested.fish):
 
-    ssh -t vm tmux -L claude attach -t =x                   pty root's,
+    ssh -t vm tmux -L work attach -t =x                     pty root's,
                                                             report fails
-    LC_TMUX_ATTACH=claude:x ssh -o SendEnv=LC_TMUX_ATTACH vm
+    LC_TMUX_ATTACH=work:x ssh -o SendEnv=LC_TMUX_ATTACH vm
                                                             pty the user's,
                                                             report lands
 
@@ -885,33 +881,23 @@ class Landing:
 
 def tmux_landing(
     label: str,
-    socket: str,
     name: str,
     session: iterm2.Session,
     *,
     on_mac: bool = False,
 ) -> Landing:
-    """Return the landing of a tab that attaches tmux session `name` on `socket`.
+    """Return the landing of a tab that attaches tmux session `name`.
 
-    Landed once its title shows the session as TITLED does (~/.tmux.conf's
-    set-titles-string for an iTerm2 client): "[main]" for default:main,
-    "[vm/api/docs]" for claude:api/docs. The saved line does not name the
-    far side's host, so on the claude socket any "<host>/" prefix will do
-    (a hostname holds no "/", so the first one ends it).
+    Landed once its title shows the session, on whichever socket (~/.tmux.conf's
+    set-titles-string for an iTerm2 client): "[main]" for main.
     """
-    shows = {"claude": f"<host>/{name}", "default": name}[socket]
 
     async def reach(s: iterm2.Session) -> tuple[bool, str]:
         title = await s.async_get_variable("name")
         shown = tmux_session(title) if isinstance(title, str) else None
-        if socket == "claude":
-            host, sep, rest = (shown or "").partition("/")
-            landed = bool(host) and bool(sep) and rest == name
-        else:
-            landed = shown == name
-        return landed, f"title reads {title!r}"
+        return shown == name, f"title reads {title!r}"
 
-    return Landing(label, f"[{shows}]", session, reach, on_mac)
+    return Landing(label, f"[{name}]", session, reach, on_mac)
 
 
 def dir_landing(
@@ -957,9 +943,9 @@ def landing_of(
     `local` are this Mac's names, which a directory tab must have left.
     """
     if request := attach_request(line):
-        return tmux_landing(label, *request, session)
+        return tmux_landing(label, request[1], session)
     if client := local_request(line):
-        return tmux_landing(label, client.socket, client.session, session, on_mac=True)
+        return tmux_landing(label, client.session, session, on_mac=True)
     if (where := dir_request(line)) is not None:
         return dir_landing(label, where, local, session)
     return None

@@ -3,7 +3,7 @@
 # send_line: %-encoded, "/" too, ":" kept), decoded, for the login-shell ends
 # (tmux_attach_requested, login_dir_requested). A value it could not have
 # written is refused, on stderr and in that event log, status 1:
-#   claude:api%2Fdocs       -> claude:api/docs
+#   work:api%2Fdocs         -> work:api/docs
 #   %2Fhome%2Fit%27s%20here -> /home/it's here
 #   %zz, a/b (a raw "/")    -> refused: not %-encoded as the arrangement writes it
 #   %2Fa%0Ab                -> refused: a newline, which the save refuses too,

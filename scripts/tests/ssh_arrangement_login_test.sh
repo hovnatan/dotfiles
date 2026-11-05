@@ -13,7 +13,7 @@
 #     --> config.fish --> login_dir_requested --cd--> `pwd` of the shell
 #                                                `--> event log line
 #
-# Then each function's refusals (malformed, unknown socket, inside tmux, a
+# Then each function's refusals (malformed, a socket no plain name, inside tmux, a
 # log it cannot write; a relative or missing directory), each of which
 # leaves the shell where it was and runs no tmux.
 set -euo pipefail
@@ -133,7 +133,7 @@ spec.loader.exec_module(arr)
 args = sys.argv[2:]
 $code" "$REPO" "$@"
 }
-lines=$(arrangement 'for socket in arr.tmux_arrangement.SOCKETS:
+lines=$(arrangement 'for socket in ("default", "work"):
     print(socket, arr.tmux_arrangement.attach_line("ssh -p 2222 vm", socket, "api/docs"))')
 [ -n "$lines" ] || {
   log "FAIL  attach_line gave no lines"
@@ -271,13 +271,13 @@ refuse() {
   has "$label: says why" "$out" "$want"
 }
 refuse "'main'" main "want <socket>:<session>"
-refuse "'claude:'" claude: "want <socket>:<session>"
+refuse "'work:'" work: "want <socket>:<session>"
 refuse "''" "" "want <socket>:<session>"
-refuse "':main'" :main "socket '' is neither claude nor default"
-refuse "'-S%2Ftmp%2Fx:main'" -S%2Ftmp%2Fx:main "socket '-S/tmp/x' is neither"
-refuse "a raw /" claude:api/docs "not %-encoded as the arrangement writes it"
-refuse "a bad escape" claude:%zz "not %-encoded as the arrangement writes it"
-refuse "inside tmux" claude:x "inside tmux" TMUX=/tmp/tmux-1/default,1,0
+refuse "':main'" :main "socket '' is not a plain name"
+refuse "'-S%2Ftmp%2Fx:main'" -S%2Ftmp%2Fx:main "socket '-S/tmp/x' is not a plain name"
+refuse "a raw /" work:api/docs "not %-encoded as the arrangement writes it"
+refuse "a bad escape" work:%zz "not %-encoded as the arrangement writes it"
+refuse "inside tmux" work:x "inside tmux" TMUX=/tmp/tmux-1/default,1,0
 has "refusals are logged" "$(attach_log)" "LC_TMUX_ATTACH='main' refused: want <socket>:<session>"
 
 # A request it cannot log is not run: .logs is a file, so no directory.

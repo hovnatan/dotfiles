@@ -108,7 +108,7 @@ USAGE = (
     " | replace [<name>] | snapshot"
 )
 MAX_ARGS = 2  # <command> <name>
-# "[main]" and, for an ssh client on the default socket, "(vm) [main]"
+# "[main]" and, for an ssh client, "(vm) [main]"
 # (~/.tmux.conf's set-titles-string, which reads @ssh outside iTerm2).
 TITLE = re.compile(r"(?:\(\S+\) )?\[(.+)\]")
 
@@ -425,12 +425,9 @@ def plan_restore(
 def landed(session: str, title: str) -> bool:
     """Tell whether a title shows `session`.
 
-    On the claude socket a title reads "<host>/<session>", and a session name
-    may hold a "/" itself:
-        ("api/docs", "[vm/api/docs]") -> True; ("api", "fish:~") -> False
+    ("api/docs", "(vm) [api/docs]") -> True; ("api", "fish:~") -> False
     """
-    shown = title_session(title)
-    return shown is not None and (shown == session or shown.endswith(f"/{session}"))
+    return title_session(title) == session
 
 
 # --- Ghostty, tmux and ps -------------------------------------------------------

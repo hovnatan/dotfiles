@@ -61,20 +61,19 @@ Landing = arr.Landing
 LOCAL = "Mac.local"  # iTerm2's host for a local session here
 arr.LOG.append(LOG)  # the script's own log() lines land in this run's log
 
-# What `tmux ls` on each socket of each host prints (list_sessions_argv):
-# socket, session, and the name its title shows -- "<hostname>/<session>"
-# on the claude socket -- ":"-separated. Twin's claude "dup" shows as "dup"
-# through a host named "" -- impossible, but it puts one shown name on both
+# What each host prints for LIST_SESSIONS: a line per session, and what a
+# socket with no server, or ssh, says beside them. Twin holds one name on two
 # sockets.
 HOSTS = {
-    "ssh vm": "claude:ai-agent:vm/ai-agent\nclaude:api/docs:vm/api/docs\n"
-    "default:main:main\n"
-    "default:my notes:my notes\n"
+    "ssh vm": "tmux-session:work:ai-agent\ntmux-session:work:api/docs\n"
+    "tmux-session:default:main\n"
+    "tmux-session:default:my notes\n"
     "error connecting to /tmp/tmux-1000/x (No such file or directory)\n",
-    "ssh -p 2222 user@box": "no server running on /tmp/tmux-1000/claude\n"
-    "default:main:main\n",
-    "ssh twin": "claude:dup:dup\ndefault:dup:dup\n",
-    "ssh -t vm": "default:main:main\n",
+    "ssh -p 2222 user@box": "no server running on /tmp/tmux-1000/stale\n"
+    "Warning: this login: has colons\n"
+    "tmux-session:default:main\n",
+    "ssh twin": "tmux-session:work:dup\ntmux-session:default:dup\n",
+    "ssh -t vm": "tmux-session:default:main\n",
 }
 
 
@@ -135,21 +134,21 @@ def refused(tabs: list[Tab], want: str) -> None:
     assert want in error, f"error {error!r} lacks {want!r}"
 
 
-@case("ssh tabs: tmux on either socket, a plain login in its directory, options kept")
+@case("ssh tabs: tmux on any socket, a plain login in its directory, options kept")
 def _() -> None:
     got = save(
         [
-            Tab(1, "ssh", "ssh vm", "[vm/ai-agent]", "/home/me", "vm"),
+            Tab(1, "ssh", "ssh vm", "[ai-agent]", "/home/me", "vm"),
             Tab(1, "ssh", "ssh vm", "fish:~/d/ai-agent", "/home/me/d/ai-agent", "vm"),
-            Tab(1, "ssh", "ssh vm", "[vm/api/docs]", "/home/me", "vm"),
+            Tab(1, "ssh", "ssh vm", "[api/docs]", "/home/me", "vm"),
             Tab(1, "ssh", "ssh -p 2222 user@box ./deploy.sh", "[main]", "/", "box"),
             Tab(1, "ssh", "ssh -p 2222 user@box", "fish:/", "/", "box"),
         ],
     )
     assert got == [
-        "LC_TMUX_ATTACH=claude:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH vm",
+        "LC_TMUX_ATTACH=work:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH vm",
         "LC_LOGIN_DIR=%2Fhome%2Fme%2Fd%2Fai-agent ssh -o SendEnv=LC_LOGIN_DIR vm",
-        "LC_TMUX_ATTACH=claude:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm",
+        "LC_TMUX_ATTACH=work:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm",
         "LC_TMUX_ATTACH=default:main ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 user@box",
         "LC_LOGIN_DIR=%2F ssh -o SendEnv=LC_LOGIN_DIR -p 2222 user@box",
     ], got
@@ -248,7 +247,7 @@ def _() -> None:
 
 @case("attach_request reads back what attach_line wrote, and nothing else")
 def _() -> None:
-    for socket in shared.SOCKETS:
+    for socket in ("default", "claude", "work.2"):
         line = shared.attach_line("ssh -p 2222 vm", socket, "api/docs")
         got = arr.attach_request(line)
         assert got == (socket, "api/docs"), (line, got)
@@ -271,12 +270,13 @@ def _() -> None:
     )
 
 
-@case("a saved attach line on a socket the restore cannot land is refused at parse")
+@case("a saved attach line the restore cannot land is refused at parse")
 def _() -> None:
     for value, want in [
-        ("work:main", "socket 'work'"),
-        ("main", "socket 'main'"),  # no ":" at all
-        ("claude:", "no session"),
+        ("-S%2Ftmp%2Fx:main", "socket '-S/tmp/x'"),
+        (":main", "socket ''"),
+        ("main", "no session"),  # no ":" at all
+        ("work:", "no session"),
     ]:
         line = f"LC_TMUX_ATTACH={value} ssh -o SendEnv=LC_TMUX_ATTACH vm"
         error = error_of(
@@ -286,13 +286,13 @@ def _() -> None:
         assert "line 3" in error, error
 
 
-@case("TITLED is what ~/.tmux.conf's set-titles-string shows for each socket")
+@case("~/.tmux.conf's title shows the bare session, whatever the socket")
 def _() -> None:
     conf = (REPO / "home/.tmux.conf").read_text()
     titles = re.findall(r"^set-option -g set-titles-string (.+)$", conf, re.MULTILINE)
     assert len(titles) == 1, titles
-    for socket, shown in shared.TITLED.items():
-        assert f"[{shown}]" in titles[0], (socket, shown, titles[0])
+    assert "[#{session_name}]" in titles[0], titles
+    assert "socket_path" not in titles[0], titles
 
 
 @case("a session on no socket is refused, with the host's output")
@@ -300,16 +300,11 @@ def _() -> None:
     refused([Tab(1, "ssh", "ssh vm", "[gone]", "/", "vm")], "on no socket")
 
 
-@case("a claude session's bare name is not its title, so it matches nothing")
-def _() -> None:
-    refused([Tab(1, "ssh", "ssh vm", "[ai-agent]", "/", "vm")], "on no socket")
-
-
 @case("a session on two sockets is refused")
 def _() -> None:
     refused(
         [Tab(1, "ssh", "ssh twin", "[dup]", "/", "vm")],
-        "sockets claude and default",
+        "sockets work and default",
     )
 
 
@@ -365,10 +360,7 @@ def _() -> None:
         "-p",
         "2222",
         "vm",
-        (
-            "tmux -L claude ls -F 'claude:#{session_name}:#{host}/#{session_name}';"
-            " tmux ls -F 'default:#{session_name}:#{session_name}'"
-        ),
+        shared.LIST_SESSIONS,
     ], got
 
 
@@ -469,9 +461,9 @@ def stuck(fields: dict[str, str | None]) -> Moving:
     return Moving(fields, {}, 10**6)
 
 
-def tmux_tab(label: str, name: str, s: Moving, socket: str = "claude") -> Landing:
+def tmux_tab(label: str, name: str, s: Moving) -> Landing:
     """Return the landing of a tmux tab."""
-    return arr.tmux_landing(label, socket, name, s)
+    return arr.tmux_landing(label, name, s)
 
 
 def dir_tab(label: str, path: str, s: Moving) -> Landing:
@@ -491,10 +483,10 @@ def wait(
 @case("restore waits for each tmux tab to show its session, each dir tab its path")
 def _() -> None:
     tabs = [
-        tmux_tab("window 1 tab 1", "ai-agent", titled("[vm/ai-agent]", 3)),
-        tmux_tab("window 1 tab 2", "api/docs", titled("[vm/api/docs]", 0)),
+        tmux_tab("window 1 tab 1", "ai-agent", titled("[ai-agent]", 3)),
+        tmux_tab("window 1 tab 2", "api/docs", titled("[api/docs]", 0)),
         dir_tab("window 1 tab 3", "/home/me/d", in_dir("/home/me/d", 4)),
-        tmux_tab("window 1 tab 4", "main", titled("[main]", 2), socket="default"),
+        tmux_tab("window 1 tab 4", "main", titled("[main]", 2)),
     ]
     wait(tabs, timeout=5)
 
@@ -502,14 +494,14 @@ def _() -> None:
 @case("a tab still a shell at the timeout fails the restore, by name")
 def _() -> None:
     tabs = [
-        tmux_tab("window 1 tab 1", "ai-agent", titled("[vm/ai-agent]", 0)),
-        tmux_tab("window 2 tab 3", "api/docs", titled("[vm/api/docs]", 10**6)),
+        tmux_tab("window 1 tab 1", "ai-agent", titled("[ai-agent]", 0)),
+        tmux_tab("window 2 tab 3", "api/docs", titled("[api/docs]", 10**6)),
         dir_tab("window 2 tab 4", "/home/me/d", in_dir("/home/me/d", 10**6)),
         dir_tab("window 2 tab 5", "/srv", in_dir("/srv", 0)),
     ]
     error = error_of(lambda: wait(tabs))
     assert "2 tabs did not land" in error, error
-    assert "window 2 tab 3: want [<host>/api/docs], title reads 'fish'" in error, error
+    assert "window 2 tab 3: want [api/docs], title reads 'fish'" in error, error
     want = (
         "window 2 tab 4: want directory '/home/me/d' off host 'Mac.local',"
         " path reads '/Users/me' on host 'Mac.local'"
@@ -553,15 +545,15 @@ def _() -> None:
         "far": lines[at["far"] :],
     }
     assert groups["up"][-3:-1] == [
-        "  w1 t1: want [<host>/a], title reads 'ssh'",
+        "  w1 t1: want [a], title reads 'ssh'",
         (
             "  w1 t2: want directory '/d' off host 'Mac.local',"
             " path reads '/Users/me' on host 'Mac'"
         ),
     ], groups["up"]
-    assert groups["ended"][1] == "  w2 t1: want [<host>/gone], title reads 'fish'"
+    assert groups["ended"][1] == "  w2 t1: want [gone], title reads 'fish'"
     assert groups["far"][1:3] == [
-        "  w3 t1: want [<host>/b], title reads 'fish ~'",
+        "  w3 t1: want [b], title reads 'fish ~'",
         (
             "  w3 t2: want directory '/srv' off host 'Mac.local',"
             " path reads '/home/me' on host 'vm'"
@@ -597,15 +589,12 @@ def _() -> None:
         assert want in error, error
 
 
-@case("a claude tab has landed only on its own session, behind some host")
+@case("a tmux tab has landed only on its own session")
 def _() -> None:
     for title, want in [
-        ("[vm/api/docs]", True),
-        ("[box/api/docs]", True),
-        ("[api/docs]", False),  # no host: the bare name is not a claude title
-        ("[vm/api/docs2]", False),
-        ("[vm/x/api/docs]", False),  # the host ends at the first "/"
-        ("[vm-api/docs]", False),  # the form before 2026-10-22
+        ("[api/docs]", True),
+        ("[api/docs2]", False),
+        ("[vm/api/docs]", False),
         ("[main]", False),
     ]:
         s = titled(title, 0)
@@ -628,7 +617,7 @@ def _() -> None:
     attach = shared.attach_line("ssh vm", "claude", "api/docs")
     got = arr.landing_of("t", attach, s, local)
     assert got is not None, attach
-    assert got.want == "[<host>/api/docs]", got
+    assert got.want == "[api/docs]", got
     got = arr.landing_of("t", arr.dir_line("ssh vm", "/a b"), s, local)
     assert got is not None
     assert got.want == "directory '/a b' off host 'Mac', 'Mac.local'", got
@@ -664,21 +653,21 @@ def _() -> None:
     assert tabs[0].tty == "/dev/ttys001", tabs
 
 
-@case("a local line survives the file, and a socket of no use fails its parse")
+@case("a local line survives the file, and a socket no plain name fails its parse")
 def _() -> None:
     [window] = arr.parse_file(f"window: t\n{LOCAL_LINE}\n")
     assert window.lines == [LOCAL_LINE], window
-    bad = "window: t\ntmux -L other new-session -A -s 'a' -c '/x'\n"
-    assert "line 2 uses tmux socket 'other'" in error_of(lambda: arr.parse_file(bad))
+    bad = "window: t\ntmux -L -x new-session -A -s 'a' -c '/x'\n"
+    assert "line 2 uses tmux socket '-x'" in error_of(lambda: arr.parse_file(bad))
 
 
-@case("a restored local tab waits for its session, on either socket")
+@case("a restored local tab waits for its session, on any socket")
 def _() -> None:
     local = frozenset({LOCAL})
     s = in_dir("/x", 0)
     got = arr.landing_of("t", LOCAL_LINE, s, local)
     assert got is not None
-    assert got.want == "[<host>/api]", got
+    assert got.want == "[api]", got
     plain = "tmux new-session -A -s 'main' -c '/x'"
     got = arr.landing_of("t", plain, s, local)
     assert got is not None
@@ -694,7 +683,7 @@ def _() -> None:
     assert tab is not None
     error = error_of(lambda: wait([tab]))
     assert "local tmux, not attached:" in error, error
-    assert "w1 t1: want [<host>/api], title reads 'fish'" in error, error
+    assert "w1 t1: want [api], title reads 'fish'" in error, error
     assert "ssh ended" not in error, error
 
 
@@ -765,7 +754,7 @@ class RestoredSession:
         if request := arr.attach_request(line):
             if request[1] == GONE:
                 return  # tmux: can't find session; ssh ends, the tab local again
-            self.vars.update(name=f"[vm/{request[1]}]", hostname="vm", jobName="ssh")
+            self.vars.update(name=f"[{request[1]}]", hostname="vm", jobName="ssh")
         elif (where := arr.dir_request(line)) is not None:
             self.vars.update(path=where, hostname="vm", jobName="ssh")
 
@@ -918,7 +907,7 @@ def _() -> None:
     want = (
         "1 tabs did not land in 0.05 s.\n"
         "ssh ended, the tab back on this Mac ('Mac', 'Mac.local'):\n"
-        "  window 1 tab 2: want [<host>/gone], title reads 'fish'\n"
+        "  window 1 tab 2: want [gone], title reads 'fish'\n"
     )
     assert error.startswith(want), error
 

@@ -3,22 +3,22 @@ function tmux_attach_requested --description 'Replace this login shell with the 
     # plain login carrying the request in the environment, not as a remote
     # command (scripts/lib/iterm2_ssh_arrangement.py, attach_line):
     #
-    #   Mac tab: LC_TMUX_ATTACH=claude:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH vm
+    #   Mac tab: LC_TMUX_ATTACH=work:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH vm
     #     -> sshd / tailscaled: no command, so login(1), pty is the user's
     #     -> bash -> fish --login (from_bash_login.sh) -> config.fish
-    #     -> here: exec tmux -L claude attach -t =ai-agent
+    #     -> here: exec tmux -L work attach -t =ai-agent
     #
     # Over Tailscale SSH a remote command (`ssh -t vm tmux attach ...`) skips
     # login(1) and the pty stays root's, so the client-attached hook
     # (~/.config/tmux/report-attach.sh) cannot write the iTerm2 host report
-    # to it. The value is <socket>:<session>; the socket is one of the
-    # arrangement's SOCKETS, "default" for tmux's own; tmux allows no ":" in
-    # a session name, so the first ":" splits. The value comes %-encoded, a
+    # to it. The value is <socket>:<session>; the socket is any plain name
+    # (the arrangement's SOCKET_NAME), "default" for tmux's own; tmux allows
+    # no ":" in a session name, so the first ":" splits. The value comes %-encoded, a
     # "/" as "%2F" (Tailscale SSH drops a variable whose value holds a "/"),
     # and is decoded first (__ssh_arrangement_decode).
-    #   claude:api%2Fdocs -> tmux -L claude attach -t =api/docs
-    #   default:main       -> tmux attach -t =main
-    #   main, other:x, a/b -> error, shell stays
+    #   work:api%2Fdocs   -> tmux -L work attach -t =api/docs
+    #   default:main      -> tmux attach -t =main
+    #   main, -S%2Fx:y, a/b -> error, shell stays
     # exec, as the remote command did: detaching ends the ssh, and a failed
     # attach (session gone) prints tmux's error and ends it too. Each request
     # and its outcome goes to the tmux_attach_requested event log
@@ -37,9 +37,9 @@ function tmux_attach_requested --description 'Replace this login shell with the 
     if set -q TMUX
         set why "reached a shell inside tmux ($TMUX); not nesting a client"
     else if test (count $parts) -ne 2; or test -z "$parts[2]"
-        set why "want <socket>:<session>, e.g. claude:ai-agent or default:main"
-    else if not contains -- $parts[1] claude default
-        set why "socket '$parts[1]' is neither claude nor default"
+        set why "want <socket>:<session>, e.g. work:ai-agent or default:main"
+    else if not string match -qr '^[A-Za-z0-9_.][A-Za-z0-9_.-]*$' -- $parts[1]
+        set why "socket '$parts[1]' is not a plain name"
     end
     if test -n "$why"
         __ssh_arrangement_note tmux_attach_requested "LC_TMUX_ATTACH='$want' refused: $why"

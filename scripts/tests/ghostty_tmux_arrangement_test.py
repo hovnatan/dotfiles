@@ -16,7 +16,9 @@ CI has no Ghostty, tmux or ssh:
 # ruff: noqa: S101, INP001, CPY001, D103
 
 import importlib.util
+import socket
 import sys
+import tempfile
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
@@ -47,10 +49,10 @@ Client, Terminal, ArrangementError = arr.Client, arr.Terminal, arr.ArrangementEr
 
 ATTACH = "LC_TMUX_ATTACH=claude:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm"
 SHELL_LOCAL = "tmux -L claude new-session -A -s 'notes' -c '/Users/me'"
-SESSIONS = {"vm/api/docs": [("claude", "api/docs")], "main": [("default", "main")]}
+SESSIONS = {"api/docs": ["claude"], "main": ["default"]}
 
 
-def lookup(_login: str) -> tuple[dict[str, list[tuple[str, str]]], str]:
+def lookup(_login: str) -> tuple[dict[str, list[str]], str]:
     """Answer as a host holding the sessions of SESSIONS."""
     return SESSIONS, "fake tmux ls"
 
@@ -89,14 +91,14 @@ def check(name: str, fn: Callable[[], None]) -> None:
 
 
 def titles() -> None:
-    assert arr.title_session("[vm/api/docs]") == "vm/api/docs"
+    assert arr.title_session("[api/docs]") == "api/docs"
     assert arr.title_session("(vm) [main]") == "main"
     assert arr.title_session("fish:~") is None
     assert arr.title_session("(vm) fish:~") is None
 
 
 def local_lines_round_trip() -> None:
-    client = Client("default", "it's/a", "/Users/me/it's here")
+    client = Client("default", "it's/a", "/Users/me/it's here")  # no -L
     line = arr.local_line(client)
     assert line == r"tmux new-session -A -s 'it\'s/a' -c '/Users/me/it\'s here'"
     assert arr.local_request(line) == client
@@ -104,11 +106,33 @@ def local_lines_round_trip() -> None:
     assert arr.local_request(ATTACH) is None
 
 
-def a_local_line_on_another_socket_is_refused() -> None:
+def a_local_line_on_any_socket_reads_back() -> None:
+    client = Client("work.2", "x", "/")
+    assert arr.local_request(arr.local_line(client)) == client
+
+
+def a_local_line_on_a_socket_no_plain_name_is_refused() -> None:
     raises(
-        "not one of",
-        lambda: arr.local_request("tmux -L probe new-session -A -s 'x' -c '/'"),
+        "not a plain name",
+        lambda: arr.local_request("tmux -L -x new-session -A -s 'x' -c '/'"),
     )
+
+
+def local_sockets_are_found_by_looking() -> None:
+    # In /tmp: a unix socket's path may not run past 104 bytes on a Mac.
+    with tempfile.TemporaryDirectory(dir="/tmp") as held:
+        directory = Path(held)
+        assert shared.local_sockets(directory / "none") == []
+        for name in ("work", "default"):
+            bound = socket.socket(socket.AF_UNIX)
+            bound.bind(str(directory / name))
+            bound.close()  # the file stays, as one a dead server left
+        (directory / "a-file").touch()
+        assert shared.local_sockets(directory) == ["default", "work"]
+        bound = socket.socket(socket.AF_UNIX)
+        bound.bind(str(directory / "-odd"))
+        bound.close()
+        raises("not a plain name", lambda: shared.local_sockets(directory))
 
 
 def a_local_client_is_saved_whatever_its_title() -> None:
@@ -118,12 +142,12 @@ def a_local_client_is_saved_whatever_its_title() -> None:
 
 
 def an_ssh_tab_is_saved_from_its_title() -> None:
-    line = arr.line_of(1, terminal("[vm/api/docs]"), None, "ssh vm", lookup)
+    line = arr.line_of(1, terminal("[api/docs]"), None, "ssh vm", lookup)
     assert line == ATTACH
 
 
 def an_ssh_title_with_the_host_prefix_still_reads() -> None:
-    # The default socket outside iTerm2: tmux prefixes the host (.tmux.conf).
+    # Outside iTerm2 tmux prefixes the host (.tmux.conf).
     line = arr.line_of(1, terminal("(vm) [main]"), None, "ssh vm", lookup)
     assert line == "LC_TMUX_ATTACH=default:main ssh -o SendEnv=LC_TMUX_ATTACH vm"
 
@@ -138,14 +162,14 @@ def what_is_no_tmux_is_skipped() -> None:
 def a_session_on_no_socket_is_an_error() -> None:
     raises(
         "on no socket",
-        lambda: arr.line_of(3, terminal("[vm/gone]"), None, "ssh vm", lookup),
+        lambda: arr.line_of(3, terminal("[gone]"), None, "ssh vm", lookup),
     )
 
 
 def an_ssh_line_that_cannot_be_replayed_is_an_error() -> None:
     raises(
         "cannot be replayed",
-        lambda: arr.line_of(3, terminal("[vm/api/docs]"), None, "ssh", lookup),
+        lambda: arr.line_of(3, terminal("[api/docs]"), None, "ssh", lookup),
     )
 
 
@@ -191,7 +215,7 @@ def bad_files_are_refused() -> None:
     raises('no "window:"', lambda: arr.parse_file("# only a comment\n"))
     raises(
         "line 2",
-        lambda: arr.parse_file("window:\ntmux -L probe new-session -A -s 'x' -c '/'\n"),
+        lambda: arr.parse_file("window:\ntmux -L -x new-session -A -s 'x' -c '/'\n"),
     )
 
 
@@ -238,12 +262,12 @@ def a_gone_local_session_with_its_directory_gone_fails_first() -> None:
 
 
 def landing() -> None:
-    assert arr.landed("api/docs", "[vm/api/docs]")
+    assert arr.landed("api/docs", "[api/docs]")
     assert arr.landed("main", "(vm) [main]")
     assert arr.landed("main", "[main]")
     assert not arr.landed("docs", "fish:~")
-    assert not arr.landed("docs", "[vm/api]")
-    assert not arr.landed("api", "[vm/api-old]")
+    assert not arr.landed("docs", "[api/docs]")
+    assert not arr.landed("api", "[api-old]")
 
 
 def snapshots_prune_in_the_given_folder() -> None:

@@ -17,6 +17,7 @@ iterm2_ssh_arrangement.py's docstring.
 # A script beside its shell wrapper, no license header, as in scripts/tests.
 # ruff: noqa: INP001, CPY001
 
+import os
 import re
 import subprocess
 import sys
@@ -30,11 +31,25 @@ from urllib.parse import quote, unquote
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "home/.hammerspoon"))
 import ssh_command
 
-SOCKETS = ("claude", "default")  # tmux_attach_requested.fish accepts these
-# What each socket's sessions show inside the brackets of the terminal title,
-# as tmux formats; must match ~/.tmux.conf's set-titles-string.
-TITLED = {"claude": "#{host}/#{session_name}", "default": "#{session_name}"}
-SESSION_FIELDS = 3  # a list_sessions_argv line: socket, session, shown name
+# A socket a saved line may name: any tmux socket, found by looking
+# (local_sockets, LIST_SESSIONS), as long as it needs no quoting and reads as
+# no option. tmux_attach_requested.fish holds the same pattern, as what it
+# gets arrives over ssh.
+SOCKET_NAME = re.compile(r"[A-Za-z0-9_.][A-Za-z0-9_.-]*")
+# What a host runs to list its sessions: a line per session, on every socket
+# in tmux's directory. In sh whatever the login shell is, and with its outer
+# single quotes the same words to a remote sh and a remote fish. A socket file
+# outliving its server prints "no server running ..." and lists nothing.
+#   /tmp/tmux-1000/{default,work} -> tmux-session:default:main
+#                                    tmux-session:work:api/docs
+LIST_SESSIONS = (
+    """sh -c 'for p in "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)"/*; do"""
+    """ [ -S "$p" ] && s=${p##*/} &&"""
+    """ tmux -L "$s" ls -F "tmux-session:$s:#{session_name}"; done'"""
+)
+# The mark sets a session apart from what ssh or a login shell prints beside
+# it. Fields split at ":", which a session name (tmux allows none) lacks.
+SESSION_LINE = re.compile(r"tmux-session:([^:]+):(.+)")
 LIST_CLIENTS_FIELDS = 3  # a local_clients line: tty, session, directory
 # tmux list-clients on a socket with no server: nothing attached, no error.
 NO_SERVER = re.compile(r"no server running|error connecting to")
@@ -53,8 +68,8 @@ SNAPSHOT_KEEP = 14 * 144
 UNATTENDED_SSH = ("-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
 LOG: list[Path] = []  # the run's event log, set by main()
 
-# (login) -> ({shown name: [(socket, session)]}, what the host printed)
-Lookup = Callable[[str], tuple[dict[str, list[tuple[str, str]]], str]]
+# (login) -> ({session: [sockets holding one of that name]}, what the host printed)
+Lookup = Callable[[str], tuple[dict[str, list[str]], str]]
 
 
 class ArrangementError(Exception):
@@ -79,35 +94,33 @@ def log(msg: str) -> None:
 
 
 def tmux_session(title: str) -> str | None:
-    """Return the name a tab title shows for its remote tmux session, or None.
+    """Return the tmux session a tab title shows, or None.
 
-    "[vm/api/docs]" -> "vm/api/docs"; "[main]" -> "main"; "fish:~" -> None.
-    On the claude socket that name is "<hostname>/<session>" (TITLED); the
-    lookup maps it back.
+    "[api/docs]" -> "api/docs"; "[main]" -> "main"; "fish:~" -> None.
     """
     m = re.fullmatch(r"\[(.+)\]", title)
     return m[1] if m else None
 
 
 def tmux(socket: str) -> str:
-    """Return the tmux command for `socket`: "tmux" or "tmux -L claude"."""
+    """Return the tmux command for `socket`: "tmux" or "tmux -L work"."""
     return "tmux" if socket == "default" else f"tmux -L {socket}"
 
 
 def attach_line(login: str, socket: str, session: str) -> str:
     """Return the line that reattaches `session` on `socket`, via the login shell.
 
-    ("ssh -p 2222 vm", "claude", "ai-agent")
-        -> "LC_TMUX_ATTACH=claude:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 vm"
+    ("ssh -p 2222 vm", "work", "ai-agent")
+        -> "LC_TMUX_ATTACH=work:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 vm"
     The value is "<socket>:<session>", split at the first ":" on the far
     side; tmux allows no ":" in a session name. LC_ because the stock
     AcceptEnv of sshd (LANG LC_*) passes only those.
 
     "/" goes as "%2F": Tailscale SSH (1.102) drops a variable whose value
-    holds a "/", so "claude:api/docs" never arrived, while every other
+    holds a "/", so "work:api/docs" never arrived, while every other
     character a plain session name may hold passes. A plain name holds no
     "%", so tmux_attach_requested.fish decodes it unambiguously:
-        "api/docs" -> "LC_TMUX_ATTACH=claude:api%2Fdocs ..."
+        "api/docs" -> "LC_TMUX_ATTACH=work:api%2Fdocs ..."
     """
     if not ssh_command.plain(session):
         msg = f"tmux session {session!r} has characters needing quotes; rename it"
@@ -122,7 +135,7 @@ def send_line(login: str, variable: str, value: str) -> str:
         -> "LC_X=a%2Fb%20c ssh -o SendEnv=LC_X -p 2222 vm"
     Every byte but [A-Za-z0-9_.~:-] is %-encoded: the "/" for Tailscale SSH
     (attach_line), the rest so the value needs no quoting in fish. ":" stays,
-    so a tmux line reads as before ("claude:api%2Fdocs"). The far side
+    so a tmux line reads as before ("work:api%2Fdocs"). The far side
     decodes it with `string unescape --style=url` (__ssh_arrangement_decode).
     """
     first, *rest = login.split()
@@ -145,20 +158,17 @@ def attach_request(line: str) -> tuple[str, str] | None:
     """Return the (socket, session) a saved line asks the far side to attach.
 
     attach_line's output -> its socket and session; any other line -> None.
-    "LC_TMUX_ATTACH=claude:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm"
-        -> ("claude", "api/docs")
-    An attach line no restore can land -- a socket not in SOCKETS, no
+    "LC_TMUX_ATTACH=work:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm"
+        -> ("work", "api/docs")
+    An attach line no restore can land -- a socket that is no plain name, no
     session -- is an error (a hand edit, or a file older than this script).
     """
     value = sent_value(line, "LC_TMUX_ATTACH")
     if value is None:
         return None
     socket, _, session = value.partition(":")
-    if socket not in SOCKETS:
-        msg = (
-            f"attaches on tmux socket {socket!r},"
-            f" not one of {', '.join(SOCKETS)}: {line}"
-        )
+    if not SOCKET_NAME.fullmatch(socket):
+        msg = f"attaches on tmux socket {socket!r}, not a plain name: {line}"
         raise ArrangementError(msg)
     if not session:
         msg = f"attaches no session on socket {socket!r}: {line}"
@@ -171,23 +181,20 @@ def fish_quote(s: str) -> str:
     return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 
-def parse_sessions(text: str) -> dict[str, list[tuple[str, str]]]:
-    r"""Return {shown name: [(socket, session)]} from list_sessions_argv's output.
+def parse_sessions(text: str) -> dict[str, list[str]]:
+    r"""Return {session: [sockets holding it]} from list_sessions_argv's output.
 
-    "claude:ai-agent:vm/ai-agent\ndefault:main:main\n"
-        -> {"vm/ai-agent": [("claude", "ai-agent")], "main": [("default", "main")]}
-    Fields split at ":", which neither a session name (tmux allows none) nor
-    a hostname holds; a space would split "my notes", whose tab then read
-    as on no socket rather than as a name to rename (attach_line).
+    "tmux-session:work:api\ntmux-session:default:main\n"
+        -> {"api": ["work"], "main": ["default"]}
+    A space stays in its field, so "my notes" reads as a name to rename
+    (attach_line), not as on no socket.
     Lines of any other shape ("no server running on ...") are what a socket
-    with no server prints; they are kept only for the error in lines().
+    with no server prints; they are kept only for attach_for's error.
     """
-    found: dict[str, list[tuple[str, str]]] = {}
+    found: dict[str, list[str]] = {}
     for line in text.splitlines():
-        fields = line.split(":")
-        if len(fields) == SESSION_FIELDS and fields[0] in SOCKETS and all(fields):
-            socket, session, shown = fields
-            found.setdefault(shown, []).append((socket, session))
+        if m := SESSION_LINE.fullmatch(line):
+            found.setdefault(m[2], []).append(m[1])
     return found
 
 
@@ -203,26 +210,15 @@ def ssh_argv(login: str, remote: str, *, unattended: bool) -> list[str]:
 
 
 def list_sessions_argv(login: str, *, unattended: bool) -> list[str]:
-    """Return the argv that lists every socket's sessions on the host of `login`.
-
-    A line per session: its socket, its name, and the name its title shows
-    (TITLED), ":"-separated (parse_sessions), tmux formatting both on the far
-    side so the host is that one's.
-    The remote command is one word for ssh; its single quotes read the same
-    in a remote sh and a remote fish.
-    """
-    remote = "; ".join(
-        f"{tmux(socket)} ls -F '{socket}:#{{session_name}}:{TITLED[socket]}'"
-        for socket in SOCKETS
-    )
-    return ssh_argv(login, remote, unattended=unattended)
+    """Return the argv that lists every socket's sessions on the host of `login`."""
+    return ssh_argv(login, LIST_SESSIONS, unattended=unattended)
 
 
 def remote_lookup(*, unattended: bool) -> Lookup:
     """Return a lookup asking each host once which tmux sockets hold which sessions."""
-    cache: dict[str, tuple[dict[str, list[tuple[str, str]]], str]] = {}
+    cache: dict[str, tuple[dict[str, list[str]], str]] = {}
 
-    def lookup(login: str) -> tuple[dict[str, list[tuple[str, str]]], str]:
+    def lookup(login: str) -> tuple[dict[str, list[str]], str]:
         if login not in cache:
             log(f"asking `{login}` which tmux sockets hold which sessions")
             # tmux ls exits 1 for a socket with no server, an empty socket,
@@ -255,16 +251,16 @@ def attach_for(tab: int, login: str, shown: str, lookup: Lookup) -> str:
     if not held:
         msg = (
             f"tab {tab}: tmux session {shown!r} is on no socket"
-            f" ({', '.join(SOCKETS)}) of `{login}`; its tmux ls said:\n{raw}"
+            f" of `{login}`; its tmux ls said:\n{raw}"
         )
         raise ArrangementError(msg)
     if len(held) > 1:
         msg = (
             f"tab {tab}: tmux session {shown!r} is on sockets"
-            f" {' and '.join(s for s, _ in held)} of `{login}`; rename one"
+            f" {' and '.join(held)} of `{login}`; rename one"
         )
         raise ArrangementError(msg)
-    return attach_line(login, *held[0])
+    return attach_line(login, held[0], shown)
 
 
 def snapshot_name(now: datetime) -> str:
@@ -326,8 +322,8 @@ def fish_unquote(quoted: str) -> str:
 def local_line(client: Client) -> str:
     r"""Return the line that attaches a local session, or creates it if it is gone.
 
-    Client("claude", "api", "/Users/me/it's")
-      -> tmux -L claude new-session -A -s 'api' -c '/Users/me/it\'s'
+    Client("work", "api", "/Users/me/it's")
+      -> tmux -L work new-session -A -s 'api' -c '/Users/me/it\'s'
     """
     session, path = fish_quote(client.session), fish_quote(client.path)
     return f"{tmux(client.socket)} new-session -A -s {session} -c {path}"
@@ -339,8 +335,8 @@ def local_request(line: str) -> Client | None:
     if not m:
         return None
     socket = m[1] or "default"
-    if socket not in SOCKETS:
-        msg = f"uses tmux socket {socket!r}, not one of {', '.join(SOCKETS)}: {line}"
+    if not SOCKET_NAME.fullmatch(socket):
+        msg = f"uses tmux socket {socket!r}, not a plain name: {line}"
         raise ArrangementError(msg)
     return Client(socket, fish_unquote(m[2]), fish_unquote(m[3]))
 
@@ -361,10 +357,33 @@ def parse_clients(socket: str, text: str) -> dict[str, Client]:
     return clients
 
 
+def socket_dir() -> Path:
+    """Return the directory of this user's tmux sockets, as tmux works it out."""
+    tmp = os.environ.get("TMUX_TMPDIR") or "/tmp"  # noqa: S108 - tmux's own default
+    return Path(tmp) / f"tmux-{os.getuid()}"
+
+
+def local_sockets(directory: Path) -> list[str]:
+    """Return the tmux sockets in `directory`, none if tmux has not made it.
+
+    A socket file can outlive its server, and is listed all the same:
+    local_clients reads that as nothing attached. One whose name a saved line
+    could not carry is an error, not a session to lose without a word.
+    """
+    if not directory.is_dir():
+        return []
+    sockets = sorted(p.name for p in directory.iterdir() if p.is_socket())
+    for socket in sockets:
+        if not SOCKET_NAME.fullmatch(socket):
+            msg = f"tmux socket {socket!r} in {directory} is not a plain name"
+            raise ArrangementError(msg)
+    return sockets
+
+
 def local_clients() -> dict[str, Client]:
     """Return {tty: Client} of every local tmux client, on every socket."""
     clients: dict[str, Client] = {}
-    for socket in SOCKETS:
+    for socket in local_sockets(socket_dir()):
         form = "#{client_tty}:#{session_name}:#{session_path}"
         done = run([*tmux(socket).split(), "list-clients", "-F", form], 10)
         if done.returncode == 0:
