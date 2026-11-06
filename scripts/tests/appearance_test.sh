@@ -26,8 +26,8 @@
 #   theme file   a line that is not a `set` fails the run
 #   tmux         the theme lines of home/.config/tmux/tmux.conf (six hooks, the
 #                dim colours and bar styles, the bar's default, four reload
-#                lines), in a throwaway server: a client in a pty reports its
-#                theme as a terminal does (CSI ? 997 ; 2 n = light, ; 1 n =
+#                lines, the `theme` option), in a throwaway server: a client in
+#                a pty reports its theme as a terminal does (CSI ? 997 ; 2 n = light, ; 1 n =
 #                dark), the links, the inactive panes' background (window-style)
 #                and the bar's colours (status-style, and what the client is
 #                sent to draw) follow; a reload from that client's keys sets
@@ -218,10 +218,10 @@ sed -i.bak '$d' "$H/.config/zathura/gruvbox-dark" # the map line from above
 rm "$H/bin/zathura"
 mkdir -p "$H/.dotfiles"
 ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
-grep -E "^(set-hook -g client-(dark|light)-theme(\[[0-9]+\])? |set-option -g @(dim|bar)_|set-option -gF status-style |if-shell -F '#\{==:#\{client_theme\})" \
+grep -E "^(set-hook -g client-(dark|light)-theme(\[[0-9]+\])? |set-option -g @(dim|bar)_|set-option -gF status-style |set-option -s theme |if-shell -F '#\{==:#\{client_theme\})" \
   "$REPO/home/.config/tmux/tmux.conf" >"$WORK/hooks.conf"
-if [ "$(wc -l <"$WORK/hooks.conf")" -eq 15 ]; then
-  pass "tmux: home/.config/tmux/tmux.conf has the fifteen theme lines"
+if [ "$(wc -l <"$WORK/hooks.conf")" -eq 16 ]; then
+  pass "tmux: home/.config/tmux/tmux.conf has the sixteen theme lines"
 else
   fail "tmux: hooks in home/.config/tmux/tmux.conf: $(cat "$WORK/hooks.conf")"
 fi
