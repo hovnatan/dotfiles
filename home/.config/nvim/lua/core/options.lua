@@ -43,6 +43,15 @@ if vim.env.SSH_CONNECTION and not vim.env.TMUX and not in_iterm2 then
 end
 vim.opt.titlestring = title
 vim.opt.ruler = true
+-- The default statusline renders this, so the total line count needs no
+-- custom statusline: "123/4567,12" (line/total,column). No %P: the total
+-- already says how far through the file you are. The one %-20( group does
+-- two jobs: in the statusline it pads, so the left edge holds still as the
+-- numbers change length; where there is no statusline (a focused float
+-- draws the ruler in the command line) it sets the ruler's width. Keep it
+-- as a leading %-NN( with no dot: "%-18.(" is not read as a width, and the
+-- 17-column default cut the line number off, "<8/236,1".
+vim.opt.rulerformat = "%-20(%l/%L,%c%V%)"
 vim.opt.number = true
 vim.opt.showcmd = true
 vim.opt.mouse = ""
