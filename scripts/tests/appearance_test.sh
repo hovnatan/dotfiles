@@ -32,6 +32,10 @@
 #                and the bar's colours (status-style, and what the client is
 #                sent to draw) follow; a reload from that client's keys sets
 #                both styles again
+#   stale report a client reports the old theme and then the new one, as a
+#                terminal does at a switch (three reports each, old first),
+#                and the old one's run is slow: the links end on the new
+#                theme, as a run that finishes last must not undo a later report
 #
 # Exit 0 = all passed; on failure the work dir is kept and printed.
 
@@ -301,6 +305,45 @@ if [ "$(tr '\n' ' ' <"$WORK/client.out")" = "light ok dark ok light ok reload ok
   pass "tmux: the links, the dimmed panes and the bar's colours follow the client's theme, light, dark, light, and a reload"
 else
   fail "tmux: $(cat "$WORK/client.out")"
+fi
+
+# --- a stale report that finishes last --------------------------------------------
+
+# Seen on a box with three clients: a switch to light ran the script nine
+# times in one second, three of them dark. tmux's own styles ended light; the
+# link ended dark, as the runs were in the background and a dark one finished
+# last. The stand-in below makes that dark run the slow one every time.
+rm "$H/.dotfiles/scripts"
+mkdir "$H/.dotfiles/scripts"
+cat >"$H/.dotfiles/scripts/appearance.sh" <<SH
+#!/usr/bin/env bash
+if [ "\$1" = dark ]; then sleep 1; fi
+exec "$REPO/scripts/appearance.sh" "\$@"
+SH
+chmod +x "$H/.dotfiles/scripts/appearance.sh"
+python3 - "$TMUX_BIN" "$SOCKDIR/tmux" "$H" >"$WORK/stale.out" 2>&1 <<'PYEOF'
+import os, pty, select, sys, time
+tmux, sock, home = sys.argv[1:]
+pid, fd = pty.fork()
+if pid == 0:
+    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=t"], {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"})
+
+def drain(seconds):
+    end = time.time() + seconds
+    while time.time() < end:
+        if select.select([fd], [], [], 0.1)[0]:
+            try: os.read(fd, 65536)
+            except OSError: return
+
+drain(1)
+os.write(fd, b"\x1b[?997;1n\x1b[?997;2n\x1b[?997;2n")
+drain(3)  # past the slow run, however the runs are ordered
+print(os.readlink(home + "/.claude/themes/gruvbox.json"), flush=True)
+PYEOF
+if [ "$(cat "$WORK/stale.out")" = gruvbox-light.json ]; then
+  pass "tmux: a stale report's slow run does not undo the theme reported after it"
+else
+  fail "tmux: dark then light reported, the link ended at: $(cat "$WORK/stale.out")"
 fi
 
 log "$failures failure(s)"
