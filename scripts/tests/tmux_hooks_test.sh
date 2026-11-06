@@ -30,11 +30,15 @@
 # Then the window rules, on a second server started from the whole
 # home/.config/tmux/tmux.conf, with a client in a pty typing what a terminal would:
 #
-#   one window, two windows           -> the bar on, on top, "cpu N% mem
-#                                        N% | <date time zone>" on the
-#                                        right (a stub tmux-mem-cpu-load in
-#                                        the throwaway HOME); closing a
-#                                        middle window renumbers the rest
+#   one window, two windows           -> the bar on, on top, "[<session>] |
+#                                        cpu N% mem N% | <date time zone>"
+#                                        on the right (a stub
+#                                        tmux-mem-cpu-load in the throwaway
+#                                        HOME); closing a middle window
+#                                        renumbers the rest
+#   @ssh set on the session           -> "(<host>) [<session>] | cpu ..."
+#   a session of a 40-column name     -> the title cut to 32 columns and
+#                                        "...", the clock still drawn
 #   status-stats.sh                   -> no tool, or output of another
 #                                        form: the reason, exit 1
 #   panes setting titles; one that    -> each window named after its
@@ -344,13 +348,44 @@ done
 # the server's date, time and zone. The first draw has the date alone (the
 # job still running), so wait for the second. The minute by pattern: it
 # may turn between this line and the draw.
-want="cpu 7\.8% mem 74\.0% \| $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
+stats_clock="cpu 7\.8% mem 74\.0% \| $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
+want="\[w\] \| $stats_clock"
 for _ in $(seq 50); do
   grep -aqE "$want" "$WORK/screen" && break
   sleep 0.1
 done
 grep -aqE "$want" "$WORK/screen" && pass "the bar draws '$(grep -aoE "$want" "$WORK/screen" | tail -1)' on the right" \
   || fail "the bar never drew '$want'; screen: $(tr -c '[:print:]' ' ' <"$WORK/screen" | grep -o '[a-z]* [0-9.]*% [^E]*' | tail -2)"
+
+# Over ssh the bar names the machine, as the terminal title does. After the
+# attach's own report, which would otherwise unset @ssh behind this check.
+wait_for ' attached [^ ]+ session=w: not iTerm2, local: @ssh unset$' \
+  || fail "no attach report for w: $(hooks_log | tail -3)"
+tw set -t =w: @ssh 1
+tw refresh-client -t "$(tw list-clients -t =w -F '#{client_name}')"
+want="\($(tw display -p '#{host_short}')\) \[w\] \| $stats_clock"
+for _ in $(seq 50); do
+  grep -aqE "$want" "$WORK/screen" && break
+  sleep 0.1
+done
+grep -aqE "$want" "$WORK/screen" && pass "over ssh the bar names the machine: '$(grep -aoE "$want" "$WORK/screen" | tail -1)'" \
+  || fail "the bar never drew '$want'; screen: $(tr -c '[:print:]' ' ' <"$WORK/screen" | grep -o '[a-z]* [0-9.]*% [^E]*' | tail -2)"
+tw set -t =w: -u @ssh
+
+# A long session name gives way, not the clock: tmux trims status-right from
+# its end, so a name left whole would cut the date off instead.
+long=$(printf 'n%.0s' {1..40})
+tw new-session -d -s "$long" 'sleep 300'
+tw switch-client -t "=$long"
+want="\[$(printf 'n%.0s' {1..31})\.\.\. \| $stats_clock"
+for _ in $(seq 1 50); do
+  grep -aqE "$want" "$WORK/screen" && break
+  sleep 0.1
+done
+grep -aqE "$want" "$WORK/screen" && pass "a long session name is cut, the clock kept: '$(grep -aoE "$want" "$WORK/screen" | tail -1)'" \
+  || fail "the bar never drew '$want'; screen: $(tr -c '[:print:]' ' ' <"$WORK/screen" | grep -o '[a-z]* [0-9.]*% [^E]*' | tail -2)"
+tw switch-client -t =w
+tw kill-session -t "=$long"
 
 tw new-window -d -t =w: 'sleep 300'
 sleep 0.3
