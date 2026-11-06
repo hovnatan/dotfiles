@@ -492,7 +492,7 @@ async def register(
     while True:
         try:
             await async_register(connection)
-        except iterm2.notifications.SubscriptionException as e:  # noqa: PERF203 - a bounded retry
+        except iterm2.notifications.SubscriptionException as e:
             if str(e) != "DUPLICATE_SERVER_ORIGINATED_RPC" or loop.time() > deadline:
                 raise
             log("ssh_new_tab is still the previous run's; waiting for it to exit")

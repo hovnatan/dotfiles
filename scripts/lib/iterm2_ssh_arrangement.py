@@ -539,7 +539,7 @@ async def own_host(app: iterm2.App) -> str:
 async def fresh_host(
     label: str,
     session: iterm2.Session,
-    timeout: float = FRESH_HOST_TIMEOUT,
+    timeout: float = FRESH_HOST_TIMEOUT,  # noqa: ASYNC109 - expiry raises a named error
     poll: float = 0.05,
 ) -> str:
     """Return the host a tab just opened reports: a name for this Mac, read.
@@ -955,7 +955,7 @@ def landing_of(
 async def wait_landed(
     tabs: list[Landing],
     local: frozenset[str],
-    timeout: float | None = None,
+    timeout: float | None = None,  # noqa: ASYNC109 - expiry reports each tab's stage
     poll: float = 0.5,
 ) -> None:
     """Wait until each restored tab shows its tmux session or its directory.
@@ -1019,9 +1019,9 @@ async def not_landed(
     tabs: list[Landing],
     seen: dict[str, str],
     local: frozenset[str],
-    timeout: float,
+    waited: float,
 ) -> str:
-    """Return the error for `tabs`, which did not land in `timeout` s.
+    """Return the error for `tabs`, which did not land in `waited` s.
 
     A group per stage (stage_of; ON_MAC for a local tmux session), each its
     tabs, then what to look at:
@@ -1075,7 +1075,7 @@ async def not_landed(
         ON_MAC: "The tab shows why: tmux's error, or a shell that ran no line.",
     }
 
-    out = [f"{len(tabs)} tabs did not land in {timeout:g} s."]
+    out = [f"{len(tabs)} tabs did not land in {waited:g} s."]
     for stage, head in heads.items():
         group = [t for t in tabs if stages[t.label] == stage]
         if group:
