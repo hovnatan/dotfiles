@@ -1,132 +1,80 @@
 -- Ghostty's window picker on a middle click (switcher.lua), its windows from
--- Ghostty's AppleScript:
+-- AltTab's command line, which asks the AltTab running:
 --
---   up: LIST_WINDOWS --> { { id, name }, ... }, Ghostty's order
+--   up: AltTab --detailed-list --> every app's windows, as JSON
 --        v
---   a row per window, the most recently focused first (byRecency)
+--   a row per Ghostty window, the most recently focused first
 --        | picked
 --        v
---   ACTIVATE <id>: to front, switching to its Space
+--   AltTab --focus=<id>: to front, switching to its Space
 --
---   focused window changed (macOS) --SETTLE_SECONDS--> FRONT_WINDOW --> recent
+-- Why AltTab, not Ghostty's AppleScript: Ghostty's order is no history, from A
+-- to C across fullscreen Spaces it read C, w1, w2, A (2026-11-04), so the window
+-- left was never second, and the history kept here to make up for it lasted
+-- only as long as Hammerspoon. AltTab keeps it already, across reloads. And
+-- `tell application "Ghostty"` reaches one instance: a second one started for a
+-- test hid every window of the first (2026-11-06). AltTab lists both.
+-- Not hs.window, which sees only the current Space's windows.
 --
--- The order is kept here, as Ghostty's is no history: from A to C across
--- fullscreen Spaces it read C, w1, w2, A, and back again A, w1, w2, C, so the
--- window left was never second (measured 2026-11-04). Its first window is
--- right, though: macOS says when focus moves, once a jump, none for windows
--- passed over, and the first window is then read for what it moved to. The
--- wait is for Ghostty: its list still shows the old window at the event, and
--- caught up 133-183 ms later over 6 jumps. The history lasts while Ghostty and
--- Hammerspoon do; a window not focused since sorts after, in Ghostty's order.
---
--- All run in Hammerspoon's process and hold its one thread, 34 ms and 20 ms
--- for a list and an activate (2026-11-04), so a timeout bounds a hung Ghostty. In-process, a
--- failure raises where the picker can give the keyboard back; a task's would
--- come too late. Not hs.window, which sees only the current Space's windows.
---
--- The first run asks macOS to let Hammerspoon control Ghostty, as a snapshot's
--- does (ghostty_snapshots.lua). A window's name carries Ghostty's bell mark,
+-- Both calls run in Hammerspoon's process and hold its one thread, 11 ms and
+-- 12 ms (2026-11-06), the CLI's own 2 s each way bounding a hung AltTab.
+-- In-process, a failure raises where the picker can give the keyboard back; an
+-- hs.task's would come too late. A window's title carries Ghostty's bell mark,
 -- which here says which window rang.
 local GHOSTTY = "com.mitchellh.ghostty"
-
--- One Apple event for all windows: ids and names read apart could pair a name
--- with the wrong window, as the order moves, and a read per window took 500 ms
--- for 8 (2026-11-04). The loop is over records already here, no more events.
-local LIST_WINDOWS = [[
-with timeout of 1 seconds
-  tell application "Ghostty"
-    set found to properties of every window
-    set rows to {}
-    repeat with p in found
-      set end of rows to {id of p, name of p}
-    end repeat
-    return rows
-  end tell
-end timeout
-]]
--- "" for no window, as closing the last one moves focus too.
-local FRONT_WINDOW = [[
-with timeout of 1 seconds
-  tell application "Ghostty"
-    if (count of windows) is 0 then return ""
-    return id of first window
-  end tell
-end timeout
-]]
-local ACTIVATE = [[
-with timeout of 1 seconds
-  tell application "Ghostty"
-    activate window (first window whose id is "%s")
-  end tell
-end timeout
-]]
-
--- Twice Ghostty's lag, so a read lands after it; the wait restarts on each
--- change, so a window held for less is passed through, not visited.
-local SETTLE_SECONDS = 0.4
+local ALTTAB = "/Applications/AltTab.app/Contents/MacOS/AltTab"
 
 local S
 
--- Window ids, the most recently focused first.
-local recent = {}
+-- Run AltTab with `args`: what it printed, else alerted and raised, naming
+-- `what`. AltTab says why on stderr, e.g. that it is not running, or that a
+-- window closed since the list; the shell, if AltTab is not installed.
+local function altTab(args, what)
+  local out, _, _, rc = hs.execute(ALTTAB .. " " .. args .. " 2>&1")
+  if rc ~= 0 then
+    S.fail(string.format("%s failed (exit %s): %s", what, tostring(rc), out:match("^(.-)%s*$")))
+  end
+  return out
+end
 
-local function visit(id)
-  for i, seen in ipairs(recent) do
-    if seen == id then
-      table.remove(recent, i)
-      break
+-- Ghostty's windows as AltTab has them, the most recently focused first. The
+-- list is every app's, in no such order: lastFocusOrder 0 is the window in
+-- front of all, and Ghostty's numbers have gaps for the other apps' windows.
+-- Being clicked, Ghostty has at least one, so none means AltTab lost track.
+local function ghosttyWindows()
+  local out = altTab("--detailed-list", "listing windows")
+  local ok, reply = pcall(hs.json.decode, out)
+  if not ok or type(reply) ~= "table" or type(reply.windows) ~= "table" then
+    S.fail(string.format("AltTab's window list is not as expected: %q", out:match("^(.-)%s*$"):sub(1, 80)))
+  end
+
+  local windows = {}
+  for _, window in ipairs(reply.windows) do
+    if window.appBundleId == GHOSTTY then
+      table.insert(windows, window)
     end
   end
-  table.insert(recent, 1, id)
-end
-
--- Run `script`: its result, else alerted and raised, naming `what`. A -1743
--- is macOS refusing Hammerspoon, which the alert says how to allow.
-local function ask(script, what)
-  local ok, result, raw = hs.osascript.applescript(script)
-  if ok then
-    return result
+  if #windows == 0 then
+    S.fail("AltTab lists no Ghostty window; check it has not excluded Ghostty")
   end
-  local said = hs.inspect(raw)
-  local hint = said:find("-1743", 1, true)
-      and "; allow Hammerspoon to control Ghostty in System Settings > Privacy & Security > Automation"
-    or ""
-  S.fail(string.format("%s failed: %s%s", what, said, hint))
-end
-
--- `windows`, in Ghostty's order, by `recent`, those not in it after, in the
--- order given. The window in front counts as visited: it is the one thing
--- Ghostty's order says for sure, and an event may be missed or not settled.
--- `recent` becomes the result, which drops the windows closed.
---   recent { "C", "A" }, windows { C, w1, A } -> { C, A, w1 }
-local function byRecency(windows)
-  visit(windows[1][1])
-  local rank = {}
-  for i, id in ipairs(recent) do
-    rank[id] = i
-  end
-  local place = {}
-  for i, window in ipairs(windows) do
-    place[window[1]] = (rank[window[1]] or #recent + 1) * (#windows + 1) + i
-  end
-  local sorted = { table.unpack(windows) }
-  table.sort(sorted, function(a, b)
-    return place[a[1]] < place[b[1]]
+  table.sort(windows, function(a, b)
+    return a.lastFocusOrder < b.lastFocusOrder
   end)
-  recent = {}
-  for _, window in ipairs(sorted) do
-    table.insert(recent, window[1])
-  end
-  return sorted
+  return windows
 end
 
 -- A row per window, e.g.
---   { "tab-group-7b96", "[vm/api]" } -> { id = "tab-group-7b96", title =
+--   { id = 19321, title = "[vm/api]", ... } -> { id = "19321", title =
 --   "[vm/api]", detail = "current" } for the one in front, else detail "".
+-- The id a string, as the other switchers': it goes to the page and back.
 local function rowsOf(windows)
   local rows = {}
-  for i, window in ipairs(byRecency(windows)) do
-    table.insert(rows, { id = window[1], title = window[2], detail = i == 1 and "current" or "" })
+  for i, window in ipairs(windows) do
+    table.insert(rows, {
+      id = string.format("%d", window.id),
+      title = window.title,
+      detail = i == 1 and "current" or "",
+    })
   end
   return rows
 end
@@ -135,63 +83,11 @@ S = require("switcher").new({
   name = "ghostty_switcher",
   bundle = GHOSTTY,
   list = function(show)
-    show(rowsOf(ask(LIST_WINDOWS, "listing Ghostty's windows")))
+    show(rowsOf(ghosttyWindows()))
   end,
   activate = function(id)
-    ask(ACTIVATE:format(id), "bringing window " .. id .. " forward")
+    altTab("--focus=" .. id, "bringing window " .. id .. " forward")
   end,
 })
-
--- Checked again at the end of the wait: `tell application` to a Ghostty that
--- quit meanwhile would launch it.
-S.settled = hs.timer.delayed.new(SETTLE_SECONDS, function()
-  S.guarded(function()
-    if not hs.application.get(GHOSTTY) then
-      return
-    end
-    local id = ask(FRONT_WINDOW, "reading Ghostty's front window")
-    if id ~= "" then
-      visit(id)
-      S.log("focused %s", id)
-    end
-  end)
-end)
-
--- Started at its first activation, not its launch: by then it answers
--- accessibility. It ends with the process, so a new Ghostty needs a new one.
-local function watch(app)
-  if S.focus then
-    return
-  end
-  S.focus = app:newWatcher(function()
-    S.settled:start()
-  end)
-  S.focus:start({ hs.uielement.watcher.focusedWindowChanged })
-end
-
--- Kept in S so the watcher is not garbage-collected.
-S.ghosttyWatcher = hs.application.watcher.new(function(_, eventType, app)
-  if not app or app:bundleID() ~= GHOSTTY then
-    return
-  end
-  if eventType == hs.application.watcher.activated then
-    watch(app)
-  elseif eventType == hs.application.watcher.terminated then
-    S.settled:stop()
-    -- None if it launched and quit without ever being activated.
-    if S.focus then
-      S.focus:stop()
-      S.focus = nil
-    end
-    recent = {}
-  end
-end)
-S.ghosttyWatcher:start()
-
--- Apply on load in case Ghostty already runs.
-local running = hs.application.get(GHOSTTY)
-if running then
-  watch(running)
-end
 
 return S

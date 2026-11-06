@@ -5,7 +5,7 @@
 --                                                        |
 --                       doubled picker <-- rows <-- opts.list
 --                            |
---   test --pick()------------+--> opts.activate --> doubled AppleScript / api
+--   test --pick()------------+--> opts.activate --> doubled AltTab CLI / api
 local repo = assert(arg[1], "pass the repo path")
 -- The module's own requires that are not stubbed (failure.lua) load as is.
 package.path = repo .. "/home/.hammerspoon/?.lua;" .. package.path
@@ -26,8 +26,6 @@ local DOWN, DRAGGED, UP = 1, 2, 3
 -- What the module did, for the asserts.
 local world
 
-local focusable
-
 local function app(bundle)
   return {
     bundleID = function()
@@ -37,25 +35,6 @@ local function app(bundle)
       return bundle == "other" and OTHER_PID or APP_PID
     end,
   }
-end
-
--- Ghostty as hs.application.get gives it: one watcher at a time, for the asserts.
-function focusable()
-  local a = app(GHOSTTY)
-  function a.newWatcher(_, fn)
-    local w = { fn = fn, running = false }
-    function w.start(self, events)
-      assert(events[1] == "AXFocusedWindowChanged", "watching something else")
-      self.running = true
-    end
-    function w.stop(self)
-      self.running = false
-    end
-    world.focus = w
-    table.insert(world.focusWatchers, w)
-    return w
-  end
-  return a
 end
 
 local function stubHs()
@@ -69,9 +48,6 @@ local function stubHs()
     return element
   end
   return {
-    inspect = function(v)
-      return type(v) == "table" and (v.NSAppleScriptErrorMessage or "?") or tostring(v)
-    end,
     alert = {
       show = function(msg)
         table.insert(world.alerts, msg)
@@ -104,52 +80,43 @@ local function stubHs()
       frontmostApplication = function()
         return app(world.front)
       end,
-      get = function(bundle)
-        assert(bundle == GHOSTTY, "asked for " .. bundle)
-        return world.ghosttyRuns and focusable() or nil
-      end,
       watcher = {
         activated = "activated",
-        terminated = "terminated",
         new = function(fn)
           table.insert(world.onApps, fn)
           return { start = function() end }
         end,
       },
     },
-    uielement = { watcher = { focusedWindowChanged = "AXFocusedWindowChanged" } },
     timer = {
       doAfter = function(_, fn)
         table.insert(world.timers, fn)
         return {}
       end,
-      delayed = {
-        new = function(seconds, fn)
-          local t = { seconds = seconds, fn = fn, pending = false }
-          function t.start(self)
-            self.pending = true
-          end
-          function t.stop(self)
-            self.pending = false
-          end
-          world.settle = t
-          return t
-        end,
-      },
     },
-    osascript = {
-      applescript = function(script)
-        table.insert(world.scripts, script)
-        if world.scriptError then
-          return false, nil, { NSAppleScriptErrorMessage = world.scriptError }
+    -- AltTab's CLI: a command is noted, and answers as world says. Its reply
+    -- stands for the JSON, so decode hands the table back.
+    execute = function(command)
+      table.insert(world.commands, command)
+      if world.cliError then
+        return world.cliError .. "\n", nil, "exit", 1
+      end
+      return world.reply or "the list", true, "exit", 0
+    end,
+    json = {
+      decode = function(text)
+        if text ~= "the list" then
+          error("not JSON")
         end
-        if script:find("id of first window", 1, true) then
-          return true, world.windows[1] and world.windows[1][1] or ""
-        end
-        return true, world.windows
+        return { windows = world.windows }
       end,
     },
   }
+end
+
+-- A window as AltTab lists it, of Ghostty unless `bundle` says.
+local function ghostty(id, title, order, bundle)
+  return { id = id, title = title, lastFocusOrder = order, appBundleId = bundle or GHOSTTY }
 end
 
 local function load(module, setup)
@@ -157,15 +124,13 @@ local function load(module, setup)
     alerts = {},
     logged = {},
     shown = {},
-    scripts = {},
+    commands = {},
     timers = {},
     activated = {},
     onApps = {},
-    focusWatchers = {},
-    ghosttyRuns = module == "ghostty_switcher",
     underPointer = APP_PID,
     front = module == "ghostty_switcher" and GHOSTTY or ITERM2,
-    windows = { { "w1", "[vm/api]" }, { "w2", "[main]" }, { "w3", "fish" } },
+    windows = { ghostty(101, "[vm/api]", 0), ghostty(102, "[main]", 1), ghostty(103, "fish", 2) },
   }
   for k, v in pairs(setup or {}) do
     world[k] = v
@@ -251,23 +216,7 @@ local function appEvent(name, event, application)
   end
 end
 
--- Ghostty moved `id` to the front of `windows` and macOS said so; the wait
--- for its list to catch up then ends. Its other windows stay as they were,
--- which is how the window left falls out of second place.
-local function focusOn(id)
-  for i, window in ipairs(world.windows) do
-    if window[1] == id then
-      table.insert(world.windows, 1, table.remove(world.windows, i))
-      break
-    end
-  end
-  world.focus.fn()
-  assert(world.settle.pending, "a focus change did not start the wait")
-  world.settle.pending = false
-  world.settle.fn()
-end
-
-local function titlesShown()
+local function idsShown()
   click()
   local rows = world.shown[#world.shown].rows
   local ids = {}
@@ -299,12 +248,12 @@ test("a middle click over Ghostty opens the picker, the second row selected", fu
   assert(shown.at.at.x == 612.5, "not opened at the click")
   assert(#shown.rows == 3, "not a row per window")
   local first, second = shown.rows[1], shown.rows[2]
-  assert(first.id == "w1" and first.title == "[vm/api]" and first.detail == "current", "first row wrong")
-  assert(second.id == "w2" and second.title == "[main]" and second.detail == "", "second row wrong")
+  assert(first.id == "101" and first.title == "[vm/api]" and first.detail == "current", "first row wrong")
+  assert(second.id == "102" and second.title == "[main]" and second.detail == "", "second row wrong")
 end)
 
 test("one window has only its own row to select", function()
-  load("ghostty_switcher", { windows = { { "w1", "[vm/api]" } } })
+  load("ghostty_switcher", { windows = { ghostty(101, "[vm/api]", 0) } })
   click()
   assert(world.shown[1].at.selected == 1, "selected a row that is not there")
 end)
@@ -334,7 +283,7 @@ end)
 test("the tap runs only while its app is in front", function()
   load("ghostty_switcher", { front = "other" })
   assert(not world.tap.running, "the tap runs behind another app")
-  appEvent("Ghostty", "activated", focusable())
+  appEvent("Ghostty", "activated", app(GHOSTTY))
   assert(world.tap.running, "the tap did not start")
   appEvent("Other", "activated", app("other"))
   assert(not world.tap.running, "the tap did not stop")
@@ -342,115 +291,57 @@ end)
 
 test("a pick brings that window forward", function()
   load("ghostty_switcher")
-  world.onPick("w2")
-  assert(world.scripts[1]:find('first window whose id is "w2"', 1, true), "activated something else")
+  world.onPick("102")
+  assert(world.commands[1]:find(" --focus=102 ", 1, true), "activated something else: " .. world.commands[1])
 end)
 
-test("a failed list is alerted by name, and no picker opens", function()
-  load("ghostty_switcher", { scriptError = "Ghostty got an error (-1712)" })
+test("what AltTab says goes in the alert, to give the reason a list failed", function()
+  load("ghostty_switcher", { cliError = "AltTab.app needs to be running for CLI commands to work" })
   click()
   assert(#world.shown == 0, "a picker opened")
   assert(#world.alerts == 1, "alerted " .. #world.alerts .. " times")
-  assert(world.alerts[1]:find("listing Ghostty's windows failed", 1, true), world.alerts[1])
-end)
-
-test("macOS refusing Hammerspoon says where to allow it", function()
-  load("ghostty_switcher", { scriptError = "Not authorized (-1743)" })
-  click()
-  assert(world.alerts[1]:find("Privacy & Security > Automation", 1, true), world.alerts[1])
+  assert(
+    world.alerts[1]:find("listing windows failed (exit 1): AltTab.app needs to be running", 1, true),
+    world.alerts[1]
+  )
 end)
 
 test("a failed pick raises, for the picker to give the keyboard back", function()
-  load("ghostty_switcher", { scriptError = "no such window" })
-  local ok, err = pcall(world.onPick, "w2")
+  load("ghostty_switcher", { cliError = "Couldn't execute command. Is it correct?" })
+  local ok, err = pcall(world.onPick, "102")
   assert(not ok, "it did not raise")
-  assert(tostring(err):find("bringing window w2 forward failed", 1, true), tostring(err))
+  assert(tostring(err):find("bringing window 102 forward failed", 1, true), tostring(err))
 end)
 
--- Measured 2026-11-04: on a jump between fullscreen windows Ghostty's own
--- order put a third window second, not the one left, in both directions.
-test("the second row is the window left, whatever Ghostty's order says", function()
-  load("ghostty_switcher", { windows = { { "A", "a" }, { "w1", "b" }, { "w2", "c" }, { "C", "d" } } })
-  focusOn("A")
-  focusOn("C")
-  -- Ghostty's list now reads C, A...; put it as measured: C, w1, w2, A.
-  world.windows = { { "C", "d" }, { "w1", "b" }, { "w2", "c" }, { "A", "a" } }
-  assert(titlesShown() == "C A w1 w2", "not by recency: " .. titlesShown())
-  focusOn("A")
-  world.windows = { { "A", "a" }, { "w1", "b" }, { "w2", "c" }, { "C", "d" } }
-  assert(titlesShown() == "A C w1 w2", "the flip back is lost: " .. titlesShown())
+-- A reply that fails to parse is what a failed AltTab looks like if it exits 0.
+test("a reply that is not the list is alerted, and no picker opens", function()
+  load("ghostty_switcher", { reply = "\n" })
+  click()
+  assert(#world.shown == 0, "a picker opened")
+  assert(#world.alerts == 1, "alerted " .. #world.alerts .. " times")
+  assert(world.alerts[1]:find("window list is not as expected", 1, true), world.alerts[1])
 end)
 
-test("windows not focused since load keep Ghostty's order, after those that were", function()
-  load("ghostty_switcher", { windows = { { "A", "a" }, { "B", "b" }, { "C", "c" } } })
-  assert(titlesShown() == "A B C", titlesShown())
-  focusOn("C")
-  assert(titlesShown() == "C A B", titlesShown())
-  local said = false
-  for _, line in ipairs(world.logged) do
-    said = said or line == "focused C"
-  end
-  assert(said, "the focus change was not logged")
+test("no Ghostty window in the list is alerted, not an empty picker", function()
+  load("ghostty_switcher", { windows = { ghostty(201, "Slack", 0, "com.tinyspeck.slackmacgap") } })
+  click()
+  assert(#world.shown == 0, "a picker opened")
+  assert(world.alerts[1]:find("AltTab lists no Ghostty window", 1, true), tostring(world.alerts[1]))
 end)
 
-test("the first row is the window in front, a focus event missed or not", function()
-  load("ghostty_switcher", { windows = { { "A", "a" }, { "B", "b" } } })
-  focusOn("B")
-  -- Ghostty changed its front window with no event seen, or none settled yet.
-  world.windows = { { "A", "a" }, { "B", "b" } }
-  assert(titlesShown() == "A B", titlesShown())
-end)
-
-test("a window closed leaves the history, and one opened joins it", function()
-  load("ghostty_switcher", { windows = { { "A", "a" }, { "B", "b" } } })
-  focusOn("B")
-  world.windows = { { "N", "n" }, { "B", "b" } }
-  world.focus.fn()
-  world.settle.pending = false
-  world.settle.fn()
-  assert(titlesShown() == "N B", titlesShown())
-end)
-
-test("focus changes wait for Ghostty, and a read with no window is no error", function()
-  load("ghostty_switcher", { windows = {} })
-  assert(world.settle.seconds > 0.2, "shorter than Ghostty's lag of up to 185 ms")
-  world.focus.fn()
-  world.settle.fn()
-  assert(#world.alerts == 0, "alerted: " .. tostring(world.alerts[1]))
-end)
-
-test("Ghostty quit: no read that would launch it, and watching starts again", function()
-  load("ghostty_switcher", { windows = { { "A", "a" }, { "B", "b" } } })
-  focusOn("B")
-  local first = world.focus
-  world.focus.fn()
-  world.ghosttyRuns = false
-  appEvent("Ghostty", "terminated", app(GHOSTTY))
-  assert(not first.running, "still watching a Ghostty that quit")
-  assert(not world.settle.pending, "a read still pending")
-  local asked = #world.scripts
-  world.settle.fn()
-  assert(#world.scripts == asked, "asked Ghostty, which would launch it")
-
-  world.ghosttyRuns = true
-  appEvent("Ghostty", "activated", focusable())
-  assert(world.focus ~= first and world.focus.running, "not watching the new Ghostty")
-  appEvent("Ghostty", "activated", focusable())
-  assert(#world.focusWatchers == 2, "a second watcher on the same Ghostty")
-end)
-
-test("Ghostty not running at load: nothing is watched until it comes", function()
-  load("ghostty_switcher", { ghosttyRuns = false, front = "other" })
-  assert(world.focus == nil, "watching nothing")
-  world.ghosttyRuns = true
-  appEvent("Ghostty", "activated", focusable())
-  assert(world.focus.running, "not watching")
-end)
-
-test("Ghostty quitting before it was ever activated is no error", function()
-  load("ghostty_switcher", { ghosttyRuns = false, front = "other" })
-  appEvent("Ghostty", "terminated", app(GHOSTTY))
-  assert(world.focus == nil, "watching something")
+-- AltTab's list is every app's and not in focus order (2026-11-06: 1, 2, 0).
+test("the rows are Ghostty's alone, the most recently focused first", function()
+  load("ghostty_switcher", {
+    windows = {
+      ghostty(101, "image-loading", 4),
+      ghostty(102, "ai-agent", 7),
+      ghostty(201, "Slack", 0, "com.tinyspeck.slackmacgap"),
+      ghostty(103, "dotfiles", 1),
+    },
+  })
+  assert(idsShown() == "103 101 102", idsShown())
+  local rows = world.shown[#world.shown].rows
+  assert(rows[1].detail == "current" and rows[2].detail == "", "the window in front is not the one marked")
 end)
 
 test("iTerm2's rows and picks still go through its API", function()
