@@ -8,7 +8,9 @@
 --          { at = point, selected = 2 })   row 2 selected, under the point
 --
 --   show --render(rows)--> picker.html --row count--> sized, placed,
---        Hammerspoon activated, shown
+--        Hammerspoon activated, shown fully transparent
+--   picker.html --"painted" (two animation frames on)--> made opaque;
+--        none within REVEAL_SECONDS --> hidden, the keyboard given back, alerted
 --   picker.html --"pick" (Return, click)--> hidden, onPick(id), which
 --        brings forward what was picked; if it raises, the app in front
 --        before is activated again
@@ -29,6 +31,11 @@
 -- webview's first load is about 100 ms (its WebKit process starting), an
 -- update after that about 8 ms (2026-10-20). The price is that process,
 -- about 30 MB, for as long as the picker is kept.
+--
+-- Shown transparent because a hidden page does not paint: render() changes its
+-- rows, but the window still holds the last opening's frame, and showing it
+-- flashed those rows, in their old order, in 3 of 5 openings (2026-11-06). Made
+-- opaque once the page has painted, 38 to 69 ms after showing, none of 5 did.
 local M = {}
 M.__index = M
 
@@ -43,6 +50,9 @@ local MAX_ROWS = 12
 local POINTER_INSET = 40
 -- Of the screen's width: a long title still fits.
 local WIDTH_SHARE = 0.32
+-- A transparent panel holds the keyboard unseen, so a page that never says it
+-- painted must not leave it there. Over ten times the slowest measured.
+local REVEAL_SECONDS = 1
 
 -- Every opening, pick and close is logged (event_log.lua), to the file
 -- only, e.g.
@@ -72,6 +82,8 @@ function M.new(opts)
     onCancel = opts.onCancel or function() end,
     ready = false,
     open = false,
+    -- Which opening this is, so a "painted" from an earlier one is told apart.
+    opening = 0,
   }, M)
 
   local file = io.open(PAGE)
@@ -117,18 +129,22 @@ function M.new(opts)
   return self
 end
 
--- A message from the page: { action = "pick", id = "<id>" } or
--- { action = "cancel" }. One after the panel closed (a click as it lost
--- focus) is dropped: the close already answered.
+-- A message from the page: { action = "pick", id = "<id>" },
+-- { action = "cancel" } or { action = "painted", opening = 3 }. One after the
+-- panel closed (a click as it lost focus) is dropped: the close already
+-- answered.
 function M:received(body)
-  if type(body) ~= "table" or (body.action ~= "pick" and body.action ~= "cancel") then
+  local known = type(body) == "table" and (body.action == "pick" or body.action == "cancel" or body.action == "painted")
+  if not known then
     fail("the page sent a message this module does not know: " .. hs.inspect(body))
   end
   if not self.open then
     log("%s after closing: dropped", body.action)
     return
   end
-  if body.action == "pick" then
+  if body.action == "painted" then
+    self:reveal(body.opening)
+  elseif body.action == "pick" then
     local previous = self:close("picked " .. tostring(body.id), false)
     -- A pick that failed brings nothing forward: the keyboard goes back.
     if not guarded(self.onPick, body.id) and previous then
@@ -141,11 +157,26 @@ function M:received(body)
   end
 end
 
+-- Makes the panel opaque, its page having painted `opening`'s rows. An earlier
+-- opening's word says nothing of the rows up now.
+function M:reveal(opening)
+  if opening ~= self.opening then
+    log("painted opening %s, up is %d: dropped", tostring(opening), self.opening)
+    return
+  end
+  self.revealTimer:stop()
+  self.view:alpha(1)
+  log("painted: opening %d revealed", opening)
+end
+
 -- Hides the panel; with `giveBack`, the app in front before it (show) is
 -- activated again, so its window has the keyboard: Esc leaves things as
 -- they were. Returns that app, or nil.
 function M:close(why, giveBack)
   self.open = false
+  if self.revealTimer then
+    self.revealTimer:stop()
+  end
   self.view:hide()
   local previous = self.previous
   self.previous = nil
@@ -161,8 +192,8 @@ end
 -- click at (700, 500) with row 2 selected puts the panel's top-left at
 -- (660, 410), that row's middle at the pointer. Moved in by whatever would
 -- cross the screen's edge (a click near an edge), which takes the row off
--- the pointer by as much. Shown once the page has the rows, so an opening
--- never flashes the last one's.
+-- the pointer by as much. Seen only once the page has painted the rows, so an
+-- opening never flashes the last one's (see the top of this file).
 function M:show(rows, opts)
   if not self.ready then
     fail("its page is still loading (Hammerspoon just reloaded?): try again in a moment")
@@ -217,10 +248,25 @@ function M:show(rows, opts)
       if front and front:bundleID() ~= "org.hammerspoon.Hammerspoon" then
         self.previous = front
       end
+      self.opening = self.opening + 1
+      local opening = self.opening
       self.view:frame(frame)
+      self.view:alpha(0)
       hs.focus()
       self.view:show()
       self.open = true
+      self.view:evaluateJavaScript(string.format("whenPainted(%d)", opening))
+
+      -- Kept in self so the timer is not garbage-collected first. close()
+      -- comes before fail(), which raises, and gives the keyboard back.
+      self.revealTimer = hs.timer.doAfter(
+        REVEAL_SECONDS,
+        wrap(function()
+          self:close("never painted", true)
+          self.onCancel()
+          fail(string.format("the page did not paint within %d s: nothing to see, so closed", REVEAL_SECONDS))
+        end)
+      )
       log(
         "shown: %d rows at (%.0f, %.0f), %.0fx%.0f, row %d selected; in front before: %s",
         #rows,

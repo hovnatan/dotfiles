@@ -3,8 +3,10 @@
   The page of picker.lua: a list of rows, one selected, no filter field.
   Loaded once, hidden between openings; each opening calls render().
 
-    picker.lua --render({rows, selected, theme, sizes})--> this page
-    this page  --postMessage({action: "pick", id} | {action: "cancel"})--> picker.lua
+    picker.lua -- render({rows, selected, theme, sizes}) -> this page
+    picker.lua -- whenPainted(opening) -> this page, the panel up, transparent
+    this page  -- postMessage({action: "pick", id} | {action: "cancel"}
+                  | {action: "painted", opening}) -> picker.lua
 
   Keys: Up/Down (also Ctrl-P/Ctrl-N, Tab/Shift-Tab) move, Return picks,
   Esc cancels. The mouse selects on hover and picks on click.
@@ -134,6 +136,15 @@
         );
         select(data.selected);
         return rows.length;
+      }
+
+      // Says when what render() set is on screen, for picker.lua to make the
+      // panel opaque. Two frames: the first callback runs before its frame's
+      // paint, the second after it. Needs the panel up: a hidden page gets none.
+      function whenPainted(opening) {
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => send({ action: "painted", opening })),
+        );
       }
 
       // Ctrl-P/N as in a shell's history; Tab as in a dialog.
