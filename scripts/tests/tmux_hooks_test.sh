@@ -102,6 +102,32 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# COPY_BASH: a bash whose copy runs. Panes below run copies of bash under
+# other names, since tmux reports a pane's command by its file name. macOS
+# kills a copy of a platform binary ("Killed: 9" for /bin/bash), which is
+# what `command -v bash` finds when /bin comes before the Nix profile on
+# PATH, as in an agent's shell: those panes then died at once, and later
+# steps failed or hung on a session that was gone. So the first bash on
+# PATH whose copy runs, resolved past links (a copied link target, not a
+# copied wrapper).
+# A new file per try: macOS remembers the kill for a file overwritten in
+# place, and would kill the next copy written over it too.
+COPY_BASH=
+n=0
+for b in $(type -ap bash); do
+  n=$((n + 1))
+  b=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$b")
+  cp "$b" "$SOCKDIR/bash_probe$n" && ("$SOCKDIR/bash_probe$n" -c :) 2>/dev/null && {
+    COPY_BASH=$b
+    break
+  }
+done
+rm -f "$SOCKDIR"/bash_probe*
+[ -n "$COPY_BASH" ] || {
+  log "FAIL no bash on PATH runs when copied ($(type -ap bash | paste -sd ' ' -)); macOS kills copies of /bin/bash: put Nix's bash ahead of /bin on PATH"
+  exit 1
+}
+
 # The throwaway HOME holds the repo at ~/.dotfiles, where the hook lines
 # expect their scripts; the logs land in its .logs, not the checkout's.
 #
@@ -410,8 +436,7 @@ sleep 0.3
 # keeps printing with builtins: no child, the pane's command stays notitle.
 # A copy of the real file: macOS kills a copied wrapper or system binary.
 mkdir -p "$WORK/cc"
-real_bash=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$(command -v bash)")
-cp "$real_bash" "$WORK/cc/notitle"
+cp "$COPY_BASH" "$WORK/cc/notitle"
 # title_then <title> <command...>: set the pane title, then run the command.
 # The glyph as UTF-8 bytes: this file stays ASCII.
 cat >"$WORK/cc/title_then" <<'EOF'
@@ -508,7 +533,7 @@ send_keys '\x01S'
 # the version on macOS, where Delete (ESC [ 3 ~) replaces Ctrl-d. Anything else keeps it.
 # They are copies: macOS reports a link to bash as `bash`.
 mkdir "$WORK/named"
-for name in claude 2.1.318 other-program; do cp "$(command -v bash)" "$WORK/named/$name"; done
+for name in claude 2.1.318 other-program; do cp "$COPY_BASH" "$WORK/named/$name"; done
 ctrl_d_reaches() {
   tw new-window -t =w: "'$WORK/named/$1' -c 'stty raw -echo; cat >\"$WORK/ctrl_d_got\"; :'"
   sleep 0.5
@@ -597,11 +622,12 @@ tw_stop
 
 # --- a Mac: what a closed pane left -------------------------------------------------
 
-# reap-panes-macos.sh by way of the real hooks. The job is this bash, not an
-# Apple binary, whose environment ps would hide; its parent exits, so it is
-# detached. Each carries a number of its own, to be found by.
+# reap-panes-macos.sh by way of the real hooks. The job is a bash that is not
+# an Apple binary, whose environment ps would hide: COPY_BASH, as macOS lets
+# only those run copied (`command -v bash` can be /bin/bash). Its parent
+# exits, so it is detached. Each carries a number of its own, to be found by.
 if [ "$(uname)" = Darwin ]; then
-  BASH_BIN=$(command -v bash)
+  BASH_BIN=$COPY_BASH
   GONE=$((300000 + $$ % 100000)) STAY=$((GONE + 100000)) RETRY=$((GONE + 200000)) # numbers no other run holds
   # detached_job <timeout>: a pane that leaves a job behind and idles; prints
   # the pane's id.
