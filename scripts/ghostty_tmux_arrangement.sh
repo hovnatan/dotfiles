@@ -6,7 +6,11 @@
 #   ghostty_tmux_arrangement.sh save [<name>]     every window; <name> defaults
 #                                                 to "all"
 #   ghostty_tmux_arrangement.sh restore [<name>]  a new window per saved one,
-#                                                 skipping sessions already open
+#                                                 skipping sessions already open;
+#                                                 launches Ghostty if it is not
+#                                                 running (open_clean.sh: never
+#                                                 a bare `open`, which hands it
+#                                                 the caller's environment)
 #   ghostty_tmux_arrangement.sh replace [<name>]  the saved windows in place of
 #                                                 every window open; refused
 #                                                 under Ghostty, or where a

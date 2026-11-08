@@ -29,6 +29,11 @@ windows. Only tmux tabs are saved: a plain shell has nothing to come back to.
            a local shell --> wait_landed(): each title shows its session,
            else the restore fails, naming them
 
+Ghostty not running: restore and replace launch it by open_clean.sh
+(launch()), with a Dock launch's environment, never the caller's, and close
+its startup window once theirs land; save and snapshot fail, as a new
+Ghostty has nothing to save.
+
 What restore does with a session (plan_restore):
 
     already open in Ghostty      skipped: a second client adds nothing
@@ -454,9 +459,14 @@ def ghostty_running() -> bool:
 
 
 def require_ghostty() -> None:
-    """Fail unless Ghostty runs: `tell application` would launch it instead."""
+    """Fail unless Ghostty runs: `tell application` would launch it instead.
+
+    For save and snapshot, where a launched Ghostty would have nothing to
+    save; restore and replace launch it themselves (launch()). The message
+    asks for no launch: "start it first" once got a bare `open -a Ghostty`.
+    """
     if not ghostty_running():
-        msg = "Ghostty is not running; start it first"
+        msg = "Ghostty is not running, so it has no windows to save"
         raise ArrangementError(msg)
 
 
@@ -567,7 +577,6 @@ def wait_landed(waiting: dict[str, str]) -> None:
     left = dict(waiting)
     start = time.monotonic()
     said = start
-    names: dict[str, str] = {}
     while left:
         names = {t.id: t.name for w in read_windows() for t in w.terminals}
         left = {
@@ -589,9 +598,21 @@ def wait_landed(waiting: dict[str, str]) -> None:
 
 
 def restore(name: str) -> None:
-    """Open the saved windows beside what is open, and see each session land."""
+    """Open the saved windows beside what is open, and see each session land.
+
+    Ghostty not running is launched here, by launch() (open_clean.sh), not
+    left to the caller: a caller's bare `open -a Ghostty` hands Ghostty its
+    shell's environment, and every tab after inherits it (2026-11-07, an
+    agent's: each new claude ran with transcripts off). The plan comes first,
+    so a bad file or a dead directory fails before the launch; the startup
+    window, an empty shell, is closed once the sessions land, and left if
+    they do not.
+    """
     windows = load(name)
-    current = saved_lines(read_windows(), remote_lookup(unattended=False))
+    running = ghostty_running()
+    current = (
+        saved_lines(read_windows(), remote_lookup(unattended=False)) if running else []
+    )
     plan = plan_restore(
         windows,
         [line for lines in current for line in lines],
@@ -601,8 +622,13 @@ def restore(name: str) -> None:
     if not plan:
         log(f"every session of {name} is already open")
         return
+    startup = [] if running else launch()
+
     made, waiting = open_tabs(plan)
     wait_landed(waiting)
+    for window in startup:
+        osascript(CLOSE_WINDOW, window.id)
+        log(f"closed the startup window {window.id}")
     osascript(ACTIVATE, made[0])
     log(f"restored {len(waiting)} tabs in {len(made)} windows from {name}")
 
@@ -705,14 +731,14 @@ def main() -> None:
     try:
         if command == "replace":
             replace(name)
-            return
-        require_ghostty()
-        if command == "save":
-            save(name)
-        elif command == "snapshot":
-            snapshot()
-        else:
+        elif command == "restore":
             restore(name)
+        else:
+            require_ghostty()
+            if command == "save":
+                save(name)
+            else:
+                snapshot()
     except ArrangementError as e:
         log(f"ERROR: {e}")
         sys.exit(1)

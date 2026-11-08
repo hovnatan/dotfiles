@@ -442,6 +442,93 @@ def test_replace_with_a_dead_directory_fails_before_any_launch() -> None:
     assert "local tmux session 'x' is gone" in error, error
 
 
+def restoring(
+    *,
+    running: bool = True,
+    land: Callable[[dict[str, str]], None] = lambda _waiting: None,
+    lines: tuple[str, ...] = (SHELL_LOCAL,),
+    is_alive: bool = True,
+) -> tuple[list[str], str]:
+    """Run restore() on fakes: return what it did, in order, and its error."""
+    done: list[str] = []
+    started = {"yes": running}
+    startup = [arr.Window("start1", [Terminal("t0", "/dev/t0", "fish")])]
+
+    def osascript(script: str, *args: str) -> str:
+        verb = {arr.CLOSE_WINDOW: "close", arr.ACTIVATE: "activate"}[script]
+        done.append(f"{verb} {args[0]}")
+        return ""
+
+    def read_windows() -> list[object]:
+        # Asking a Ghostty that does not run would launch it, unclean.
+        assert started["yes"], "read_windows() before Ghostty runs"
+        return []
+
+    def launch() -> list[object]:
+        done.append("launch")
+        started["yes"] = True
+        return startup
+
+    def open_tabs(plan: list[list[object]]) -> tuple[list[str], dict[str, str]]:
+        done.append(f"open {len(plan)}")
+        return ["new1"], {"t9": "notes"}
+
+    with patched(
+        load=lambda _name: [list(lines)],
+        alive=lambda _client: is_alive,
+        ghostty_running=lambda: started["yes"],
+        launch=launch,
+        read_windows=read_windows,
+        local_clients=dict,
+        remote_lookup=lambda **_kw: lookup,
+        open_tabs=open_tabs,
+        wait_landed=land,
+        osascript=osascript,
+    ):
+        try:
+            arr.restore("x")
+        except ArrangementError as e:
+            return done, str(e)
+    return done, ""
+
+
+def test_restore_beside_a_running_ghostty_launches_and_closes_nothing() -> None:
+    done, error = restoring()
+    assert not error, error
+    assert done == ["open 1", "activate new1"], done
+
+
+def test_restore_launches_ghostty_itself_and_closes_its_startup_window() -> None:
+    # Launched by launch() (open_clean.sh), never left to the caller's `open`.
+    done, error = restoring(running=False)
+    assert not error, error
+    assert done == ["launch", "open 1", "close start1", "activate new1"], done
+
+
+def test_restore_that_does_not_land_keeps_the_startup_window() -> None:
+    def never(_waiting: dict[str, str]) -> None:
+        msg = "1 tabs never showed their session: notes"
+        raise ArrangementError(msg)
+
+    done, error = restoring(running=False, land=never)
+    assert done == ["launch", "open 1"], done
+    assert "never showed their session" in error, error
+
+
+def test_restore_with_a_dead_directory_fails_before_any_launch() -> None:
+    gone = "tmux new-session -A -s 'x' -c '/no/such/dir'"
+    done, error = restoring(running=False, lines=(gone,), is_alive=False)
+    assert not done, done
+    assert "local tmux session 'x' is gone" in error, error
+
+
+def test_save_without_ghostty_asks_for_no_launch() -> None:
+    # "start it first" once got Ghostty a bare `open`, with an agent's env.
+    want = "Ghostty is not running, so it has no windows to save"
+    with patched(ghostty_running=lambda: False):
+        raises(want, arr.require_ghostty)
+
+
 for name, fn in [(k, v) for k, v in list(globals().items()) if callable(v)]:
     if getattr(fn, "__module__", "") == "__main__" and name not in (
         "log",
@@ -453,6 +540,7 @@ for name, fn in [(k, v) for k, v in list(globals().items()) if callable(v)]:
         "no",
         "patched",
         "replacing",
+        "restoring",
     ):
         check(name.replace("_", " "), fn)
 
