@@ -122,10 +122,10 @@ press '\001\t'
 if until_ok 5 fzf_up; then
   press 'reconc'
   sleep 0.3
-  press '\t'
+  press '\r'
   until_ok 5 line_is reconcile_ledger.py \
-    && pass "Tab inserts a word from the other pane at the cursor" \
-    || fail "after reconc Tab, %1 reads '$(cursor_line)'"
+    && pass "Enter inserts a word from the other pane at the cursor" \
+    || fail "after reconc Enter, %1 reads '$(cursor_line)'"
 else
   fail "no extrakto fzf after C-a Tab"
 fi
@@ -137,11 +137,11 @@ press '\001\t'
 if until_ok 5 fzf_up; then
   press 'alpha'
   sleep 0.3
-  press '\r'
+  press '\t'
   until_ok 5 buffer_is alpha \
     && line_is reconcile_ledger.py \
-    && pass "Enter copies the pick to tmux's buffer and leaves the pane alone" \
-    || fail "after alpha Enter, buffer '$(t show-buffer 2>&1)', %1 '$(cursor_line)'"
+    && pass "Tab copies the pick to tmux's buffer and leaves the pane alone" \
+    || fail "after alpha Tab, buffer '$(t show-buffer 2>&1)', %1 '$(cursor_line)'"
 else
   fail "no extrakto fzf for the copy"
 fi
