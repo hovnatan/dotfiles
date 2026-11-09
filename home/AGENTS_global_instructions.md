@@ -102,6 +102,14 @@ not when the job exits twenty minutes later. Write job scripts to stop at the
 first failed stage, rather than waiting out health checks or running later
 stages against a broken state.
 
+Following a job: when a background job will run for more than a few minutes
+and `$TMUX` is set, also open a window in the current tmux session that tails
+its log (`tmux new-window -d -n <job> "tail -F <log path>"`) and tell me the
+window name. The window only displays the log; the job does not run in it, so
+closing the window leaves the job running. When the job exits, close the
+window if it succeeded (`tmux kill-window -t <job>`); on failure leave it open
+so the error stays on screen, and say so.
+
 # Results: leave a handoff document next to the artifacts
 
 When a task produces results someone will later read, compare against, or
