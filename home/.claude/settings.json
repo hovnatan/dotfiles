@@ -22,12 +22,6 @@
   },
   "model": "opus",
   "disableClaudeAiConnectors": true,
-  "enableArtifact": false,
-  "deniedMcpServers": [
-    {
-      "serverName": "computer-use"
-    }
-  ],
   "skillOverrides": {
     "anthropic-skills:chrome-browser": "user-invocable-only",
     "anthropic-skills:built-in-browser": "user-invocable-only",
@@ -50,6 +44,11 @@
     "fewer-permission-prompts": "user-invocable-only",
     "code-review": "user-invocable-only"
   },
+  "deniedMcpServers": [
+    {
+      "serverName": "computer-use"
+    }
+  ],
   "hooks": {
     "SessionStart": [
       {
@@ -99,6 +98,7 @@
       }
     ]
   },
+  "enableArtifact": false,
   "statusLine": {
     "type": "command",
     "command": "sh ~/.dotfiles/home/.claude/statusline-command.sh",
@@ -154,7 +154,7 @@
   "dialogExpiry": "never",
   "tui": "default",
   "voice": {
-    "enabled": true,
+    "enabled": false,
     "mode": "tap"
   },
   "timeFormat": "24-hour",
@@ -170,5 +170,5 @@
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": false
 }
