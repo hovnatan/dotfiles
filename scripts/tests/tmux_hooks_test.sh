@@ -419,9 +419,10 @@ for _ in $(seq 50); do
   sleep 0.1
 done
 # What the client draws on the right: the stub's numbers labelled, a bar,
-# the server's date, time and zone. The first draw has the date alone (the
-# job still running), so wait for the second. The minute by pattern: it
-# may turn between this line and the draw.
+# the server's date, time and zone (the client has no LC_CLIENT_TZ;
+# tmux_client_clock_test.sh tests one that has). Both are #() jobs, so the
+# first draw has neither (the jobs still running): wait for a later one.
+# The minute by pattern: it may turn between this line and the draw.
 stats_clock="cpu 7\.8% mem 74\.0% \| $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
 want="\(local\) \[w\] \| $stats_clock"
 for _ in $(seq 50); do
