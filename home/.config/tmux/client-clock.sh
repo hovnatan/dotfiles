@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # client-clock.sh <client pid> -- the date, time and zone for the tmux status
 # bar (home/.config/tmux/tmux.conf, status-right), in the zone of the person
-# looking at it rather than the tmux server's.
+# looking at it rather than the tmux server's. Kept, not wired in: the bar
+# shows the server's strftime clock; tmux.conf's comment above status-right
+# says how to put this in its place.
 #
 #   Mac (Asia/Yerevan)                     Linux VM, server in UTC
 #   fish: LC_CLIENT_TZ=Asia/Yerevan  --ssh (SendEnv LC_*)-->  login fish

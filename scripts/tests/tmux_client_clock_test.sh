@@ -15,7 +15,8 @@
 #     a pid that is gone           -> Linux: exit 1, "cannot read ..."
 #     no pid                       -> exit 1, the usage, logged
 #
-#   a server from the whole tmux.conf, session w, three clients on it:
+#   a server from the whole tmux.conf, client-clock.sh wired into its bar
+#   (tmux.conf leaves it out), session w, three clients on it:
 #     Asia/Yerevan, Pacific/Kiritimati, none
 #                                  -> Linux: each bar shows its own zone's
 #                                     time (+04, +14, the server's)
@@ -153,6 +154,14 @@ STUB
 chmod +x "$H/.nix-profile/bin/tmux-mem-cpu-load"
 t -f "$H/.dotfiles/home/.config/tmux/tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300' 2>"$WORK/out" \
   || fail "the server would not start from tmux.conf: $(cat "$WORK/out")"
+
+# The bar draws the server's strftime clock; client-clock.sh is kept, not
+# wired in. Wire it in here the way tmux.conf's comment says, the job in place
+# of `%d %b %H:%M %Z`, so the script stays tested end to end while unused.
+right=$(t show-options -gv status-right)
+[[ "$right" == *"$FORMAT"* ]] \
+  || fail "status-right has no '$FORMAT' to put client-clock.sh in place of: $right"
+t set-option -g status-right "${right/"$FORMAT"/'#(~/.dotfiles/home/.config/tmux/client-clock.sh #{client_pid})'}"
 
 # attach <name> <zone|->: a client of w in a pty, with LC_CLIENT_TZ as an
 # ssh login would hand it; what tmux draws to it goes to $WORK/<name>.screen

@@ -1,8 +1,9 @@
 # LC_CLIENT_TZ: the Mac's time zone, for the machines it ssh's into. macOS
 # ssh sends LC_* (SendEnv in /etc/ssh/ssh_config.d/100-macos.conf) and the
 # VM's sshd accepts it, so a tmux client attached over ssh carries it, and
-# the tmux bar there shows this zone, not the server's
-# (home/.config/tmux/client-clock.sh). macOS keeps its zone as the
+# the tmux bar there can show this zone, not the server's
+# (home/.config/tmux/client-clock.sh, kept but not wired into the bar; see
+# its header). macOS keeps its zone as the
 # /etc/localtime link, not in TZ:
 #
 #   /etc/localtime -> /var/db/timezone/zoneinfo/Asia/Yerevan  ->  Asia/Yerevan
