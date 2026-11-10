@@ -36,8 +36,20 @@ Vagrant.configure("2") do |config|
   # and the checks would pass without testing; Nix installed as README.md says;
   # linger for the user systemd manager the tests start units on; Docker for
   # test:apt_bundle.
+  #
+  # The root volume first takes the whole disk. The box's disk is 64 GB, but
+  # Ubuntu's installer gives root half of it (30 GB), and the Nix set does not
+  # fit in that: terraform (unfree, so built here) and other aarch64-linux
+  # packages missing from the cache build under /nix/var/nix/builds on root,
+  # and a `nix profile upgrade` failed with "no space left on device" at 25 of
+  # 30 GB. Only when the volume group has free space, so a re-provision passes.
   config.vm.provision "shell", privileged: false, inline: <<~'SHELL'
     set -euo pipefail
+    free=$(sudo vgs --noheadings --units b --nosuffix -o vg_free ubuntu-vg | tr -d ' ')
+    if [ "$free" -gt 0 ]; then
+      sudo lvextend --resizefs -l +100%FREE /dev/ubuntu-vg/ubuntu-lv
+    fi
+
     export DEBIAN_FRONTEND=noninteractive
     sudo -E apt-get update -qq
     sudo -E apt-get install -y -qq curl xz-utils git docker.io >/dev/null
