@@ -93,6 +93,7 @@ def check(name: str, fn: Callable[[], None]) -> None:
 def titles() -> None:
     assert arr.title_session("[api/docs]") == "api/docs"
     assert arr.title_session("(vm) [main]") == "main"
+    assert arr.title_session("(local) [main]") == "main"
     assert arr.title_session("fish:~") is None
     assert arr.title_session("(vm) fish:~") is None
 
@@ -264,6 +265,7 @@ def a_gone_local_session_with_its_directory_gone_fails_first() -> None:
 def landing() -> None:
     assert arr.landed("api/docs", "[api/docs]")
     assert arr.landed("main", "(vm) [main]")
+    assert arr.landed("main", "(local) [main]")
     assert arr.landed("main", "[main]")
     assert not arr.landed("docs", "fish:~")
     assert not arr.landed("docs", "[api/docs]")

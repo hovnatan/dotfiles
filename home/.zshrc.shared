@@ -123,11 +123,17 @@ set_terminal_title() {
         title="...${title: -17}"
     fi
     title=$(printf '%.20s' "${title}")
-    # Over ssh the tab leads with the machine (hostname up to its first dot),
-    # outside the 20-column budget: "(<host>) ~/.dotfiles". fish and nvim titles
-    # do the same. Not inside tmux, where the title names the window in the
-    # bar and tmux's set-titles-string names the host.
-    [[ -n $SSH_CONNECTION && -z $TMUX ]] && title="(${HOST%%.*}) $title"
+    # The tab leads with where the shell runs, outside the 20-column budget:
+    # over ssh the machine (hostname up to its first dot), "(<host>)
+    # ~/.dotfiles", else "(local) ~/.dotfiles". fish and nvim titles do the
+    # same. Not inside tmux, where the title names the window in the bar and
+    # tmux's set-titles-string leads with the same. Not in iTerm2, whose
+    # titles name no host (same test as fish's is_iterm2).
+    if [[ -z $TMUX ]] && ! [[ $LC_TERMINAL == iTerm2 && ( -z $TERM_PROGRAM || $TERM_PROGRAM == iTerm.app ) ]]; then
+        local where=local
+        [[ -n $SSH_CONNECTION ]] && where=${HOST%%.*}
+        title="($where) $title"
+    fi
     print -Pn "\e]0;$title\a"
 }
 

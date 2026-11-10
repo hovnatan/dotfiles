@@ -113,8 +113,8 @@ USAGE = (
     " | replace [<name>] | snapshot"
 )
 MAX_ARGS = 2  # <command> <name>
-# "[main]" and, for an ssh client, "(vm) [main]"
-# (~/.config/tmux/tmux.conf's set-titles-string, which reads @ssh outside iTerm2).
+# "(local) [main]", "(vm) [main]" for an ssh client, "[main]" before any attach
+# report (~/.config/tmux/tmux.conf's set-titles-string, which reads @title_host).
 TITLE = re.compile(r"(?:\(\S+\) )?\[(.+)\]")
 
 # The fields of one terminal a line, " " for the unit separator shown here:
@@ -213,7 +213,8 @@ class Opening:
 def title_session(title: str) -> str | None:
     """Return the name a terminal's title shows for its tmux session, or None.
 
-    "[vm/api/docs]" -> "vm/api/docs"; "(vm) [main]" -> "main"; "fish:~" -> None.
+    "[vm/api/docs]" -> "vm/api/docs"; "(vm) [main]" -> "main";
+    "(local) [main]" -> "main"; "fish:~" -> None.
     """
     m = TITLE.fullmatch(title)
     return m[1] if m else None

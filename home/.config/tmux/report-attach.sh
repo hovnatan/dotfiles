@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # tmux client-attached / client-session-changed hook (declared in
 # ~/.config/tmux/tmux.conf): report each attach to the client's terminal. The tab names
-# this machine while the last attach came in over ssh, as the shells' titles
-# do over ssh; iTerm2 gets the host report instead and names no host:
+# where the last attach came from, as the shells' titles do: this machine over
+# ssh, "local" otherwise; iTerm2 gets the host report instead and names no host:
 #
-#   ssh <host>, tmux attach, iTerm2  --> RemoteHost   --> "[backend]"
-#   ssh <host>, tmux attach, other   --> @ssh=1       --> "(<host>) [backend]"
-#   local tmux attach, iTerm2        --> RemoteHost   --> "[backend]"
-#   local tmux attach, other         --> @ssh unset   --> "[backend]"
+#   ssh <host>, tmux attach, iTerm2  --> RemoteHost              --> "[backend]"
+#   ssh <host>, tmux attach, other   --> @title_host=<host>      --> "(<host>) [backend]"
+#   local tmux attach, iTerm2        --> RemoteHost              --> "[backend]"
+#   local tmux attach, other         --> @title_host=local       --> "(local) [backend]"
 #
 # client-session-changed is the only one of the two hooks that
 # `tmux new-session` fires, so `ssh -t <host> tmux new` gets its report too.
@@ -23,11 +23,11 @@
 # `ssh -t <host> tmux attach` runs no prompt that would, so the hook has the
 # same function write them straight to the client's tty.
 #
-# Other terminals get @ssh, which set-titles-string reads. The client is then
-# redrawn: tmux re-sends the title only on a redraw, and the attach redrew
-# before this hook ran, so a local attach after an ssh one would otherwise
-# keep the stale "(<host>) ". One flag per session, so a local and an ssh
-# client on the same session both show the title of the last attach.
+# Other terminals get @title_host, which set-titles-string reads. The client
+# is then redrawn: tmux re-sends the title only on a redraw, and the attach
+# redrew before this hook ran, so a local attach after an ssh one would
+# otherwise keep the stale "(<host>) ". One value per session, so a local and
+# an ssh client on the same session both show the title of the last attach.
 #
 # What was reported, and to whom, is logged with the other tmux hooks
 # (log-event.sh says where and why): the host report is one of the things
@@ -88,10 +88,13 @@ if [ -n "$iterm2" ]; then
   note "iTerm2 $where, reported $host"
 fi
 
-if [ -n "$ssh" ] && [ -z "$iterm2" ]; then
-  tmux -S "$sock" set -t "$session" @ssh 1 \; refresh-client -t "$client"
-  note "not iTerm2, over ssh: @ssh set"
+# The label the title leads with: tmux's own short host name over ssh (the
+# one the bar has always shown), "local" otherwise, none for iTerm2.
+if [ -n "$iterm2" ]; then
+  tmux -S "$sock" set -t "$session" -u @title_host \; refresh-client -t "$client"
 else
-  tmux -S "$sock" set -t "$session" -u @ssh \; refresh-client -t "$client"
-  [ -n "$iterm2" ] || note "not iTerm2, local: @ssh unset"
+  label=local
+  [ -n "$ssh" ] && label=$(tmux -S "$sock" display-message -p '#{host_short}')
+  tmux -S "$sock" set -t "$session" @title_host "$label" \; refresh-client -t "$client"
+  note "not iTerm2, $where: @title_host $label"
 fi
