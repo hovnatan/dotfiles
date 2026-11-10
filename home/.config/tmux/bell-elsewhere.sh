@@ -8,7 +8,7 @@
 #     -> bell-elsewhere.sh <socket> $3 solo 1 <window name>
 #     -> a client of solo has focus?  yes -> exit: tmux's own bell reached it
 #                                     no  (none attached, or all unfocused):
-#     -> @bell "1!" on solo, for the status-left marker in tmux.conf
+#     -> @bell "1!" on solo, for the bar's @bell_marker in tmux.conf
 #     -> display-message on each terminal client of another session, 5 s:
 #          bell: solo:1 * vm/fix
 #     -> ~/.dotfiles/.logs/<UTC day>_tmux_hooks/events.log

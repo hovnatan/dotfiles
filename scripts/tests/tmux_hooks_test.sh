@@ -64,9 +64,10 @@
 #   Ctrl-click on one                 -> it and the current window swapped
 #   a bell in a window out of view    -> its label on a red background
 #   a bell in solo (no client)        -> "bell: solo:N ring #S" shown to the
-#                                        client on w, a red " solo:N! " in
-#                                        its status-left, a log line; none
-#                                        on solo itself; gone once shown.
+#                                        client on w, a red " solo:N! "
+#                                        first on its bar's right, a log
+#                                        line; none on solo itself; gone
+#                                        once shown.
 #                                        The bell in w (its client focused)
 #                                        logs none
 #   a bell in the window bg's client  -> shown to w's client, " bg:0! " by
@@ -652,7 +653,7 @@ grep -aq '48;2;204;36;29' "$WORK/screen" && pass "a bell paints its window's lab
   || fail "no red background drawn; flags: $(tw list-windows -t =w -F '#{window_index}:#{window_bell_flag}' | tr '\n' ' ')"
 
 # A bell in solo, which no client is attached to (bell-elsewhere.sh): the
-# client on w gets a message naming it, its status-left a red marker, and the
+# client on w gets a message naming it, its bar a red marker, and the
 # log a line. The window's name holds "#S" (-n expands formats, hence ##S),
 # which a message passed as a format would show as "solo".
 wname=$(tw list-clients -t =w -F '#{client_name}')
@@ -668,14 +669,20 @@ for _ in $(seq 50); do
 done
 grep -aqF "bell: solo:$ring ring #S" "$WORK/screen" && pass "w's client is shown 'bell: solo:$ring ring #S'" \
   || fail "w's client never drew 'bell: solo:$ring ring #S'"
-# status-left as tmux expands it for that client: the marker in the bell red.
+# @bell_marker as tmux expands it for that client: the marker in the bell
+# red, and it first in status-right, before the session's name.
 # list-clients, not display -p -c: display uses -c's client for formats only
 # when it is on the target session, by default the latest active client's,
 # so with a second client in bg it expanded bg's bar (#{client_session} bg).
-left() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:status-left}'; }
+left() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:@bell_marker}'; }
+right() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:status-right}'; }
 want="#[fg=#fbf1c7,bg=#cc241d,bold] solo:$ring! #[default] "
-[ "$(left)" = "$want" ] && pass "w's status-left marks solo: '$(left)'" \
-  || fail "w's status-left is '$(left)', wanted '$want'"
+[ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
+  || fail "w's bell marker is '$(left)', wanted '$want'"
+case $(right) in
+  "${want}[w] | "*) pass "the marker opens status-right, before '[w]'" ;;
+  *) fail "status-right on w is '$(right)', wanted it to start '${want}[w] | '" ;;
+esac
 # The bell rang in w as well (the step above), whose client has focus (tmux
 # counts a client focused from its attach until its terminal says otherwise):
 # watched, so nothing is logged.
@@ -683,16 +690,16 @@ hooks_log | grep -q ' bell session=w ' && fail "a bell in w, whose client has fo
   || pass "a bell in a session whose client has focus logs nothing"
 # On solo itself solo's marker is left out (its window label shows the
 # bell), while w's, from the bell in w above, now shows; shown, the window's
-# alert clears, and w's status-left is empty again.
+# alert clears, and w's marker is empty again.
 tw switch-client -c "$wname" -t =solo
 case $(left) in *" solo:"*) false ;; *" w:"*) true ;; *) false ;; esac \
   && [ -n "$(tw display -p -t =solo: '#{session_alerts}')" ] \
   && pass "a client on solo marks w's bell, not solo's own: '$(left)'" \
-  || fail "on solo: status-left '$(left)', solo's alerts '$(tw display -p -t =solo: '#{session_alerts}')'"
+  || fail "on solo: bell marker '$(left)', solo's alerts '$(tw display -p -t =solo: '#{session_alerts}')'"
 tw select-window -t "=solo:$ring"
 tw switch-client -c "$wname" -t =w
 [ -z "$(left)" ] && pass "once the window was shown, the marker is gone" \
-  || fail "after showing solo:$ring: status-left '$(left)'"
+  || fail "after showing solo:$ring: bell marker '$(left)'"
 tw kill-window -t "=solo:$ring"
 
 # A bell in the window an unfocused client shows: a second terminal on
@@ -738,8 +745,8 @@ wait_for " bell session=bg window=0 \([^)]*\): unwatched \(1 client, none focuse
   || fail "no bell line for bg:0 shown to $wname (bg's client flags: $(bg_flags)): $(hooks_log | tail -3)"
 want="#[fg=#fbf1c7,bg=#cc241d,bold] bg:0! #[default] "
 [ "$(left)" = "$want" ] && [ -z "$(tw display -p -t =bg: '#{session_alerts}')" ] \
-  && pass "w's status-left marks bg by @bell, tmux holding no alert: '$(left)'" \
-  || fail "w's status-left is '$(left)', wanted '$want'; bg's alerts '$(tw display -p -t =bg: '#{session_alerts}')', @bell '$(tw show -t =bg: -qv @bell)'; clients: $(tw list-clients -F '#{client_name} on #{client_session}' | paste -sd ' ' -); sessions: $(tw list-sessions -F '#{session_name}=#{session_id}@bell[#{@bell}]alerts[#{session_alerts}]' | paste -sd ' ' -)"
+  && pass "w's bell marker marks bg by @bell, tmux holding no alert: '$(left)'" \
+  || fail "w's bell marker is '$(left)', wanted '$want'; bg's alerts '$(tw display -p -t =bg: '#{session_alerts}')', @bell '$(tw show -t =bg: -qv @bell)'; clients: $(tw list-clients -F '#{client_name} on #{client_session}' | paste -sd ' ' -); sessions: $(tw list-sessions -F '#{session_name}=#{session_id}@bell[#{@bell}]alerts[#{session_alerts}]' | paste -sd ' ' -)"
 printf '%s\n' '\x1b[I' >"$WORK/bgkeys"
 for _ in $(seq 50); do
   [ -z "$(left)" ] && break
@@ -747,7 +754,7 @@ for _ in $(seq 50); do
 done
 [ -z "$(left)" ] && [ -z "$(tw show -t =bg: -qv @bell)" ] \
   && pass "bg's client focused again: the marker is gone" \
-  || fail "after bg's focus-in: w's status-left '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
+  || fail "after bg's focus-in: w's bell marker '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
 kill "$bgclient"
 wait "$bgclient" 2>/dev/null
 bgclient=
