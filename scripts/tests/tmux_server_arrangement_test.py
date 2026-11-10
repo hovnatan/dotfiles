@@ -111,7 +111,10 @@ def test_default_restore_takes_the_newest_snapshot_before_the_server_started() -
 
 # --- end to end ------------------------------------------------------------------
 
-WORK = Path(tempfile.mkdtemp(prefix="tmux_server_arrangement_test."))
+# Resolved, as tmux reports a pane's directory: on macOS the temp folder is
+# under /var, a link to /private/var, and the restored windows' paths came
+# back as /private/var/... against an expected /var/...
+WORK = Path(tempfile.mkdtemp(prefix="tmux_server_arrangement_test.")).resolve()
 HOME = WORK / "home"
 D = WORK / "dirs"
 # Unix socket paths are capped near 104 bytes: the socket folder is short.
@@ -332,7 +335,8 @@ def run_end_to_end() -> None:  # noqa: PLR0915 - one story, step by step
     t("new-session", "-d", "-s", "job", "-c", a, f"sh {script}")
     t("send-keys", "-t", "=main:0", f"bash {script}", "Enter")
     until("main running bash", lambda: pane_command("=main:0") == "bash")
-    assert pane_command("=job:0") == "sh", pane_command("=job:0")
+    # macOS's /bin/sh runs bash, so tmux names that pane "bash" there
+    assert pane_command("=job:0") in {"sh", "bash"}, pane_command("=job:0")
     r = cli("replace", "only-api")
     assert r.returncode == 1, r.stdout + r.stderr
     assert f"main:0.0 bash {script}" in r.stdout, r.stdout
