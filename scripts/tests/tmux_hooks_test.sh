@@ -701,9 +701,28 @@ case $(left) in *" solo:"*) false ;; *" w:"*) true ;; *) false ;; esac \
   || fail "on solo: bell marker '$(left)', solo's alerts '$(tw display -p -t =solo: '#{session_alerts}')'"
 tw select-window -t "=solo:$ring"
 tw switch-client -c "$wname" -t =w
+# The switch's set-option -qu @bell waits behind client-session-changed[0],
+# focus-out-unattached.sh, which runs without -b: the marker clears a moment
+# after the switch returns, not at once.
+for _ in $(seq 50); do
+  [ -z "$(left)" ] && break
+  sleep 0.1
+done
 [ -z "$(left)" ] && pass "once the window was shown, the marker is gone" \
   || fail "after showing solo:$ring: bell marker '$(left)'"
 tw kill-window -t "=solo:$ring"
+
+# A bell in a window with an empty name (a pane title Claude Code cleared,
+# under automatic-rename): #{q:} of an empty value expands to nothing, not
+# '', and the hook once passed the script 4 arguments: "returned 2". Then
+# @bell is unset by hand, as no client looks at solo to clear it.
+ring=$(tw new-window -d -P -F '#{window_index}' -t =solo: -n '' "printf '\\a'; exec sleep 100")
+wait_for " bell session=solo window=$ring \(\): unwatched \(no client\), shown to $wname$" \
+  && pass "a bell in a window with an empty name is shown to w's client" \
+  || fail "no bell line for solo:$ring, named '': $(hooks_log | tail -3); messages: $(tw show-messages | tail -3)"
+tw kill-window -t "=solo:$ring"
+tw set-option -u -t =solo: @bell
+tw set-option -u -t =solo: @bell_at
 
 # A bell in the window an unfocused client shows: a second terminal on
 # session bg, its tab in the background (focus out). tmux keeps no alert of a
