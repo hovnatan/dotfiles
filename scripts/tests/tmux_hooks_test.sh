@@ -63,6 +63,11 @@
 #   click on a window in the bar      -> that window selected
 #   Ctrl-click on one                 -> it and the current window swapped
 #   a bell in a window out of view    -> its label on a red background
+#   a bell in solo (no client)        -> "bell: solo:N ring #S" shown to the
+#                                        client on w, a red " solo:N! " in
+#                                        its status-left, a log line; none
+#                                        on solo itself; gone once shown.
+#                                        The bell in w (a client) logs none
 #   prefix c from window 0 of 3       -> new window at 1, the rest move up
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
@@ -640,6 +645,46 @@ tw new-window -d -t =w: "printf '\\a'; exec sleep 100"
 sleep 0.5
 grep -aq '48;2;204;36;29' "$WORK/screen" && pass "a bell paints its window's label red in the bar" \
   || fail "no red background drawn; flags: $(tw list-windows -t =w -F '#{window_index}:#{window_bell_flag}' | tr '\n' ' ')"
+
+# A bell in solo, which no client is attached to (bell-elsewhere.sh): the
+# client on w gets a message naming it, its status-left a red marker, and the
+# log a line. The window's name holds "#S" (-n expands formats, hence ##S),
+# which a message passed as a format would show as "solo".
+wname=$(tw list-clients -t =w -F '#{client_name}')
+ring=$(tw new-window -d -P -F '#{window_index}' -t =solo: -n 'ring ##S' "printf '\\a'; exec sleep 100")
+[ "$(tw display -p -t "=solo:$ring" '#{window_name}')" = 'ring #S' ] \
+  || fail "the ringing window is named '$(tw display -p -t "=solo:$ring" '#{window_name}')', not 'ring #S'"
+wait_for " bell session=solo window=$ring \(ring #S\): shown to $wname$" \
+  && pass "a bell in a session with no client is logged as shown to w's client" \
+  || fail "no bell line for solo:$ring shown to $wname: $(hooks_log | tail -3)"
+for _ in $(seq 50); do
+  grep -aqF "bell: solo:$ring ring #S" "$WORK/screen" && break
+  sleep 0.1
+done
+grep -aqF "bell: solo:$ring ring #S" "$WORK/screen" && pass "w's client is shown 'bell: solo:$ring ring #S'" \
+  || fail "w's client never drew 'bell: solo:$ring ring #S'"
+# status-left as tmux expands it for that client: the marker in the bell red.
+left() { tw display -p -c "$wname" '#{E:status-left}'; }
+want="#[fg=#fbf1c7,bg=#cc241d,bold] solo:$ring! #[default] "
+[ "$(left)" = "$want" ] && pass "w's status-left marks solo: '$(left)'" \
+  || fail "w's status-left is '$(left)', wanted '$want'"
+# The bell rang in w as well (the step above), which has a client: the if
+# in the hook line ran no script for it.
+hooks_log | grep -q ' bell session=w ' && fail "a bell in w, which has a client, ran bell-elsewhere.sh: $(hooks_log | grep ' bell session=w ')" \
+  || pass "a bell in a session with a client runs no script"
+# On solo itself solo's marker is left out (its window label shows the
+# bell), while w's, from the bell in w above, now shows; shown, the window's
+# alert clears, and w's status-left is empty again.
+tw switch-client -c "$wname" -t =solo
+case $(left) in *" solo:"*) false ;; *" w:"*) true ;; *) false ;; esac \
+  && [ -n "$(tw display -p -t =solo: '#{session_alerts}')" ] \
+  && pass "a client on solo marks w's bell, not solo's own: '$(left)'" \
+  || fail "on solo: status-left '$(left)', solo's alerts '$(tw display -p -t =solo: '#{session_alerts}')'"
+tw select-window -t "=solo:$ring"
+tw switch-client -c "$wname" -t =w
+[ -z "$(left)" ] && pass "once the window was shown, the marker is gone" \
+  || fail "after showing solo:$ring: status-left '$(left)'"
+tw kill-window -t "=solo:$ring"
 
 # prefix c from window 0 of three: the new window takes number 1, the old 1 moves to
 # 2. The panes need no shell, so the new one runs sleep in place of the config's fish.
