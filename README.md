@@ -221,3 +221,28 @@ sudo loginctl disable-linger $USER     # also stop the user manager at boot
 To leave the manager running, detach (prefix `d`) rather than quitting it.
 Since the manager runs with permissions bypassed from boot, only enable this
 on a machine whose SSH access you trust.
+
+## tmux history: prefix C-s, the window used last
+
+Prefix `C-s` takes the session back to the window it left most recently after showing it a
+second or more, and never to another session. A window passed through on the way (Cmd-J, Cmd-K
+held down) is a stay of a fraction of a second and does not count; a window closed since is
+skipped. The history is the session's, whichever terminal showed it. Prefix `l` is still tmux's
+own `last-window`: the window the session showed before, however briefly.
+
+Every tmux server in tmux's own socket folder (the default one, `tmux -L <name>`) starts a
+tracker from `home/.config/tmux/tmux.conf`: `scripts/tmux_history.py` keeps one control-mode
+client on it, for as long as the server runs, follows which window each session shows, and
+keeps each session's stays in memory. The key does not start a program: it puts the terminal
+and its window in buffer `tmux-history-ask`, which tmux reports to the tracker at once and
+which redraws nothing, and the tracker selects the window. Without a tracker the key says so.
+Nothing to install: a server started after the pull tracks itself, and a running one does after
+`tmux source-file ~/.config/tmux/tmux.conf`.
+
+The client sits in a session of its own, `tmux-history`, which the session pickers (prefix
+`s`, `w`) leave out. Leave it alone: killed, it is made again, and it closes itself when it is
+the last session, so the server still exits when empty. `dotup` sends the trackers SIGHUP, and
+they run again on the pulled code, forgetting the stays so far. Each run logs a line per
+window change and per key press to `~/.dotfiles/.logs/<UTC>_tmux_history/events.log`; a tracker
+that fails says why there and in a pane of its server. `pgrep -af 'tmux_history.py run'` lists
+the trackers running.

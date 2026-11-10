@@ -26,6 +26,8 @@
 #   an iTerm2-over-ssh attach to a tty    -> exit 1, the reason in the
 #   this user cannot write (report-          output tmux shows, FAILED ...
 #   attach.sh run as tmux runs a hook)       in the log
+#   a control-mode client attaches to b   -> the hook fires, the attach
+#   (no tty)                                 report does not run
 #
 # Then the window rules, on a second server started from the whole
 # home/.config/tmux/tmux.conf, with a client in a pty typing what a terminal would:
@@ -46,8 +48,11 @@
 #                                        renamed when it changes; the
 #                                        titleless one after its program
 #   prefix c C n p l C-s w s S 0-9,   -> bound; c new window, C new
-#   User0/1                              session, C-s and l last window,
-#                                        s the session picker
+#   User0/1                              session, C-s asks the history
+#                                        tracker for the last window
+#                                        (tmux_history_test.sh presses
+#                                        it), l last window, s the
+#                                        session picker
 #   Cmd-K Cmd-K Cmd-J (\e[5;30002~,   -> windows 1, 2, 1, nothing typed into
 #   \e[5;30001~ as iTerm2 sends them)    the pane; in a one-window session
 #                                        nothing moves and nothing is shown
@@ -277,6 +282,37 @@ err=$(env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin:$(dirname "$(c
 wait_for " attached $ro_tty session=b: iTerm2 over ssh, FAILED: cannot write to $ro_tty\$" \
   && pass "the failure is logged, naming the tty" || fail "no FAILED line: $(hooks_log)"
 
+# --- a control-mode client: no terminal, no attach report ---------------------------
+
+# A control client (tmux -C, as scripts/tmux_history.py keeps one) has no
+# tty, and in the attach hooks its client_* formats are all empty, so
+# report-attach.sh would get three arguments of five and die on set -u. The
+# hook lines skip such a client. They are sourced again here with the script
+# swapped for a stub that records its arguments, beside a hook that records
+# hook_client, so the attach is seen to fire either way.
+printf '#!/bin/sh\necho "$# args: $*" >>"${0%%/*}/argv.log"\n' >"$WORK/argv.sh"
+chmod +x "$WORK/argv.sh"
+grep -E '^set-hook -g client-(attached|session-changed)\[[0-9]+\] .*report-attach\.sh' \
+  "$REPO/home/.config/tmux/tmux.conf" \
+  | sed "s|~/.dotfiles/home/.config/tmux/report-attach.sh|$WORK/argv.sh|" >"$WORK/stub_hooks.conf"
+t source-file "$WORK/stub_hooks.conf"
+t set-hook -g client-attached[9] "run-shell -b 'echo attach of #{hook_client} >>$WORK/attach.log'"
+t -C attach -t b </dev/null >/dev/null 2>&1
+for _ in $(seq 50); do
+  [ -s "$WORK/attach.log" ] && break
+  sleep 0.1
+done
+# The report hook runs before [9]; this leaves its background job time too.
+sleep 0.5
+if [ ! -s "$WORK/attach.log" ]; then
+  fail "a control client's attach fired no client-attached hook"
+elif [ -e "$WORK/argv.log" ]; then
+  fail "the attach report ran for a control client: $(cat "$WORK/argv.log")"
+else
+  pass "a control client's attach runs no attach report ($(cat "$WORK/attach.log"))"
+fi
+t set-hook -gu client-attached[9]
+
 # --- windows: the status bar, the bindings, Cmd-J / Cmd-K ------------------------------
 
 # A server of its own, started from the whole home/.config/tmux/tmux.conf (the window
@@ -489,9 +525,9 @@ done
 [ -z "$missing" ] && pass "window bindings: prefix c C n p l C-s w s S 0-9, User0 User1" || fail "unbound:$missing"
 [ -z "$(what_key prefix z)" ] || fail "what_key reads prefix z, which the config leaves unbound, as bound: '$(what_key prefix z)'"
 [[ "$(what_key prefix c)" == "new-window -a -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
-  && [ "$(what_key prefix C-s)" = last-window ] && [ "$(what_key prefix l)" = last-window ] \
-  && [ "$(what_key prefix s)" = "choose-tree -Zs" ] \
-  && pass "prefix c: new window, C: new session, C-s and l: last window, s: session picker" \
+  && [[ "$(what_key prefix C-s)" == "if-shell -F \"#{S:#{?#{==:#{session_name},tmux-history},1,}}\" { run-shell -C \"set-buffer -b tmux-history-ask "* ]] && [ "$(what_key prefix l)" = last-window ] \
+  && [ "$(what_key prefix s)" = "choose-tree -Zs -f \"#{!=:#{session_name},tmux-history}\"" ] \
+  && pass "prefix c: new window, C: new session, C-s: asks the history tracker, l: last window, s: session picker" \
   || fail "prefix c '$(what_key prefix c)', C '$(what_key prefix C)', C-s '$(what_key prefix C-s)', l '$(what_key prefix l)', s '$(what_key prefix s)'"
 
 # Cmd-J / Cmd-K, as iTerm2 and Ghostty send them. In a one-window session

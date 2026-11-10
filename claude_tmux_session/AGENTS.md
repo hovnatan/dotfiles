@@ -79,6 +79,9 @@ setup, or a GPU box.
 
 - Do not kill or restart sessions you were not asked to touch, and do not
   kill the tmux server (it hosts all of them).
+- Session `tmux-history`, on every server, is that server's history
+  tracker (`scripts/tmux_history.py`, README "tmux history"): not a session
+  to open windows or start claude in, and it ends on its own.
 - Permissions bypass is reserved for this manager session and for
   sessions the user explicitly requested with it
   (`--dangerously-skip-permissions`).

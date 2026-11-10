@@ -206,6 +206,16 @@ main() {
     systemctl --user daemon-reload || status=1
   fi
 
+  # Each tmux server runs a tmux_history.py tracker (tmux.conf), a
+  # long-running Python process on the code it started with. SIGHUP makes it
+  # run itself again, on the pulled code; forgetting the windows prefix C-s
+  # would go back to is all it costs. pkill: 1 is "none running", only above
+  # that a failure.
+  echo "--- SIGHUP to the tmux history trackers (they pick up the pulled code)"
+  local rc=0
+  pkill -HUP -u "$(id -u)" -f 'scripts/tmux_history\.py run ' || rc=$?
+  [ "$rc" -le 1 ] || status=1
+
   if [ "$(uname)" = "Darwin" ]; then
     brew_drift || status=1
   elif is_ubuntu; then
