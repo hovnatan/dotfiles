@@ -23,6 +23,10 @@ if status --is-interactive
     set -U fish_cursor_visual block
 
     set -u fish_color_cwd brcyan
+    # prompt_pwd keeps two letters of each parent folder, not fish's default
+    # one: ~/.dotfiles/home/.config/fish -> ~/.do/ho/.co/fish, not ~/.d/h/.c/fish.
+    # The prompt and the window title (fish_title) both use it.
+    set -g fish_prompt_pwd_dir_length 2
     # The host label's background, the same in tmux as outside it
     set -u fish_color_prompt_bg red
 

@@ -36,9 +36,14 @@ path_abbrev() {
     result="/"
   fi
 
+  # Each parent keeps two letters, a hidden one its dot as well, the same as
+  # fish's prompt_pwd (fish_prompt_pwd_dir_length 2 in config.fish):
+  # ~/.dotfiles/home/.config/fish -> ~/.do/ho/.co/fish
   for ((i=2; i<${#path_parts[@]}; i++)); do
-    if [[ -n ${path_parts[i]} ]]; then
-      result+="${path_parts[i]:0:1}/"
+    if [[ ${path_parts[i]} == .* ]]; then
+      result+="${path_parts[i]:0:3}/"
+    elif [[ -n ${path_parts[i]} ]]; then
+      result+="${path_parts[i]:0:2}/"
     else
       result+="/"
     fi

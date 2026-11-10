@@ -137,7 +137,10 @@ if [ -n "$effort" ]; then
 fi
 
 # Abbreviate cwd to match PS1's path_abbrev: $HOME -> ~, then shorten every
-# parent path component to its first character, keeping the last component full.
+# parent path component to its first two characters (a hidden one keeps its dot
+# as well), keeping the last component full, as fish's prompt_pwd does with
+# fish_prompt_pwd_dir_length 2: ~/.dotfiles/home/.config/fish -> ~/.do/ho/.co/fish.
+# A component no longer than the cut stays whole ("a" -> "a", "." -> ".").
 case "$cwd" in
   "$HOME"*) full_path="~${cwd#"$HOME"}" ;;
   *) full_path="$cwd" ;;
@@ -165,7 +168,11 @@ else
   while [ "$#" -gt 1 ]; do
     part="$1"
     if [ -n "$part" ]; then
-      path="${path}${part%"${part#?}"}/"
+      case $part in
+        .??*) part=${part%"${part#???}"} ;;
+        ??*) part=${part%"${part#??}"} ;;
+      esac
+      path="${path}${part}/"
     else
       path="${path}/"
     fi
