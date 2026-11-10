@@ -447,6 +447,15 @@ if [ "$(uname)" = "Darwin" ]; then
   # resets a change made in Preferences > General.
   defaults write com.colliderli.iina pauseWhenOpen -bool false
 
+  # Default tracks: English audio and English subtitles (Preferences > Video/Audio
+  # and > Subtitles, "Preferred language"). IINA hands these to mpv as alang/slang,
+  # and mpv's prefix match lets "en" pick tracks tagged en-US and an external
+  # "<name>.en.srt". E.g. a dub-first mkv (ru audio flagged default, en second)
+  # opens on the en audio with en subs; mpv's default subs-with-matching-audio=yes
+  # keeps the subs on although the audio is English too.
+  defaults write com.colliderli.iina audioLanguage -string en
+  defaults write com.colliderli.iina subLang -string en
+
   # Keyboard navigation (System Settings > Keyboard): Tab moves focus to
   # every button in a dialog and Space presses it, not only Return (default
   # button) and Esc (Cancel). E.g. iTerm2's Paste Image dialog: cmd+v, Tab,
