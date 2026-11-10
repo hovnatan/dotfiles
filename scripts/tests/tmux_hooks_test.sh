@@ -67,12 +67,13 @@
 #                                        client on w, a red " solo:N! "
 #                                        first on its bar's right, a log
 #                                        line; none on solo itself; gone
-#                                        once shown.
-#                                        The bell in w (its client focused)
-#                                        logs none
+#                                        once shown. The bell in w (its
+#                                        client focused) logs "watched"
 #   a bell in the window bg's client  -> shown to w's client, " bg:0! " by
 #   shows, its terminal unfocused        @bell (tmux keeps no alert); gone
 #                                        at its focus-in
+#   the same, bg's client focused but -> unwatched, marked; a key typed in
+#   idle past BELL_STALE_SECONDS         bg hides the marker, no focus-in
 #   prefix c from window 0 of 3       -> new window at 1, the rest move up
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
@@ -684,10 +685,12 @@ case $(right) in
   *) fail "status-right on w is '$(right)', wanted it to start '${want}[w] | '" ;;
 esac
 # The bell rang in w as well (the step above), whose client has focus (tmux
-# counts a client focused from its attach until its terminal says otherwise):
-# watched, so nothing is logged.
-hooks_log | grep -q ' bell session=w ' && fail "a bell in w, whose client has focus, was logged: $(hooks_log | grep ' bell session=w ')" \
-  || pass "a bell in a session whose client has focus logs nothing"
+# counts a client focused from its attach until its terminal says otherwise)
+# and typed a moment ago: watched, logged with that evidence, nothing shown.
+w_bell=$(hooks_log | grep ' bell session=w ')
+grep -qE ": watched \(${wname#/dev/} focused, input [0-9]+s ago\)$" <<<"$w_bell" \
+  && pass "a bell in a session whose client has focus and fresh input is logged as watched: '${w_bell#* }'" \
+  || fail "the bell in w, its client focused, logged '$w_bell'"
 # On solo itself solo's marker is left out (its window label shows the
 # bell), while w's, from the bell in w above, now shows; shown, the window's
 # alert clears, and w's marker is empty again.
@@ -740,7 +743,7 @@ for _ in $(seq 50); do
   case ,$(bg_flags), in *,focused,*) sleep 0.1 ;; *) break ;; esac
 done
 tw respawn-pane -k -t =bg: "printf '\\a'; exec sleep 100"
-wait_for " bell session=bg window=0 \([^)]*\): unwatched \(1 client, none focused\), shown to $wname$" \
+wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} not focused, input [0-9]+s ago\), shown to $wname$" \
   && pass "a bell where bg's unfocused client looks is shown to w's client" \
   || fail "no bell line for bg:0 shown to $wname (bg's client flags: $(bg_flags)): $(hooks_log | tail -3)"
 want="#[fg=#fbf1c7,bg=#cc241d,bold] bg:0! #[default] "
@@ -755,6 +758,31 @@ done
 [ -z "$(left)" ] && [ -z "$(tw show -t =bg: -qv @bell)" ] \
   && pass "bg's client focused again: the marker is gone" \
   || fail "after bg's focus-in: w's bell marker '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
+
+# Focus gone stale (ntfy-stop.sh's rule): bg's client still says focused, as
+# a locked Mac's terminal does, but has had no input for longer than
+# BELL_STALE_SECONDS (1 s here, from the server's environment, which run-shell
+# passes on): unwatched. Then a key typed there, its focus flag unchanged as
+# when a terminal's focus reports stopped, so no focus-in clears @bell: the
+# marker hides by the input alone (@bell_at older than #{session_activity}).
+tw set-environment -g BELL_STALE_SECONDS 1
+sleep 2
+tw respawn-pane -k -t =bg: "printf '\\a'; exec sleep 100"
+wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} focused, input [0-9]+s ago\), shown to $wname$" \
+  && pass "a focused client with no input past BELL_STALE_SECONDS leaves its session unwatched" \
+  || fail "no stale-focus bell line for bg (bg's client flags: $(bg_flags)): $(hooks_log | tail -3)"
+[ "$(left)" = "$want" ] && pass "and w's bell marker marks bg: '$(left)'" \
+  || fail "after the stale-focus bell: w's bell marker '$(left)', wanted '$want'"
+sleep 1.1 # input in a later second than @bell_at: the compare is by the second
+printf '%s\n' 'x' >"$WORK/bgkeys"
+for _ in $(seq 50); do
+  [ -z "$(left)" ] && break
+  sleep 0.1
+done
+[ -z "$(left)" ] && [ "$(tw show -t =bg: -qv @bell)" = '0!' ] \
+  && pass "a key typed in bg hides the marker, @bell still set (no focus-in came)" \
+  || fail "after a key in bg: w's bell marker '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
+tw set-environment -gu BELL_STALE_SECONDS
 kill "$bgclient"
 wait "$bgclient" 2>/dev/null
 bgclient=
