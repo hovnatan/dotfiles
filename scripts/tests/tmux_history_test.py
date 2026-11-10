@@ -270,7 +270,10 @@ def test_the_last_session_left_ends_the_connection_for_good() -> None:
 WORK = Path(tempfile.mkdtemp(prefix="tmux_history_test."))
 HOME = WORK / "home"
 # Unix socket paths are capped near 104 bytes: the socket folder is short.
-SOCKETS = Path(tempfile.mkdtemp(prefix="thtest.", dir="/tmp"))
+# Resolved, as tmux resolves #{socket_path}, which the trackers log: on
+# macOS /tmp is a link to /private/tmp, and /tmp/thtest.x/... would match
+# no tracker's "starting: socket /private/tmp/thtest.x/..." line.
+SOCKETS = Path(tempfile.mkdtemp(prefix="thtest.", dir="/tmp")).resolve()
 SOCKET_DIR = SOCKETS / f"tmux-{os.getuid()}"
 LOGS = HOME / ".dotfiles/.logs"
 CONF = WORK / "tmux.conf"
@@ -698,3 +701,4 @@ if failures:
 else:
     shutil.rmtree(WORK)
 shutil.rmtree(SOCKETS, ignore_errors=True)
+sys.exit(1 if failures else 0)
