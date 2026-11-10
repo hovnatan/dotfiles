@@ -90,6 +90,7 @@ from tmux_arrangement import (
     attach_for,
     attach_request,
     check_local,
+    idle,
     local_clients,
     local_line,
     local_request,
@@ -103,7 +104,6 @@ from tmux_arrangement import (
 
 DIR = Path.home() / ".local/state/ghostty_tmux_arrangements"
 OPEN_CLEAN = Path(__file__).resolve().parents[1] / "macos/open_clean.sh"
-IDLE_SHELLS = frozenset({"bash", "fish", "sh", "zsh"})
 LANDING_TIMEOUT = 30.0  # s for every restored tab to show its session
 OSASCRIPT_TIMEOUT = 30  # s; it takes under a second, longer while macOS asks
 PROGRESS_EVERY = 5.0  # s between the lines a restore logs while it waits
@@ -251,18 +251,6 @@ def line_of(
 def is_ssh(command: str) -> bool:
     """Tell whether a command line runs ssh: "/usr/bin/ssh vm" -> True, "" -> False."""
     return bool(command) and Path(command.split(maxsplit=1)[0]).name == "ssh"
-
-
-def idle(command: str) -> bool:
-    """Tell whether a tty's foreground command is a shell at its prompt, or nothing.
-
-    "-fish" and "/bin/zsh" are; "" is; "fish build.fish" and "vim" are not. A
-    shell that shows arguments is running them.
-    """
-    words = command.split()
-    return not words or (
-        len(words) == 1 and Path(words[0]).name.lstrip("-") in IDLE_SHELLS
-    )
 
 
 def busy_terminals(

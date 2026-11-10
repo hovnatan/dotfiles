@@ -56,6 +56,8 @@ NO_SERVER = re.compile(r"no server running|error connecting to")
 LOCAL_LINE = re.compile(
     r"tmux(?: -L (\S+))? new-session -A -s '((?:[^'\\]|\\.)*)' -c '((?:[^'\\]|\\.)*)'",
 )
+# The shells idle() takes for one at its prompt.
+IDLE_SHELLS = frozenset({"bash", "fish", "sh", "zsh"})
 SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
 # Two weeks of them (14 x 144) at Hammerspoon's one per 10 minutes
 # (snapshots.lua): long enough that a run of snapshots taken after a drop,
@@ -296,6 +298,18 @@ def stale_snapshots(names: list[str], directory: Path) -> list[str]:
 
 
 # --- local tmux, and this process ---------------------------------------------
+
+
+def idle(command: str) -> bool:
+    """Tell whether a tty's foreground command is a shell at its prompt, or nothing.
+
+    "-fish" and "/bin/zsh" are; "" is; "fish build.fish" and "vim" are not. A
+    shell that shows arguments is running them.
+    """
+    words = command.split()
+    return not words or (
+        len(words) == 1 and Path(words[0]).name.lstrip("-") in IDLE_SHELLS
+    )
 
 
 def run(argv: list[str], timeout: float) -> subprocess.CompletedProcess[str]:

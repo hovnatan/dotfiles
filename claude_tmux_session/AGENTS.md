@@ -43,6 +43,10 @@ them; the user takes it from there, with `/resume`, `/rename` and the rest.
   that exits stays at its shell, nothing restarts it, and a `manager` session
   already up is left as it is: type that command there, or open the window by
   hand, when it is missing.
+- Every server snapshots its sessions' layout every 10 minutes. Asked to
+  bring sessions back after a reboot, run
+  `~/.dotfiles/scripts/tmux_server_arrangement.py restore`: shells in their
+  old directories, no claude in them (README "tmux snapshots").
 - A manager claude that quits stays at its shell; the user resumes it there,
   with `--dangerously-skip-permissions`. With the session gone,
   `systemctl --user start claude-tmux` starts it again. That start, and each

@@ -215,6 +215,11 @@ main() {
   local rc=0
   pkill -HUP -u "$(id -u)" -f 'scripts/tmux_history\.py run ' || rc=$?
   [ "$rc" -le 1 ] || status=1
+  # The same for each server's snapshot run (tmux_server_arrangement.py).
+  echo "--- SIGHUP to the tmux snapshot runs (they pick up the pulled code)"
+  rc=0
+  pkill -HUP -u "$(id -u)" -f 'scripts/tmux_server_arrangement\.py run ' || rc=$?
+  [ "$rc" -le 1 ] || status=1
 
   if [ "$(uname)" = "Darwin" ]; then
     brew_drift || status=1

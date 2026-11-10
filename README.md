@@ -246,3 +246,32 @@ they run again on the pulled code, forgetting the stays so far. Each run logs a 
 window change and per key press to `~/.dotfiles/.logs/<UTC>_tmux_history/events.log`; a tracker
 that fails says why there and in a pane of its server. `pgrep -af 'tmux_history.py run'` lists
 the trackers running.
+
+## tmux snapshots: sessions back after a reboot
+
+Every tmux server in tmux's own socket folder snapshots its sessions every 10 minutes: each
+session, its windows in order, and the directory of each window's active pane. Not the
+programs, the splits or the text. `home/.config/tmux/tmux.conf` starts one
+`scripts/tmux_server_arrangement.py run` per server, as it starts the history tracker; it ends
+with the server, and `dotup` sends it SIGHUP to run on the pulled code. A snapshot the same as
+the one before is not written; two weeks of them are kept. They are plain text, in
+`~/.local/state/tmux_server_arrangements/<socket>/auto-<UTC time>.txt`, to read or edit by
+hand.
+
+```bash
+~/.dotfiles/scripts/tmux_server_arrangement.py list              # what is saved
+~/.dotfiles/scripts/tmux_server_arrangement.py restore           # after a reboot
+~/.dotfiles/scripts/tmux_server_arrangement.py save <name>       # keep this layout
+~/.dotfiles/scripts/tmux_server_arrangement.py replace <name>    # it, and nothing else
+```
+
+`restore` with no name takes the newest snapshot from before this server started: after a
+reboot, the old server's last state. It creates each saved session that is not open, a window
+per saved one, each a fresh shell in its directory; a session already open (`manager`, at
+boot) is left as it is. Run it before the Ghostty arrangement's restore, which would otherwise
+create those sessions with one window each. `replace` also closes every other session
+(`tmux-history` aside), and refuses before touching anything if one of them holds the command
+itself, or has a pane whose foreground command line is more than a bare shell (`claude ...`,
+`nvim ...`, `bash build.sh`). A job left in the background (`cmd &`) is not seen, and dies.
+A saved directory that is gone stops either before anything opens. `-L <name>` after the verb
+picks another server. Each run logs to `~/.dotfiles/.logs/<UTC>_tmux_server_arrangement/events.log`.
