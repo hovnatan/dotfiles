@@ -55,9 +55,6 @@ cask "claude"
 cask "discord"
 cask "docker-desktop"
 cask "dropbox@beta"
-# font-symbols-only-nerd-font -- Nerd Font icons (snacks picker, ...) in iTerm2
-# via the profile's Non-ASCII font; Ghostty has them built in (2026-09-28)
-cask "font-symbols-only-nerd-font"
 cask "ghostty"
 cask "google-chrome"
 cask "google-chrome@beta"
@@ -65,8 +62,6 @@ cask "google-drive"
 cask "hammerspoon"
 cask "homerow"
 cask "iina"
-# iterm2 -- Ghostty alternative; profile in home/Library/Application Support/iTerm2 (2026-09-25)
-cask "iterm2"
 cask "keepassxc"
 cask "libreoffice"
 cask "little-snitch"

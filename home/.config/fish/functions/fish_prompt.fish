@@ -1,6 +1,5 @@
 function fish_prompt --description 'Write out the prompt'
     set -l last_status $status
-    iterm2_report_host
 
     set -l normal (set_color normal)
 

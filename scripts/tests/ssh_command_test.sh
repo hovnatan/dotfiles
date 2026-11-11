@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/ssh_command.py scripts/tests/ssh_command_test.py scripts/lib/*
-# Exercise home/.hammerspoon/ssh_command.py, the parser behind iTerm2's
-# Cmd-T in an ssh tab (iterm2_api.py) and the saved ssh arrangements. No
-# iterm2 import, so plain python3 runs it in CI on Linux and macOS.
+# check.sh covers: scripts/tests/ssh_command_test.py scripts/lib/*
+# Exercise scripts/lib/ssh_command.py, the parser behind the saved tmux
+# arrangements' ssh lines. Only the standard library, so plain python3 runs
+# it in CI on Linux and macOS.
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
 . "$REPO/scripts/lib/event_log.sh"

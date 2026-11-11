@@ -101,8 +101,8 @@ note() {
 # The window is named only when it is not claude's, so a session of one
 # window reads as before. Input seconds ago with no focus is a
 # contradiction worth seeing: somebody is at that terminal, and its focus
-# reports are not arriving (iTerm2 switches them off when it takes the host
-# for changed; 2026-09-30).
+# reports are not arriving (a terminal that resets its modes after the
+# attach sends none again; 2026-09-30).
 # The clients listed are those of the session claude's pane is in now --
 # the hook's, unless the pane moved -- and those of the hook's session once
 # the pane is gone. Best effort: this is evidence for a log line, and a

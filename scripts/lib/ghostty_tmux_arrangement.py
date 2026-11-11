@@ -15,8 +15,8 @@ windows. Only tmux tabs are saved: a plain shell has nothing to come back to.
       v  line_of(): what each terminal is
     tty is a local tmux client  -> tmux [-L <socket>] new-session -A -s <session>
       (tmux list-clients)            -c <its directory>
-    ssh, title "[<shown>]" or   -> LC_TMUX_ATTACH=<socket>:<session> \
-      "(<host>) [<shown>]"           ssh -o SendEnv=LC_TMUX_ATTACH <login>
+    ssh, title "[<shown>]" or   -> <login, with -t> tmux [-L <socket>] attach
+      "(<host>) [<shown>]"           -t =<session>
                                    (the host is asked which socket: attach_for)
     anything else               -> skipped, and logged
       |
@@ -333,9 +333,11 @@ def render(name: str, saved_at: str, windows: list[list[str]]) -> str:
 def parse_file(text: str) -> list[list[str]]:
     r"""Return the lines of each window of the file's text.
 
-    "window:\nLC_TMUX_ATTACH=...\n" -> [["LC_TMUX_ATTACH=..."]]. A line before
-    the first "window:", a line that is no tmux request, or a window with no
-    tabs is an error: a hand edit gone wrong, caught before any tab opens.
+    "window:\nssh -t vm tmux attach -t =main\n"
+        -> [["ssh -t vm tmux attach -t =main"]]
+    A line before the first "window:", a line that is no tmux request, or a
+    window with no tabs is an error: a hand edit gone wrong, caught before any
+    tab opens.
     """
     windows: list[list[str]] = []
     for n, line in enumerate(text.splitlines(), 1):
@@ -370,11 +372,18 @@ def parse_file(text: str) -> list[list[str]]:
 def session_key(line: str) -> tuple[str, ...]:
     """Return what makes two saved lines the same session.
 
-    A remote line is its own key, the host being part of it. A local line is
-    its socket and session, not its directory, which may have moved on.
+    A remote line is its destination, socket and session, not the rest of its
+    ssh options: a tab opened by hand with other options is still the same
+    session. A local line is its socket and session, not its directory, which
+    may have moved on. A line that is neither is its own key.
     """
     client = local_request(line)
-    return ("local", client.socket, client.session) if client else ("remote", line)
+    if client:
+        return ("local", client.socket, client.session)
+    remote = attach_request(line)
+    if remote:
+        return ("remote", remote.destination, remote.socket, remote.session)
+    return ("line", line)
 
 
 def session_of(line: str) -> str:
@@ -386,7 +395,7 @@ def session_of(line: str) -> str:
     if request is None:
         msg = f"attaches no tmux session: {line}"
         raise ArrangementError(msg)
-    return request[1]
+    return request.session
 
 
 def plan_restore(

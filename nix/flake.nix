@@ -167,8 +167,7 @@
             pkgs.fzf
             # GitHub command-line tool
             pkgs.gh
-            # GitLab CLI (glab): issues on GitLab-hosted projects, e.g.
-            # iTerm2, whose GitHub mirror has issues turned off (2026-09-29)
+            # GitLab CLI (glab): issues on GitLab-hosted projects
             pkgs.glab
             # git and git-lfs, the same version everywhere; the rest of the
             # former apt_base list of app_backend's setup_workspace.sh
@@ -201,7 +200,7 @@
             pkgs.lftp
             # Lua 5.4, the version Hammerspoon embeds: runs its modules
             # outside the app, against stub `hs` objects
-            # (scripts/tests/iterm2_api_test.sh). CI installs the
+            # (scripts/tests/switcher_test.sh). CI installs the
             # same attribute (.github/workflows/tests.yml); without it here
             # the test only ran locally through `nix shell` (2026-10-02)
             pkgs.lua5_4

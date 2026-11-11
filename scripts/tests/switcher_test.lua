@@ -1,11 +1,11 @@
--- switcher.lua, through the real iterm2_switcher.lua and ghostty_switcher.lua,
+-- switcher.lua, through the real ghostty_switcher.lua,
 -- against Hammerspoon doubles:
 --
 --   test --click()--> doubled tap --> onOtherMouse --> doubled timer
 --                                                        |
 --                       doubled picker <-- rows <-- opts.list
 --                            |
---   test --pick()------------+--> opts.activate --> doubled AltTab CLI / api
+--   test --pick()------------+--> opts.activate --> doubled AltTab CLI
 local repo = assert(arg[1], "pass the repo path")
 -- The module's own requires that are not stubbed (failure.lua) load as is.
 package.path = repo .. "/home/.hammerspoon/?.lua;" .. package.path
@@ -19,7 +19,7 @@ local function note(fmt, ...)
   io.stdout:flush()
 end
 
-local GHOSTTY, ITERM2 = "com.mitchellh.ghostty", "com.googlecode.iterm2"
+local GHOSTTY = "com.mitchellh.ghostty"
 local APP_PID, OTHER_PID = 500, 900
 local DOWN, DRAGGED, UP = 1, 2, 3
 
@@ -129,13 +129,13 @@ local function load(module, setup)
     activated = {},
     onApps = {},
     underPointer = APP_PID,
-    front = module == "ghostty_switcher" and GHOSTTY or ITERM2,
+    front = GHOSTTY,
     windows = { ghostty(101, "[vm/api]", 0), ghostty(102, "[main]", 1), ghostty(103, "fish", 2) },
   }
   for k, v in pairs(setup or {}) do
     world[k] = v
   end
-  for _, name in ipairs({ module, "switcher", "failure", "picker", "iterm2_api", "event_log" }) do
+  for _, name in ipairs({ module, "switcher", "failure", "picker", "event_log" }) do
     package.loaded[name] = nil
   end
   package.preload.picker = function()
@@ -148,17 +148,6 @@ local function load(module, setup)
           end,
           delete = function() end,
         }
-      end,
-    }
-  end
-  package.preload.iterm2_api = function()
-    return {
-      listWindows = function(seconds, callback)
-        world.replySeconds = seconds
-        callback(world.event)
-      end,
-      activateWindow = function(id)
-        table.insert(world.activated, id)
       end,
     }
   end
@@ -342,25 +331,6 @@ test("the rows are Ghostty's alone, the most recently focused first", function()
   assert(idsShown() == "103 101 102", idsShown())
   local rows = world.shown[#world.shown].rows
   assert(rows[1].detail == "current" and rows[2].detail == "", "the window in front is not the one marked")
-end)
-
-test("iTerm2's rows and picks still go through its API", function()
-  load("iterm2_switcher", {
-    event = {
-      current = "a",
-      windows = {
-        { window = "a", title = "~/.dotfiles", number = 1, tabs = 3 },
-        { window = "b", title = "", number = 6, tabs = 1 },
-      },
-    },
-  })
-  click()
-  assert(world.replySeconds == 1, "no time limit on the reply")
-  local rows = world.shown[1].rows
-  assert(rows[1].detail == "3 tabs (current)", rows[1].detail)
-  assert(rows[2].title == "window 6" and rows[2].detail == "1 tab", rows[2].title)
-  world.onPick("b")
-  assert(world.activated[1] == "b", "the pick did not reach the API")
 end)
 
 note("%d failed", failures)

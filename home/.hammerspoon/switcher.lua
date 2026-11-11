@@ -2,10 +2,9 @@
 -- (picker.lua); picking one (Return, or a click) brings it to front. Esc,
 -- or a click elsewhere, closes it.
 --
---   iterm2_switcher.lua   ghostty_switcher.lua     name, bundle, list, activate
---            |                    |
---            +---------+----------+
---                      v
+--   ghostty_switcher.lua     name, bundle, list, activate
+--            |
+--            v
 --   switcher.new(opts)
 --
 --   app watcher --(the app frontmost?)--> start / stop the tap, keep its pid
@@ -57,7 +56,7 @@ local SYSTEM = hs.axuielement.systemWideElement()
 local AX_SECONDS = 0.2
 
 -- opts:
---   name      its event log and its alerts, e.g. "iterm2_switcher"
+--   name      its event log and its alerts, e.g. "ghostty_switcher"
 --   bundle    the app's bundle id
 --   list      fn(show): calls show(rows) once the windows are known, rows as
 --             picker.lua's, the window in front first; it runs show guarded

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/lib/ghostty_tmux_arrangement.py scripts/lib/tmux_arrangement.py scripts/ghostty_tmux_arrangement.sh home/.hammerspoon/ssh_command.py scripts/tests/ghostty_tmux_arrangement_test.py
+# check.sh covers: scripts/lib/ghostty_tmux_arrangement.py scripts/lib/tmux_arrangement.py scripts/ghostty_tmux_arrangement.sh scripts/lib/ssh_command.py scripts/tests/ghostty_tmux_arrangement_test.py
 # Exercise the pure part of scripts/lib/ghostty_tmux_arrangement.py: what
 # Ghostty, tmux and ps report in, the saved lines and the restore plan out.
 # No Ghostty, tmux or ssh, so it runs in CI on Linux and macOS.

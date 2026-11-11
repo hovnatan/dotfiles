@@ -1,17 +1,16 @@
-r"""What the terminals' tmux arrangements share, whichever terminal holds the tabs.
+r"""What the tmux arrangements share, whichever of them holds the tabs.
 
-    iterm2_ssh_arrangement.py    ghostty_tmux_arrangement.py
-            |                              |
-            +-------------+----------------+
-                          v
+    ghostty_tmux_arrangement.py    scripts/tmux_server_arrangement.py
+              |                                 |
+              +----------------+----------------+
+                               v
     this file: which tmux sessions a host holds (remote_lookup), the line
     that attaches one over ssh (attach_for, attach_line), and how snapshots
     are named and pruned
 
-Only the standard library and ssh_command.py, so the Ghostty script and the
-tests run on plain python3; iTerm2's API stays in its own script. The attach
-line, and why it goes through the login shell, is explained in
-iterm2_ssh_arrangement.py's docstring.
+Only the standard library and ssh_command.py, so the scripts and their
+tests run on plain python3. The attach line is a plain remote command
+(attach_line), so the far side needs nothing but tmux on its PATH.
 """
 
 # A script beside its shell wrapper, no license header, as in scripts/tests.
@@ -20,21 +19,16 @@ iterm2_ssh_arrangement.py's docstring.
 import os
 import re
 import subprocess
-import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import quote, unquote
 
-# The parser lives beside its first user, Cmd-T's iterm2_api.py.
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "home/.hammerspoon"))
 import ssh_command
 
 # A socket a saved line may name: any tmux socket, found by looking
 # (local_sockets, LIST_SESSIONS), as long as it needs no quoting and reads as
-# no option. tmux_attach_requested.fish holds the same pattern, as what it
-# gets arrives over ssh.
+# no option.
 SOCKET_NAME = re.compile(r"[A-Za-z0-9_.][A-Za-z0-9_.-]*")
 # What a host runs to list its sessions: a line per session, on every socket
 # in tmux's directory. In sh whatever the login shell is, and with its outer
@@ -78,6 +72,15 @@ class ArrangementError(Exception):
     """A save or restore that would leave the wrong thing; the message says what."""
 
 
+@dataclass(frozen=True)
+class Attach:
+    """A remote tmux session an attach line brings back, and the host it is on."""
+
+    destination: str
+    socket: str
+    session: str
+
+
 @dataclass
 class Client:
     """A local tmux client: the session it shows, and that session's directory."""
@@ -110,72 +113,57 @@ def tmux(socket: str) -> str:
 
 
 def attach_line(login: str, socket: str, session: str) -> str:
-    """Return the line that reattaches `session` on `socket`, via the login shell.
+    """Return the line that reattaches `session` on `socket`, as a remote command.
 
-    ("ssh -p 2222 vm", "work", "ai-agent")
-        -> "LC_TMUX_ATTACH=work:ai-agent ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 vm"
-    The value is "<socket>:<session>", split at the first ":" on the far
-    side; tmux allows no ":" in a session name. LC_ because the stock
-    AcceptEnv of sshd (LANG LC_*) passes only those.
+    ("ssh -p 2222 vm", "work", "api/docs")
+        -> "ssh -t -p 2222 vm tmux -L work attach -t =api/docs"
+    ("ssh -t vm", "default", "main") -> "ssh -t vm tmux attach -t =main"
+    -t gives tmux a tty; "=" makes the target exact, so "bench" never
+    attaches "bench-2". A plain session name needs no quoting in the local
+    fish nor in the far side's shell.
 
-    "/" goes as "%2F": Tailscale SSH (1.102) drops a variable whose value
-    holds a "/", so "work:api/docs" never arrived, while every other
-    character a plain session name may hold passes. A plain name holds no
-    "%", so tmux_attach_requested.fish decodes it unambiguously:
-        "api/docs" -> "LC_TMUX_ATTACH=work:api%2Fdocs ..."
+    Over Tailscale SSH a remote command skips login(1): its pty stays
+    root's (crw--w---- root tty), it gets no logind session and no `who`
+    line. tmux attaches through it all the same (checked 2026-11-10, Tailscale
+    SSH to an Ubuntu box), but a hook that opens the client's tty by path
+    (#{client_tty}) cannot write to it.
     """
     if not ssh_command.plain(session):
         msg = f"tmux session {session!r} has characters needing quotes; rename it"
         raise ArrangementError(msg)
-    return send_line(login, "LC_TMUX_ATTACH", f"{socket}:{session}")
-
-
-def send_line(login: str, variable: str, value: str) -> str:
-    """Return `login` sending `variable`=`value` to the far side's login shell.
-
-    ("ssh -p 2222 vm", "LC_X", "a/b c")
-        -> "LC_X=a%2Fb%20c ssh -o SendEnv=LC_X -p 2222 vm"
-    Every byte but [A-Za-z0-9_.~:-] is %-encoded: the "/" for Tailscale SSH
-    (attach_line), the rest so the value needs no quoting in fish. ":" stays,
-    so a tmux line reads as before ("work:api%2Fdocs"). The far side
-    decodes it with `string unescape --style=url` (__ssh_arrangement_decode).
-    """
     first, *rest = login.split()
-    words = [f"{variable}={quote(value, safe=':')}", first, f"-o SendEnv={variable}"]
-    return " ".join([*words, *rest])
+    words = [first, *rest] if "-t" in rest else [first, "-t", *rest]
+    return f"{' '.join(words)} {tmux(socket)} attach -t ={session}"
 
 
-def sent_value(line: str, variable: str) -> str | None:
-    """Return the value send_line put in `line` for `variable`, decoded; else None.
-
-    ("LC_X=a%2Fb ssh -o SendEnv=LC_X vm", "LC_X") -> "a/b"
-    ("ssh vm", "LC_X") -> None
-    """
-    v = re.escape(variable)
-    m = re.fullmatch(rf"{v}=(\S+) \S+ -o SendEnv={v} .+", line)
-    return unquote(m[1]) if m else None
+# attach_line's output, read back: the login (its last word the destination),
+# then the tmux command at its end.
+ATTACH_LINE = re.compile(
+    r"\S+(?: \S+)*? -t(?: \S+)*? (\S+) tmux(?: -L (\S+))? attach -t =(\S*)",
+)
 
 
-def attach_request(line: str) -> tuple[str, str] | None:
-    """Return the (socket, session) a saved line asks the far side to attach.
+def attach_request(line: str) -> Attach | None:
+    """Return the remote session a saved line attaches over ssh.
 
-    attach_line's output -> its socket and session; any other line -> None.
-    "LC_TMUX_ATTACH=work:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm"
-        -> ("work", "api/docs")
+    attach_line's output -> what it attaches; any other line -> None.
+    "ssh -t -p 2222 vm tmux -L work attach -t =api/docs"
+        -> Attach("vm", "work", "api/docs")
+    "ssh -t vm tmux attach -t =main" -> Attach("vm", "default", "main")
     An attach line no restore can land -- a socket that is no plain name, no
-    session -- is an error (a hand edit, or a file older than this script).
+    session -- is an error (a hand edit).
     """
-    value = sent_value(line, "LC_TMUX_ATTACH")
-    if value is None:
+    m = ATTACH_LINE.fullmatch(line)
+    if m is None:
         return None
-    socket, _, session = value.partition(":")
+    destination, socket, session = m[1], m[2] or "default", m[3]
     if not SOCKET_NAME.fullmatch(socket):
         msg = f"attaches on tmux socket {socket!r}, not a plain name: {line}"
         raise ArrangementError(msg)
     if not session:
         msg = f"attaches no session on socket {socket!r}: {line}"
         raise ArrangementError(msg)
-    return socket, session
+    return Attach(destination, socket, session)
 
 
 def fish_quote(s: str) -> str:

@@ -1,31 +1,26 @@
 """The interactive-login part of an ssh command line.
 
 A second shell on the machine a tab is ssh'd into, and nothing else the
-first command did: for Cmd-T in an ssh tab (iterm2_api.py) and for the saved
-ssh arrangements (scripts/lib/iterm2_ssh_arrangement.py). No iterm2 import,
-so scripts/tests/ssh_command_test.py runs it in CI.
+first command did: for the saved tmux arrangements (tmux_arrangement.py,
+ghostty_tmux_arrangement.py). Only the standard library, so
+scripts/tests/ssh_command_test.py runs it in CI.
 
-    iTerm2 commandLine -> words -> options / destination / remote command
-                                     |          |            |
-                                     |          kept         dropped
-                                     kept, minus DROP
+    `ps -o command` line -> words -> options / destination / remote command
+                                          |          |            |
+                                          |          kept         dropped
+                                          kept, minus DROP
 
 E.g.
     ssh vm                          -> ssh vm
-    ssh "user@vm"                   -> ssh user@vm           (iTerm2's quotes off)
-    ssh -p 2222 "user@vm" ./deploy.sh
-                                    -> ssh -p 2222 user@vm   (not run twice)
+    ssh -p 2222 user@vm ./deploy.sh -> ssh -p 2222 user@vm   (not run twice)
     ssh -N -L 8080:localhost:80 vm  -> ssh vm                (no second tunnel)
     ssh -t vm tmux attach           -> ssh -t vm             (a plain shell)
-    ssh -o "SendEnv=LC_TMUX_ATTACH" vm
-                                    -> ssh vm                (the same: no attach)
-    ssh -o SendEnv=LC_LOGIN_DIR vm  -> ssh vm                (nor the saved cd)
-    ssh vm "tmux new -s main"       -> ssh vm                (a quote, but dropped)
-    ssh -o "ProxyCommand x" vm      -> NotReplayableError: a kept word is quoted,
-                                       not ours to re-parse
+    ssh vm tmux new -s main         -> ssh vm
+    ssh -o ProxyCommand=a"b vm      -> NotReplayableError: a kept word fish
+                                       would not read back as itself
 """
 
-# Beside the Hammerspoon config, not in a package: imported by path.
+# Beside the scripts that import it, not in a package.
 # ruff: noqa: INP001, CPY001
 
 import re
@@ -45,34 +40,9 @@ DROP = set("LRDWNfTnsGVQO")
 # command are dropped unread, so they may hold anything.
 PLAIN = re.compile(r"[A-Za-z0-9@.,_:/=+-]+")
 
-# iTerm2 (3.7.4, probed through its API with an argument per printable
-# ASCII character) joins argv with spaces, quoting an argument unless it is
-# all [A-Za-z0-9%,./:_-], with no escapes inside the quotes:
-#   holds one of !"$()\` -> '...'   a!b -> 'a!b'
-#   else                  -> "..."   user@vm -> "user@vm", a b -> "a b"
-# So a word "X" with no space or quote in X is the argument X itself, and is
-# read back as X. Any other quoted word (a piece of an argument with a space,
-# or a '...' one) is left as it is, for plain() to refuse.
-#   "user@vm" -> user@vm
-#   "a b"     -> the words `"a` and `b"`, left as they are: refused
-ITERM2_QUOTED = re.compile(r'"([^"\s]+)"')
-
-# The -o that sends the login fish its tmux attach request or its directory
-# (the saved arrangements' lines, tmux_attach_requested.fish and
-# login_dir_requested.fish): a remote command in all but form, dropped like
-# one; the arrangement adds its own again when it saves the tab. ssh reads
-# option names in any case, variable names as written.
-SENT = re.compile(r"(?i:sendenv)=(?:LC_TMUX_ATTACH|LC_LOGIN_DIR)")
-
 
 class NotReplayableError(ValueError):
     """The command line cannot be replayed safely; the message says why."""
-
-
-def unquote(word: str) -> str:
-    """Return `word` without iTerm2's quotes, where they are unambiguous."""
-    m = ITERM2_QUOTED.fullmatch(word)
-    return m.group(1) if m else word
 
 
 def plain(word: str) -> bool:
@@ -105,7 +75,7 @@ def option(words: list[str], i: int, out: list[str]) -> int:
             if not plain(arg):
                 msg = f"-{flag} argument {arg!r} is not plain"
                 raise NotReplayableError(msg)
-        if flag not in DROP and not (flag == "o" and SENT.fullmatch(arg)):
+        if flag not in DROP:
             out += [f"-{flag}", arg]
         break
     return i
@@ -113,7 +83,7 @@ def option(words: list[str], i: int, out: list[str]) -> int:
 
 def interactive(command_line: str) -> str:
     """Return the replay of `command_line`, or raise NotReplayableError."""
-    words = [unquote(word) for word in command_line.split()]
+    words = command_line.split()
     if not words or not plain(words[0]):
         msg = f"program {words[0] if words else None!r} is not plain"
         raise NotReplayableError(msg)

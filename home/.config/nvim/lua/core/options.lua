@@ -34,11 +34,8 @@ local title = "nvim: %t%( %M%)"
 -- fish_prompt_host override is a fish-only variable nvim cannot see. Not
 -- inside tmux: there the title names the window in the bar, every window
 -- there is on this machine, and tmux's set-titles-string (with its own
--- lead) titles the terminal. Not in iTerm2, whose titles name no host;
--- same test as fish's is_iterm2 (home/.config/fish/functions/is_iterm2.fish).
-local in_iterm2 = vim.env.LC_TERMINAL == "iTerm2"
-  and (vim.env.TERM_PROGRAM == nil or vim.env.TERM_PROGRAM == "iTerm.app")
-if not vim.env.TMUX and not in_iterm2 then
+-- lead) titles the terminal.
+if not vim.env.TMUX then
   local where = "local"
   if vim.env.SSH_CONNECTION then
     where = vim.fn.hostname():gsub("%..*", "")
@@ -135,12 +132,13 @@ vim.o.clipboard = "unnamedplus"
 -- every yank failed with "clipboard: No provider". nvim's own OSC 52 fallback
 -- stays off while 'clipboard' is set (provider/clipboard.vim), so opt in here:
 -- yanks travel as OSC 52 through the pty (and any local tmux, set-clipboard
--- on) to iTerm2/Ghostty, which write the Mac clipboard.
+-- on) to Ghostty, which writes the Mac clipboard.
 --   remote nvim -yy-> OSC 52 -> ssh -> [local tmux] -> terminal -> Mac clipboard
 -- The gate mirrors the env half of that file's probe: mac has pbcopy, a
 -- display has xclip/wl-copy, tmux has its own provider (load-buffer -w).
--- Paste stays local: iTerm2 never answers an OSC 52 read, so nvim would wait
--- on it; p puts the last yank from this cache, Cmd+V pastes the Mac clipboard.
+-- Paste stays local: an OSC 52 read waits on the terminal's answer (Ghostty
+-- asks first: its default clipboard-read = ask); p puts the last yank from
+-- this cache, Cmd+V pastes the Mac clipboard.
 -- Both registers send to "+", as pbcopy does: the Mac has no primary selection.
 local has_native_clipboard = vim.fn.has("mac") == 1 or vim.env.DISPLAY or vim.env.WAYLAND_DISPLAY or vim.env.TMUX
 if not has_native_clipboard then

@@ -95,10 +95,15 @@ A box is often shared: other sessions run their own jobs there, under
 process names that are not yours. Before you stop, deallocate or reboot
 one, look at everything running on it, not only your own jobs:
 
-    timeout 30 ssh remote 'uptime; who; ps -eo user,pcpu,etimes,args --sort=-pcpu | head -20'
+    timeout 30 ssh remote 'uptime; who; ps -eo user,pcpu,etimes,args --sort=-pcpu | head -20
+      for s in "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)"/*; do tmux -S "$s" list-clients 2>/dev/null; done'
 
-The box is idle when the load is near zero, nobody is logged in, and
-nothing on CPU is anyone's work but your own finished jobs. When anything
+`who` misses a tab attached to tmux by a remote command (`ssh -t remote
+tmux attach ...`, as a restored Ghostty arrangement does): over Tailscale
+SSH that skips login(1), so it gets no `who` line. The tmux client list
+shows it. The box is idle when the load is near zero, nobody is logged in
+or attached to tmux, and nothing on CPU is anyone's work but your own
+finished jobs. When anything
 else is busy, leave the box up and tell me what is running: an idle hour
 costs little next to a killed run. An idle check that matched only its own
 process names once deallocated a box under another session's last

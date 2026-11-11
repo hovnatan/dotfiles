@@ -1,10 +1,9 @@
 -- What a terminal's snapshot module is made of: a timer running its
 -- arrangement script's "snapshot" every 10 minutes while the app runs.
 --
---   iterm2_snapshots.lua   ghostty_snapshots.lua     name, app, script, running
---            |                    |
---            +---------+----------+
---                      v
+--   ghostty_snapshots.lua     name, app, script, running
+--            |
+--            v
 --   snapshots.new(opts)
 --     timer, every INTERVAL s, guarded
 --       |  the app not running, or the last snapshot still running -> skipped

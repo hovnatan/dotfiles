@@ -47,7 +47,7 @@ shared = arr.tmux_arrangement
 arr.LOG.append(LOG)  # the script's own log() lines land in this run's log
 Client, Terminal, ArrangementError = arr.Client, arr.Terminal, arr.ArrangementError
 
-ATTACH = "LC_TMUX_ATTACH=claude:api%2Fdocs ssh -o SendEnv=LC_TMUX_ATTACH vm"
+ATTACH = "ssh -t vm tmux -L claude attach -t =api/docs"
 SHELL_LOCAL = "tmux -L claude new-session -A -s 'notes' -c '/Users/me'"
 SESSIONS = {"api/docs": ["claude"], "main": ["default"]}
 
@@ -107,6 +107,26 @@ def local_lines_round_trip() -> None:
     assert arr.local_request(ATTACH) is None
 
 
+def attach_lines_round_trip() -> None:
+    attach = shared.Attach
+    line = shared.attach_line("ssh -p 2222 vm", "work", "api/docs")
+    assert line == "ssh -t -p 2222 vm tmux -L work attach -t =api/docs"
+    assert shared.attach_request(line) == attach("vm", "work", "api/docs")
+    # A login that has its -t keeps the one; tmux's own socket takes no -L.
+    line = shared.attach_line("ssh -t vm", "default", "main")
+    assert line == "ssh -t vm tmux attach -t =main"
+    assert shared.attach_request(line) == attach("vm", "default", "main")
+    assert shared.attach_request("ssh vm") is None
+    assert shared.attach_request(SHELL_LOCAL) is None
+
+
+def an_attach_line_that_cannot_land_is_refused() -> None:
+    request, line = shared.attach_request, shared.attach_line
+    raises("not a plain name", lambda: request("ssh -t vm tmux -L -x attach -t =a"))
+    raises("attaches no session", lambda: request("ssh -t vm tmux attach -t ="))
+    raises("needing quotes", lambda: line("ssh vm", "default", "my notes"))
+
+
 def a_local_line_on_any_socket_reads_back() -> None:
     client = Client("work.2", "x", "/")
     assert arr.local_request(arr.local_line(client)) == client
@@ -148,9 +168,9 @@ def an_ssh_tab_is_saved_from_its_title() -> None:
 
 
 def an_ssh_title_with_the_host_prefix_still_reads() -> None:
-    # Outside iTerm2 tmux prefixes the host (tmux.conf).
+    # tmux prefixes the host to the title (tmux.conf).
     line = arr.line_of(1, terminal("(vm) [main]"), None, "ssh vm", lookup)
-    assert line == "LC_TMUX_ATTACH=default:main ssh -o SendEnv=LC_TMUX_ATTACH vm"
+    assert line == "ssh -t vm tmux attach -t =main"
 
 
 def what_is_no_tmux_is_skipped() -> None:
@@ -238,6 +258,12 @@ def what_is_open_is_skipped() -> None:
 def a_local_session_is_the_same_in_another_directory() -> None:
     moved = "tmux -L claude new-session -A -s 'notes' -c '/tmp'"
     assert arr.plan_restore([[SHELL_LOCAL]], [moved], yes, yes) == []
+
+
+def a_remote_session_open_with_other_ssh_options_is_open() -> None:
+    # A tab opened by hand, or by an older restore, with options of its own.
+    other = "ssh -t -o SendEnv=LC_X vm tmux -L claude attach -t =api/docs"
+    assert arr.plan_restore([[ATTACH]], [other], yes, yes) == []
 
 
 def the_same_session_on_another_host_is_not_open() -> None:

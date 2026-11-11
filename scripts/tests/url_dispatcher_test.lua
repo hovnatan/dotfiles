@@ -180,7 +180,7 @@ local HOSTS = {
 }
 
 test("isWorkLink: host and URL decide, case-insensitively", function()
-  local d = loadDispatcher(CFG, "com.googlecode.iterm2")
+  local d = loadDispatcher(CFG, "com.mitchellh.ghostty")
   for _, c in ipairs(HOSTS) do
     local host = c[1]:match("^https?://([^/:?#]+)")
     eq(d.isWorkLink(host, c[1]) and WORK or PERSONAL, c[2], c[1])
@@ -201,14 +201,14 @@ test("isWorkLink: ignores which app is in front", function()
 end)
 
 test("click: routes by URL from a non-work app", function()
-  loadDispatcher(CFG, "com.googlecode.iterm2")
+  loadDispatcher(CFG, "com.mitchellh.ghostty")
   for _, c in ipairs(HOSTS) do
     eq(click(c[1]), c[2], c[1])
   end
 end)
 
 test("click: anything from Slack goes to work", function()
-  loadDispatcher(CFG, "com.googlecode.iterm2")
+  loadDispatcher(CFG, "com.mitchellh.ghostty")
   eq(click("https://example.com/"), PERSONAL, "before Slack")
   world.watch(nil, hs.application.watcher.activated, app("com.tinyspeck.slackmacgap"))
   eq(click("https://example.com/"), WORK, "Slack in front")

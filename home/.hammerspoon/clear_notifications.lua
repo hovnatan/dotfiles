@@ -1,6 +1,5 @@
 -- alt+0 dismisses every notification banner on screen. macOS has no
--- shortcut for it, and Persistent banners (the bell banners of
--- iterm2_api.lua, for one) wait until dismissed.
+-- shortcut for it, and Persistent banners wait until dismissed.
 --
 -- Banners are elements of the NotificationCenter process that accessibility
 -- exposes with named actions, not buttons to click:
@@ -81,7 +80,7 @@ local function list(el, attribute, what)
 end
 
 -- Every banner in Notification Center's windows, as { el, subrole, id, desc }
--- records, e.g. desc "iTerm2, Bell, Session fish:~ #2 just rang a bell!".
+-- records, desc reading "<app>, <title>, <body>".
 -- Only windows are walked: the process also owns the menu bar, whose tree
 -- is large and has no notifications in it. A stack counts as one banner:
 -- collapsed, its id and text are its newest notification's (desc then ends

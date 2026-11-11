@@ -14,8 +14,8 @@ setopt incappendhistorytime
 setopt histsavenodups
 setopt nocaseglob
 
-# Prevent terminal software flow control (Ctrl+S/Ctrl+Q), which can make iTerm2
-# look "frozen" / like paste isn't working (common when tools inject keystrokes).
+# Prevent terminal software flow control (Ctrl+S/Ctrl+Q), which can make the
+# terminal look "frozen" / like paste isn't working (common when tools inject keystrokes).
 setopt noflowcontrol
 [[ -t 0 ]] && stty -ixon -ixoff
 
@@ -132,9 +132,8 @@ set_terminal_title() {
     # over ssh the machine (hostname up to its first dot), "(<host>)
     # ~/.dotfiles", else "(local) ~/.dotfiles". fish and nvim titles do the
     # same. Not inside tmux, where the title names the window in the bar and
-    # tmux's set-titles-string leads with the same. Not in iTerm2, whose
-    # titles name no host (same test as fish's is_iterm2).
-    if [[ -z $TMUX ]] && ! [[ $LC_TERMINAL == iTerm2 && ( -z $TERM_PROGRAM || $TERM_PROGRAM == iTerm.app ) ]]; then
+    # tmux's set-titles-string leads with the same.
+    if [[ -z $TMUX ]]; then
         local where=local
         [[ -n $SSH_CONNECTION ]] && where=${HOST%%.*}
         title="($where) $title"
@@ -335,10 +334,10 @@ native_flags() {
 
 
 # When a command taking > 1s finishes, ring the terminal bell: tmux window
-# flag, Ghostty/iTerm2 dock bounce + tab mark. tmux forwards the bell
+# flag, Ghostty dock bounce + tab mark. tmux forwards the bell
 # natively (monitor-bell/bell-action, tmux.conf), so it needs no
 # passthrough wrapping. No desktop notification on purpose: it doubled
-# iTerm2's dock count and tmux dropped it for hidden panes. Same behaviour
+# the dock count and tmux dropped it for hidden panes. Same behaviour
 # as the fish hook in config.fish.
 #   `sleep 2` -> bell; `true` -> nothing
 autoload -Uz add-zsh-hook

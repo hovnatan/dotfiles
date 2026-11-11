@@ -33,14 +33,14 @@
 #     "focused". A frozen terminal sends no input either, so a focused client
 #     counts only with input in the last BELL_STALE_SECONDS (default 1800,
 #     ntfy's STALE_SECONDS). Coming back counts as input: the focus-in does.
-#   - iTerm2 switches focus reports off when it takes the host for changed,
-#     and tmux asks for them once, at attach: the flag freezes either way.
+#   - tmux asks for focus reports once, at attach, so a terminal that resets
+#     its modes later stops sending them: the flag freezes either way.
 #     Stuck focused is the case above; stuck unfocused is the input rule of
 #     the marker. The log shows it as "not focused, input 2s ago".
 # A terminal that never reports focus stays focused from its attach, so its
 # session counts as watched while someone types there.
 #
-# Control-mode clients (scripts/tmux_history.py's tracker, iTerm2 -CC) have no
+# Control-mode clients (scripts/tmux_history.py's tracker) have no
 # status line to show a message on and no focus, so they are skipped. A client
 # that detaches between the listing and its message fails the script: the
 # hook reports the error, and the log names the client.

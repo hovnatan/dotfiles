@@ -51,7 +51,6 @@ shell-integration-features = no-ssh-env,no-ssh-terminfo
 # Cmd-J / Cmd-K: previous / next tmux window. macOS never passes Cmd to the
 # program, so they send the sequences ~/.config/tmux/tmux.conf reads as User0 / User1
 # (fish outside tmux ignores them); the tabs move to Ctrl-Cmd-J / Ctrl-Cmd-K.
-# iTerm2 gets the same keys from scripts/setup_user_symlinks.sh.
 keybind = super+j=text:\x1b[5;30001~
 keybind = super+k=text:\x1b[5;30002~
 keybind = ctrl+super+j=previous_tab
@@ -73,6 +72,6 @@ copy-on-select = clipboard
 mouse-hide-while-typing = true
 
 # One wheel notch is one scroll event, not the default 3: tmux scrolls 5 lines
-# an event (copy-mode's WheelUpPane), so a notch was 15 lines, not iTerm2's 5.
+# an event (copy-mode's WheelUpPane), so a notch was 15 lines, not 5.
 # discrete: wheels only; a trackpad keeps its default.
 mouse-scroll-multiplier = discrete:1

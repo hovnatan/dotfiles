@@ -56,7 +56,7 @@ local REVEAL_SECONDS = 1
 
 -- Every opening, pick and close is logged (event_log.lua), to the file
 -- only, e.g.
---   2026-10-20T19:49:08.526Z shown: 5 rows at (648, 484), 614x292, row 2 selected; in front before: com.googlecode.iterm2
+--   2026-10-20T19:49:08.526Z shown: 5 rows at (648, 484), 614x292, row 2 selected; in front before: com.mitchellh.ghostty
 --   2026-10-20T19:49:16.053Z closed: picked pty-ED0B8468-...
 local log
 log, M.logDir = require("event_log").new("picker", { console = false })

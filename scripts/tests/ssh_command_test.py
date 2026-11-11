@@ -1,7 +1,6 @@
-"""ssh_command.interactive: an iTerm2 commandLine in, the replay out.
+"""ssh_command.interactive: a `ps -o command` line in, the replay out.
 
-The replay is what Cmd-T types into the new tab and what an ssh arrangement
-saves; NotReplayableError where it must not guess.
+The replay is what an ssh arrangement saves; NotReplayableError where it must not guess.
 
     python3 ssh_command_test.py <repo> <event log>
 """
@@ -27,28 +26,18 @@ def log(msg: str) -> None:
 
 spec = importlib.util.spec_from_file_location(
     "ssh_command",
-    REPO / "home/.hammerspoon/ssh_command.py",
+    REPO / "scripts/lib/ssh_command.py",
 )
 assert spec  # noqa: S101
 assert spec.loader  # noqa: S101
 ssh = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ssh)
 
-# commandLine -> expected replay; None where the replay must be refused.
+# Command line -> expected replay; None where the replay must be refused.
 CASES: list[tuple[str, str | None]] = [
-    # iTerm2 quotes an argument holding @ = + and others (ssh_command.py,
-    # ITERM2_QUOTED): such a word is read back without the quotes.
-    ('ssh "user@vm"', "ssh user@vm"),
-    ('ssh -p 2222 "user@vm"', "ssh -p 2222 user@vm"),
-    ('ssh -o "SendEnv=LC_TMUX_ATTACH" vm', "ssh vm"),
-    (
-        'ssh -o "ServerAliveInterval=30" "user@vm" uptime',
-        "ssh -o ServerAliveInterval=30 user@vm",
-    ),
-    ('ssh "-oSendEnv=LC_TMUX_ATTACH" vm', "ssh vm"),
-    # but only where X in "X" holds no space or quote: an argument with a
-    # space, or a '...' one (an argument holding $ or a backslash), is
-    # still refused.
+    # ps joins argv with spaces and quotes nothing, so a quote in a kept
+    # word is part of it, and refused: fish would read it differently.
+    ('ssh "user@vm"', None),
     ('ssh -o "User=a b" vm', None),
     ("ssh -i '$HOME/key' vm", None),
     ('ssh "vm\'" ', None),
@@ -60,15 +49,10 @@ CASES: list[tuple[str, str | None]] = [
     # A remote command is not run a second time.
     ("ssh -p 2222 user@vm ./deploy.sh", "ssh -p 2222 user@vm"),
     ("ssh vm sudo reboot", "ssh vm"),
+    # The arrangement's own attach line among them.
     ("ssh -t vm tmux attach", "ssh -t vm"),
-    # So is the arrangement's attach, which is one in all but form.
-    ("ssh -o SendEnv=LC_TMUX_ATTACH -p 2222 vm", "ssh -p 2222 vm"),
-    ("ssh -osendenv=LC_TMUX_ATTACH vm", "ssh vm"),
-    # And the arrangement's directory, which it sends the same way.
-    ("ssh -o SendEnv=LC_LOGIN_DIR -p 2222 vm", "ssh -p 2222 vm"),
-    ('ssh -o "SendEnv=LC_LOGIN_DIR" vm', "ssh vm"),
-    # Option names are read in any case, variable names are not.
-    ("ssh -o SendEnv=lc_tmux_attach vm", "ssh -o SendEnv=lc_tmux_attach vm"),
+    ("ssh -t -p 2222 vm tmux -L work attach -t =api/docs", "ssh -t -p 2222 vm"),
+    # Other -o options stay.
     ("ssh -o SendEnv=LC_OTHER vm", "ssh -o SendEnv=LC_OTHER vm"),
     # rsync's and git's transport ssh: a shell, never their server command.
     ("ssh vm rsync --server -vlogDtpre.iLsfxCIvu . /data", "ssh vm"),

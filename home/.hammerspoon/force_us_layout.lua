@@ -7,7 +7,6 @@ local US_SOURCE_ID = "com.apple.keylayout.US"
 -- renamable (and WhatsApp shows why they cannot be trusted at all).
 local FORCE_US_APPS = {
   ["com.mitchellh.ghostty"] = true,
-  ["com.googlecode.iterm2"] = true,
   ["com.microsoft.VSCode"] = true,
   -- The viewer helper, not the com.hovnatan.zathura launcher: the windows
   -- belong to the helper (scripts/macos/build_zathura_app.sh).

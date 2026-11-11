@@ -6,13 +6,13 @@
 #
 #   Claude Code Bash tool (CLAUDECODE=1, CLAUDE_CODE_CHILD_SESSION=1, ...)
 #     --open -a Hammerspoon-->  Hammerspoon, with all of it, for days
-#       --iTerm2 hotkey-->      iTerm2, with all of it
+#       --app hotkey-->         the terminal, with all of it
 #         --new tab-->          claude: "Transcript saving is off -
 #                               inherited CLAUDE_CODE_CHILD_SESSION marker"
 #
-# (2026-10-07 -> 2026-10-12; again 2026-10-26 by iterm2_ssh_arrangement.sh
-# replace, which now launches iTerm2 through this.) So relaunch a GUI app from a
-# shell with this:
+# (2026-10-07 -> 2026-10-12; again 2026-10-26 by an arrangement script's
+# replace, which now launches the terminal through this.) So relaunch a GUI
+# app from a shell with this:
 #
 #   ~/.dotfiles/scripts/macos/open_clean.sh -a Hammerspoon
 #

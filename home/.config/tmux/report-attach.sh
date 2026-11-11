@@ -1,44 +1,29 @@
 #!/usr/bin/env bash
 # tmux client-attached / client-session-changed hook (declared in
-# ~/.config/tmux/tmux.conf): report each attach to the client's terminal. The tab names
-# where the last attach came from, as the shells' titles do: this machine over
-# ssh, "local" otherwise; iTerm2 gets the host report instead and names no host:
+# ~/.config/tmux/tmux.conf): the client's terminal title names where the last
+# attach came from, as the shells' titles do: this machine over ssh, "local"
+# otherwise.
 #
-#   ssh <host>, tmux attach, iTerm2  --> RemoteHost              --> "[backend]"
-#   ssh <host>, tmux attach, other   --> @title_host=<host>      --> "(<host>) [backend]"
-#   local tmux attach, iTerm2        --> RemoteHost              --> "[backend]"
-#   local tmux attach, other         --> @title_host=local       --> "(local) [backend]"
+#   ssh <host>, tmux attach  --> @title_host=<host>  --> "(<host>) [backend]"
+#   local tmux attach        --> @title_host=local   --> "(local) [backend]"
 #
 # client-session-changed is the only one of the two hooks that
-# `tmux new-session` fires, so `ssh -t <host> tmux new` gets its report too.
+# `tmux new-session` fires, so `ssh -t <host> tmux new` gets its title too.
 #
 # Formats cannot read the environment, so the session environment carries
-# it: tmux's update-environment copies the attaching client's SSH_CONNECTION,
-# LC_TERMINAL and TERM_PROGRAM into it, or marks them removed
-# ("-SSH_CONNECTION") when the client has none.
+# it: tmux's update-environment copies the attaching client's SSH_CONNECTION
+# into it, or marks it removed ("-SSH_CONNECTION") when the client has none.
 #
-# iTerm2 (same test as home/.config/fish/functions/is_iterm2.fish) tells
-# local from remote by the report iterm2_report_host.fish explains and
-# writes, but a program in a pane cannot reach it through tmux, and
-# `ssh -t <host> tmux attach` runs no prompt that would, so the hook has the
-# same function write them straight to the client's tty.
+# set-titles-string reads @title_host. The client is then redrawn: tmux
+# re-sends the title only on a redraw, and the attach redrew before this hook
+# ran, so a local attach after an ssh one would otherwise keep the stale
+# "(<host>) ". One value per session, so a local and an ssh client on the
+# same session both show the title of the last attach.
 #
-# Other terminals get @title_host, which set-titles-string reads. The client
-# is then redrawn: tmux re-sends the title only on a redraw, and the attach
-# redrew before this hook ran, so a local attach after an ssh one would
-# otherwise keep the stale "(<host>) ". One value per session, so a local and
-# an ssh client on the same session both show the title of the last attach.
-#
-# What was reported, and to whom, is logged with the other tmux hooks
-# (log-event.sh says where and why): the host report is one of the things
-# iTerm2 judges a change of host by, and a report that cannot be written
-# (the pty of a Tailscale SSH session that runs a command stays root's)
-# fails here, with the line to show for it. A restored iTerm2 ssh
-# arrangement attaches through the login shell for that reason
-# (LC_TMUX_ATTACH, ~/.config/fish/functions/tmux_attach_requested.fish).
-#   2026-09-30T13:01:58Z attached /dev/pts/1 session=proj: iTerm2 over ssh, reported azureuser@vm
-#   2026-09-30T14:07:07Z session-changed /dev/pts/1 session=bench: iTerm2 over ssh, reported azureuser@vm
-#   2026-09-30T00:44:24Z attached /dev/pts/7 session=t: iTerm2 over ssh, FAILED: cannot write to /dev/pts/7
+# What was set, and for whom, is logged with the other tmux hooks
+# (log-event.sh says where and why):
+#   2026-11-10T13:01:58Z attached /dev/pts/1 session=proj: over ssh: @title_host vm
+#   2026-11-10T14:07:07Z session-changed /dev/pts/3 session=bench: local: @title_host local
 #
 #   args: socket_path session_id client_name client_tty event
 #         (event: attached | session-changed, for the log)
@@ -49,52 +34,23 @@ sock=$1 session=$2 client=$3 tty=$4 event=$5
 name=$(tmux -S "$sock" display-message -p -t "$session" '#{session_name}')
 note() { event_log_note tmux_hooks "$event $tty session=$name: $*"; }
 
-# The attaching client's variables; removed ones ("-NAME") match nothing and
-# stay empty.
-ssh='' lc_terminal='' term_program=''
+# The attaching client's SSH_CONNECTION; a removed one ("-SSH_CONNECTION")
+# matches nothing and stays empty.
+ssh=''
 while IFS= read -r line; do
   case $line in
     SSH_CONNECTION=*) ssh=${line#*=} ;;
-    LC_TERMINAL=*) lc_terminal=${line#*=} ;;
-    TERM_PROGRAM=*) term_program=${line#*=} ;;
   esac
 done <<EOF
 $(tmux -S "$sock" show-environment -t "$session")
 EOF
 
-iterm2=
-case $lc_terminal:$term_program in iTerm2: | iTerm2:iTerm.app) iterm2=1 ;; esac
-
-# The report the prompt sends, from the same fish function so tab and
-# prompt agree. This process's environment is the tmux server's, so the
-# client's ssh state goes in as the flag.
-where=local
-[ -n "$ssh" ] && where="over ssh"
-if [ -n "$iterm2" ]; then
-  report=$(fish -c "iterm2_report_host --tmux-attach=${where#over }")
-  host=${report#*RemoteHost=}
-  host=${host%%$'\a'*}
-  # tmux shows a failed hook's stdout beside its "... returned 1", never its
-  # stderr, so the reason goes to stdout, and bash's own redirection error
-  # (to stderr: unseen anyway) is silenced with the braces.
-  if ! { printf '%s' "$report" >"$tty"; } 2>/dev/null; then
-    note "iTerm2 $where, FAILED: cannot write to $tty"
-    echo "report-attach.sh: cannot write the iTerm2 host report to $tty." \
-      "Likely a Tailscale SSH login that ran a remote command, whose pty stays root's;" \
-      "attach through the login shell instead:" \
-      "LC_TMUX_ATTACH=<socket>:<session> ssh -o SendEnv=LC_TMUX_ATTACH <host>"
-    exit 1
-  fi
-  note "iTerm2 $where, reported $host"
-fi
-
 # The label the title leads with: tmux's own short host name over ssh (the
-# one the bar has always shown), "local" otherwise, none for iTerm2.
-if [ -n "$iterm2" ]; then
-  tmux -S "$sock" set -t "$session" -u @title_host \; refresh-client -t "$client"
-else
-  label=local
-  [ -n "$ssh" ] && label=$(tmux -S "$sock" display-message -p '#{host_short}')
-  tmux -S "$sock" set -t "$session" @title_host "$label" \; refresh-client -t "$client"
-  note "not iTerm2, $where: @title_host $label"
+# one the bar has always shown), "local" otherwise.
+where=local label=local
+if [ -n "$ssh" ]; then
+  where="over ssh"
+  label=$(tmux -S "$sock" display-message -p '#{host_short}')
 fi
+tmux -S "$sock" set -t "$session" @title_host "$label" \; refresh-client -t "$client"
+note "$where: @title_host $label"

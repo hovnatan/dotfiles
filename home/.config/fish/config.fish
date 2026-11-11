@@ -46,10 +46,10 @@ if status --is-interactive
     set -u fish_color_search_match normal --bold
 
     # When a command taking > 1s finishes, ring the terminal bell: tmux window
-    # flag, Ghostty/iTerm2 dock bounce + tab mark. tmux forwards the bell
+    # flag, Ghostty dock bounce + tab mark. tmux forwards the bell
     # natively (monitor-bell/bell-action, tmux.conf), so it needs no
     # passthrough wrapping. No desktop notification on purpose: it doubled
-    # iTerm2's dock count and tmux dropped it for hidden panes. Same behaviour
+    # the dock count and tmux dropped it for hidden panes. Same behaviour
     # as the zsh hook in .zshrc.shared; fish hands postexec $CMD_DURATION (ms).
     #   `sleep 2` -> bell; `true` -> nothing
     function __bell_on_long_command --on-event fish_postexec
@@ -110,14 +110,5 @@ if status --is-interactive
     set -u fish_command_timer_enabled 1
     set -u fish_command_timer_export_only_string 1
     set -u fish_command_timer_time_format '%b %d %T'
-
-    # An ssh login from a restored iTerm2 ssh arrangement: land in the
-    # directory its tab was in, or become the tmux client it was (a saved
-    # tab asks for one or the other). Last, so PATH and the rest are set as
-    # for any login; login only, so a fish started by hand never takes it.
-    if status is-login
-        login_dir_requested
-        tmux_attach_requested
-    end
 
 end
