@@ -264,6 +264,9 @@
             pkgs.tmux-mem-cpu-load
             # Markup-based typesetting system
             pkgs.typst
+            # typstyle -- Typst formatter; the resume repo checks it in CI
+            # (.github/workflows/build.yml) at the version pinned here (2026-11-12)
+            pkgs.typstyle
             # unzip, xz, zstd -- archive tools; macOS has no xz or zstd
             pkgs.unzip
             pkgs.xz
