@@ -55,12 +55,20 @@
 #   Cmd-K Cmd-K Cmd-J (\e[5;30002~,   -> windows 1, 2, 1, nothing typed into
 #   \e[5;30001~ as Ghostty sends them)   the pane; in a one-window session
 #                                        nothing moves and nothing is shown
+#   Shift+Enter as Ghostty sends it   -> CSI 27;2;13~ to a pane that asked
+#   under modifyOtherKeys (which tmux    for extended keys (Claude Code
+#   asks the terminal for at attach)     does), Enter to any other
 #   Ctrl-u, then Ctrl-d, in a plain   -> copy mode half a page up; back at
 #   pane                                 the bottom, copy mode gone
 #   wheel up, up, down, down          -> copy mode 5 lines up, then 10; back
 #                                        at the bottom, copy mode gone
 #   click on a window in the bar      -> that window selected
 #   Ctrl-click on one                 -> it and the current window swapped
+#   prefix k in a pane whose program  -> history and screen both empty (not
+#   clears at Ctrl-l                     one screen left in history)
+#   prefix z, z; a drag on the border -> zoomed, unzoomed; the left pane 10
+#   10 columns left; prefix x, y         columns narrower; the pane closed
+#   prefix L, L after w -> solo -> w  -> solo, then w
 #   a bell in a window out of view    -> its label on a red background
 #   a bell in solo (no client)        -> "bell: solo:N ring #S" shown to the
 #                                        client on w, a red " solo:N! "
@@ -519,7 +527,7 @@ for k in User0 User1; do
   [ -n "$(what_key root "$k")" ] || missing+=" $k"
 done
 [ -z "$missing" ] && pass "window bindings: prefix c C n p l C-s w s S 0-9, User0 User1" || fail "unbound:$missing"
-[ -z "$(what_key prefix z)" ] || fail "what_key reads prefix z, which the config leaves unbound, as bound: '$(what_key prefix z)'"
+[ -z "$(what_key prefix t)" ] || fail "what_key reads prefix t, which the config leaves unbound, as bound: '$(what_key prefix t)'"
 [[ "$(what_key prefix c)" == "new-window -a -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
   && [[ "$(what_key prefix C-s)" == "if-shell -F \"#{S:#{?#{==:#{session_name},tmux-history},1,}}\" { run-shell -C \"set-buffer -b tmux-history-ask "* ]] && [ "$(what_key prefix l)" = last-window ] \
   && [ "$(what_key prefix s)" = "choose-tree -Zs -f \"#{!=:#{session_name},tmux-history}\"" ] \
@@ -580,6 +588,26 @@ done
 got=$(ctrl_d_reaches other-program)
 [ "$got" = 04 ] && pass "Ctrl-d in any other program stays Ctrl-d" || fail "Ctrl-d in other-program sent: $got"
 
+# Shift+Enter. tmux asks the terminal for modifyOtherKeys at attach (CSI > 4 ; 2 m
+# with the extkeys feature on xterm*), and Ghostty then sends Shift+Enter as
+# CSI 27;2;13~. A pane that asked for the same (Claude Code does, Ext 2) gets it so,
+# and takes it as a newline; with extended-keys off it got a plain CR, which
+# submits. A pane that did not ask still gets the CR.
+shift_enter_reaches() { # <ask>: the bytes a pane gets, having sent <ask> first
+  tw new-window -t =w: "printf '$1'; stty raw -echo; cat >\"$WORK/shift_enter_got\""
+  sleep 0.5
+  send_keys '\x1b[27;2;13~'
+  od -An -tx1 "$WORK/shift_enter_got" | tr -d ' \n'
+  tw kill-window
+}
+grep -aqF $'\e[>4;2m' "$WORK/screen" && pass "tmux asks the terminal for modifyOtherKeys 2" \
+  || fail "tmux never sent the terminal CSI > 4 ; 2 m"
+got=$(shift_enter_reaches '\033[>4;2m')
+[ "$got" = 1b5b32373b323b31337e ] && pass "Shift+Enter reaches a pane that asked for extended keys as CSI 27;2;13~" \
+  || fail "Shift+Enter in a pane that asked for extended keys sent: $got"
+got=$(shift_enter_reaches '')
+[ "$got" = 0d ] && pass "Shift+Enter reaches any other pane as Enter" || fail "Shift+Enter in a plain pane sent: $got"
+
 # Ctrl-u in a plain pane: copy mode, half a page up, the step Ctrl-u and Ctrl-d take
 # inside copy mode. Ctrl-d then lands back on the bottom line, which leaves copy mode.
 tw new-window -t =w: "seq 500; exec sleep 100"
@@ -629,6 +657,64 @@ got="$(tw display -p -t "=w:$first" '#{window_id}') $(tw display -p -t "=w:$last
 [ "$got" = "$last_id $first_id" ] && pass "a Ctrl-click on a window in the bar swaps it with the current one" \
   || fail "Ctrl-click on the bar: windows $first and $last hold $got, wanted $last_id $first_id"
 tw kill-window -t "$last_id"
+
+# prefix k: the history and the screen both empty afterwards. The pane's
+# program clears its screen at Ctrl-l, as a shell does, and tmux scrolls a
+# cleared screen into history (scroll-on-clear): history cleared before the
+# Ctrl-l kept one screen of it (10 lines of `seq 50` in an 80x10 pane).
+cat >"$WORK/clears_at_ctrl_l" <<'EOF'
+#!/usr/bin/env bash
+seq 500
+stty raw -echo
+while IFS= read -rsn1 c; do
+  [ "$c" = $'\f' ] && printf '\033[H\033[2J'
+done
+EOF
+chmod +x "$WORK/clears_at_ctrl_l"
+tw new-window -t =w: "$WORK/clears_at_ctrl_l"
+sleep 0.5
+before=$(tw display -p -t =w: '#{history_size}')
+send_keys '\x01k'
+got="$(tw display -p -t =w: '#{history_size}') '$(tw capture-pane -p -t =w: | tr -d ' \n')'"
+[ "$before" -gt 0 ] && [ "$got" = "0 ''" ] && pass "prefix k: history ($before lines) and screen both cleared" \
+  || fail "prefix k: history before $before; after it, history and screen: $got"
+tw kill-window
+
+# Panes: in a window split left | right, prefix z zooms the current pane and
+# back; a drag on the border between them (SGR press, motion with button 1
+# held, release; the bar takes row 1) resizes them; prefix x asks, and y
+# closes the current pane.
+tw new-window -t =w: 'sleep 100'
+tw split-window -h -t =w: 'sleep 100'
+sleep 0.3
+send_keys '\x01z'
+a=$(tw display -p -t =w: '#{window_zoomed_flag}')
+send_keys '\x01z'
+b=$(tw display -p -t =w: '#{window_zoomed_flag}')
+[ "$a $b" = "1 0" ] && pass "prefix z zooms the pane, and again unzooms" || fail "prefix z, z: zoomed flag $a $b, wanted 1 0"
+left_w=$(tw display -p -t =w:.0 '#{pane_width}')
+border=$(($(tw display -p -t =w:.0 '#{pane_right}') + 2)) # 0-based right edge -> 1-based border column
+send_keys "\\x1b[<0;$border;10M"
+send_keys "\\x1b[<32;$((border - 10));10M"
+send_keys "\\x1b[<0;$((border - 10));10m"
+got=$(tw display -p -t =w:.0 '#{pane_width}')
+[ "$got" = "$((left_w - 10))" ] && pass "dragging the pane border 10 columns left: left pane $left_w -> $got wide" \
+  || fail "border drag: left pane $left_w -> $got wide, wanted $((left_w - 10))"
+send_keys '\x01x'
+send_keys 'y'
+got=$(tw display -p -t =w: '#{window_panes}')
+[ "$got" = 1 ] && pass "prefix x, y: the pane closed" || fail "prefix x, y: $got panes, wanted 1"
+tw kill-window
+
+# prefix L flips the client back to the session it showed before, and again.
+cname=$(tw list-clients -t =w -F '#{client_name}')
+tw switch-client -c "$cname" -t =solo
+tw switch-client -c "$cname" -t =w
+send_keys '\x01L'
+a=$(tw display -p -c "$cname" '#{client_session}')
+send_keys '\x01L'
+b=$(tw display -p -c "$cname" '#{client_session}')
+[ "$a $b" = "solo w" ] && pass "prefix L, L: sessions solo, w" || fail "prefix L, L: sessions $a $b, wanted solo w"
 
 # A bell in a window out of view: its label is drawn on a red background (#cc241d, as
 # the RGB parameters the client is sent).
