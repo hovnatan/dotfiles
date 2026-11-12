@@ -294,6 +294,10 @@
           ];
 
           darwin = [
+            # flock -- flock(1), which ai-agent's workspace/setup_workspace.sh
+            # needs to serialise its ~/.gitconfig writes. Mac only: Linux has
+            # it from util-linux, macOS has none (2026-11-12)
+            pkgs.flock
             # zathura -- PDF, EPUB, DjVu, PostScript and comic-book viewer, recoloured
             # to gruvbox (home/.config/zathura/zathurarc); DjVu is why not
             # sioyek (MuPDF has no DjVu). A CLI binary, no .app: start it from
