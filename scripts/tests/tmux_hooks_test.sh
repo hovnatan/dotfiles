@@ -68,10 +68,10 @@
 #   clears at Ctrl-l                     one screen left in history)
 #   prefix / then 123, Enter; q,      -> on line 123 while typing, kept at
 #   prefix [, n                          Enter, found again by n
-#   in copy mode, g / 123 and G ? 45  -> on 123 and 459 while typing (the
+#   in copy mode, g ? 123 and G / 45  -> on 123 and 459 while typing (the
 #                                        second from 500, not from where
 #                                        the first search started)
-#   v, then ? 123                     -> the selection kept, up to 123
+#   v, then / 123                     -> the selection kept, up to 123
 #   prefix z, z; a drag on the border -> zoomed, unzoomed; the left pane 10
 #   10 columns left; prefix x, y         columns narrower; the pane closed
 #   prefix L, L after w -> solo -> w  -> solo, then w
@@ -704,33 +704,33 @@ c=$(tw display -p -t =w: '#{pane_in_mode} #{copy_cursor_line}')
   && pass "prefix /: on line 123 as '123' is typed, kept at Enter, and found again by prefix [, n" \
   || fail "prefix /: mode and cursor line typing '123' '$a', at Enter '$b', prefix [ n '$c'; wanted '1 123' each"
 
-# The same inside copy mode: from the top (g), / then "123" is on line 123
-# before any Enter; from the bottom (G), ? then "45" is on 459, the nearest
-# match above 500.
+# The same inside copy mode, where ? searches down and / up (vi's swapped):
+# from the top (g), ? then "123" is on line 123 before any Enter; from the
+# bottom (G), / then "45" is on 459, the nearest match above 500.
 send_keys 'g'
-send_keys '/'
+send_keys '?'
 send_keys '123'
 a=$(tw display -p -t =w: '#{copy_cursor_line}')
 send_keys '\r'
 send_keys 'G'
-send_keys '?'
+send_keys '/'
 send_keys '45'
 b=$(tw display -p -t =w: '#{copy_cursor_line}')
 send_keys '\r'
-[ "$a|$b" = "123|459" ] && pass "copy mode / and ?: on the match while typing, down and up" \
-  || fail "copy mode: / then 123 on '$a', wanted 123; ? then 45 on '$b', wanted 459"
+[ "$a|$b" = "123|459" ] && pass "copy mode ? and /: on the match while typing, down and up" \
+  || fail "copy mode: ? then 123 on '$a', wanted 123; / then 45 on '$b', wanted 459"
 
 # A selection begun with v and not yet moved is kept by a search, which
 # extends it to the match: the search's clear-selection is skipped.
 send_keys 'G'
 send_keys 'k'
 send_keys 'v'
-send_keys '?'
+send_keys '/'
 send_keys '123'
 got=$(tw display -p -t =w: '#{copy_cursor_line} #{selection_present}')
 send_keys '\r'
-[ "$got" = "123 1" ] && pass "v then ?: the selection kept, reaching the match" \
-  || fail "v then ? 123: cursor line and selection '$got', wanted '123 1'"
+[ "$got" = "123 1" ] && pass "v then /: the selection kept, reaching the match" \
+  || fail "v then / 123: cursor line and selection '$got', wanted '123 1'"
 tw kill-window
 
 # Panes: in a window split left | right, prefix z zooms the current pane and
