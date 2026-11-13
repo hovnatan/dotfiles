@@ -60,11 +60,28 @@ function fish_prompt --description 'Write out the prompt'
         set prompt_status ' ' (set_color $fish_color_status) "[$last_status]" "$normal"
     end
 
-    # The block's background says where the shell runs (red outside tmux, grey
-    # inside, config.fish); its text names the machine, e.g. " mbp ".
-    set -l host (machine_name)
+    # The machine's name in a block, e.g. " mbp ", on every prompt, past ones
+    # included: a landmark to find in the scrollback where each command began
+    # and the last one's output ended. The same over ssh as here. In the tmux
+    # bar's colours (tmux.conf, @bar_light / @bar_dark), following the
+    # terminal's light or dark theme, so the prompt and the bar read as one
+    # family; any filled block is enough to scan by. A terminal that does not
+    # report its colours ("unknown") gets the name in plain text.
+    # Tried 2026-11-13 and left: red (the exit status's [127] and the bell's
+    # colour), gruvbox purple (kitschy), inverse video (too heavy). If this
+    # tan proves too faint, one step darker is gruvbox bg3, bdae93. Not a
+    # transient prompt (fish_transient_prompt) either: tried the same day, it
+    # shrank past prompts to "<cwd> % <command>" and took the landmark with it.
+    set -l block
+    switch "$fish_terminal_color_theme"
+        case light
+            set block (set_color -b d5c4a1 3c3836)
+        case dark
+            set block (set_color -b 504945 ebdbb2)
+    end
     set -l prpwd (prompt_pwd)
+    set -l host (machine_name)
     set -l gitpr (__fish_git_prompt)
-    echo -n -s (set_color -b $fish_color_prompt_bg) " $host " $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
+    echo -n -s $block " $host " $normal ' ' (set_color $color_cwd) $prpwd $normal $gitpr $normal $prompt_status "$mode_str" " "
     echo -n "% "
 end

@@ -27,8 +27,6 @@ if status --is-interactive
     # one: ~/.dotfiles/home/.config/fish -> ~/.do/ho/.co/fish, not ~/.d/h/.c/fish.
     # The prompt and the window title (fish_title) both use it.
     set -g fish_prompt_pwd_dir_length 2
-    # The host label's background, the same in tmux as outside it
-    set -u fish_color_prompt_bg red
 
     set -u fish_color_command normal
     set -u fish_color_error normal
@@ -107,8 +105,48 @@ if status --is-interactive
     abbr xt "TERM=xterm-256color"
 
     set -u VIRTUAL_ENV_DISABLE_PROMPT 1
-    set -u fish_command_timer_enabled 1
-    set -u fish_command_timer_export_only_string 1
-    set -u fish_command_timer_time_format '%b %d %T'
+
+    # The right prompt's timer (fish_right_prompt): after every command, how
+    # long it took, to the millisecond, and when it finished, its date in the
+    # tmux bar's order ("13 Nov", tmux.conf status-right):
+    #
+    #   true            -> "0.002s   13 Nov 00:18:05"
+    #   sleep 2         -> "2.004s   13 Nov 00:18:05"
+    #   a long build    -> "3m 14.341s   13 Nov 00:18:05", "11h 0m 18.296s   14 Nov 09:12:40"
+    #
+    # Every unit from the largest down, seconds always. Set here, at the
+    # command's end, not in fish_right_prompt: a prompt is redrawn (resize,
+    # repaint), and the time must stay the finish time. Replaced the
+    # fish-command-timer plugin (2026-11-13), whose "[ 3m 14s341 | Nov 13
+    # 00:18:05 ]" had brackets and a pipe built in.
+    function __command_timer --on-event fish_postexec
+        set -l ms $CMD_DURATION
+        set -l total (math "floor($ms / 1000)")
+        set -l units (math "floor($total / 86400)") d \
+            (math "floor($total % 86400 / 3600)") h \
+            (math "floor($total % 3600 / 60)") m
+        set -l parts
+        for i in (seq 1 2 (count $units))
+            if test (count $parts) -gt 0; or test $units[$i] -gt 0
+                set -a parts $units[$i]$units[(math $i + 1)]
+            end
+        end
+        set -a parts (printf '%d.%03ds' (math "$total % 60") (math "$ms % 1000"))
+        set -g __command_timer_str (string join ' ' $parts)"   "(date '+%d %b %T')
+        set -g __command_timer_fresh 1
+    end
+
+    # An empty Enter runs nothing and fires no fish_postexec, so without this
+    # its prompt would repeat the last command's time as if it were its own.
+    # fish_prompt (the event) comes once per new prompt, after fish_postexec,
+    # not on a repaint: the first prompt after a command keeps the time, any
+    # later one clears it.
+    function __command_timer_expire --on-event fish_prompt
+        if set -q __command_timer_fresh
+            set -e __command_timer_fresh
+        else
+            set -g __command_timer_str
+        end
+    end
 
 end
