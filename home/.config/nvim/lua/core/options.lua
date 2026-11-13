@@ -24,9 +24,12 @@ vim.opt.wildignorecase = true
 vim.opt.showbreak = "↪ "
 vim.opt.ls = 2
 vim.opt.title = true
--- "nvim: <file name>" and a modified flag, e.g. "nvim: options.lua +";
--- an unnamed buffer reads "nvim: [No Name]" (%t does both).
-local title = "nvim: %t%( %M%)"
+-- "nvim: <file name>", and " +" while it has unsaved changes, e.g.
+-- "nvim: options.lua +"; an unnamed buffer reads "nvim: [No Name]" (%t does
+-- both). Not %M: it also marks a buffer that cannot be edited with "-", so
+-- Neogit's status read "nvim: NeogitStatus -" in the tmux bar (until
+-- 2026-11-13), a flag about nothing you can act on.
+local title = "nvim: %t%{&modified ? ' +' : ''}"
 -- The title leads with where nvim runs, as the fish and zsh titles do:
 -- over ssh the machine ("(<host>) nvim: ..."), else "(local) nvim: ...":
 -- nvim's own title replaces theirs, so without it a remote nvim tab read
