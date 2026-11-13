@@ -42,6 +42,10 @@ vim.pack.add({
 -- themes use: dark bg #282828 / fg #ebdbb2, light bg #fbf1c7 / fg #3c3836.
 -- Light or dark follows 'background', which nvim detects from the terminal.
 -- Gruvbox Material was tried first on 2026-09-24 and looked off.
+-- Italics for comments and markdown *emphasis* only: gruvbox also slants
+-- every string by default, so italic meant two unrelated things, and strings
+-- are common enough that much of the code leaned (until 2026-11-13).
+require("gruvbox").setup({ italic = { strings = false } })
 vim.cmd.colorscheme("gruvbox")
 
 -- gitsigns: hunks against the index, shown with the defaults - bars in the
@@ -238,8 +242,11 @@ snacks.toggle.option("background", { off = "light", on = "dark", name = "dark ba
 -- symbols, which Ghostty draws from its built-in fallback (SF Mono has none).
 -- In the shell, `glow FILE.md` (nix/flake.nix) renders the same way.
 local render_markdown = require("render-markdown")
+-- A heading's bar is as wide as its text, not the window ("full", the
+-- default, ran a coloured band across the screen for every heading).
 render_markdown.setup({
   code = { language_icon = false },
+  heading = { width = "block" },
 })
 -- ,um: rendering on/off in every markdown buffer, e.g. to see the raw table
 -- pipes everywhere instead of only on the cursor line.

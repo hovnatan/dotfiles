@@ -78,11 +78,30 @@ vim.filetype.add({
   },
 })
 
+-- Wrap widths, which 'colorcolumn' (core/options.lua) marks one column past:
+--   prose            90  the top of Butterick's 45-90, what markdownlint holds
+--                        prose to and Claude Code folds replies at
+--   commit messages  72  git's convention: git log and GitHub show them unwrapped
+--   Python           88  ruff's line length; its ftplugin leaves out
+--                        formatoptions "t", so only comments wrap as you type
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = "NeogitCommitMessage,gitcommit,markdown,text,rst,tex,latex",
+  pattern = "markdown,text,rst,tex,latex",
   callback = function()
-    vim.bo.textwidth = 80
+    vim.bo.textwidth = 90
     vim.opt_local.spell = true
+  end,
+})
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "NeogitCommitMessage,gitcommit",
+  callback = function()
+    vim.bo.textwidth = 72
+    vim.opt_local.spell = true
+  end,
+})
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "python",
+  callback = function()
+    vim.bo.textwidth = 88
   end,
 })
 

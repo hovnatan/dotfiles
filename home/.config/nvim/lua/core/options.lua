@@ -21,7 +21,12 @@ vim.opt.showmatch = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.wildignorecase = true
-vim.opt.showbreak = "↪ "
+-- No showbreak (it was "↪ " until 2026-11-13): with breakindent below, a
+-- wrapped line already starts at its parent's indent, so the arrow said
+-- nothing that space did not.
+-- Past the end of the buffer, blank lines instead of a column of "~": empty
+-- space says "no more lines" as well.
+vim.opt.fillchars:append({ eob = " " })
 vim.opt.ls = 2
 vim.opt.title = true
 -- "nvim: <file name>", and " +" while it has unsaved changes, e.g.
@@ -95,7 +100,12 @@ vim.opt.history = 200
 vim.opt.undofile = true
 vim.opt.undolevels = 1000
 vim.opt.undoreload = 10000
-vim.opt.colorcolumn = "88"
+-- The guide one column past the buffer's own wrap width ('textwidth'), and
+-- none where it has none (0): Neogit, help, terminals. A fixed "88" until
+-- 2026-11-13 drew a full-height stripe through every buffer. The widths are
+-- set per filetype in core/autocmd.lua: prose 90, commit messages 72,
+-- Python 88 (ruff's line length).
+vim.opt.colorcolumn = "+1"
 vim.opt.backup = false
 vim.opt.writebackup = false
 vim.opt.cmdheight = 1
