@@ -174,6 +174,10 @@
             # follows under its own name (2026-09-23)
             pkgs.git
             pkgs.git-lfs
+            # glow -- renders Markdown in the terminal: `glow FILE.md`, or
+            # `glow -p FILE.md` in a pager; in nvim, render-markdown.nvim
+            # does the same in the buffer (2026-11-13)
+            pkgs.glow
             # GNU make 4.x; macOS ships 3.81
             pkgs.gnumake
             # Google Cloud SDK (gcloud, gsutil, bq); no extra components in use.

@@ -342,6 +342,18 @@ else
   ln -sfn ~/.dotfiles/home/.config/zathura ~/.config/zathura
 fi
 
+# glow (nix/flake.nix) reads glow.yml from ~/Library/Preferences/glow on macOS
+# and ~/.config/glow elsewhere. The file is linked, not the directory: glow
+# writes a default glow.yml there on first run, and that generated copy holds
+# nothing to keep, so -f replaces it.
+if [ "$(uname)" = "Darwin" ]; then
+  glow_dir="$HOME/Library/Preferences/glow"
+else
+  glow_dir=~/.config/glow
+fi
+mkdir -p "$glow_dir"
+ln -sf ~/.dotfiles/home/.config/glow/glow.yml "$glow_dir"/glow.yml
+
 # fd's global ignore file; fish's FZF_FIND_FILE_COMMAND also passes it explicitly
 ln -sfn ~/.dotfiles/home/.config/fd ~/.config/fd
 # ripgrep's defaults; RIPGREP_CONFIG_PATH in home/.profile.shared points here
