@@ -25,10 +25,15 @@ adjust-cell-height = 12%
 # grid evenly, instead of all on the right and bottom. Extend paints each
 # margin in the colour of the row or column beside it, so the tmux bar's fill
 # runs to the top edge rather than floating under a strip of background.
+# extend-always, not extend: extend leaves the top and bottom margins in the
+# background colour when the row beside them has any cell in it, and the
+# tmux bar's current-window tab is one (tmux.conf, bg=terminal), so the bar
+# kept a strip of cream above it. Each column now takes its own cell's
+# colour: tan above the bar, cream above that tab.
 window-padding-x = 12
 window-padding-y = 6
 window-padding-balance = true
-window-padding-color = extend
+window-padding-color = extend-always
 
 # fish reads no POSIX startup files, so run the account's login shell first
 # for its environment (Nix, Homebrew, ~/.profile PATH and exports), then hand
