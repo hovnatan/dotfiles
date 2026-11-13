@@ -6,12 +6,18 @@
 # Adding an element? Take a free treatment, or share one whose meaning already
 # matches; never re-use a hue for an unrelated idea.
 #
-#   bold blue      path                    matches the PS1 in ~/.zshrc.shared
+#   blue           path                    the PS1 in ~/.zshrc.shared's hue;
+#                                          not bold (dropped 2026-11-13): bold
+#                                          and a hue at once is two emphases
+#                                          for one item, and bold belongs to
+#                                          the effort ramp. Not fish's brcyan
+#                                          either: cyan is the model's
 #   blue           cache "cold"            the entry is gone; the next request
 #                                          pays a full write. The one shared
 #                                          hue: blue is what "cold" looks like,
-#                                          and weight keeps it apart from the
-#                                          path, which is never drawn plain
+#                                          and the word and its place, last on
+#                                          the line, keep it apart from the
+#                                          path, which is always first
 #   green          branch                  matches that PS1; "*" marks dirty,
 #                                          "?" a dirty check that timed out
 #   yellow         gauge 20-80%            warm, but not now (Ctx)
@@ -20,13 +26,12 @@
 #                  cache <=2m              (Ctx)
 #   cyan           model
 #   bold magenta   @agent                  rare, so it gets the loud hue
-#   weight only    effort ramp             plain / plain / 1m / 1;4m / 1;7m
+#   weight only    effort ramp             plain / plain / 1m / 1;4m / 1;7m;
+#                                          the only bold but @agent's
 #                                          (lo and md share a weight, told
 #                                          apart by the label)
-#   dim            | separators            the only dim element: values stay
-#                                          readable
 #   plain          gauges under 20%        dim was too faint to read at a
-#                  cache >10m, "na"        glance for either of these: gauges
+#                  cache >10m, "Cch--"     glance for either of these: gauges
 #                  "Ctx--"                 below their threshold, or an unset
 #                                          cache countdown or context gauge
 #
@@ -37,6 +42,15 @@
 # best, cyan at dE 50.5, is the model's and points the wrong way semantically).
 # A trailing "*" costs one column and is exact in any theme, at any size, and
 # colorblind. It is also what git's own __git_ps1 uses.
+#
+# Groups are separated by three spaces, not a dim "|" (dropped 2026-11-13: a
+# rule between every group was clutter that space does as well), e.g.
+#
+#   ~/.dotfiles (main*)   Op5.5 hi   Ctx5%   59m
+#
+# The session name is not drawn: Claude Code already prints it on the prompt
+# box's border, and tmux's bar names the session too, so a bold copy here was
+# the loudest thing on the line while saying nothing new.
 
 # Payload fields, in ONE jq pass that prints shell assignments. @sh quotes every
 # value, so the eval is safe against anything the payload can carry (quotes,
@@ -60,7 +74,6 @@ eval "$(jq -r '
   @sh "cwd=\(s(.workspace.current_dir))",
   @sh "ctx_used=\(s(.context_window.used_percentage))",
   @sh "agent_name=\(s(.agent.name))",
-  @sh "session_name=\(s(.session_name))",
   @sh "transcript=\(s(.transcript_path))",
   @sh "now=\(now | floor)",
   @sh "cache_expires=\(if .prompt_cache == null then ""
@@ -217,14 +230,6 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
   fi
 fi
 
-# Session name (set via -n or /rename; absent on unnamed sessions), whole:
-# the same string the prompt bar, /resume and claude.ai show, so one
-# conversation never reads two ways. Not shortened.
-sname=""
-if [ -n "$session_name" ]; then
-  sname="\033[1m${session_name}\033[0m \033[2m|\033[0m "
-fi
-
 # Main-thread agent name (absent unless the session is running as a custom
 # agent type via --agent / a .claude/agents/*.md slug). Rare and worth
 # noticing, and magenta is reserved for it alone, so it gets the hue in bold
@@ -254,9 +259,9 @@ gauge_color() {
 # the slot draws a plain "Ctx--": the gauge is there, it has no reading yet.
 if [ -n "$ctx_used" ]; then
   ctx_pct=$(printf '%.0f' "$ctx_used")
-  ctx=" \033[2m|\033[0m $(gauge_color "$ctx_pct")Ctx${ctx_pct}%\033[0m"
+  ctx="   $(gauge_color "$ctx_pct")Ctx${ctx_pct}%\033[0m"
 else
-  ctx=" \033[2m|\033[0m Ctx--"
+  ctx="   Ctx--"
 fi
 
 # Prompt-cache countdown: how long the conversation's cached prefix stays
@@ -318,10 +323,12 @@ fi
 #
 # Whole minutes down to 1m, then seconds; colour bands follow the LABEL (red
 # through "2m", yellow through "10m", blue for "cold", plain otherwise -- past
-# 10m and for "na") so one number never wears two colours.
-# The label is dropped because a duration is the only thing on the line
-# measured in time (Ctx is the sole other gauge and it is a %), and "cold" --
-# the state that needs a word -- says what the number was counting. The number
+# 10m and for "Cch--") so one number never wears two colours.
+# A duration carries the label "Cch", glued on as Ctx's is, its "~" after the
+# label: "Cch59m", "Cch~4m", "Cch45s". Without one (until 2026-11-13) a bare
+# "59m" did not say what it counted. "na" became "Cch--", as an unread Ctx is
+# "Ctx--". "cold" stays the bare word, in blue: it names its own state, and
+# "Cchcold" would run two words together. The number
 # can lag the refresh interval (statusLine.refreshInterval in settings.json,
 # armed only when the status line mounts: a running session needs a reload to
 # pick it up), but a MEASURED flip to "cold" is exact: Claude Code schedules a
@@ -354,19 +361,19 @@ if [ -z "$cache_expires" ]; then
 fi
 
 if [ "$cache_expires" = na ]; then
-  cache_txt="na"
+  cache_txt="Cch--"
   cache_mark=""
   pcolor=''
 else
   cache_left=$((cache_expires - now))
   if [ "$cache_left" -le 0 ]; then
-    cache_txt="cold"
+    cache_txt="${cache_mark}cold"
     pcolor='\033[34m'
   else
     if [ "$cache_left" -ge 60 ]; then
-      cache_txt="$((cache_left / 60))m"
+      cache_txt="Cch${cache_mark}$((cache_left / 60))m"
     else
-      cache_txt="${cache_left}s"
+      cache_txt="Cch${cache_mark}${cache_left}s"
     fi
     if [ "$cache_left" -lt 180 ]; then
       pcolor='\033[31m'
@@ -377,6 +384,6 @@ else
     fi
   fi
 fi
-cache=" \033[2m|\033[0m ${pcolor}${cache_mark}${cache_txt}\033[0m"
+cache="   ${pcolor}${cache_txt}\033[0m"
 
-printf '%b\033[1;34m%s\033[0m%b%b \033[2m|\033[0m \033[36m%s\033[0m%b%b%b' "$sname" "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache"
+printf '\033[34m%s\033[0m%b%b   \033[36m%s\033[0m%b%b%b' "$path" "$branch" "$agent" "$model" "$eff" "$ctx" "$cache"
