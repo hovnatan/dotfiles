@@ -140,6 +140,16 @@ whether the fact belongs in a git-tracked layer instead: project skills for
 pipeline lessons, repo CLAUDE.md/AGENTS.md for conventions. Personal
 preferences and machine/account specifics stay in memory only.
 
+# File paths: give them in full
+
+When you point me at a file or folder, write its absolute path
+(`/Users/me/work/repo/.logs/<run>/README.md`, or `~/work/...`), so I can open
+it or `cd` to it from any terminal without knowing your working directory.
+This matters most for artifacts outside the tracked tree - `.logs/` runs,
+temp files, remote mirrors - which I cannot find by searching the repo. A
+repo-relative `path:line` is fine for citing source code inside the repo we
+are both working in.
+
 # Plain ASCII
 
 Default to plain ASCII everywhere - code, comments, commit messages, prose -
