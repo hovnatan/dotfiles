@@ -86,6 +86,25 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Markdown folds from nvim's bundled treesitter query
+-- ($VIMRUNTIME/queries/markdown/folds.scm): a heading's section (nested by
+-- level, so zc on "## Install" folds up to the next ## or #), a fenced code
+-- block, a nested list. Not the ftplugin's g:markdown_folding: it finds
+-- headings by regex and skips code by vim syntax groups, which are off under
+-- treesitter highlighting, so a "# comment" in a bash block began a fold.
+-- foldtext="" draws the folded line as the line itself, highlighted, then
+-- "...". All open on entry (foldlevelstart=99, core/options.lua):
+--   zc / zo / za  close / open / toggle the one under the cursor
+--   zM / zR       close / open all    zm / zr  one level more / less
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "markdown",
+  callback = function()
+    vim.wo[0][0].foldmethod = "expr"
+    vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+    vim.wo[0][0].foldtext = ""
+  end,
+})
+
 vim.api.nvim_create_autocmd("BufWritePost", {
   pattern = "*.sh",
   callback = function()
