@@ -193,6 +193,16 @@ satisfy the linter unless I ask or the project's config already covers it.
 Hand those commands to me to run in my own terminal window; keep `!` for
 interactive logins that open a browser or read no password.
 
+# Commands for me to run: a short line, the rest in a file
+
+Claude Code wraps long lines itself when it draws a reply, so a command I
+copy from the screen carries hard newlines; a break inside quotes or after
+`>` changes what it does (`cat >` lost its file name, 2026-11-13). When
+you hand me a command to run (with `!` or in my own terminal) that would
+not fit on one screen line, write it to a script under `/tmp` with a short
+name, check it (`bash -n`, shellcheck), show what it does, and give me
+`! bash /tmp/<name>.sh`. Keep the path short too: a long one wraps as well.
+
 # Failures: loud, not silent
 
 In everything code-related, an unexpected state should fail where it
