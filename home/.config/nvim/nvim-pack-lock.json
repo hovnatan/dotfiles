@@ -20,6 +20,11 @@
       "src": "https://github.com/NeogitOrg/neogit",
       "version": "'master'"
     },
+    "render-markdown.nvim": {
+      "rev": "640a3ec6d538bad17c328be373c7cad0293d9589",
+      "src": "https://github.com/MeanderingProgrammer/render-markdown.nvim",
+      "version": "8.0.0 - 9.0.0"
+    },
     "snacks.nvim": {
       "rev": "e6fd58c82f2f3fcddd3fe81703d47d6d48fc7b9f",
       "src": "https://github.com/folke/snacks.nvim",

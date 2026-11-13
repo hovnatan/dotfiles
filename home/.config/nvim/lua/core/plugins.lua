@@ -28,6 +28,9 @@ vim.pack.add({
   -- Only its picker, explorer and bigfile modules are used (setup below). Semver releases, main
   -- only 11 commits past v2.31.0 (2026-09-27), so stay on 2.x like gitsigns.
   { src = "https://github.com/folke/snacks.nvim", version = vim.version.range("2") },
+  -- Markdown rendered in the buffer (setup below). Semver-tagged (v8.14.0 on
+  -- 2026-11-13), so stay on 8.x like gitsigns.
+  { src = "https://github.com/MeanderingProgrammer/render-markdown.nvim", version = vim.version.range("8") },
 }, {
   -- The lockfile already pins what gets installed, so a fresh machine
   -- installs without asking (a prompt would also hang a headless nvim).
@@ -216,12 +219,33 @@ end, { desc = "Grep word or selection" })
 -- flip for the current window/buffer only, background for the whole session.
 --   ,uw wrap    ,us spell    ,ul line numbers    ,uL relative numbers
 --   ,ui invisible chars (list)    ,ub light/dark background    ,ua non-ASCII
+--   ,um markdown rendering (render-markdown below)
 snacks.toggle.option("wrap", { name = "wrap" }):map("<leader>uw")
 snacks.toggle.option("spell", { name = "spell" }):map("<leader>us")
 snacks.toggle.line_number():map("<leader>ul")
 snacks.toggle.option("relativenumber", { name = "relative number" }):map("<leader>uL")
 snacks.toggle.option("list", { name = "invisible chars" }):map("<leader>ui")
 snacks.toggle.option("background", { off = "light", on = "dark", name = "dark background" }):map("<leader>ub")
+
+-- render-markdown: draws markdown in the buffer in normal mode: heading bars,
+-- table borders, code block backgrounds, bullets, checkboxes. Insert mode and
+-- the cursor line show the raw text, so editing needs no toggling. It uses
+-- the markdown and markdown_inline parsers that ship with nvim 0.12, so no
+-- nvim-treesitter. While rendering it sets conceallevel=3 in the window,
+-- overriding the global 0 (core/options.lua), and puts it back when off.
+-- No icon plugin is installed, so the language icon above code blocks is off;
+-- the language name stays. The heading and bullet glyphs are Nerd Font
+-- symbols, which Ghostty draws from its built-in fallback (SF Mono has none).
+-- In the shell, `glow FILE.md` (nix/flake.nix) renders the same way.
+local render_markdown = require("render-markdown")
+render_markdown.setup({
+  code = { language_icon = false },
+})
+-- ,um: rendering on/off in every markdown buffer, e.g. to see the raw table
+-- pipes everywhere instead of only on the cursor line.
+snacks.toggle
+  .new({ name = "markdown rendering", get = render_markdown.get, set = render_markdown.set })
+  :map("<leader>um")
 
 -- ,ua: non-ASCII highlight, the feature itself is core/non_ascii.lua.
 local non_ascii = require("core.non_ascii")
