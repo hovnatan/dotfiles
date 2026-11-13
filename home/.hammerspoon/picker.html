@@ -24,7 +24,7 @@
         --mark: #d79921;
         --fg: #ebdbb2;
         --sub: #a89984;
-        --row: 56px;
+        --row: 44px;
         --pad: 6px;
         --title: 18px;
         --detail: 14px;
@@ -108,7 +108,7 @@
       // Called by picker.lua at each opening, e.g.
       //   render({rows: [{id: "w1", title: "~/.dotfiles", detail: "3 tabs"}],
       //           selected: 0, light: false,
-      //           sizes: {row: 56, pad: 6, title: 18, detail: 14}})
+      //           sizes: {row: 44, pad: 6, title: 18, detail: 14}})
       // `selected` is 0-based here, picker.lua's is 1-based.
       function render(data) {
         document.documentElement.classList.toggle("light", data.light);

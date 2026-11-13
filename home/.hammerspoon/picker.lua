@@ -41,8 +41,10 @@ M.__index = M
 
 local PAGE = hs.configdir .. "/picker.html"
 -- Pixels, for both the page's CSS (render() sets them) and the panel's
--- height here: 2 * pad + rows * row.
-local SIZES = { row = 56, pad = 6, title = 18, detail = 14 }
+-- height here: 2 * pad + rows * row. A row fits a title and a detail line
+-- (21 + 17 px at these font sizes, measured) with a little to spare; 56 left a
+-- title-only row looking double-spaced (2026-11-13).
+local SIZES = { row = 44, pad = 6, title = 18, detail = 14 }
 -- More rows than this scroll.
 local MAX_ROWS = 12
 -- Pixels from the panel's left edge to the pointer: inside the rows (they
