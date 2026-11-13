@@ -20,6 +20,15 @@ font-thicken = true
 # (1980 + 432) / 2048 units). +12% makes it 132%, mid-range, at roughly six
 # fewer rows on a full-screen window (2026-11-13).
 adjust-cell-height = 12%
+# Margins: the default 2 px put text flush against the screen's edges in
+# fullscreen (2026-11-13). Balance splits the pixels left over from the cell
+# grid evenly, instead of all on the right and bottom. Extend paints each
+# margin in the colour of the row or column beside it, so the tmux bar's fill
+# runs to the top edge rather than floating under a strip of background.
+window-padding-x = 12
+window-padding-y = 6
+window-padding-balance = true
+window-padding-color = extend
 
 # fish reads no POSIX startup files, so run the account's login shell first
 # for its environment (Nix, Homebrew, ~/.profile PATH and exports), then hand
