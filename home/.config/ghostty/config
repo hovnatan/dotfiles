@@ -15,6 +15,11 @@ fullscreen = true
 font-size = 15
 font-family = SF Mono
 font-thicken = true
+# Line spacing for reading prose (long agent replies): Butterick's range is
+# 120-145% of the font size, and SF Mono's own line height is 118% (hhea:
+# (1980 + 432) / 2048 units). +12% makes it 132%, mid-range, at roughly six
+# fewer rows on a full-screen window (2026-11-13).
+adjust-cell-height = 12%
 
 # fish reads no POSIX startup files, so run the account's login shell first
 # for its environment (Nix, Homebrew, ~/.profile PATH and exports), then hand
