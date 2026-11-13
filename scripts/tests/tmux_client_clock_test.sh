@@ -215,7 +215,7 @@ for client in yerevan:Asia/Yerevan kiritimati:Pacific/Kiritimati server:-; do
   if [ -n "$drawn" ] && { [ "$hm" = "$before" ] || [ "$hm" = "$after" ]; }; then
     pass "client $name (LC_CLIENT_TZ ${sent/#-/unset}, on $OS: ${zone/#-/server} time) draws '${drawn#mem 74%   }'"
   else
-    fail "client $name never drew '$want' at $after; screen: $(tr -c '[:print:]' ' ' <"$WORK/$name.screen" | grep -oE 'mem [0-9]+% +[^ ]+ [^ ]+ [^ ]+ [^ ]+' | tail -2)"
+    fail "client $name never drew '$want' at $after; screen: $(tr -c '[:print:]' ' ' <"$WORK/$name.screen" | grep -oE 'mem +[0-9]+% +[^ ]+ [^ ]+ [^ ]+ [^ ]+' | tail -2)"
   fi
 done
 

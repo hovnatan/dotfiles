@@ -8,9 +8,20 @@
 # The tool prints memory first and has no labels, and its order is fixed;
 # this reorders and labels it, and rounds to whole percents: a tenth of a
 # percent is never acted on, and digits that change every 15 s are noise.
-# Two spaces between the pairs, so each label stays with its number. A script rather than an awk line in the
-# config: status-right goes through strftime (a printf "%s" would become the
-# epoch time) and two layers of quoting before a shell sees it.
+# Two spaces between the pairs, so each label stays with its number.
+#
+# Each figure takes three columns, so the bar keeps its width as a figure
+# gains or loses a digit (everything left of it, the session's name, shifted
+# a column each time until 2026-11-13): two for the number, right-aligned,
+# and the "%"; a full 100 drops the "%" to fit, as it says enough alone.
+#
+#   7.8 -> " 8%"    73.98 -> "74%"    99.6 -> "100"
+#
+# CPU is the mean over all cores, so it reaches 100 with every core busy.
+#
+# A script rather than an awk line in the config: status-right goes through
+# strftime (a printf "%s" would become the epoch time) and two layers of
+# quoting before a shell sees it.
 #
 # tmux runs it in the background every status-interval and draws what it
 # prints, so a failure is printed, not logged: it shows in the bar where the
@@ -31,10 +42,22 @@ if ! out=$("$tool" -a 0 -m 2 -g 0 -i 2 2>&1 | tr -d '\000'); then
   exit 1
 fi
 
+# A percentage in three columns (see the top): "7.8" -> " 8%", "99.6" -> "100".
+# Above 100 it is printed as it is, a column wider, not cut to fit.
+figure() {
+  local n
+  printf -v n '%.0f' "$1"
+  if [ "$n" = 100 ]; then
+    printf '100'
+  else
+    printf '%2d%%' "$n"
+  fi
+}
+
 # "74.94%  18.5%" -> mem=74.94% cpu=18.5%; anything else is a format change
 read -r mem cpu rest <<<"$out"
 case "$mem $cpu ${rest:-}" in
-  *%\ *%\ ) printf 'cpu %.0f%%  mem %.0f%%\n' "${cpu%\%}" "${mem%\%}" ;;
+  *%\ *%\ ) printf 'cpu %s  mem %s\n' "$(figure "${cpu%\%}")" "$(figure "${mem%\%}")" ;;
   *)
     echo "tmux-mem-cpu-load printed '$out', not '<mem>% <cpu>%'"
     exit 1

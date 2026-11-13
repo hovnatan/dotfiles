@@ -75,7 +75,7 @@
 #   prefix z, z; a drag on the border -> zoomed, unzoomed; the left pane 10
 #   10 columns left; prefix x, y         columns narrower; the pane closed
 #   prefix L, L after w -> solo -> w  -> solo, then w
-#   a bell in a window out of view    -> its label on a red background
+#   a bell in a window out of view    -> its label on a yellow background
 #   a bell in solo (no client)        -> "bell: solo:N ring #S" shown to the
 #                                        client on w, a red " solo:N! "
 #                                        first on its bar's right, a log
@@ -362,7 +362,7 @@ tw_stop() {
 stats() { env -i HOME="$H" PATH=/usr/bin:/bin "$H/.dotfiles/home/.config/tmux/status-stats.sh" 2>&1; }
 out=$(stats)
 rc=$?
-[ "$rc" = 0 ] && [ "$out" = "cpu 8%  mem 74%" ] && pass "status-stats.sh labels the tool's numbers: '$out'" \
+[ "$rc" = 0 ] && [ "$out" = "cpu  8%  mem 74%" ] && pass "status-stats.sh labels the tool's numbers: '$out'" \
   || fail "status-stats.sh: rc=$rc '$out'"
 touch "$WORK/stats_odd"
 out=$(stats)
@@ -419,7 +419,7 @@ done
 # rounded, then the server's date, time and zone, groups three spaces apart. The numbers are a #() job, so the
 # first draw has the date alone (the job still running): wait for a later one.
 # The minute by pattern: it may turn between this line and the draw.
-stats_clock="cpu 8%  mem 74%   $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
+stats_clock="cpu  8%  mem 74%   $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
 want="\(local\) \[w\]   $stats_clock"
 for _ in $(seq 50); do
   grep -aqE "$want" "$WORK/screen" && break
@@ -769,15 +769,15 @@ send_keys '\x01L'
 b=$(tw display -p -c "$cname" '#{client_session}')
 [ "$a $b" = "solo w" ] && pass "prefix L, L: sessions solo, w" || fail "prefix L, L: sessions $a $b, wanted solo w"
 
-# A bell in a window out of view: its label is drawn on a red background (#cc241d, as
+# A bell in a window out of view: its label is drawn on a yellow background (#d79921, as
 # the RGB parameters the client is sent).
 tw new-window -d -t =w: "printf '\\a'; exec sleep 100"
 sleep 0.5
-grep -aq '48;2;204;36;29' "$WORK/screen" && pass "a bell paints its window's label red in the bar" \
-  || fail "no red background drawn; flags: $(tw list-windows -t =w -F '#{window_index}:#{window_bell_flag}' | tr '\n' ' ')"
+grep -aq '48;2;215;153;33' "$WORK/screen" && pass "a bell paints its window's label yellow in the bar" \
+  || fail "no yellow background drawn; flags: $(tw list-windows -t =w -F '#{window_index}:#{window_bell_flag}' | tr '\n' ' ')"
 
 # A bell in solo, which no client is attached to (bell-elsewhere.sh): the
-# client on w gets a message naming it, its bar a red marker, and the
+# client on w gets a message naming it, its bar a yellow marker, and the
 # log a line. The window's name holds "#S" (-n expands formats, hence ##S),
 # which a message passed as a format would show as "solo".
 wname=$(tw list-clients -t =w -F '#{client_name}')
@@ -794,13 +794,13 @@ done
 grep -aqF "bell: solo:$ring ring #S" "$WORK/screen" && pass "w's client is shown 'bell: solo:$ring ring #S'" \
   || fail "w's client never drew 'bell: solo:$ring ring #S'"
 # @bell_marker as tmux expands it for that client: the marker in the bell
-# red, and it first in status-right, before the session's name.
+# yellow, and it first in status-right, before the session's name.
 # list-clients, not display -p -c: display uses -c's client for formats only
 # when it is on the target session, by default the latest active client's,
 # so with a second client in bg it expanded bg's bar (#{client_session} bg).
 left() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:@bell_marker}'; }
 right() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:status-right}'; }
-want="#[fg=#fbf1c7,bg=#cc241d,bold] solo:$ring! #[default] "
+want="#[fg=#282828,bg=#d79921] solo:$ring! #[default] "
 [ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'"
 case $(right) in
@@ -888,7 +888,7 @@ tw respawn-pane -k -t =bg: "printf '\\a'; exec sleep 100"
 wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} not focused, input [0-9]+s ago\), shown to $wname$" \
   && pass "a bell where bg's unfocused client looks is shown to w's client" \
   || fail "no bell line for bg:0 shown to $wname (bg's client flags: $(bg_flags)): $(hooks_log | tail -3)"
-want="#[fg=#fbf1c7,bg=#cc241d,bold] bg:0! #[default] "
+want="#[fg=#282828,bg=#d79921] bg:0! #[default] "
 [ "$(left)" = "$want" ] && [ -z "$(tw display -p -t =bg: '#{session_alerts}')" ] \
   && pass "w's bell marker marks bg by @bell, tmux holding no alert: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'; bg's alerts '$(tw display -p -t =bg: '#{session_alerts}')', @bell '$(tw show -t =bg: -qv @bell)'; clients: $(tw list-clients -F '#{client_name} on #{client_session}' | paste -sd ' ' -); sessions: $(tw list-sessions -F '#{session_name}=#{session_id}@bell[#{@bell}]alerts[#{session_alerts}]' | paste -sd ' ' -)"
