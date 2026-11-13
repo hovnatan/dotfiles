@@ -195,7 +195,8 @@ for _ in $(seq 50); do
   sleep 0.1
 done
 
-# Each client's bar ends with a clock in its zone. The #() job's first draw
+# Each client's bar ends with a clock in its zone, after the stub's memory
+# figure (status-stats.sh rounds its 73.98 to 74). The #() job's first draw
 # is empty (the job still running), so wait for the time to show. The time
 # by pattern, then checked against the zone's minute before and after.
 for client in yerevan:Asia/Yerevan kiritimati:Pacific/Kiritimati server:-; do
@@ -203,7 +204,7 @@ for client in yerevan:Asia/Yerevan kiritimati:Pacific/Kiritimati server:-; do
   sent=${client#*:}
   zone=$(expect_zone "$sent")
   before=$(in_zone "$zone" '%H:%M')
-  want="\| $(in_zone "$zone" '%d %b') [0-9]{2}:[0-9]{2} $(in_zone "$zone" '%Z' | sed 's/+/\\+/')"
+  want="mem 74%   $(in_zone "$zone" '%d %b') [0-9]{2}:[0-9]{2} $(in_zone "$zone" '%Z' | sed 's/+/\\+/')"
   for _ in $(seq 100); do
     grep -aqE "$want" "$WORK/$name.screen" && break
     sleep 0.1
@@ -212,9 +213,9 @@ for client in yerevan:Asia/Yerevan kiritimati:Pacific/Kiritimati server:-; do
   after=$(in_zone "$zone" '%H:%M')
   hm=$(grep -oE '[0-9]{2}:[0-9]{2}' <<<"$drawn")
   if [ -n "$drawn" ] && { [ "$hm" = "$before" ] || [ "$hm" = "$after" ]; }; then
-    pass "client $name (LC_CLIENT_TZ ${sent/#-/unset}, on $OS: ${zone/#-/server} time) draws '${drawn#| }'"
+    pass "client $name (LC_CLIENT_TZ ${sent/#-/unset}, on $OS: ${zone/#-/server} time) draws '${drawn#mem 74%   }'"
   else
-    fail "client $name never drew '$want' at $after; screen: $(tr -c '[:print:]' ' ' <"$WORK/$name.screen" | grep -oE 'mem [0-9.]+% \| [^ ]+ [^ ]+ [^ ]+ [^ ]+' | tail -2)"
+    fail "client $name never drew '$want' at $after; screen: $(tr -c '[:print:]' ' ' <"$WORK/$name.screen" | grep -oE 'mem [0-9]+% +[^ ]+ [^ ]+ [^ ]+ [^ ]+' | tail -2)"
   fi
 done
 

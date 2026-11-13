@@ -362,7 +362,7 @@ tw_stop() {
 stats() { env -i HOME="$H" PATH=/usr/bin:/bin "$H/.dotfiles/home/.config/tmux/status-stats.sh" 2>&1; }
 out=$(stats)
 rc=$?
-[ "$rc" = 0 ] && [ "$out" = "cpu 7.8% mem 74.0%" ] && pass "status-stats.sh labels the tool's numbers: '$out'" \
+[ "$rc" = 0 ] && [ "$out" = "cpu 8%  mem 74%" ] && pass "status-stats.sh labels the tool's numbers: '$out'" \
   || fail "status-stats.sh: rc=$rc '$out'"
 touch "$WORK/stats_odd"
 out=$(stats)
@@ -415,12 +415,12 @@ for _ in $(seq 50); do
   [ -n "$(tw list-clients -t =w -F '#{client_tty}')" ] && break
   sleep 0.1
 done
-# What the client draws on the right: the stub's numbers labelled, a bar,
-# the server's date, time and zone. The numbers are a #() job, so the
+# What the client draws on the right: the stub's numbers labelled and
+# rounded, then the server's date, time and zone, groups three spaces apart. The numbers are a #() job, so the
 # first draw has the date alone (the job still running): wait for a later one.
 # The minute by pattern: it may turn between this line and the draw.
-stats_clock="cpu 7\.8% mem 74\.0% \| $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
-want="\(local\) \[w\] \| $stats_clock"
+stats_clock="cpu 8%  mem 74%   $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
+want="\(local\) \[w\]   $stats_clock"
 for _ in $(seq 50); do
   grep -aqE "$want" "$WORK/screen" && break
   sleep 0.1
@@ -434,7 +434,7 @@ wait_for ' attached [^ ]+ session=w: local: @title_host local$' \
   || fail "no attach report for w: $(hooks_log | tail -3)"
 tw set -t =w: @title_host "$(tw display -p '#{host_short}')"
 tw refresh-client -t "$(tw list-clients -t =w -F '#{client_name}')"
-want="\($(tw display -p '#{host_short}')\) \[w\] \| $stats_clock"
+want="\($(tw display -p '#{host_short}')\) \[w\]   $stats_clock"
 for _ in $(seq 50); do
   grep -aqE "$want" "$WORK/screen" && break
   sleep 0.1
@@ -449,7 +449,7 @@ tw set -t =w: @title_host local
 long=$(printf 'n%.0s' {1..40})
 tw new-session -d -s "$long" 'sleep 300'
 tw switch-client -t "=$long"
-want="\(local\) \[$(printf 'n%.0s' {1..23})\.\.\. \| $stats_clock"
+want="\(local\) \[$(printf 'n%.0s' {1..23})\.\.\.   $stats_clock"
 for _ in $(seq 1 50); do
   grep -aqE "$want" "$WORK/screen" && break
   sleep 0.1
@@ -804,8 +804,8 @@ want="#[fg=#fbf1c7,bg=#cc241d,bold] solo:$ring! #[default] "
 [ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'"
 case $(right) in
-  "${want}(local) [w] | "*) pass "the marker opens status-right, before '(local) [w]'" ;;
-  *) fail "status-right on w is '$(right)', wanted it to start '${want}(local) [w] | '" ;;
+  "${want}(local) [w]   "*) pass "the marker opens status-right, before '(local) [w]'" ;;
+  *) fail "status-right on w is '$(right)', wanted it to start '${want}(local) [w]   '" ;;
 esac
 # The bell rang in w as well (the step above), whose client has focus (tmux
 # counts a client focused from its attach until its terminal says otherwise)

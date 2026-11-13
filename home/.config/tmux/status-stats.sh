@@ -3,10 +3,12 @@
 # (home/.config/tmux/tmux.conf, status-right), labelled:
 #
 #   tmux-mem-cpu-load -a 0 -m 2 -g 0 -i 2   ->  "74.94%  18.5%"   (memory, CPU)
-#   this script                             ->  "cpu 18.5% mem 74.9%"
+#   this script                             ->  "cpu 18%  mem 75%"
 #
 # The tool prints memory first and has no labels, and its order is fixed;
-# this reorders and labels it. A script rather than an awk line in the
+# this reorders and labels it, and rounds to whole percents: a tenth of a
+# percent is never acted on, and digits that change every 15 s are noise.
+# Two spaces between the pairs, so each label stays with its number. A script rather than an awk line in the
 # config: status-right goes through strftime (a printf "%s" would become the
 # epoch time) and two layers of quoting before a shell sees it.
 #
@@ -32,7 +34,7 @@ fi
 # "74.94%  18.5%" -> mem=74.94% cpu=18.5%; anything else is a format change
 read -r mem cpu rest <<<"$out"
 case "$mem $cpu ${rest:-}" in
-  *%\ *%\ ) printf 'cpu %s mem %.1f%%\n' "$cpu" "${mem%\%}" ;;
+  *%\ *%\ ) printf 'cpu %.0f%%  mem %.0f%%\n' "${cpu%\%}" "${mem%\%}" ;;
   *)
     echo "tmux-mem-cpu-load printed '$out', not '<mem>% <cpu>%'"
     exit 1
