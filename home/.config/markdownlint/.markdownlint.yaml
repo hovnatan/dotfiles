@@ -8,12 +8,15 @@
 # This repo lints itself with the same rules: /.markdownlint-cli2.yaml extends
 # this file, so there is one copy of them.
 
-# 100 characters: prose and lists wrap, so they are held to it. Table rows and
+# 90 characters, the top of the 45-90 that Butterick's Practical Typography
+# gives for comfortable reading (100 until 2026-11-13); Claude Code folds its
+# replies at the same width (maxProseWidth, home/.claude/settings.json).
+# Prose and lists wrap, so they are held to it. Table rows and
 # code blocks cannot wrap and are exempt. Front matter is skipped by the linter
 # itself, and a line whose overflow is one unbreakable token (a long path or
 # URL) is allowed.
 MD013:
-  line_length: 100
+  line_length: 90
   tables: false
   code_blocks: false
 

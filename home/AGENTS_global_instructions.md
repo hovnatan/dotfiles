@@ -86,8 +86,8 @@ specific folder the work belongs to - the experiment's own
 package/environment folder, not the repo root; fall back to the repo root
 `.logs/` only when no subfolder clearly owns the work. Remote work follows
 the `remote-run` skill's naming. `.logs` is gitignored on this machine only -
-add it to the project's .gitignore anywhere else. Tell me the path when the run starts (for a remote
-mirror, once the first refresh lands).
+add it to the project's .gitignore anywhere else. Tell me the path when the run
+starts (for a remote mirror, once the first refresh lands).
 
 Keep it proportionate: where reporting genuinely costs real performance,
 lengthen the interval rather than dropping it, and say when you make that
@@ -150,10 +150,12 @@ runs, temp files, remote mirrors - which I cannot find by searching the repo. A
 repo-relative `path:line` is fine for citing source code inside the repo we
 are both working in.
 
-Claude Code folds a reply at about 100 columns whatever the terminal width, and
-the fold is a real newline, so a longer path copied from the screen comes out
-broken. When a path would pass about 90 characters, put the folder alone on its
-own line and list the files under it by bare name:
+Claude Code folds a reply's prose at 90 columns whatever the terminal width
+(`maxProseWidth` in `~/.claude/settings.json`), and the fold is a real newline,
+so a longer path copied from the screen comes out broken. A list item's indent
+and the words around a path take some of those 90, so when a path would pass
+about 75 characters, put the folder alone on its own line and list the files
+under it by bare name:
 
 ```text
 ~/work/repo/.logs/20261113_101500_sweep/
@@ -182,11 +184,12 @@ files the whole set must pass. Where it has none, pass mine:
 markdownlint-cli2 --config ~/.config/markdownlint/.markdownlint.yaml <files>
 ```
 
-That config holds prose and lists to 100 characters per line. Table rows and
-code blocks cannot wrap and are exempt, front matter is skipped, and a line
-whose overflow is one unbreakable token (a long path or URL) is allowed. Keep
-table cells to a phrase: when a cell needs a sentence, write a list or a
-section instead.
+That config holds prose and lists to 90 characters per line, the top of the
+45-90 that Butterick's Practical Typography gives for comfortable reading.
+Table rows and code blocks cannot wrap and are exempt, front matter is
+skipped, and a line whose overflow is one unbreakable token (a long path or
+URL) is allowed. Keep table cells to a phrase: when a cell needs a sentence,
+write a list or a section instead.
 
 The findings worth the most are text that renders wrong: a `|` inside a table
 cell (write `\|`), `*` or `_` in math read as emphasis (escape it or use a

@@ -139,7 +139,7 @@
       "autoUpdate": true
     }
   },
-  "maxProseWidth": 100,
+  "maxProseWidth": 90,
   "spellcheck": {
     "enabled": true,
     "checker": "hunspell"

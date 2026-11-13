@@ -36,8 +36,8 @@ status`): the day's commits are read from GitHub, not from local clones.
 ## Writing the entry
 
 Write with `gws`, already OAuth-authenticated as the user -- edits carry
-their name in version history and nothing needs sharing. The Google Drive MCP connector can read
-a document but cannot write one: its `update_file` changes metadata only.
+their name in version history and nothing needs sharing. The Google Drive MCP connector can
+read a document but cannot write one: its `update_file` changes metadata only.
 
 The log is one tab per month, titled `MM/YYYY`, newest tab at index 0;
 within a tab the days are newest-first too. So an entry goes at index 1 of

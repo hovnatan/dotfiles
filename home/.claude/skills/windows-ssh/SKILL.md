@@ -62,23 +62,25 @@ failure mode below comes from that. The safe path is a script file.
 
 ## Uninstalling
 
-- Order of preference: `msiexec /x {code} /qn /norestart`; the registry `UninstallString` with `/S`;
-  manual removal (program folder, `%LOCALAPPDATA%` data, the uninstall key, Run entries, scheduled tasks).
+- Order of preference: `msiexec /x {code} /qn /norestart`; the registry `UninstallString`
+  with `/S`; manual removal (program folder, `%LOCALAPPDATA%` data, the uninstall key, Run
+  entries, scheduled tasks).
 - winget hangs on uninstallers that want a prompt. If it does,
   `taskkill /IM winget.exe /F` and fall back.
 - Store apps: `Remove-AppxPackage` then `Remove-AppxProvisionedPackage -Online`, or the next
   feature update reinstalls them.
-- Sync clients (Dropbox, OneDrive): deleting the local folder while linked deletes in the cloud.
-  Uninstall, delete the client config, confirm no process, then touch the folder. OneDrive's
-  folder backup redirects Desktop, Documents and Pictures: read
+- Sync clients (Dropbox, OneDrive): deleting the local folder while linked deletes in the
+  cloud. Uninstall, delete the client config, confirm no process, then touch the folder.
+  OneDrive's folder backup redirects Desktop, Documents and Pictures: read
   `HKCU:\...\Explorer\User Shell Folders` and move them back.
-- Files held open by Explorer (shell extension DLLs) cannot be deleted live. Leave them for the
-  reboot; killing Explorer over ssh leaves the user without a shell.
+- Files held open by Explorer (shell extension DLLs) cannot be deleted live. Leave them for
+  the reboot; killing Explorer over ssh leaves the user without a shell.
 
 ## Gotchas
 
 - `powershell -Command -` reads stdin line by line: multi-line blocks are dropped silently.
-- cmd owns `|`, `&`, `%`, `"` on the command line, so inline `-Command` strings with them break.
+- cmd owns `|`, `&`, `%`, `"` on the command line, so inline `-Command` strings with them
+  break.
 - `$args`, `$input`, `$matches`, `$_` are automatic variables. Parameter names must differ.
 - `-f` binds tighter than `/`: write `($_.Size/1GB)` inside a format argument list.
 - `wsl.exe` prints UTF-16: `(wsl --list) -replace "`0",''`.

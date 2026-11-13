@@ -235,28 +235,29 @@ tracker from `home/.config/tmux/tmux.conf`: `scripts/tmux_history.py` keeps one 
 client on it, for as long as the server runs, follows which window each session shows, and
 keeps each session's stays in memory. The key does not start a program: it puts the terminal
 and its window in buffer `tmux-history-ask`, which tmux reports to the tracker at once and
-which redraws nothing, and the tracker selects the window. Without a tracker the key says so.
-Nothing to install: a server started after the pull tracks itself, and a running one does after
-`tmux source-file ~/.config/tmux/tmux.conf`.
+which redraws nothing, and the tracker selects the window. Without a tracker the key says
+so. Nothing to install: a server started after the pull tracks itself, and a running one
+does after `tmux source-file ~/.config/tmux/tmux.conf`.
 
 The client sits in a session of its own, `tmux-history`, which the session pickers (prefix
-`s`, `w`) leave out. Leave it alone: killed, it is made again, and it closes itself when it is
-the last session, so the server still exits when empty. `dotup` sends the trackers SIGHUP, and
-they run again on the pulled code, forgetting the stays so far. Each run logs a line per
-window change and per key press to `~/.dotfiles/.logs/<UTC>_tmux_history/events.log`; a tracker
-that fails says why there and in a pane of its server. `pgrep -af 'tmux_history.py run'` lists
-the trackers running.
+`s`, `w`) leave out. Leave it alone: killed, it is made again, and it closes itself when it
+is the last session, so the server still exits when empty. `dotup` sends the trackers
+SIGHUP, and they run again on the pulled code, forgetting the stays so far. Each run logs
+a line per window change and per key press to
+`~/.dotfiles/.logs/<UTC>_tmux_history/events.log`; a tracker that fails says why there
+and in a pane of its server. `pgrep -af 'tmux_history.py run'` lists the trackers
+running.
 
 ## tmux snapshots: sessions back after a reboot
 
 Every tmux server in tmux's own socket folder snapshots its sessions every 10 minutes: each
 session, its windows in order, and the directory of each window's active pane. Not the
 programs, the splits or the text. `home/.config/tmux/tmux.conf` starts one
-`scripts/tmux_server_arrangement.py run` per server, as it starts the history tracker; it ends
-with the server, and `dotup` sends it SIGHUP to run on the pulled code. A snapshot the same as
-the one before is not written; two weeks of them are kept. They are plain text, in
-`~/.local/state/tmux_server_arrangements/<socket>/auto-<UTC time>.txt`, to read or edit by
-hand.
+`scripts/tmux_server_arrangement.py run` per server, as it starts the history tracker; it
+ends with the server, and `dotup` sends it SIGHUP to run on the pulled code. A snapshot
+the same as the one before is not written; two weeks of them are kept. They are plain
+text, in `~/.local/state/tmux_server_arrangements/<socket>/auto-<UTC time>.txt`, to read
+or edit by hand.
 
 ```bash
 ~/.dotfiles/scripts/tmux_server_arrangement.py list              # what is saved

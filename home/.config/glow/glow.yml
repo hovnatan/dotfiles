@@ -9,11 +9,11 @@
 # Light or dark from the terminal background, like Ghostty's theme pair.
 style: "auto"
 
-# Word-wrap at 100, the line length markdownlint holds prose to
+# Word-wrap at 90, the line length markdownlint holds prose to
 # (home/.config/markdownlint): glow 3.0.0 keeps every source line break, so
-# at 80 each ~100-char source line split into a long line plus a short
-# leftover. In a terminal under 100 columns it wraps mid-word instead.
-width: 100
+# at 80 each ~90-char source line split into a long line plus a short
+# leftover. In a terminal under 90 columns it wraps mid-word instead.
+width: 90
 
 # Print straight to the terminal; `glow -p FILE.md` pages through $PAGER or
 # `less -r` when a file is too long to scroll back through.
