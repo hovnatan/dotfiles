@@ -38,8 +38,8 @@ _Avoid_: Private (that means the private companion repo)
 **Private repo**:
 One of two optional companion clones for anything that should not be public,
 updated alongside this repo when present: `~/.dotfiles-private` (personal:
-the hunspell word list) and `~/.hov-dotfiles-private` (work: the work log
-config, internal documents, hosts).
+the hunspell word list, the grammar-drill bank) and `~/.hov-dotfiles-private`
+(work: the work log config, internal documents, hosts).
 
 **Vendored skill**:
 A Claude Code skill copied into `home/.claude/skills/<name>/` and pinned by

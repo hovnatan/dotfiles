@@ -159,7 +159,7 @@ ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
 # Private companion repos, both OPTIONAL: a machine without a clone still
 # installs cleanly, it just goes without what that clone carries.
 #
-#   ~/.dotfiles-private      personal: the hunspell word list
+#   ~/.dotfiles-private      personal: the hunspell word list, the grammar-drill bank
 #   ~/.hov-dotfiles-private  work: claude-worklog (the work log routine),
 #                            anything naming an internal document or host
 #
