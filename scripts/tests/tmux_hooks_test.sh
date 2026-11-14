@@ -37,9 +37,10 @@
 #                                        tmux-mem-cpu-load in the throwaway
 #                                        HOME); closing a middle window
 #                                        renumbers the rest
-#   @title_host <host> on the session -> "(<host>) [<session>] | cpu ..."
-#   a session of a 40-column name     -> the title cut to 32 columns and
-#                                        "...", the clock still drawn
+#   @title_host <host> on the session -> "(<host>) [<session>]   cpu ..."
+#   a session of a 40-column name     -> the title cut to 32 columns (an
+#                                        80-column client) and "...", the
+#                                        clock still drawn
 #   status-stats.sh                   -> no tool, or output of another
 #                                        form: the reason, exit 1
 #   panes setting titles; one that    -> each window named after its
@@ -445,7 +446,8 @@ tw set -t =w: @title_host local
 
 # A long session name gives way, not the clock: tmux trims status-right from
 # its end, so a name left whole would cut the date off instead. The 32
-# columns hold the "(local) [" lead and 23 of the 40 n's.
+# columns (this client's 80 less 48; 48 on a wide one) hold the "(local) ["
+# lead and 23 of the 40 n's.
 long=$(printf 'n%.0s' {1..40})
 tw new-session -d -s "$long" 'sleep 300'
 tw switch-client -t "=$long"
