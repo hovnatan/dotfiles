@@ -150,12 +150,12 @@ runs, temp files, remote mirrors - which I cannot find by searching the repo. A
 repo-relative `path:line` is fine for citing source code inside the repo we
 are both working in.
 
-Claude Code folds a reply's prose at 90 columns whatever the terminal width
-(`maxProseWidth` in `~/.claude/settings.json`), and the fold is a real newline,
-so a longer path copied from the screen comes out broken. A list item's indent
-and the words around a path take some of those 90, so when a path would pass
-about 75 characters, put the folder alone on its own line and list the files
-under it by bare name:
+Claude Code folds a reply's prose at 90 columns, and the fold is a real
+newline, so a path cut by it comes out broken when copied. Put each path I am
+meant to open or `cd` to on its own line, flush left with no list indent, so no
+words around it can push it into the fold. If the path is longer than about 85
+characters, put the folder alone on one line and list the files under it by
+bare name (if the folder is still too long, split at a deeper folder):
 
 ```text
 ~/work/repo/.logs/20261113_101500_sweep/
