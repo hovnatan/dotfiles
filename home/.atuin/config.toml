@@ -28,7 +28,11 @@
 #                                                           logged-in machine)
 #                   atuin sync
 #
-# A machine never logged in records locally and syncs nothing.
+# A machine never logged in records locally and syncs nothing; one kept out
+# on purpose (it should not hold the key or see the others' history) can still
+# be pulled in from a logged-in one, by hand, every field intact:
+#
+#   scripts/atuin_import_remote.sh <host>   (ssh to <host>, import, sync)
 
 # Search every machine's and directory's history by default; ctrl-r inside the
 # search cycles through host/session/directory.

@@ -258,6 +258,10 @@
             # shfmt -- shell formatter, style in .editorconfig; CI checks
             # (scripts/check.sh shell) (2026-10-05)
             pkgs.shfmt
+            # sqlite -- the sqlite3 shell, the same version on every machine
+            # (Ubuntu has none by default); scripts/atuin_import_remote.sh
+            # snapshots a live atuin history.db with its .backup (2026-11-16)
+            pkgs.sqlite
             # stylua -- Lua formatter, style in .stylua.toml; nvim formats on
             # save (home/.config/nvim/lua/core/format.lua), CI checks
             # (.github/workflows/lua.yml) (2026-09-24)
