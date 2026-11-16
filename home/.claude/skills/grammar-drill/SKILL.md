@@ -93,8 +93,9 @@ and want it right first. No drill and no harvest.
 
 1. **Correct it.** Fix grammar, typos and punctuation, and nothing else: keep
    my wording, tone, line breaks and formatting (Slack markdown, code spans,
-   links). Show the corrected message whole in a `text` code block so I can
-   copy it in one go. When nothing needs fixing, say so in one line and stop.
+   links), and a lowercase first letter of the message as I typed it. Show
+   the corrected message whole in a `text` code block so I can copy it in one
+   go. When nothing needs fixing, say so in one line and stop.
 2. **List the fixes** under it, one per line as `wrong -> fixed (pattern)`,
    naming a bank pattern, or `new` with a one-line rule. Put typos last, all
    on one line, with no pattern.
