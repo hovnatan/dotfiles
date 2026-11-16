@@ -1,6 +1,6 @@
 ---
 name: grammar-drill
-description: A 10-minute English grammar drill built from my own past mistakes. Optional argument - a pattern name, or "mixed".
+description: A 10-minute English grammar drill built from my own past mistakes, or a grammar check of a message I am about to send. Optional argument - a pattern name, "mixed", or "check <message>".
 disable-model-invocation: true
 ---
 
@@ -19,6 +19,9 @@ here:
 
 If `bank.md` is missing, `~/.dotfiles-private` is not cloned or linked on
 this machine: say so and stop.
+
+With the argument `check <message>`, go to "Check a message" below and do
+only that. Any other argument runs a drill.
 
 ## Run a drill
 
@@ -82,6 +85,25 @@ so-such                so + adjective vs such (a) + noun
 future-perfect-cont    will have done vs will be doing
 participle-clauses     Having finished..., Built in 1990, ...
 ```
+
+## Check a message
+
+`check <message>`: I am about to send `<message>` (Slack, email, a PR comment)
+and want it right first. No drill and no harvest.
+
+1. **Correct it.** Fix grammar, typos and punctuation, and nothing else: keep
+   my wording, tone, line breaks and formatting (Slack markdown, code spans,
+   links). Show the corrected message whole in a `text` code block so I can
+   copy it in one go. When nothing needs fixing, say so in one line and stop.
+2. **List the fixes** under it, one per line as `wrong -> fixed (pattern)`,
+   naming a bank pattern, or `new` with a one-line rule. Put typos last, all
+   on one line, with no pattern.
+3. **Bank the grammar slips** as Harvest step 4 does: the sentence holding
+   each slip, cut to one line, as `wrong => fixed` under its pattern, with
+   near-duplicates skipped and names, hosts and work details swapped out.
+   Typos stay out of the bank. Done when every grammar fix from step 2 is
+   banked or named as a near-duplicate; report the lines added per pattern.
+   Commit the bank only when I ask.
 
 ## Harvest
 
