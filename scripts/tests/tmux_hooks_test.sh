@@ -431,11 +431,14 @@ grep -aqE "$want" "$WORK/screen" && pass "the bar draws '$(grep -aoE "$want" "$W
 
 # Over ssh the bar names the machine, as the terminal title does. After the
 # attach's own report, which would otherwise reset @title_host behind this check.
+# A fixed short name, not this machine's: the bar cuts the title at 32 columns
+# here, and GitHub's macOS runners are named like "iad20-fj920-<uuid>-<hex>"
+# (70 characters, no dot), which the bar rightly draws as "(iad20-...".
 wait_for ' attached [^ ]+ session=w: local: @title_host local$' \
   || fail "no attach report for w: $(hooks_log | tail -3)"
-tw set -t =w: @title_host "$(tw display -p '#{host_short}')"
+tw set -t =w: @title_host box
 tw refresh-client -t "$(tw list-clients -t =w -F '#{client_name}')"
-want="\($(tw display -p '#{host_short}')\) \[w\]   $stats_clock"
+want="\(box\) \[w\]   $stats_clock"
 for _ in $(seq 50); do
   grep -aqE "$want" "$WORK/screen" && break
   sleep 0.1
