@@ -1,6 +1,16 @@
 if status --is-interactive
 
-    # atuin init fish --disable-up-arrow | source
+    # atuin records every command (with cwd, exit code, duration) and owns
+    # ctrl-r, taking it over from the fzf plugin's history search, which
+    # conf.d/plugins.fish bound earlier. Up and ctrl-p stay fish's prefix
+    # search (conf.d/0_user.fish). --disable-ai: atuin otherwise binds `?` on
+    # an empty line to its hosted AI assistant. Config:
+    # home/.atuin/config.toml.
+    if type -q atuin
+        atuin init fish --disable-up-arrow --disable-ai | source
+    else
+        echo "config.fish: atuin not found, so ctrl-r is the fzf plugin's and history is not recorded; it comes from nix/flake.nix: nix profile upgrade nix" >&2
+    end
 
     set -U FZF_LEGACY_KEYBINDINGS 0
     set -U FZF_DEFAULT_OPTS "-i --bind ctrl-a:select-all,ctrl-d:deselect-all,ctrl-t:toggle-all --height=50% --min-height=15 --reverse"

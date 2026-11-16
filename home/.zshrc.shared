@@ -353,3 +353,13 @@ _bell_precmd() {
 }
 add-zsh-hook preexec _bell_preexec
 add-zsh-hook precmd _bell_precmd
+
+# atuin records every command into the history fish also writes, and owns
+# ctrl-r, replacing the incremental search bound above; ^P/^N and Up stay
+# zsh's. --disable-ai: atuin otherwise binds `?` to its hosted AI assistant.
+# Same as config.fish; config in home/.atuin/config.toml.
+if command -v atuin >/dev/null; then
+  eval "$(atuin init zsh --disable-up-arrow --disable-ai)"
+else
+  print -u2 "zshrc.shared: atuin not found, so ctrl-r is zsh's and history is not recorded; it comes from nix/flake.nix: nix profile upgrade nix"
+fi

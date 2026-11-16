@@ -116,6 +116,10 @@
             # (ansible, ansible-playbook, ansible-galaxy); its Python and
             # modules come with it, so no pip install (2026-10-05)
             pkgs.ansible
+            # atuin -- shell history in SQLite with context (cwd, exit code,
+            # duration, host): ctrl-r in fish and zsh opens its search
+            # (home/.atuin/config.toml) (2026-11-16)
+            pkgs.atuin
             # awscli2 -- AWS CLI v2 (aws), beside az and gcloud; awscli is
             # the old v1 (2026-10-23)
             pkgs.awscli2

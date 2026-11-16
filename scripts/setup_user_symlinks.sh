@@ -107,6 +107,14 @@ mkdir -p ~/.config
 rm -rf ~/.config/htop
 ln -s ~/.dotfiles/home/.config/htop ~/.config/
 
+# atuin: only its config file is linked; its history (~/.atuin/data) stays
+# machine-local. Since 18.24 atuin's home is ~/.atuin, mode 700 like atuin
+# makes it; a ~/.atuin/config.toml shadows the legacy ~/.config/atuin one.
+# An atuin run before this install writes a default config.toml there, which
+# -f replaces.
+[ -d ~/.atuin ] || mkdir -m 700 ~/.atuin
+ln -sf ~/.dotfiles/home/.atuin/config.toml ~/.atuin/config.toml
+
 # cd ~
 # ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519
 # ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa

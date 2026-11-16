@@ -1,0 +1,39 @@
+# atuin -- shell history in SQLite under ~/.atuin/data, searched with ctrl-r
+# in fish and zsh. Only the settings that differ from atuin's
+# defaults are here; `atuin config get --resolved <key>` shows any value in
+# effect, `atuin config print` this file's.
+#
+#   fish/zsh preexec --atuin history start--> history.db <--ctrl-r-- atuin search -i
+#            postexec --atuin history end---^  (cwd, exit, duration, host, session)
+#
+# The shells keep their own history as well: fish's autosuggestions and its
+# ctrl-p/Up prefix search still read ~/.local/share/fish/fish_history, which
+# is why the init lines pass --disable-up-arrow. `forget` (ctrl-g in fish)
+# deletes a command from both.
+#
+# Linked as ~/.atuin/config.toml, the file alone (scripts/setup_user_symlinks.sh),
+# so the history next to it stays machine-local. Atuin 18.24 moved its home
+# from ~/.config/atuin to ~/.atuin, and this file shadows any legacy one there
+# (`atuin doctor` warns). `atuin config set` edits this file, so its changes
+# show up in git.
+#
+# Sync: every machine logs in to one account on atuin's hosted server
+# (sync_address default), and the shells sync at most every 5 min
+# (auto_sync, sync_frequency defaults). History is encrypted on the machine
+# with the account's key, which never leaves it except by hand:
+#
+#   first machine   atuin register -u <user> -e <email>    (creates the key)
+#   each other      atuin import fish                      (its old history)
+#                   atuin login -u <user> -k '<key>'       (`atuin key` on a
+#                                                           logged-in machine)
+#                   atuin sync
+#
+# A machine never logged in records locally and syncs nothing.
+
+# Search every machine's and directory's history by default; ctrl-r inside the
+# search cycles through host/session/directory.
+filter_mode = "global"
+
+# The full-height layout, with the matched command's details in a preview
+# pane, rather than the default compact one.
+style = "full"
