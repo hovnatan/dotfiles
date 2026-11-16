@@ -167,7 +167,8 @@ ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
 # Private companion repos, both OPTIONAL: a machine without a clone still
 # installs cleanly, it just goes without what that clone carries.
 #
-#   ~/.dotfiles-private      personal: the hunspell word list, the grammar-drill bank
+#   ~/.dotfiles-private      personal: the hunspell word list, the grammar-drill bank,
+#                            and machines/<name>/home/, files for one machine only
 #   ~/.hov-dotfiles-private  work: claude-worklog (the work log routine),
 #                            anything naming an internal document or host
 #
@@ -233,6 +234,24 @@ elif [ -d ~/.dotfiles-private/home ]; then
   fi
 
   link_private_config ~/.dotfiles-private
+
+  # Per-machine files: machines/<name>/home/ mirrors $HOME for one machine
+  # only (its ssh hosts in ~/.ssh/local_config, Hammerspoon's Chrome
+  # profiles), linked one by one. <name> is the Mac's LocalHostName (Sharing
+  # settings; `hostname` there can be a generic "Mac") or `hostname -s`
+  # elsewhere. A machine without a directory has none. Until 2026-11-16
+  # these were links into Dropbox, which a launchd job cannot read: macOS
+  # holds its open() forever (scripts/periodic.sh's ssh hung on it).
+  if [ "$(uname)" = Darwin ]; then
+    machine=$(scutil --get LocalHostName)
+  else
+    machine=$(hostname -s)
+  fi
+  if [ -d ~/.dotfiles-private/machines/"$machine"/home ]; then
+    link_private_files ~/.dotfiles-private/machines/"$machine"
+  else
+    echo "no per-machine files for $machine (~/.dotfiles-private/machines/$machine/home)"
+  fi
 else
   # The word list used to live in this repo; drop the link left dangling by
   # the move rather than let a hunspell save recreate it here untracked.
@@ -425,8 +444,8 @@ if [ "$(uname)" = "Darwin" ]; then
 
   ln -sfn ~/.dotfiles/home/.hammerspoon ~/.hammerspoon
   # Machine-private Hammerspoon settings (Chrome profiles, work URLs) stay out
-  # of this repo and get linked in, the same way ~/.ssh/local_config does. The
-  # link is git-ignored; init.lua simply requires "local_hammerspoon", since
+  # of this repo: ~/.dotfiles-private/machines/<name>/ links them in, like
+  # ~/.ssh/local_config (above). The link is git-ignored; init.lua simply requires "local_hammerspoon", since
   # Hammerspoon already searches ~/.hammerspoon/?.lua.
 
   # Login key remaps (caps lock -> ctrl, PC menu key -> right option)
