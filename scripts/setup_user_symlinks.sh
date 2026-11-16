@@ -436,6 +436,14 @@ if [ "$(uname)" = "Darwin" ]; then
   launchctl bootout "gui/$(id -u)/$keyremap_label" 2>/dev/null
   launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/"$keyremap_label".plist
 
+  # Recurring tasks (scripts/periodic.sh): hourly, and at load, so this
+  # install runs whatever is overdue. Reloaded every install, which picks
+  # up an edited plist.
+  periodic_label=com.hovnatan.periodic
+  ln -sf ~/.dotfiles/home/Library/LaunchAgents/"$periodic_label".plist ~/Library/LaunchAgents/
+  launchctl bootout "gui/$(id -u)/$periodic_label" 2>/dev/null
+  launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/"$periodic_label".plist
+
   # D-Bus session bus, over which scripts/appearance.sh recolours the zathura
   # windows that are open (scripts/macos/dbus_session.sh). Started only if
   # it does not run: zathura joins the bus once, at its start, so a restart

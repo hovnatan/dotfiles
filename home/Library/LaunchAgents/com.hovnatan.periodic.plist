@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Recurring tasks: scripts/periodic.sh runs whichever are due, every hour
+     and once at login (an overdue task after a reboot runs then). launchd
+     never starts it twice at once, and a missed hour while asleep fires once
+     on wake. Through sh, as launchd expands no $HOME; Nix's profile goes first
+     on PATH, since launchd's own (/usr/bin:/bin:...) would give bash 3.2 and
+     none of the Nix tools the tasks use.
+     Symlinked into ~/Library/LaunchAgents by scripts/setup_user_symlinks.sh. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.hovnatan.periodic</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/opt/homebrew/bin:$PATH" exec "$HOME/.dotfiles/scripts/periodic.sh"</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>
