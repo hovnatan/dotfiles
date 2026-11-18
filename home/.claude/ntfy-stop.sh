@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
-# Claude Code Stop hook: push to ntfy.sh when a session finishes a turn and
-# nobody comes to look within DEBOUNCE_SECONDS (default 10 minutes).
+# Claude Code Stop hook: push to ntfy.sh when a session is done -- its turn
+# ended with no background task left to wake it -- and nobody comes to look
+# within DEBOUNCE_SECONDS (default 10 minutes).
+#
+#   Stop --> background tasks running? --yes--> no push (cancel a pending one)
+#               | no
+#               v
+#            watched now? --yes--> no push
+#               | no
+#               v
+#            waiter: 10 min unwatched, no new prompt --> push
 #
 # Hook mode (no args): must return within the hook timeout, so it checks
-# whether anyone is looking right now and otherwise forks the waiter,
+# whether the session is done (running_tasks()) and whether anyone is
+# looking right now, and otherwise forks the waiter,
 # detached, and exits. Waiter mode (--wait): poll the tmux session's
 # focus for DEBOUNCE_SECONDS. A client of this session reporting fresh
 # focus at any poll, with claude's pane on screen, cancels the push -- the
@@ -57,9 +67,11 @@
 #   2026-09-23T13:41:10Z backend ($3) wait: seen after 65s, no push
 # An "unwatched" verdict carries what tmux knew of the session's clients
 # (see clients()), so a push that should not have been sent explains itself.
-# Events: stop (watched now | waiter armed | FAILED, no $TMUX_PANE or tmux
-# failing), wait (coalesced | seen | session or claude's pane gone |
-# transcript grew | FAILED, tmux failing), prompt (pending push cancelled),
+# Events: stop (not done, background tasks running | pending push
+# cancelled, tasks running | watched now | waiter armed | FAILED, no
+# $TMUX_PANE, no background_tasks or tmux failing), wait (coalesced | seen
+# | session or claude's pane gone | transcript grew | FAILED, tmux
+# failing), prompt (pending push cancelled),
 # push (sent | FAILED with curl's exit code). The topic is never logged -- it is the capability. Only machines
 # with a topic log; days over a month old are pruned with the other event
 # logs (scripts/prune_logs.sh).
@@ -189,6 +201,51 @@ watched() {
 # fork-free on the per-prompt --cancel path.
 lock_path() { lock="$RUN_DIR/claude-ntfy/${1##*/}-$2.lock"; }
 
+# cancel_waiter <event>: kill the pending waiter of the session in $socket
+# and $sid, free its lock, and log "<event>, pending push cancelled
+# (waiter <pid>)". Status 1, nothing logged, when none is pending. Builtins
+# only on that path: the prompt hook calls it on every message.
+cancel_waiter() {
+  local pid="" who=""
+  lock_path "$socket" "$sid"
+  [ -d "$lock" ] || return 1
+  IFS= read -r pid 2>/dev/null <"$lock/pid"
+  IFS= read -r who 2>/dev/null <"$lock/who" # before the kill: its trap removes the lock
+  [ -n "$pid" ] && kill "$pid" 2>/dev/null
+  rm -rf "$lock"
+  note "${who:-\$$sid}" "$1, pending push cancelled (waiter ${pid:-?})"
+}
+
+# running_tasks <Stop hook JSON>: set $tasks to the types of the session's
+# background tasks that are still running or pending, comma-separated: the
+# Monitors, background shells, subagents and workflows whose notifications
+# will wake the session for another turn. Claude Code lists them in the
+# Stop input's background_tasks (2.1.327; it leaves out finished tasks):
+#   "background_tasks":[]                                      -> ""
+#   "background_tasks":[{"id":"b5o4","type":"monitor",...},
+#                       {"id":"bq2x","type":"shell",...}]      -> "monitor, shell"
+# Status 1 when the input has no background_tasks (an older Claude Code).
+# Plain pattern matching suffices: a key's quotes are escaped inside JSON
+# strings, so '"type":"' can only be a key, and session_crons follows the
+# list (its prompts are not tasks).
+running_tasks() {
+  local rest
+  tasks=""
+  case $1 in
+    *'"background_tasks":[]'*) return 0 ;;
+    *'"background_tasks":['*) ;;
+    *) return 1 ;;
+  esac
+  rest=${1#*'"background_tasks":['}
+  rest=${rest%%'"session_crons":'*}
+  while :; do
+    case $rest in *'"type":"'*) ;; *) break ;; esac
+    rest=${rest#*'"type":"'}
+    tasks="${tasks:+$tasks, }${rest%%\"*}"
+  done
+  tasks=${tasks:-?} # a non-empty list whose entries carry no type
+}
+
 if [ "${1:-}" = --wait ]; then
   socket="$2" sid="$3" pane="$4" topic="$5" transcript="${6:-}" who="${7:-\$$3}"
   # One waiter per (socket, session): a Stop landing while one is pending
@@ -300,14 +357,7 @@ socket=${TMUX%%,*} sid=${TMUX##*,}
 # Runs on every prompt submission, so the common no-waiter case is pure
 # builtins -- no forks. ---
 if [ "${1:-}" = --cancel ]; then
-  lock_path "$socket" "$sid"
-  [ -d "$lock" ] || exit 0 # no waiter pending
-  pid="" who=""
-  IFS= read -r pid 2>/dev/null <"$lock/pid"
-  IFS= read -r who 2>/dev/null <"$lock/who" # before the kill: its trap removes the lock
-  [ -n "$pid" ] && kill "$pid" 2>/dev/null
-  rm -rf "$lock"
-  note "${who:-\$$sid}" "prompt: user replied, pending push cancelled (waiter ${pid:-?})"
+  cancel_waiter "prompt: user replied"
   exit 0
 fi
 
@@ -328,6 +378,24 @@ if [ -z "${TMUX_PANE:-}" ]; then
   exit 1
 fi
 pane=$TMUX_PANE
+
+# Push only once the session is done. A turn that leaves a Monitor or a
+# background task running ends in a Stop too ("Monitor re-armed; three
+# samples are left"), and the task's notification will start the next turn;
+# that one's Stop decides. A waiter still pending from an earlier Stop
+# advertises a session that has since found more work, so it goes too.
+input=$(cat)
+if ! running_tasks "$input"; then
+  note "$who" "stop: FAILED, the hook input has no background_tasks"
+  echo "ntfy-stop.sh: the Stop hook input has no background_tasks, so whether the session is done is unknown; update Claude Code (2.1.327 sends it)" >&2
+  exit 1
+fi
+if [ -n "$tasks" ]; then
+  cancel_waiter "stop: background tasks running"
+  note "$who" "stop: not done, background tasks running ($tasks), no push"
+  exit 0
+fi
+
 watched "$socket" "$sid" "$pane"
 case $? in
   0) # user is looking right now -- no waiter
@@ -340,9 +408,16 @@ case $? in
     exit 1
     ;;
 esac
-# The hook JSON on stdin carries the conversation transcript's path; the
-# waiter watches its mtime (see loop). sed, not jq: stock macOS has no jq.
-transcript=$(sed -n 's/.*"transcript_path":"\([^"]*\)".*/\1/p' 2>/dev/null)
+# The hook JSON carries the conversation transcript's path; the waiter
+# watches its mtime (see loop). Pattern matching, not jq: stock macOS has
+# no jq.
+transcript=""
+case $input in
+  *'"transcript_path":"'*)
+    transcript=${input#*'"transcript_path":"'}
+    transcript=${transcript%%\"*}
+    ;;
+esac
 
 # setsid fully detaches (survives signals to claude's process group);
 # stock macOS has no setsid, so fall back to nohup there.

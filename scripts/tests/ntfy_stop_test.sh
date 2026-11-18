@@ -35,9 +35,16 @@
 #                 mismatch") at the hook -> exit 1, stderr, a FAILED line;
 #                 and once a waiter is armed -> a FAILED line, no push --
 #                 never read as "gone", which cancels the push silently
+#     busy        a Stop with a Monitor and a background shell running
+#                 -> "not done", their types named, no waiter, no push
+#     busylater   a waiter armed, then a Stop with a task running
+#                 -> the pending push cancelled, no push
+#     notasks     input without background_tasks (an older Claude Code)
+#                 -> exit 1, the reason on stderr and a FAILED line
 #
 # Each hook runs as Claude Code runs it, inside the session's pane: $TMUX
-# and $TMUX_PANE (claude's pane, window 0 of its session).
+# and $TMUX_PANE (claude's pane, window 0 of its session), with the Stop
+# input on stdin: no background tasks unless the scenario sets $TASKS.
 #
 # Checks the decision log line by line (and that it is an event log under
 # ~/.dotfiles/.logs), what the listener received, and that no lock directory
@@ -135,9 +142,10 @@ new_session() { # prints the session id without its "$"
 # pane_of <session id>: the session's first pane, window 0's, where claude
 # runs (the hook's $TMUX_PANE)
 pane_of() { t list-panes -t "\$$1:0" -F '#{pane_id}' | head -1; }
-# hook <session id> <url> [--cancel]: one hook invocation, as Claude Code runs it
+# hook <session id> <url> [--cancel]: one hook invocation, as Claude Code runs
+# it; $TASKS, if set, is the input's background_tasks list (default none)
 hook() {
-  echo "{\"transcript_path\":\"$WORK/transcript\"}" \
+  echo "{\"transcript_path\":\"$WORK/transcript\",\"background_tasks\":${TASKS:-[]},\"session_crons\":[]}" \
     | env HOME="$H" TMUX="$SOCK,1,$1" TMUX_PANE="$(pane_of "$1")" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
       CLAUDE_NTFY_URL="$2" bash "$HOOK" ${3:+"$3"} >>"$WORK/hook.out"
 }
@@ -214,7 +222,7 @@ EOF
 chmod +x "$WORK/failtmux/tmux"
 # failhook <session id>: the hook run with that tmux on PATH
 failhook() {
-  echo '{}' | env HOME="$H" PATH="$WORK/failtmux:$PATH" TMUX="$SOCK,1,$1" TMUX_PANE="$(pane_of "$1")" \
+  echo '{"background_tasks":[]}' | env HOME="$H" PATH="$WORK/failtmux:$PATH" TMUX="$SOCK,1,$1" TMUX_PANE="$(pane_of "$1")" \
     CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE CLAUDE_NTFY_URL="$OK_URL" bash "$HOOK"
 }
 
@@ -240,6 +248,9 @@ t new-window -d -t "=panegone:" 'sleep 1000'
 sid_nopane=$(new_session nopane)
 sid_tfhook=$(new_session tfhook)
 sid_tfwait=$(new_session tfwait)
+sid_busy=$(new_session busy)
+sid_busylater=$(new_session busylater)
+sid_notasks=$(new_session notasks)
 log "scenarios armed (debounce ${DEBOUNCE}s); work dir $WORK"
 
 hook "$sid_ok" "$OK_URL"
@@ -270,10 +281,10 @@ hook "$sid_else" "$OK_URL"
 hook "$sid_zoom" "$OK_URL"
 hook "$sid_panegone" "$OK_URL"
 # nopane: as a claude whose environment lost $TMUX_PANE
-echo '{}' | env -u TMUX_PANE HOME="$H" TMUX="$SOCK,1,$sid_nopane" CLAUDE_NTFY_URL="$OK_URL" \
+echo '{"background_tasks":[]}' | env -u TMUX_PANE HOME="$H" TMUX="$SOCK,1,$sid_nopane" CLAUDE_NTFY_URL="$OK_URL" \
   bash "$HOOK" >"$WORK/nopane.out" 2>"$WORK/nopane.err"
 nopane_rc=$?
-echo '{}' | env HOME="$H" TMUX="$SOCK,1,$sid_moved" TMUX_PANE="$pane_moved" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
+echo '{"background_tasks":[]}' | env HOME="$H" TMUX="$SOCK,1,$sid_moved" TMUX_PANE="$pane_moved" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
   CLAUDE_NTFY_URL="$OK_URL" bash "$HOOK" >>"$WORK/hook.out"
 touch "$WORK/tmuxfail.$sid_tfhook"
 failhook "$sid_tfhook" >"$WORK/tfhook.out" 2>"$WORK/tfhook.err"
@@ -285,6 +296,28 @@ for _ in $(seq 50); do
 done
 touch "$WORK/tmuxfail.$sid_tfwait"
 hook "$sid_watched" "$OK_URL"
+
+# busy: what a turn ending on "Monitor re-armed" sends. The shell's command
+# holds an escaped "type" key, which must not read as a task, and a
+# recurring cron, which is not one.
+BUSY='[{"id":"b5o4y76ih","type":"monitor","status":"running","description":"run: stages, grades [2/3]"},'
+BUSY+='{"id":"bq2xosa1","type":"shell","status":"pending","description":"wait","command":"grep -m1 \"type\":\"x\" log"}]'
+echo "{\"transcript_path\":\"$WORK/transcript\",\"last_assistant_message\":\"Monitor re-armed\",\"background_tasks\":$BUSY,\"session_crons\":[{\"id\":\"c1\",\"schedule\":\"*/5 * * * *\",\"recurring\":true,\"prompt\":\"check\"}]}" \
+  | env HOME="$H" TMUX="$SOCK,1,$sid_busy" TMUX_PANE="$(pane_of "$sid_busy")" CLAUDE_NTFY_DEBOUNCE_SECONDS=$DEBOUNCE \
+    CLAUDE_NTFY_URL="$OK_URL" bash "$HOOK" >>"$WORK/hook.out"
+# busylater: armed by a Stop with nothing running, then a later Stop finds
+# a task running; the cancel needs the waiter's lock to be there first.
+hook "$sid_busylater" "$OK_URL"
+for _ in $(seq 50); do
+  [ -d "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/claude-ntfy/${SOCK##*/}-$sid_busylater.lock" ] && break
+  sleep 0.1
+done
+TASKS='[{"id":"bm1r6z4g","type":"monitor","status":"running","description":"grade"}]' hook "$sid_busylater" "$OK_URL"
+# notasks: the input an older Claude Code sends
+echo "{\"transcript_path\":\"$WORK/transcript\"}" | env HOME="$H" TMUX="$SOCK,1,$sid_notasks" \
+  TMUX_PANE="$(pane_of "$sid_notasks")" CLAUDE_NTFY_URL="$OK_URL" bash "$HOOK" >"$WORK/notasks.out" 2>"$WORK/notasks.err"
+notasks_rc=$?
+
 # The same client loses focus: the next Stop arms a waiter, whose line names
 # the client as not focused. Cancelled once its lock is there, or the cancel
 # finds nothing to cancel and the waiter pushes.
@@ -366,6 +399,21 @@ has "(\$$sid_tfwait)" "wait: FAILED, tmux -S $SOCK: protocol version mismatch" &
   && ! has "(\$$sid_tfwait)" "push:" \
   && pass "tmuxfail: tmux failing under an armed waiter is logged as FAILED, not taken for gone" \
   || fail "tmuxfail under the waiter: $(ntfy_log | grep -F "(\$$sid_tfwait)")"
+
+# Done means no background task left to wake the session.
+has "busy (\$$sid_busy)" "stop: not done, background tasks running (monitor, shell), no push" \
+  && ! has "busy (\$$sid_busy)" "waiter armed" && ! has "busy (\$$sid_busy)" "push:" \
+  && pass "busy: a Stop with tasks running arms no waiter, and names them" \
+  || fail "busy: $(ntfy_log | grep -F "busy (\$$sid_busy)")"
+has "busylater (\$$sid_busylater)" "stop: background tasks running, pending push cancelled (waiter " \
+  && ! has "busylater (\$$sid_busylater)" "push:" \
+  && pass "busylater: a later Stop with a task running cancels the pending push" \
+  || fail "busylater: $(ntfy_log | grep -F "busylater (\$$sid_busylater)")"
+[ "$notasks_rc" = 1 ] && grep -qF 'has no background_tasks' "$WORK/notasks.err" \
+  && has "notasks (\$$sid_notasks)" "stop: FAILED, the hook input has no background_tasks" \
+  && ! has "notasks (\$$sid_notasks)" "waiter armed" \
+  && pass "notasks: input without background_tasks fails loudly (exit 1, stderr, log)" \
+  || fail "notasks: exit $notasks_rc, stderr '$(cat "$WORK/notasks.err")', log: $(ntfy_log | grep -F "notasks (\$$sid_notasks)")"
 
 posts=$(grep -c '^POST /testtopic' "$WORK/listener.out")
 [ "$posts" = 3 ] && pass "listener got exactly 3 pushes" || fail "listener got $posts pushes"
