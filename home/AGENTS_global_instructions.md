@@ -22,6 +22,13 @@ different problem than the one reported, and looks like a success until it
 does not. Once you have a reproduction, keep it as the check that the fix
 actually works.
 
+# Slack links: read the conversation around them
+
+When a prompt includes a link to a Slack message, read beyond that one message:
+the thread it belongs to (parent and replies) and the channel messages just before
+and after it, enough to know what it answers and what came of it. A linked message
+alone is often a reply whose question sits above it, or a claim corrected below it.
+
 # Lint, test failures, and flakiness: fix what you find
 
 Hold engineering hygiene to the same standard as the task at hand. If you hit
