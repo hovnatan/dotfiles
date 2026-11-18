@@ -434,7 +434,22 @@ test("a click off the icon is left alone, and stops the tap", function()
     clickLeftAlone("a click " .. what)
     assert(not world.tap.running, "the tap still runs after a click " .. what)
     assert(focused() == "", "a window came forward")
+
+    -- Where the pointer and the icon were, to tell a click that left the
+    -- Dock from one misjudged.
+    local line =
+      string.format("disarmed: click off the icon: pointer (%d, %d), icon (848, 994) 65 x 81", pointer.x, pointer.y)
+    assert(loggedLine(line), "not logged: " .. line)
   end
+end)
+
+test("a click on an icon whose app has quit says the icon is gone", function()
+  local quit = icon(CHROME_PATH, 848)
+  load()
+  hover(quit, ON_CHROME)
+  quit.AXFrame = nil
+  clickLeftAlone("a click on a gone icon")
+  assert(loggedLine("disarmed: click off the icon: pointer (880, 1040), icon gone"), "not logged")
 end)
 
 test("a click below the icon, down to the screen's edge, is on it", function()

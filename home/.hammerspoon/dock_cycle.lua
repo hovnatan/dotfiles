@@ -51,6 +51,7 @@ local WALK_IDLE = 5
 --   2026-11-18T16:02:12.036Z walk: 7 windows of com.google.Chrome
 --   2026-11-18T16:02:12.101Z click: window 2 of 7, id 12819
 --   2026-11-18T16:02:15.870Z disarmed: pointer off the icon
+--   2026-11-18T16:02:19.204Z disarmed: click off the icon: pointer (880, 500), icon (848, 1085) 65 x 81
 local log, logDir = require("event_log").new("dock_cycle", { console = false })
 
 -- fail() alerts and raises; guarded() runs what the Dock's notifications,
@@ -185,8 +186,18 @@ local function onDown(event)
   -- it, and no later one comes here. No frame: the icon is gone, its app
   -- having quit.
   local frame = armedIcon.AXFrame
-  if not (frame and onIcon(frame, event:location())) then
-    disarm("click off the icon")
+  local point = event:location()
+  if not (frame and onIcon(frame, point)) then
+    -- With where both were: a click that was on the icon after all would be a
+    -- fault in onIcon(), and the log is the one place it would show.
+    disarm(
+      string.format(
+        "click off the icon: pointer (%.0f, %.0f), icon %s",
+        point.x,
+        point.y,
+        frame and string.format("(%.0f, %.0f) %.0f x %.0f", frame.x, frame.y, frame.w, frame.h) or "gone"
+      )
+    )
     return false
   end
 
