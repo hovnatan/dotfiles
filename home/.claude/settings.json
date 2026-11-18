@@ -20,7 +20,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus",
+  "model": "fable",
   "disableClaudeAiConnectors": true,
   "skillOverrides": {
     "anthropic-skills:chrome-browser": "user-invocable-only",
@@ -147,6 +147,9 @@
   "promptCacheTtl": "1h",
   "modelSettings": {
     "claude-opus-5-5": {
+      "effortLevel": "high"
+    },
+    "claude-fable-5-2": {
       "effortLevel": "high"
     }
   },
