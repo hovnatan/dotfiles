@@ -44,5 +44,5 @@ style = "full"
 
 [ui]
 # The host column (15 wide) next to atuin's defaults, since history from every
-# synced machine shows up in one list: `3s  2h ago  hov-8cpu  make test`.
+# synced machine shows up in one list: `3s  2h ago  <host>  make test`.
 columns = ["duration", "time", "host", "command"]
