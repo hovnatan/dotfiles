@@ -40,9 +40,12 @@
 # form <hostname>/<name>.
 #
 # The topic is read from ~/.config/claude-ntfy/topic, which stays OUTSIDE
-# the dotfiles repo on purpose: an ntfy.sh topic name is a capability --
-# anyone who knows it can subscribe. No topic file = do nothing, so this
-# hook is a no-op on machines where it is not set up.
+# this repo on purpose: an ntfy.sh topic name is a capability -- anyone
+# who knows it can subscribe, and this repo is public. Each machine has
+# its own, kept in the private repo (~/.dotfiles-private/machines/<name>/
+# home/.config/claude-ntfy/, linked by scripts/setup_user_symlinks.sh).
+# No topic file = do nothing, so this hook is a no-op on a machine with
+# no topic there.
 #
 # Every decision is logged, one line each, so a push that did or did not
 # arrive can be explained afterwards. The hook, the waiter and the cancel

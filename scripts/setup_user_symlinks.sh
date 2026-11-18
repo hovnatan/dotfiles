@@ -169,6 +169,7 @@ ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
 #
 #   ~/.dotfiles-private      personal: the hunspell word list, the grammar-drill bank,
 #                            and machines/<name>/home/, files for one machine only
+#                            (its ntfy topic, which home/.claude/ntfy-stop.sh pushes to)
 #   ~/.hov-dotfiles-private  work: claude-worklog (the work log routine),
 #                            anything naming an internal document or host
 #
@@ -237,7 +238,10 @@ elif [ -d ~/.dotfiles-private/home ]; then
 
   # Per-machine files: machines/<name>/home/ mirrors $HOME for one machine
   # only (its ssh hosts in ~/.ssh/local_config, Hammerspoon's Chrome
-  # profiles), linked one by one. <name> is the Mac's LocalHostName (Sharing
+  # profiles), linked one by one; and its home/.config/<dir> whole, like the
+  # shared ones above, which a machine's own replaces (its ntfy topic in
+  # .config/claude-ntfy: one per machine, so that a phone can tell them
+  # apart and mute one). <name> is the Mac's LocalHostName (Sharing
   # settings; `hostname` there can be a generic "Mac") or `hostname -s`
   # elsewhere. A machine without a directory has none. Until 2026-11-16
   # these were links into Dropbox, which a launchd job cannot read: macOS
@@ -248,6 +252,7 @@ elif [ -d ~/.dotfiles-private/home ]; then
     machine=$(hostname -s)
   fi
   if [ -d ~/.dotfiles-private/machines/"$machine"/home ]; then
+    link_private_config ~/.dotfiles-private/machines/"$machine"
     link_private_files ~/.dotfiles-private/machines/"$machine"
   else
     echo "no per-machine files for $machine (~/.dotfiles-private/machines/$machine/home)"
