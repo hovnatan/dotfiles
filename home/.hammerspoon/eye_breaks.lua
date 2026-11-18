@@ -168,7 +168,17 @@ end
 -- running to take it down, so: Esc is bound before any canvas shows, each
 -- canvas is recorded before the next is made, and closeOverlay() takes down
 -- whatever part exists (the error paths below call it).
+--
+-- The display is held awake while a break is up, so the countdown can be
+-- read to its end: with the display set to sleep after 3 min, a long
+-- break's went dark 3 minutes in (2026-11-18). The hold is Hammerspoon's
+-- in `pmset -g assertions`, and display_wake.lua ignores it: it is the
+-- break, not someone watching.
 local overlays, overlayLong, escKey = nil, nil, nil
+-- hs.caffeinate.set("displayIdle", on, true): on battery too.
+local function holdDisplay(on)
+  hs.caffeinate.set("displayIdle", on, true)
+end
 local COUNT = 4 -- index of the countdown element below
 
 -- 30 -> "30s", 600 -> "10m": a break's length, for the menu and the screen.
@@ -219,6 +229,7 @@ end
 local function closeOverlay()
   local canvases, key = overlays or {}, escKey
   overlays, overlayLong, escKey = nil, nil, nil
+  holdDisplay(false)
   for _, canvas in ipairs(canvases) do
     canvas:delete()
   end
@@ -243,6 +254,7 @@ local function drawOverlay(o)
       M.skip()
     end)
     overlays, overlayLong = {}, o.long
+    holdDisplay(true)
     for _, screen in ipairs(hs.screen.allScreens()) do
       table.insert(overlays, overlayFor(screen, o.long):show())
     end

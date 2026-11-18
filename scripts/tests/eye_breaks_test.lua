@@ -570,6 +570,7 @@ eq(
 check(wake.first(holders).app == "Google Chrome", "WhatsApp is ignored, Chrome's video is the holder")
 check(wake.first({ holders[1] }) == nil, "WhatsApp alone is nobody watching")
 check(wake.first({ { app = "caffeinate" } }) == nil, "caffeinate -d is nobody watching")
+check(wake.first({ { app = "Hammerspoon" } }) == nil, "the break screen's own hold is nobody watching")
 
 -- An app name with parentheses of its own, and a listing with no holder.
 local helper = wake.parse(
