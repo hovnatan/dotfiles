@@ -124,6 +124,7 @@ eq(badgeLine(v), "hidden", "nor is the badge up")
 local events = work(s, at(20), at(20, 40))
 expect(events, "break_done@1230")
 eq(events[1].long, false, "the short break ran out: long")
+eq(events[1].locked, false, "at the screen: locked")
 v = core.view(s, at(20, 40))
 eq(v.overlay, nil, "the break screen is down")
 eq(v.since, 10, "the rest clock restarts at the break's end: since")
@@ -200,8 +201,11 @@ s = start("lock during a break")
 work(s, at(0), at(20))
 core.breakNow(s, at(20))
 work(s, at(20), at(20, 5))
--- 5 s at the screen and 25 s locked is the break.
-expect(work(s, at(20, 5), at(20, 40), { locked = true }), "break_done@1230")
+-- 5 s at the screen and 25 s locked is the break; it ends unseen, which
+-- eye_breaks.lua tells the phone.
+events = work(s, at(20, 5), at(20, 40), { locked = true })
+expect(events, "break_done@1230")
+eq(events[1].locked, true, "the break ended under the lock: locked")
 
 s = start("asleep during a break")
 work(s, at(0), at(20))
@@ -570,7 +574,6 @@ eq(
 check(wake.first(holders).app == "Google Chrome", "WhatsApp is ignored, Chrome's video is the holder")
 check(wake.first({ holders[1] }) == nil, "WhatsApp alone is nobody watching")
 check(wake.first({ { app = "caffeinate" } }) == nil, "caffeinate -d is nobody watching")
-check(wake.first({ { app = "Hammerspoon" } }) == nil, "the break screen's own hold is nobody watching")
 
 -- An app name with parentheses of its own, and a listing with no holder.
 local helper = wake.parse(

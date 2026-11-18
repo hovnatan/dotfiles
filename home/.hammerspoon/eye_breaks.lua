@@ -16,13 +16,15 @@
 --
 --   hs.timer, every 30 s (1 s during a break), +
 --   and each lock and unlock as it happens ----+
---   hs.host.idleTime, lock watcher, -----------+--> core.tick --> events --> log, sound
+--   hs.host.idleTime, lock watcher, -----------+--> core.tick --> events --> log, sound,
+--                                              |                             phone (ntfy)
 --   display_wake (is a video keeping the       |
 --   display awake? then idle is not away,      |
 --   and the badge stays down)                  |
 --                                              |
 --   badge click, menu clicks, the break -------+--> core.dueBreakNow / skip /
 --   screen's Skip button, Esc                  |    setBadge / ...
+--   (its Lock button locks the screen)         |
 --                                              |
 --                                              v
 --                    core.view  --> menu-bar title, badge, break screen
@@ -31,7 +33,7 @@
 -- The menu-bar item has the two breaks and the badge's switch, which is
 -- saved, so it outlives a reload. From a shell:
 --   hs -q -c 'require("eye_breaks").breakNow()'
--- also longBreakNow(), dueBreakNow() (the badge's click), skip().
+-- also longBreakNow(), dueBreakNow() (the badge's click), skip(), lock().
 -- Keep the -q. Without it Hammerspoon echoes every console line to the
 -- connected `hs`, and one that was killed stays registered: print() then
 -- raises in whatever module logs next, until a reload (seen 2026-11-17).
@@ -39,6 +41,7 @@ local log = require("event_log").new("eye_breaks")
 local fail, guarded = require("failure").new("eye_breaks", log)
 local core = require("eye_breaks_core")
 local displayWake = require("display_wake")
+local ntfy = require("ntfy")
 
 local M = {}
 
@@ -169,16 +172,13 @@ end
 -- canvas is recorded before the next is made, and closeOverlay() takes down
 -- whatever part exists (the error paths below call it).
 --
--- The display is held awake while a break is up, so the countdown can be
--- read to its end: with the display set to sleep after 3 min, a long
--- break's went dark 3 minutes in (2026-11-18). The hold is Hammerspoon's
--- in `pmset -g assertions`, and display_wake.lua ignores it: it is the
--- break, not someone watching.
+-- The display is not kept awake under it, by request (it was, for a day):
+-- a long break outlasts the display's sleep timer, and the Mac should lock
+-- with nobody at it, as it does when the display sleeps. So the countdown
+-- goes dark part-way; the Lock button locks at once, and a break that ends
+-- under the lock tells the phone (step, below), as nothing can draw over
+-- the lock screen.
 local overlays, overlayLong, escKey = nil, nil, nil
--- hs.caffeinate.set("displayIdle", on, true): on battery too.
-local function holdDisplay(on)
-  hs.caffeinate.set("displayIdle", on, true)
-end
 local COUNT = 4 -- index of the countdown element below
 
 -- 30 -> "30s", 600 -> "10m": a break's length, for the menu and the screen.
@@ -212,15 +212,21 @@ local function overlayFor(screen, long)
     text(long and "Get up and walk off" or "Rest your eyes on something far off", 22, 0.75, mid - 60, 32)
   )
   canvas:appendElements(text("", 48, 1, mid, 64)) -- COUNT
-  canvas:appendElements(button("skip", "Skip (Esc)", f.w / 2 - 90, mid + 110))
+  -- Two buttons, 180 wide and 20 apart, about the middle.
+  canvas:appendElements(button("skip", "Skip (Esc)", f.w / 2 - 190, mid + 110))
+  canvas:appendElements(button("lock", "Lock screen", f.w / 2 + 10, mid + 110))
   if long then
     local hint = string.format("Skipped after %s, it still counts as a short break", span(cfg.breakLength))
     canvas:appendElements(text(hint, 15, 0.55, mid + 170, 24))
   end
-  -- The button is two elements, "skip" and "skip_label"; a click on either.
+  canvas:appendElements(text("Locked, the break runs on, and its end is sent to the phone", 15, 0.55, mid + 196, 24))
+  -- A button is two elements, "skip" and "skip_label"; a click on either.
   canvas:mouseCallback(function(_, message, id)
-    if message == "mouseDown" and tostring(id):find("^skip") then
+    local name = message == "mouseDown" and tostring(id):match("^%a+")
+    if name == "skip" then
       M.skip()
+    elseif name == "lock" then
+      M.lock()
     end
   end)
   return canvas
@@ -229,7 +235,6 @@ end
 local function closeOverlay()
   local canvases, key = overlays or {}, escKey
   overlays, overlayLong, escKey = nil, nil, nil
-  holdDisplay(false)
   for _, canvas in ipairs(canvases) do
     canvas:delete()
   end
@@ -254,7 +259,6 @@ local function drawOverlay(o)
       M.skip()
     end)
     overlays, overlayLong = {}, o.long
-    holdDisplay(true)
     for _, screen in ipairs(hs.screen.allScreens()) do
       table.insert(overlays, overlayFor(screen, o.long):show())
     end
@@ -407,6 +411,16 @@ local function playReturnSound()
   sound:volume(RETURN_VOLUME):play()
 end
 
+-- A break ended under the lock screen, where nothing shows it: the phone
+-- is told. The answer comes later, and is only logged: a push that failed
+-- has nobody at the screen to alert.
+local function tellPhone(long)
+  local length = span(long and cfg.longBreakLength or cfg.breakLength)
+  ntfy.push("Eye break over", string.format("The %s break has ended.", length), function(sent, detail)
+    log("phone: %s%s", sent and "" or "NOT told, ", detail)
+  end)
+end
+
 -- The app keeping the display awake, for the core, which asks at every
 -- tick of an idle stretch, and at every tick with the badge wanted: pmset
 -- is run at most once in TICK seconds.
@@ -432,6 +446,9 @@ function step()
   for _, event in ipairs(events) do
     if event.kind == "break_done" then
       log("%s done: %s", event.long and "long break" or "break", restarted(event.long))
+      if event.locked then
+        tellPhone(event.long)
+      end
     elseif event.kind == "returned" then
       log("back after %.0f s away: %s", event.away, restarted(event.longRest))
       if event.sound then
@@ -494,6 +511,12 @@ end)
 M.skip = action("break skipped", function(now)
   return core.skip(state, now) and ", a long break up long enough for a short rest: clock restarted"
 end)
+
+-- The break screen's Lock button: the lock watcher ticks when it has locked.
+function M.lock()
+  log("lock asked for")
+  hs.caffeinate.lockScreen()
+end
 
 local function setBadge(on)
   return action(on and "badge on" or "badge off", function()

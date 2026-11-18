@@ -30,7 +30,6 @@ local DISPLAY_KINDS = { PreventUserIdleDisplaySleep = true, NoDisplaySleepAssert
 local IGNORED = {
   WhatsApp = 'holds "net.whatsapp.idletimer" for as long as it runs, video or not (18 h on 2026-11-17)',
   caffeinate = "keeps the display on for an unattended job, not for a viewer",
-  Hammerspoon = "eye_breaks.lua holds the display on under a break screen, so that its countdown can be read",
 }
 
 -- Every display holder in `text`, the output of `pmset -g assertions`, in

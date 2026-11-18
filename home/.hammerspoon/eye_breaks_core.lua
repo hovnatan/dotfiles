@@ -227,7 +227,8 @@ end
 -- input>, locked = <bool>, watching = <function: the name of an app keeping
 -- the display awake, or nil> }. Returns what happened, for the log and
 -- sounds:
---   { kind = "break_done", long = <bool> }     a long break is a long rest
+--   { kind = "break_done", long = <bool>,      a long break is a long rest;
+--     locked = <bool> }                        locked: nobody saw it end
 --   { kind = "returned", away = <s>, sound = <bool>, longRest = <bool> }
 --   { kind = "badge_hidden", app = <name> }    the badge is down over what
 --   { kind = "badge_unhidden", app = <name> }  that app shows; and no longer
@@ -311,7 +312,7 @@ function M.tick(s, obs)
   local b = s.onBreak
   if b and now >= b.from + b.length then
     rest(s, now, b.length)
-    table.insert(events, { kind = "break_done", long = b.long })
+    table.insert(events, { kind = "break_done", long = b.long, locked = obs.locked })
     s.onBreak = nil
   end
   return events
