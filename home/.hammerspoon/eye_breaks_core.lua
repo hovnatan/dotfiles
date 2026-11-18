@@ -1,0 +1,375 @@
+-- Eye-break timing: the state machine behind eye_breaks.lua. It makes no
+-- Hammerspoon calls, so scripts/tests/eye_breaks_test.lua drives it with
+-- plain Lua and a made-up clock.
+--
+-- Two clocks run side by side:
+--
+--   lastRestAt      the last moment the eyes really rested. Only a break
+--                   that ran to its end, or time away, moves it, so the
+--                   "+29m" overdue in the menu bar is honest: skipping a
+--                   break does not reset it.
+--   lastLongRestAt  the same for a rest of a long break's length (10 min): a
+--                   long break that ran to its end, or that long away. A
+--                   short break does not restart it.
+--
+-- A short break is due breakAfter (15 min) after the last rest, a long one
+-- longBreakAfter (75 min) after the last long rest. The menu bar and the
+-- badge show one number, the same in both: the time until the next break
+-- is due, and once one is, how long it has been. (The badge had the time
+-- worked and the time to the short break, and the menu bar the time since
+-- a rest: three numbers for one question, so they went, by request.)
+--
+--   since a rest   since a 10 min rest   shown
+--   12m            12m                   "3m"    plain: a short break in 3 min
+--   44m            1h05m                 "+29m"  red: it is 29 min overdue
+--   8m             1h17m                 "+2m"   purple: the long one is, 2 min
+--
+-- A break screen comes up only when asked for: a click on the badge, or the
+-- menu. (Breaks that came up by themselves every 20 min, with a snooze and
+-- pauses, were here and went, by request; so did a session clock that
+-- restarted after 5 min away.) Breaks come in two lengths, and the one the
+-- badge's click brings follows the long clock:
+--
+--   since a rest   since a 10 min rest  the break that comes
+--   17m            45m                  short, 30 s
+--   17m            1h17m                long, 10 min (longBreakAfter is 75 min)
+--
+-- A long break skipped after a short one's length was a short rest: 40 s
+-- into the second row's break, skip leaves 0m and 1h18m, and the next break
+-- is long again.
+--
+--                  asked for (badge click, menu)
+--     +---------+ ---------------------------------------> +----------+
+--     | working |                                          | on break |
+--     +---------+ <--------------------------------------- +----------+
+--       |     ^     ran to its end -> rest (the clocks restart)
+--       |     |     skip           -> no rest
+--  away |     | input again ("returned")
+--       v     |
+--     +---------+
+--     |  away   |  rest on every tick, once away for a break's length
+--     +---------+  (a long rest once away for a long break's)
+--
+-- Away is: screen locked, or no input for awayAfter with nothing keeping
+-- the display awake (a playing video is no input and all eyes), or no tick
+-- for asleepAfter (the Mac slept). There are no office hours, by request:
+-- the clocks run, and the badge follows them, on every day and at any hour.
+--
+--   tick at     idle  locked   result (awayAfter 5 min; a break asked for at
+--                              11:20:00)
+--   11:20:30     30 s   no     break ends, the rest clock restarts ("break_done")
+--   11:30:55    295 s   no     reading, as far as it can tell: clock runs on
+--   11:31:00    300 s   no     away since 11:26:00: rest, no event yet
+--   11:31:05     1 s    no     "returned" after 305 s
+local M = {}
+
+M.defaults = {
+  breakLength = 30, -- how long the break screen stays up
+  -- The short breaks let the eyes refocus; the long one is for getting up.
+  -- This long without a rest of longBreakLength, the due break is long.
+  longBreakLength = 10 * 60,
+  longBreakAfter = 75 * 60,
+  -- This long with no input is away from the screen. A guess: reading a
+  -- page or watching a video is no input either, so it is long (it was
+  -- 60 s, and a minute's reading reset the clock).
+  awayAfter = 5 * 60,
+  -- This long with no tick: the Mac slept, or Hammerspoon was not running.
+  -- No guess, so much shorter; but several of eye_breaks.lua's 30 s ticks,
+  -- so that a late one is not taken for sleep (it checks).
+  asleepAfter = 2 * 60,
+  returnSoundAfter = 5 * 60, -- back from at least this long away: a sound says the clock restarted
+  -- A short break is due this long after the last rest: the badge comes up,
+  -- and the menu-bar clock takes its colour.
+  breakAfter = 15 * 60,
+}
+
+-- What survives a Hammerspoon reload (M.saved / M.new), and its type.
+local SAVED = {
+  lastRestAt = "number",
+  lastLongRestAt = "number",
+  lastTickAt = "number",
+  badge = "boolean",
+}
+
+-- 1380 -> "23m", 3900 -> "1h05m"
+function M.fmt(seconds)
+  local minutes = math.floor(seconds / 60)
+  if minutes < 60 then
+    return string.format("%dm", minutes)
+  end
+  return string.format("%dh%02dm", minutes // 60, minutes % 60)
+end
+
+-- A break's due time, `seconds` ahead (or behind, when 0 or less), as the
+-- menu bar shows it and as the menu says it. Ahead it is rounded up, so
+-- that the last minute reads "1m" and not "0m"; behind, down.
+--   241 -> "5m",        240 -> "4m",        0 -> "+0m",        -1740 -> "+29m"
+--   241 -> "due in 5m", 240 -> "due in 4m", 0 -> "0m overdue", -1740 -> "29m overdue"
+local function countdown(seconds)
+  return seconds > 0 and M.fmt(seconds + 59) or "+" .. M.fmt(-seconds)
+end
+local function when(seconds)
+  return seconds > 0 and "due in " .. M.fmt(seconds + 59) or M.fmt(-seconds) .. " overdue"
+end
+
+-- Whether a break asked for at `now` is the long one.
+local function longDue(s, now)
+  return now - s.lastLongRestAt >= s.cfg.longBreakAfter
+end
+
+-- The eyes rested for `lasted` seconds, until `now` (a break that ran to
+-- its end, or time away): lastRestAt restarts, and the long clock too when
+-- it lasted a long break's length (9 min 55 s away: no; 10 min: yes).
+-- Returns whether it was such a long rest.
+local function rest(s, now, lasted)
+  local long = lasted >= s.cfg.longBreakLength
+  s.lastRestAt = now
+  if long then
+    s.lastLongRestAt = now
+  end
+  return long
+end
+
+-- The break on screen, s.onBreak: when it went up, how long its countdown
+-- runs, and whether it is the long one. nil with no break up.
+local function startBreak(s, now, long)
+  s.onBreak = { from = now, long = long, length = long and s.cfg.longBreakLength or s.cfg.breakLength }
+end
+
+-- A state from what the last load saved (nil on a first run), and a note on
+-- what was made of it for the log. A saved table that does not match SAVED
+-- raises: it is another version's or a corrupted one, not one to guess at.
+function M.new(cfg, saved, now)
+  local s = { cfg = cfg, badge = true, lastTickAt = now }
+  rest(s, now, math.huge) -- both clocks start now
+  if saved == nil then
+    return s, "no saved state: clocks start now"
+  end
+
+  for key in pairs(saved) do
+    if not SAVED[key] then
+      error("saved state has an unknown field: " .. tostring(key))
+    end
+  end
+  for key, kind in pairs(SAVED) do
+    local value = saved[key]
+    if type(value) ~= kind then
+      error(string.format("saved state field %s is a %s, not a %s", key, type(value), kind))
+    end
+    s[key] = value
+  end
+  -- A long rest is a rest.
+  if s.lastLongRestAt > s.lastRestAt then
+    error("saved state does not have lastLongRestAt <= lastRestAt")
+  end
+
+  -- Hammerspoon was not running (reboot, quit), so nobody counted. Taken as
+  -- rest here, not left to the first tick, which would greet a login with
+  -- the return sound.
+  local gap = now - s.lastTickAt
+  s.lastTickAt = now
+  if gap >= cfg.asleepAfter then
+    rest(s, now, gap)
+    return s, string.format("saved state restored; not running for %s, taken as rest", M.fmt(gap))
+  end
+  return s, "saved state restored; " .. M.fmt(now - s.lastRestAt) .. " since the last rest"
+end
+
+function M.saved(s)
+  local out = {}
+  for key in pairs(SAVED) do
+    out[key] = s[key]
+  end
+  return out
+end
+
+-- Whether two M.saved tables, `a` the earlier, differ in nothing but what
+-- moves at every tick: lastTickAt, and with it a rest clock while time away
+-- runs on, which restarts at each tick and so equals lastTickAt in both.
+-- eye_breaks.lua need not write such a one at each second of a break: M.new
+-- reads lastTickAt only against asleepAfter, minutes, and a rest clock that
+-- is seconds behind is no different.
+--
+--   a (written)            b (now)                same?
+--   rest 11:00, tick 11:20  rest 11:00, tick 11:21  yes: only the tick moved
+--   rest 11:00, tick 11:20  rest 11:21, tick 11:21  no: a rest was credited
+--   rest 11:21, tick 11:21  rest 11:22, tick 11:22  yes: that rest runs on
+--   rest 11:22, tick 11:22  rest 11:30, tick 11:31  no: back, the clock runs
+function M.sameButTick(a, b)
+  for key in pairs(SAVED) do
+    local runsOn = a[key] == a.lastTickAt and b[key] == b.lastTickAt
+    if key ~= "lastTickAt" and a[key] ~= b[key] and not runsOn then
+      return false
+    end
+  end
+  return true
+end
+
+-- Advance to obs.now. obs = { now = <epoch s>, idle = <s since the last
+-- input>, locked = <bool>, watching = <function: the name of an app keeping
+-- the display awake, or nil> }. Returns what happened, for the log and
+-- sounds:
+--   { kind = "break_done", long = <bool> }     a long break is a long rest
+--   { kind = "returned", away = <s>, sound = <bool>, longRest = <bool> }
+--   { kind = "watching", app = <name> }        idle, but not away: see below
+--   { kind = "watching_ended", app = <name> }
+function M.tick(s, obs)
+  local cfg, now, events = s.cfg, obs.now, {}
+  local gap = now - s.lastTickAt
+  s.lastTickAt = now
+
+  -- Watching: idle for awayAfter, but an app keeps the display awake.
+  -- obs.watching() costs a process, so it is asked only once idle is that
+  -- long, and not under a lock or after sleep, which are away whatever
+  -- plays.
+  local asleep = gap >= cfg.asleepAfter
+  local watching = nil
+  if obs.idle >= cfg.awayAfter and not obs.locked and not asleep then
+    watching = obs.watching()
+  end
+  if watching ~= s.watching then
+    table.insert(events, { kind = watching and "watching" or "watching_ended", app = watching or s.watching })
+    -- A new stretch starts where the idle time did.
+    if watching and not s.watching then
+      s.watch = { from = now - obs.idle }
+    end
+    s.watching = watching
+  end
+  -- The stretch is kept after it ends, for the menu: opening the menu is
+  -- input, so "watching now" is over by the time anyone could read it.
+  if watching then
+    s.watch.app, s.watch.to = watching, now
+  end
+
+  -- Idle time counts from when the watching stopped: a video that ends at
+  -- 11:00 after 40 idle minutes makes it away at 11:05, not at once. Input
+  -- after the stretch is later than its end, so obs.idle is then the smaller.
+  local idleFor = s.watch and math.min(obs.idle, now - s.watch.to) or obs.idle
+
+  -- Away: idle or asleep for their thresholds, or locked. `unseen` is how
+  -- far back the away time starts: the idle or sleep time, or 0 for a
+  -- lock, which starts it at the lock. Rest is credited once it has lasted
+  -- a break's length, so locking for 5 s is not a break; a long rest once
+  -- it has lasted a long break's. A break on screen is left to its
+  -- countdown, below: it went up at a click, so the time away began after
+  -- it, and cannot cover it before the countdown has run out too.
+  local idle = idleFor >= cfg.awayAfter
+  if obs.locked or idle or asleep then
+    local unseen = math.max(idle and idleFor or 0, asleep and gap or 0)
+    s.awaySince = s.awaySince or (now - unseen)
+    local awayFor = now - s.awaySince
+    if awayFor >= cfg.breakLength then
+      s.awayRested, s.awayLong = true, rest(s, now, awayFor)
+    end
+  elseif s.awaySince then
+    -- Back at the screen.
+    if s.awayRested then
+      local awayFor = now - s.awaySince
+      table.insert(
+        events,
+        { kind = "returned", away = awayFor, sound = awayFor >= cfg.returnSoundAfter, longRest = s.awayLong }
+      )
+    end
+    s.awaySince, s.awayRested, s.awayLong = nil, nil, nil
+  end
+
+  -- The break on screen runs out whether anyone is at the screen or not:
+  -- 5 s of it and then 25 s under a lock is its 30 s all the same.
+  local b = s.onBreak
+  if b and now >= b.from + b.length then
+    rest(s, now, b.length)
+    table.insert(events, { kind = "break_done", long = b.long })
+    s.onBreak = nil
+  end
+  return events
+end
+
+-- The user's actions. None of them is rest, so the clocks stay; but see
+-- M.skip for the long break taken down part-way.
+
+-- A break now: short, long, or the due one (the badge's click; returns
+-- whether that was the long one).
+function M.breakNow(s, now)
+  startBreak(s, now, false)
+end
+
+function M.longBreakNow(s, now)
+  startBreak(s, now, true)
+end
+
+function M.dueBreakNow(s, now)
+  local long = longDue(s, now)
+  startBreak(s, now, long)
+  return long
+end
+
+-- Take the break screen down before its end. That is no rest, with one
+-- exception: a break that was up for a short one's length has been a short
+-- rest (skip at 0:40 of 10:00 -> the rest clock restarts, the long one runs
+-- on). That is a long break: a short one has run out by then. Returns
+-- whether that was so.
+function M.skip(s, now)
+  local b = s.onBreak
+  local rested = b ~= nil and now - b.from >= s.cfg.breakLength
+  if rested then
+    s.lastRestAt = now
+  end
+  s.onBreak = nil
+  return rested
+end
+
+function M.setBadge(s, on)
+  s.badge = on
+end
+
+-- What to show at `now`:
+--   since        s since the last rest
+--   sinceLong    s since the last rest of a long break's length
+--   shortWhen    the short break against its due time, for the menu:
+--                "due in 3m" or "29m overdue"
+--   longWhen     the same for the long break
+--   title        the menu-bar clock, and the badge's text: the time until
+--                the next break is due ("3m"), then how long the due one
+--                has been ("+29m"); "break" while one is on screen
+--   overlay      { remaining = <s>, long = <bool> } while a break is on
+--                screen, else nil
+--   due          the break that is due, which a click on the badge brings:
+--                "short" (breakAfter since the last rest) or "long" (which
+--                wins); nil when none is, as under a break screen. It
+--                colours the badge and the menu-bar clock.
+--   badge        whether the badge is up: a break is due, and the badge is
+--                switched on
+--   watched      { app = <name>, from = <epoch s>, to = <epoch s> }: the
+--                last idle stretch that was not rest because that app kept
+--                the display awake. Only while it explains the clock, i.e.
+--                until the next rest; else nil.
+--   badgeOn      the badge's toggle, for the menu
+function M.view(s, now)
+  local since, sinceLong = now - s.lastRestAt, now - s.lastLongRestAt
+  -- Seconds until each break is due; 0 or less once it is.
+  local shortIn, longIn = s.cfg.breakAfter - since, s.cfg.longBreakAfter - sinceLong
+  local v = {
+    since = since,
+    sinceLong = sinceLong,
+    shortWhen = when(shortIn),
+    longWhen = when(longIn),
+    badgeOn = s.badge,
+    watched = s.watch and s.watch.to > s.lastRestAt and s.watch or nil,
+  }
+
+  local b = s.onBreak
+  if b then
+    v.overlay = { remaining = math.max(0, b.from + b.length - now), long = b.long }
+    v.title = "break"
+    return v
+  end
+
+  -- The number is the due break's, the long one's when both are; with
+  -- neither due, the nearer one's.
+  v.due = longIn <= 0 and "long" or shortIn <= 0 and "short" or nil
+  v.title = countdown(v.due == "long" and longIn or math.min(shortIn, longIn))
+  v.badge = s.badge and v.due ~= nil
+  return v
+end
+
+return M

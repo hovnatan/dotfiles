@@ -22,6 +22,7 @@ require("ghostty_snapshots")
 require("appearance")
 require("zathura_windows")
 -- require("meeting_focus")
+require("eye_breaks")
 
 -- hs CLI (`hs -c "..."`) for scripting and debugging from the shell.
 -- cliInstall puts the man page in <prefix>/share/man/man1 but does not create
