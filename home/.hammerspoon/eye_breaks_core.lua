@@ -38,6 +38,22 @@
 -- into the second row's break, skip leaves 0m and 1h18m, and the next break
 -- is long again.
 --
+-- A due break can also be snoozed, without its screen ever coming up, for
+-- one of two lengths (by request; this is not the snooze of the breaks
+-- that came up by themselves, above):
+--
+--   snoozeFor, 10 min       a right click on the badge, the menu
+--   longSnoozeFor, 30 min   the menu
+--
+-- No break is due for that long, so the badge goes down and the clock
+-- counts down plain. That is no rest, and the rest clocks run on under it,
+-- so the break comes back as overdue as it really is:
+--
+--   rested last at 0:00, snoozed at 20:00
+--   19:59   "+4m"   red
+--   20:00   "10m"   plain: nothing is due before 30:00
+--   30:00   "+15m"  red again: 15 min overdue, not 0
+--
 --                  asked for (badge click, menu)
 --     +---------+ ---------------------------------------> +----------+
 --     | working |                                          | on break |
@@ -100,6 +116,10 @@ M.defaults = {
   -- glimpseLength. Long enough to catch the eye, too short to be in the way.
   glimpseEvery = 15 * 60,
   glimpseLength = 5,
+  -- A due break snoozed (M.snooze): no break is due for this long. The
+  -- first is the badge's right click and the menu's, the second the menu's.
+  snoozeFor = 10 * 60,
+  longSnoozeFor = 30 * 60,
 }
 
 -- What survives a Hammerspoon reload (M.saved / M.new), and its type.
@@ -134,17 +154,27 @@ end
 -- The break that is due at `now`: "long" (which wins when both are),
 -- "short", or nil when none is, as under a break screen. And after it the
 -- seconds until the short and the long one are due, 0 or less once they are.
+-- Neither is due before s.snoozedUntil (M.snooze), while that is ahead: a
+-- break 5 min overdue, snoozed for 10 min a minute ago, is due in 9 min.
+-- Last come the seconds it is ahead, nil when it is not.
 local function dueAt(s, now)
   local shortIn = s.cfg.breakAfter - (now - s.lastRestAt)
   local longIn = s.cfg.longBreakAfter - (now - s.lastLongRestAt)
+  local snoozedFor = nil
+  if s.snoozedUntil and now < s.snoozedUntil then
+    snoozedFor = s.snoozedUntil - now
+    shortIn, longIn = math.max(shortIn, snoozedFor), math.max(longIn, snoozedFor)
+  end
   local due = nil
   if not s.onBreak then
     due = longIn <= 0 and "long" or shortIn <= 0 and "short" or nil
   end
-  return due, shortIn, longIn
+  return due, shortIn, longIn, snoozedFor
 end
 
--- Whether a break asked for at `now` is the long one.
+-- Whether a break asked for at `now` is the long one. By the rest clock
+-- alone, on purpose: a snooze puts off the reminder, not which break
+-- is owed.
 local function longDue(s, now)
   return now - s.lastLongRestAt >= s.cfg.longBreakAfter
 end
@@ -384,10 +414,25 @@ function M.skip(s, now)
   local b = s.onBreak
   local rested = b ~= nil and now - b.from >= s.cfg.breakLength
   if rested then
-    s.lastRestAt = now
+    rest(s, now, now - b.from)
   end
   s.onBreak = nil
   return rested
+end
+
+-- Snooze the due break: none is due from `now` for snoozeFor, or with
+-- `long` for longSnoozeFor. Returns whether a break was due; with none,
+-- nothing changes. Like the break on screen it is not saved, so a reload
+-- inside it brings the badge back. The badge counts as not shown since
+-- (s.badgeUpAt, see M.tick): what comes due at the end is to show at once,
+-- video or not.
+function M.snooze(s, now, long)
+  if dueAt(s, now) == nil then
+    return false
+  end
+  s.snoozedUntil = now + (long and s.cfg.longSnoozeFor or s.cfg.snoozeFor)
+  s.badgeUpAt = nil
+  return true
 end
 
 function M.setBadge(s, on)
@@ -422,14 +467,17 @@ end
 --                the display awake. Only while it explains the clock, i.e.
 --                until the next rest; else nil.
 --   badgeOn      the badge's toggle, for the menu
+--   snoozed      the time a snooze still runs, as the title counts it
+--                ("14m"); nil with none
 function M.view(s, now)
-  local due, shortIn, longIn = dueAt(s, now)
+  local due, shortIn, longIn, snoozedFor = dueAt(s, now)
   local v = {
     since = now - s.lastRestAt,
     sinceLong = now - s.lastLongRestAt,
     shortWhen = when(shortIn),
     longWhen = when(longIn),
     badgeOn = s.badge,
+    snoozed = snoozedFor and countdown(snoozedFor),
     watched = s.watch and s.watch.to > s.lastRestAt and s.watch or nil,
   }
 

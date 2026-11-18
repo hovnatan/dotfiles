@@ -2,7 +2,9 @@
 -- the screen's right edge (the badge) while a break is due, and a break
 -- screen when the badge is clicked; no break comes up by itself. A short
 -- break, 30 seconds, is due 15 minutes after the last rest; a long one, 10
--- minutes, after 75 minutes without a rest of that length.
+-- minutes, after 75 minutes without a rest of that length. A right click
+-- on the badge snoozes the due break for 10 minutes; the menu has that
+-- too, and a snooze of 30.
 --
 --   nothing due       menu bar  3m        plain: a break is due in 3 min
 --   short break due   menu bar (+29m)     on red: it is 29 min overdue
@@ -26,7 +28,8 @@
 --   and the badge stays down)                  |
 --                                              |
 --   badge click, menu clicks, the break -------+--> core.dueBreakNow / skip /
---   screen's Skip button, Esc                  |    setBadge / ...
+--   screen's Skip button, Esc; a right         |    snooze / setBadge / ...
+--   click on the badge                         |
 --   (its Lock button locks the screen)         |
 --                                              |
 --                                              v
@@ -36,7 +39,8 @@
 -- The menu-bar item has the two breaks and the badge's switch, which is
 -- saved, so it outlives a reload. From a shell:
 --   hs -q -c 'require("eye_breaks").breakNow()'
--- also longBreakNow(), dueBreakNow() (the badge's click), skip(), lock().
+-- also longBreakNow(), dueBreakNow() (the badge's click), skip(), lock(),
+-- snooze() (a right click on the badge), longSnooze().
 -- Keep the -q. Without it Hammerspoon echoes every console line to the
 -- connected `hs`, and one that was killed stays registered: print() then
 -- raises in whatever module logs next, until a reload (seen 2026-11-17).
@@ -135,13 +139,75 @@ badge:clickActivating(false)
 badge[1] = fill(DUE_COLOR.short, BADGE_RADIUS, { x = 0, y = 0, w = BADGE_W + BADGE_RADIUS, h = BADGE_H })
 badge[2] = centredText("", BADGE_TEXT, 1, { x = 0, y = 6, w = BADGE_W, h = BADGE_H - 6 })
 badge:canvasMouseEvents(true)
+-- A click takes the due break. A ctrl-click, macOS's other way to
+-- right-click, snoozes it as a right click does (below).
 badge:mouseCallback(function(_, message)
-  if message == "mouseDown" then
+  if message ~= "mouseDown" then
+    return
+  end
+  if hs.eventtap.checkKeyboardModifiers().ctrl then
+    M.snooze()
+  else
     M.dueBreakNow()
   end
 end)
 M.badge = badge
 local badgeShown = false
+
+-- A right click on the badge snoozes the due break (by request), as the
+-- menu's "Snooze this break" does. The canvas calls back "mouseDown" for
+-- every button without saying which, and the buttons read at that moment
+-- are up again after a quick click, so the right button is caught as its
+-- own event, on a tap that runs only while the badge is up (listenFor-
+-- RightClicks, from drawBadge):
+--
+--   right button down, on the badge  --> swallowed; snooze
+--   right button up after it         --> swallowed too, so that nothing
+--                                        under the badge gets half a click
+--   any other right click            --> passed on untouched
+local TYPES = hs.eventtap.event.types
+local swallowUp = false
+local rightTap = hs.eventtap.new({ TYPES.rightMouseDown, TYPES.rightMouseUp }, function(event)
+  if event:getType() == TYPES.rightMouseUp then
+    local mine = swallowUp
+    swallowUp = false
+    return mine
+  end
+  local at, f = event:location(), badge:frame()
+  if not (badgeShown and at.x >= f.x and at.x < f.x + f.w and at.y >= f.y and at.y < f.y + f.h) then
+    return false
+  end
+  swallowUp = true
+  -- Once the tap has answered: macOS switches off a tap that is slow to,
+  -- and snoozing is a whole step.
+  M.snoozing = hs.timer.doAfter(0, M.snooze)
+  return true
+end)
+M.rightTap = rightTap
+
+-- The tap on or off, with the badge. macOS can switch a tap off by itself
+-- (one that was slow to answer); the next draw of the badge finds that
+-- here and starts it again, with a line in the log.
+local listening = false
+local function listenForRightClicks(on)
+  if rightTap:isEnabled() == on then
+    listening = on
+    return
+  end
+  if not on then
+    rightTap:stop()
+    listening = false
+    return
+  end
+  if listening then
+    log("macOS had switched off the tap for right clicks on the badge: starting it again")
+  end
+  rightTap:start()
+  if not rightTap:isEnabled() then
+    fail("could not start the event tap for right clicks on the badge: does Hammerspoon have Accessibility access?")
+  end
+  listening = true
+end
 
 -- The badge with `text` on it, in the colour of `due`; hidden with no text.
 local function drawBadge(text, due)
@@ -152,6 +218,7 @@ local function drawBadge(text, due)
       badge:hide()
       badgeShown = false
     end
+    listenForRightClicks(false)
     return
   end
 
@@ -163,6 +230,7 @@ local function drawBadge(text, due)
     badge:show()
     badgeShown = true
   end
+  listenForRightClicks(true)
 end
 
 -- --- the break screen ---------------------------------------------------------
@@ -358,7 +426,16 @@ end
 --   12:00:07 lock    -> tick (locked): away since 12:00:07
 --   12:00:42 unlock  -> tick (locked): 35 s >= 30 s, rest
 --                    -> tick (unlocked): "returned"
-local locked = false
+--
+-- At load the watcher has seen nothing yet, so macOS is asked: a reload
+-- under the lock screen took it for unlocked, and asked display_wake what
+-- was playing to nobody (2026-11-18).
+local session = hs.caffeinate.sessionProperties()
+  or fail("no session properties from macOS: cannot tell whether the screen is locked")
+local locked = session.CGSSessionScreenIsLocked == true
+if locked then
+  log("loaded under a locked screen")
+end
 M.lockWatcher = hs.caffeinate.watcher.new(function(event)
   if event == hs.caffeinate.watcher.screensDidLock then
     locked = true
@@ -518,6 +595,19 @@ M.skip = action("break skipped", function(now)
   return core.skip(state, now) and ", a long break up long enough for a short rest: clock restarted"
 end)
 
+-- The due break snoozed, with no screen, for the core's two lengths:
+--   M.snooze       10 min: a right click on the badge, the menu
+--   M.longSnooze   30 min: the menu
+local function snoozing(long)
+  return action("due break snoozed", function(now)
+    local length = long and cfg.longSnoozeFor or cfg.snoozeFor
+    local snoozed = core.snooze(state, now, long)
+    return snoozed and string.format(": none is due for %s", span(length)) or ": none was due, nothing changed"
+  end)
+end
+M.snooze = snoozing(false)
+M.longSnooze = snoozing(true)
+
 -- The break screen's Lock button: the lock watcher ticks when it has locked.
 function M.lock()
   log("lock asked for")
@@ -583,6 +673,21 @@ local function menuItems()
     { title = "-" },
     { title = "Take a " .. span(cfg.breakLength) .. " break now", fn = M.breakNow },
     { title = "Take a " .. span(cfg.longBreakLength) .. " break now", fn = M.longBreakNow },
+    -- Always there, so the menu keeps its shape, and greyed out while no
+    -- break is due (by request): "Snooze this break for 10m" and "... for
+    -- 30m". With a snooze running the first says why the badge is down,
+    -- whichever of the two it was: "Break snoozed, 9m left".
+    {
+      title = v.snoozed and string.format("Break snoozed, %s left", v.snoozed)
+        or "Snooze this break for " .. span(cfg.snoozeFor),
+      fn = M.snooze,
+      disabled = not v.due,
+    },
+    {
+      title = "Snooze this break for " .. span(cfg.longSnoozeFor),
+      fn = M.longSnooze,
+      disabled = not v.due,
+    },
     { title = "-" },
     { title = "Show badge", checked = v.badgeOn, fn = setBadge(not v.badgeOn) },
   }) do

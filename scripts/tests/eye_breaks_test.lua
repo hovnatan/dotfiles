@@ -521,6 +521,71 @@ work(s, at(20) - 5, at(20), { idle = 600, watching = chrome })
 eq(asked, 0, "not asked while typing, locked, or just woken: times asked")
 eq(core.view(s, at(20)).since, 0, "a lock and a sleep are rest whatever plays: since")
 
+-- --- a due break snoozed: for 10 min (a right click on the badge, the menu)
+-- --- or for 15 (the menu), and neither is a rest -------------------------------
+s = start("a due break snoozed")
+work(s, at(0), at(5))
+eq(core.snooze(s, at(5)), false, "with no break due there is nothing to snooze: snooze")
+eq(core.view(s, at(5)).title, "10m", "and nothing changed: title")
+work(s, at(5), at(20))
+eq(badgeLine(core.view(s, at(20))), "+5m short", "the badge before it")
+eq(core.snooze(s, at(20)), true, "a due break is snoozed: snooze")
+v = core.view(s, at(20))
+eq(v.due, nil, "no break is due after it")
+eq(badgeLine(v), "hidden", "so the badge is down")
+eq(v.title, "10m", "and the title counts down to its end")
+eq(v.shortWhen, "due in 10m", "as the menu's line does")
+eq(v.snoozed, "10m", "and the menu's greyed-out item: snoozed")
+eq(v.since, 1200, "but it was no rest: since")
+expect(work(s, at(20), at(30)), "")
+eq(core.view(s, at(29, 59)).title, "1m", "a second before its end: title")
+v = core.view(s, at(30))
+eq(badgeLine(v), "+15m short", "then the break is as overdue as it really is")
+eq(v.snoozed, nil, "and nothing is snoozed")
+-- Snoozed again, and a break taken inside the 10 min: the next one is due
+-- 15 min after that rest (50:30), not at the snooze's end (40:00).
+core.snooze(s, at(30))
+work(s, at(30), at(35))
+core.breakNow(s, at(35))
+expect(work(s, at(35), at(35, 30)), "break_done@2130")
+eq(core.view(s, at(38)).title, "13m", "inside the snooze the rest's 15 min count: title")
+
+-- The long snooze: the same, for 30 min.
+s = start("a due break snoozed for 30 min")
+work(s, at(0), at(20))
+eq(core.snooze(s, at(20), true), true, "a due break is snoozed: snooze")
+v = core.view(s, at(20))
+eq(badgeLine(v), "hidden", "the badge is down")
+eq(v.title, "30m", "and the title counts down the long snooze's 30 min")
+eq(v.snoozed, "30m", "as the menu's item does: snoozed")
+eq(v.since, 1200, "and it was no rest either: since")
+expect(work(s, at(20), at(50)), "")
+eq(core.view(s, at(49, 59)).title, "1m", "a second before its end: title")
+eq(badgeLine(core.view(s, at(50))), "+35m short", "then the break is as overdue as it really is")
+-- The short snooze after the long one runs its own 10 min.
+core.snooze(s, at(50))
+eq(core.view(s, at(50)).snoozed, "10m", "a snooze after a long one runs 10 min: snoozed")
+
+-- The long break, snoozed: both are, and it comes back as the long one.
+s = start("the long break snoozed")
+work(s, at(0), at(77))
+eq(badgeLine(core.view(s, at(77))), "+2m long", "the badge before it")
+core.snooze(s, at(77), true)
+v = core.view(s, at(77))
+eq(v.title, "30m", "the title after it")
+eq(v.longWhen, "due in 30m", "the menu's line for the long break")
+eq(v.shortWhen, "due in 30m", "and for the short one, which was due too")
+eq(badgeLine(core.view(s, at(107))), "+32m long", "30 min on the long one is back")
+
+-- A film over the snooze's end: the badge shows the moment the break is due
+-- again. With a snooze of 5 min, to tell it from the glimpse that 15 min
+-- without the badge bring anyway.
+begin("a snooze ends under a video")
+s = core.new(setmetatable({ snoozeFor = 5 * 60 }, { __index = cfg }), nil, at(0))
+work(s, at(0), at(20))
+core.snooze(s, at(20))
+expect(work(s, at(20), at(26), { watching = chrome }), "badge_hidden@1500 badge_glimpse@1500")
+
 -- --- saved state: a reload keeps the clocks, a long gap is rest --------------
 s = start("save and restore")
 work(s, at(0), at(12))
@@ -649,6 +714,28 @@ local helper = wake.parse(
 )
 check(#helper == 1 and helper[1].app == "Google Chrome Helper (Renderer)", "an app name with parentheses")
 check(#wake.parse("x\nListed by owning process:\nKernel Assertions: 0x4=USB\n") == 0, "an empty listing is no holders")
+
+-- Nothing held at all: pmset leaves the listing out. Its counts then say
+-- so (the output of 2026-11-18, cut down, less its listing), or it prints
+-- "No assertions." alone; both are no holders.
+local NOTHING_HELD = [[
+2026-11-18 14:52:22 -0500
+Assertion status system-wide:
+   UserIsActive                   0
+   PreventUserIdleDisplaySleep    0
+   PreventUserIdleSystemSleep     0
+Kernel Assertions: 0x104=USB,MAGICWAKE
+   id=553  level=255 0x4=USB creat= description=com.apple.usb.externaldevice.00200000 owner=USB3.2 Hub
+]]
+check(#wake.parse(NOTHING_HELD) == 0, "no listing and a count of 0 is no holders")
+check(#wake.parse("2026-11-18 14:52:22 -0500\nNo assertions.\n") == 0, '"No assertions." is no holders')
+-- But a display holder counted and no listing to name it is not readable.
+raises(
+  'no "Listed by owning process:" section',
+  "a count of 1 with no listing",
+  wake.parse,
+  (NOTHING_HELD:gsub("PreventUserIdleDisplaySleep    0", "PreventUserIdleDisplaySleep    1"))
+)
 
 -- Output it cannot read raises: an empty answer would say "nobody watching".
 raises('no "Listed by owning process:" section', "text that is not pmset output", wake.parse, "pmset: unknown option\n")

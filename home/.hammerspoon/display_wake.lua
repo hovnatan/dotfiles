@@ -38,7 +38,24 @@ local IGNORED = {
 function M.parse(text)
   local listing = text:match("\nListed by owning process:\n(.*)")
   if not listing then
-    error('display_wake: no "Listed by owning process:" section in the pmset output; its format changed')
+    -- With nothing held at all pmset prints no listing (2026-11-18, away
+    -- under a locked screen with no job running: this raised, and the
+    -- break timer stopped on it). That output was not kept; what follows
+    -- is from pmset's disassembly (otool -tV /usr/bin/pmset). Either of
+    -- its two forms is "no holders":
+    --   "   PreventUserIdleDisplaySleep    0"   the counts table, printed as
+    --                                           ever, with the listing left
+    --                                           out: no process holds any
+    --   "No assertions."                        in place of the table: the
+    --                                           status call failed
+    -- Any other text is not one this parser knows, and the error shows it.
+    if text:find("No assertions.", 1, true) or text:match("%s+PreventUserIdleDisplaySleep%s+0%s") then
+      return {}
+    end
+    error(
+      'display_wake: no "Listed by owning process:" section in the pmset output; its format changed. It starts: '
+        .. text:sub(1, 400)
+    )
   end
   -- The kernel's own assertions follow, in another format.
   listing = listing:match("^(.-)\nKernel Assertions:") or listing
