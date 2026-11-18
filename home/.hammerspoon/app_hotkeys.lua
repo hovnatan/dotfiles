@@ -56,7 +56,7 @@ end
 local function focusChromeProfile(profileDir)
   local app = chrome.get()
   if not app then
-    chrome.launchWithProfile(profileDir)
+    chrome.open({ profile = profileDir or "Default" })
     return
   end
   app:activate()

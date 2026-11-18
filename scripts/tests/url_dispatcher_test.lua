@@ -1,13 +1,15 @@
--- url_dispatcher.lua and local_config.lua, the real modules, against
--- Hammerspoon doubles:
+-- url_dispatcher.lua, chrome.lua and local_config.lua, the real modules,
+-- against Hammerspoon doubles:
 --
 --   test --clicked URL (httpCallback)--> url_dispatcher --> chrome double
---   test --app activations (watcher)---^       |           records (profile, url)
+--   test --app activations (watcher)---^       |           records the options
 --                                              v
 --   test --link present? / module body--> local_config --> cfg, or alert + raise
 --
--- Nothing opens: the chrome module is a double, so this runs in CI on Linux
--- and macOS without Chrome or Hammerspoon.
+--   test --options--> chrome.open --> hs.task double records the `open` argv
+--
+-- Nothing opens: Chrome is reached through a double either way, so this runs
+-- in CI on Linux and macOS without Chrome or Hammerspoon.
 local repo = assert(arg[1], "pass the repo path")
 package.path = repo .. "/home/.hammerspoon/?.lua;" .. package.path
 local file = assert(io.open(assert(arg[2], "pass the event log path"), "a"))
@@ -27,7 +29,8 @@ local CFG = {
   work_url_prefixes = { "https://github.com/someorg" },
 }
 
--- What the modules did, for the asserts: Chrome launches and alerts.
+-- What the modules did, for the asserts: Chrome launches (as the options
+-- the dispatcher passed), `open` command lines and alerts.
 local world
 
 local function app(bundle)
@@ -57,8 +60,22 @@ local function stubHs(frontmost)
     },
     urlevent = {
       setDefaultHandler = function() end,
-      openURLWithBundle = function(url)
-        table.insert(world.opened, { profile = "(none)", url = url })
+    },
+    task = {
+      -- Records the command line at start, and the environment the task
+      -- was given: nil when none was set (it would inherit Hammerspoon's).
+      new = function(path, _, args)
+        local task = {}
+        function task:setEnvironment(env)
+          self.env = env
+          return self
+        end
+        function task:start()
+          table.insert(world.tasks, path .. " " .. table.concat(args, " "))
+          table.insert(world.taskEnvs, self.env)
+          return self
+        end
+        return task
       end,
     },
     application = {
@@ -92,12 +109,19 @@ local function loadDispatcher(cfg, frontmost)
   package.loaded.local_config = cfg
   package.loaded.chrome = {
     BUNDLE_ID = "com.google.Chrome",
-    launchWithProfile = function(profile, url)
-      table.insert(world.opened, { profile = profile, url = url })
+    open = function(opts)
+      table.insert(world.opened, opts)
     end,
   }
   _G.hs = stubHs(frontmost)
   return assert(loadfile(repo .. "/home/.hammerspoon/url_dispatcher.lua"))()
+end
+
+-- The real chrome.lua, with hs.task recording the command line it builds.
+local function loadChrome()
+  world = { alerts = {}, opened = {}, tasks = {}, taskEnvs = {} }
+  _G.hs = stubHs(nil)
+  return assert(loadfile(repo .. "/home/.hammerspoon/chrome.lua"))()
 end
 
 -- local_config with the link present or not and `body` as the module the
@@ -220,6 +244,52 @@ end)
 test("click: Slack in front at load counts", function()
   loadDispatcher(CFG, "com.tinyspeck.slackmacgap")
   eq(click("https://example.com/"), WORK, "first click after reload")
+end)
+
+test("click: opens a new window and brings Chrome forward", function()
+  loadDispatcher(CFG, "com.mitchellh.ghostty")
+  click("https://example.com/a?b=c")
+  local opts = world.opened[1]
+  eq(opts.url, "https://example.com/a?b=c", "url")
+  eq(opts.newWindow, true, "newWindow")
+  eq(opts.raise, true, "raise")
+end)
+
+test("click: without a config, a new window and no profile", function()
+  loadDispatcher({}, "com.mitchellh.ghostty")
+  click("https://console.cloud.google.com/home")
+  local opts = world.opened[1]
+  eq(opts.profile, nil, "profile")
+  eq(opts.newWindow, true, "newWindow")
+end)
+
+test("chrome.open: the command line it hands to open", function()
+  local chrome = loadChrome()
+  local OPEN = "/usr/bin/open -nb com.google.Chrome --args"
+  chrome.open({ profile = "Profile 1" })
+  eq(world.tasks[1], OPEN .. " --profile-directory=Profile 1", "profile alone")
+  chrome.open({ profile = "Profile 1", url = "https://x/", newWindow = true })
+  eq(world.tasks[2], OPEN .. " --profile-directory=Profile 1 --new-window https://x/", "new window")
+  chrome.open({ profile = "Profile 1", url = "https://x/" })
+  eq(world.tasks[3], OPEN .. " --profile-directory=Profile 1 https://x/", "tab")
+  chrome.open({ url = "https://x/", newWindow = true })
+  eq(world.tasks[4], OPEN .. " --new-window https://x/", "no profile")
+end)
+
+test("chrome.open: open runs with an empty environment", function()
+  local chrome = loadChrome()
+  chrome.open({ profile = "Profile 1", url = "https://x/", newWindow = true })
+  local env = world.taskEnvs[1]
+  eq(type(env), "table", "environment set on the task")
+  eq(next(env), nil, "first variable in it")
+end)
+
+test("chrome.open: a new window without a URL raises", function()
+  local chrome = loadChrome()
+  raises("newWindow needs a url", function()
+    chrome.open({ profile = "Profile 1", newWindow = true })
+  end)
+  eq(#world.tasks, 0, "nothing launched")
 end)
 
 test("local_config: no link is an empty config", function()

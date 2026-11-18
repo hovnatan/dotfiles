@@ -1,8 +1,8 @@
 -- URL dispatcher: Hammerspoon is the default browser; Google Cloud links,
 -- AWS console and login (CLI sign-in, SSO), work URLs, Slack's own domains
 -- and anything clicked in a work app (Slack) open in the work Chrome
--- profile, everything else in the default one. Only links from outside
--- Chrome hit this.
+-- profile, everything else in the default one, each link in a new window.
+-- Only links from outside Chrome hit this.
 --
 --   click --> httpCallback --> isWorkLink(host, url) --or--> source app is
 --                                 GCLOUD_HOSTS / auth       a work app (Slack)
@@ -116,12 +116,10 @@ local function isWorkURL(url)
   return false
 end
 
+-- A window of its own, not a tab in the profile's last window. Without a
+-- profile in the config Chrome opens the window in the profile it used last.
 local function openInChrome(url, profile)
-  if profile then
-    chrome.launchWithProfile(profile, url, true)
-  else
-    hs.urlevent.openURLWithBundle(url, chrome.BUNDLE_ID)
-  end
+  chrome.open({ profile = profile, url = url, newWindow = true, raise = true })
 end
 
 -- Whether the link itself is work, from its host and URL alone. The source
