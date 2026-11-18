@@ -10,14 +10,16 @@
 --   long break due    both      +2m       on purple
 --
 -- The clock is coloured badge or no badge; the times since each rest are
--- in the menu. The timing and its settings are eye_breaks_core.lua (the
+-- in the menu. The badge stays down while an app keeps the display awake
+-- (a playing video): the break is as due, but not in the way. The timing and its settings are eye_breaks_core.lua (the
 -- state machine is drawn there); this file is its senses and its drawing:
 --
 --   hs.timer, every 30 s (1 s during a break), +
 --   and each lock and unlock as it happens ----+
 --   hs.host.idleTime, lock watcher, -----------+--> core.tick --> events --> log, sound
 --   display_wake (is a video keeping the       |
---   display awake? then idle is not away)      |
+--   display awake? then idle is not away,      |
+--   and the badge stays down)                  |
 --                                              |
 --   badge click, menu clicks, the break -------+--> core.dueBreakNow / skip /
 --   screen's Skip button, Esc                  |    setBadge / ...
@@ -394,7 +396,8 @@ local function playReturnSound()
 end
 
 -- The app keeping the display awake, for the core, which asks at every
--- tick of an idle stretch: pmset is run at most once in TICK seconds.
+-- tick of an idle stretch, and at every tick with the badge wanted: pmset
+-- is run at most once in TICK seconds.
 -- Regular ticks are that far apart anyway; this is for the 1 s ticks of a
 -- break, and the extra ones of a lock. An answer that old is fine either
 -- way round: a video cannot start without input, and one that just ended
@@ -422,8 +425,12 @@ function step()
       if event.sound then
         playReturnSound()
       end
+    elseif event.kind == "badge_hidden" then
+      -- watch.holder is the answer the core just got, here and below.
+      log('badge hidden: %s keeps the display awake (%s "%s")', event.app, watch.holder.kind, watch.holder.name)
+    elseif event.kind == "badge_unhidden" then
+      log("badge no longer hidden: %s let the display go, or no break is due", event.app)
     elseif event.kind == "watching" then
-      -- watch.holder is the answer the core just got.
       log('idle but not away: %s keeps the display awake (%s "%s")', event.app, watch.holder.kind, watch.holder.name)
     elseif event.kind == "watching_ended" then
       log("%s no longer holds the clock (input, lock, or it let the display go)", event.app)
@@ -436,11 +443,14 @@ end
 
 -- --- actions: the menu, the break screen's buttons, and the shell ---------------
 
--- A function that applies `change(now)` to the state, redraws and logs it:
+-- A function that applies `change(now)` to the state, steps and logs it:
 -- `what`, and after it the string `change` returns, if any, for what shows
--- only once it is done. Redraw before log: the screen should follow a click
--- even if the log line cannot be written. With the timer stopped nothing
--- would end a break or move the clock, so an action then only says so.
+-- only once it is done. A step, not only a redraw: whether the badge shows
+-- hangs on what a tick sees (a video playing), and a break skipped under a
+-- video would put it up until the next one. Step before log: the screen
+-- should follow a click even if the log line cannot be written. With the
+-- timer stopped nothing would end a break or move the clock, so an action
+-- then only says so.
 local function action(what, change)
   return function()
     if stopped then
@@ -449,7 +459,7 @@ local function action(what, change)
     end
     local clean = guarded(function()
       local more = change(clock())
-      render()
+      step()
       log("%s%s", what, more or "")
     end)
     if not clean then
@@ -505,6 +515,13 @@ local function menuItems()
       disabled = true,
     },
   }
+  -- Says where the badge is, while a break is due and it is not on screen.
+  if v.hiddenBy then
+    table.insert(items, {
+      title = string.format("Badge hidden: %s keeps the display awake", v.hiddenBy),
+      disabled = true,
+    })
+  end
   -- Says why an idle stretch did not reset the clock. An app named here
   -- when no video was on screen belongs in display_wake.lua's IGNORED.
   if v.watched then
@@ -529,9 +546,12 @@ end
 menu:setMenu(menuItems)
 M.menuItems = menuItems
 
--- The first draw makes the timer; the lock watcher's ticks stop it on an
--- error, so it starts after.
-render()
+-- The timer first, which a step that raises stops (tick, above). Then the
+-- first step, which draws: a step and not only a draw, so that a badge a
+-- video hides is not up until the first tick. The lock watcher's ticks
+-- stop the timer too, so it starts after.
+schedule(TICK)
+tick()
 M.lockWatcher:start()
 
 return M

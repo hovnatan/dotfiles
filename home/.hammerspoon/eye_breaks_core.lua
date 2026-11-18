@@ -55,6 +55,11 @@
 -- for asleepAfter (the Mac slept). There are no office hours, by request:
 -- the clocks run, and the badge follows them, on every day and at any hour.
 --
+-- An app keeping the display awake is someone watching (a video, a call).
+-- That is no rest, so the clocks run on; but the badge stays down over it,
+-- by request, and is back when the app lets the display go. The menu-bar
+-- clock keeps its colour all the while.
+--
 --   tick at     idle  locked   result (awayAfter 5 min; a break asked for at
 --                              11:20:00)
 --   11:20:30     30 s   no     break ends, the rest clock restarts ("break_done")
@@ -110,6 +115,19 @@ local function countdown(seconds)
 end
 local function when(seconds)
   return seconds > 0 and "due in " .. M.fmt(seconds + 59) or M.fmt(-seconds) .. " overdue"
+end
+
+-- The break that is due at `now`: "long" (which wins when both are),
+-- "short", or nil when none is, as under a break screen. And after it the
+-- seconds until the short and the long one are due, 0 or less once they are.
+local function dueAt(s, now)
+  local shortIn = s.cfg.breakAfter - (now - s.lastRestAt)
+  local longIn = s.cfg.longBreakAfter - (now - s.lastLongRestAt)
+  local due = nil
+  if not s.onBreak then
+    due = longIn <= 0 and "long" or shortIn <= 0 and "short" or nil
+  end
+  return due, shortIn, longIn
 end
 
 -- Whether a break asked for at `now` is the long one.
@@ -211,6 +229,8 @@ end
 -- sounds:
 --   { kind = "break_done", long = <bool> }     a long break is a long rest
 --   { kind = "returned", away = <s>, sound = <bool>, longRest = <bool> }
+--   { kind = "badge_hidden", app = <name> }    the badge is down over what
+--   { kind = "badge_unhidden", app = <name> }  that app shows; and no longer
 --   { kind = "watching", app = <name> }        idle, but not away: see below
 --   { kind = "watching_ended", app = <name> }
 function M.tick(s, obs)
@@ -218,15 +238,28 @@ function M.tick(s, obs)
   local gap = now - s.lastTickAt
   s.lastTickAt = now
 
-  -- Watching: idle for awayAfter, but an app keeps the display awake.
-  -- obs.watching() costs a process, so it is asked only once idle is that
-  -- long, and not under a lock or after sleep, which are away whatever
-  -- plays.
+  -- The app keeping the display awake, if any. obs.watching() costs a
+  -- process, so it is asked only when the answer is used: idle is long
+  -- enough to be away, which a video makes it not; or the badge would be
+  -- up, which a video keeps down. And not under a lock or after sleep,
+  -- which are away whatever plays.
   local asleep = gap >= cfg.asleepAfter
-  local watching = nil
-  if obs.idle >= cfg.awayAfter and not obs.locked and not asleep then
-    watching = obs.watching()
+  local idleLong = obs.idle >= cfg.awayAfter
+  local badgeWanted = s.badge and dueAt(s, now) ~= nil
+  local holder = nil
+  if (idleLong or badgeWanted) and not obs.locked and not asleep then
+    holder = obs.watching()
   end
+
+  -- The badge stays down over what is being watched (s.hiding is the app).
+  local hiding = badgeWanted and holder or nil
+  if hiding ~= s.hiding then
+    table.insert(events, { kind = hiding and "badge_hidden" or "badge_unhidden", app = hiding or s.hiding })
+    s.hiding = hiding
+  end
+
+  -- Watching: idle for awayAfter, but an app keeps the display awake.
+  local watching = idleLong and holder or nil
   if watching ~= s.watching then
     table.insert(events, { kind = watching and "watching" or "watching_ended", app = watching or s.watching })
     -- A new stretch starts where the idle time did.
@@ -337,20 +370,20 @@ end
 --                "short" (breakAfter since the last rest) or "long" (which
 --                wins); nil when none is, as under a break screen. It
 --                colours the badge and the menu-bar clock.
---   badge        whether the badge is up: a break is due, and the badge is
---                switched on
+--   badge        whether the badge is up: a break is due, the badge is
+--                switched on, and nothing hides it
+--   hiddenBy     the app whose video (or call) the badge stays down over,
+--                as of the last tick; nil when the badge is not wanted
 --   watched      { app = <name>, from = <epoch s>, to = <epoch s> }: the
 --                last idle stretch that was not rest because that app kept
 --                the display awake. Only while it explains the clock, i.e.
 --                until the next rest; else nil.
 --   badgeOn      the badge's toggle, for the menu
 function M.view(s, now)
-  local since, sinceLong = now - s.lastRestAt, now - s.lastLongRestAt
-  -- Seconds until each break is due; 0 or less once it is.
-  local shortIn, longIn = s.cfg.breakAfter - since, s.cfg.longBreakAfter - sinceLong
+  local due, shortIn, longIn = dueAt(s, now)
   local v = {
-    since = since,
-    sinceLong = sinceLong,
+    since = now - s.lastRestAt,
+    sinceLong = now - s.lastLongRestAt,
     shortWhen = when(shortIn),
     longWhen = when(longIn),
     badgeOn = s.badge,
@@ -366,9 +399,11 @@ function M.view(s, now)
 
   -- The number is the due break's, the long one's when both are; with
   -- neither due, the nearer one's.
-  v.due = longIn <= 0 and "long" or shortIn <= 0 and "short" or nil
-  v.title = countdown(v.due == "long" and longIn or math.min(shortIn, longIn))
-  v.badge = s.badge and v.due ~= nil
+  v.due = due
+  v.title = countdown(due == "long" and longIn or math.min(shortIn, longIn))
+  local wanted = s.badge and due ~= nil
+  v.hiddenBy = wanted and s.hiding or nil
+  v.badge = wanted and not v.hiddenBy
   return v
 end
 

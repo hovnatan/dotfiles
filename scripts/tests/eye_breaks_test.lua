@@ -381,7 +381,8 @@ local function chrome()
   return "Google Chrome"
 end
 -- No input from 10:00, and Chrome keeps the display awake until 30:00.
-expect(work(s, at(10), at(30), { idleSince = at(10), watching = chrome }), "watching@900")
+-- From 15:00 that is 5 min idle, and a break is due: both ask about Chrome.
+expect(work(s, at(10), at(30), { idleSince = at(10), watching = chrome }), "badge_hidden@900 watching@900")
 eq(asked, 181, "asked once a tick from 5 min idle on (181 ticks), not before: times asked")
 v = core.view(s, at(30))
 eq(v.since, 1800, "the clock ran through the video: since")
@@ -391,7 +392,7 @@ check(
   "the view says who held the clock, and from when to when"
 )
 -- The video ends; still no input. Away 5 min after its end, not at once.
-expect(work(s, at(30), at(34, 55), { idleSince = at(10) }), "watching_ended@1805")
+expect(work(s, at(30), at(34, 55), { idleSince = at(10) }), "badge_unhidden@1805 watching_ended@1805")
 eq(core.view(s, at(34, 55)).since, 2095, "4 min 55 s after the video the clock still runs: since")
 expect(work(s, at(34, 55), at(35), { idleSince = at(10) }), "")
 eq(core.view(s, at(35)).since, 0, "5 min after the video it is rest: since")
@@ -408,6 +409,37 @@ expect(work(s, at(16), at(16, 5), { watching = chrome }), "watching_ended@965")
 v = core.view(s, at(16, 5))
 eq(v.since, 965, "no rest came of it: since")
 eq(v.watched and v.watched.to, at(16), "the stretch is still shown once it is over: its end")
+
+-- --- a video keeps the badge down; the clock and the title's colour stay ------
+s = start("a video hides the badge")
+work(s, at(0), at(20))
+eq(badgeLine(core.view(s, at(20))), "+5m short", "the badge, 5 min overdue, before the video")
+-- A video plays from 20:00 to 22:00, with a key pressed now and then.
+asked = 0
+expect(work(s, at(20), at(22), { watching = chrome }), "badge_hidden@1205")
+eq(asked, 24, "asked once a tick while the badge is wanted: times asked")
+v = core.view(s, at(22))
+eq(badgeLine(v), "hidden", "the badge over the video")
+eq(v.hiddenBy, "Google Chrome", "the app the menu names")
+eq(v.due, "short", "the break is as due")
+eq(v.title, "+7m", "and the title counts on")
+expect(work(s, at(22), at(22, 5)), "badge_unhidden@1325")
+v = core.view(s, at(22, 5))
+eq(badgeLine(v), "+7m short", "the badge is back when the video ends")
+eq(v.hiddenBy, nil, "and nothing hides it")
+-- Switched off, the badge is not wanted, and nobody is asked.
+core.setBadge(s, false)
+asked = 0
+expect(work(s, at(22, 5), at(23), { watching = chrome }), "")
+eq(asked, 0, "not asked with the badge switched off: times asked")
+-- A break asked for under the video: its screen comes up, the badge is not
+-- wanted, and it comes back hidden once the break was skipped.
+core.setBadge(s, true)
+work(s, at(23), at(23, 5), { watching = chrome })
+core.dueBreakNow(s, at(23, 5))
+expect(work(s, at(23, 5), at(23, 10), { watching = chrome }), "badge_unhidden@1390")
+core.skip(s, at(23, 10))
+expect(work(s, at(23, 10), at(23, 15), { watching = chrome }), "badge_hidden@1395")
 
 -- --- the question costs a process: not asked with input, a lock, or sleep ----
 s = start("watching is asked only when idle")
