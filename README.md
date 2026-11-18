@@ -175,10 +175,11 @@ and the fleet policy in `claude_tmux_session/fleet.md` stay separate steps.
 Starts a manager tmux session `manager` at boot: Claude Code with
 permissions bypassed, started in `~/.dotfiles/claude_tmux_session`. Nothing
 watches it after: a manager that quits leaves its shell at a prompt, the
-session up, until you bring it back (below). Ask it (e.g. over Remote Control) to open other
-sessions: per `claude_tmux_session/AGENTS.md` it opens a tmux session `<name>` in a folder
-and starts claude there, in auto permission mode (permissions bypassed only on explicit
-request).
+session up, until you bring it back (below). Ask it (e.g. over Remote Control) to open
+other sessions: per the `tmux-session` skill (`home/.claude/skills/tmux-session/`, which
+any claude on any machine follows, not the manager alone) it opens a tmux session `<name>`
+in a folder and starts claude there, or resumes a named conversation, in auto permission
+mode (permissions bypassed only on explicit request).
 `/resume` and `/rename` are yours from there. No session is
 recreated when it exits, and the service's restarts and stops leave every
 session alone. Opt-in per machine:
@@ -195,18 +196,32 @@ keeps the session, and `claude --resume` there brings it back. The boot start
 opens a new conversation. Remote Control and the agent view are set for every
 claude in `home/.claude/settings.json`.
 
+A claude is named `<machine>/<session>` (`vm/manager`), which is what Remote Control and
+a phone notification show; the tmux session is `<session>` alone. `<machine>` is what
+`scripts/machine_name.sh` prints: the machine's host name up to its first dot, or, for a
+machine whose host name says nothing (a Mac's is `Mac`), the one line of
+`~/.config/dotfiles/machine-name`, kept per machine in the personal private repo
+(`machines/<name>/home/.config/dotfiles/machine-name`). The ssh tab titles of fish, zsh
+and nvim, and fish's prompt, show the same name.
+
 To also run a Remote Control server (`claude remote-control`) in a second window
-of `manager`, name its folder in a machine-local file, as an absolute path. With
-no file there is no window; a path that is not a folder fails the start. The next
-start of a `manager` session reads it. Answer two one-time prompts first, or the
-server waits at them, invisible in its detached window: run `claude` in that folder
-and accept the trust dialog, then `claude remote-control` and answer
+of `manager`, name its folder in `~/.config/claude-tmux/remote-control-dir`, as an
+absolute path. With no file there is no window; a path that is not a folder fails the
+start. The next start of a `manager` session reads it. Answer two one-time prompts
+first, or the server waits at them, invisible in its detached window: run `claude` in
+that folder and accept the trust dialog, then `claude remote-control` and answer
 `Enable Remote Control?` with `y`.
 
+Keep the file in the personal private repo, one per machine, where the installer links
+its directory into `~/.config` (a directory already there by hand is reported, and
+goes first):
+
 ```bash
-mkdir -p ~/.config/claude-tmux
-echo "$HOME/<folder>" >~/.config/claude-tmux/remote-control-dir
+d=~/.dotfiles-private/machines/<name>/home/.config/claude-tmux
+mkdir -p "$d" && echo "$HOME/<folder>" >"$d/remote-control-dir"
 ```
+
+On a machine without that repo, write `~/.config/claude-tmux/remote-control-dir` by hand.
 
 ```bash
 tmux attach -t manager                 # attach (any session name works)

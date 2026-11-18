@@ -234,7 +234,7 @@ main() {
   [ "$(uname)" = "Darwin" ] && echo "  hammerspoon: hs -c 'hs.reload()'"
   echo "  shells:      exec zsh"
   [ -e ~/.config/systemd/user/claude-tmux.service ] \
-    && echo "  claude:      /exit in a session's claude, wait for its shell prompt, then claude --resume <id> -n <host>/<name> there, starts it afresh (a new binary, settings, hooks)"
+    && echo "  claude:      /exit in a session's claude, wait for its shell prompt, then claude --resume <id> -n $(~/.dotfiles/scripts/machine_name.sh)/<name> there, starts it afresh (a new binary, settings, hooks)"
   return "$status"
 }
 

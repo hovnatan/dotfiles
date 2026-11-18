@@ -38,15 +38,17 @@ local title = "nvim: %t%{&modified ? ' +' : ''}"
 -- The title leads with where nvim runs, as the fish and zsh titles do:
 -- over ssh the machine ("(<host>) nvim: ..."), else "(local) nvim: ...":
 -- nvim's own title replaces theirs, so without it a remote nvim tab read
--- like a local one. Host is the hostname up to its first dot; fish's
--- fish_prompt_host override is a fish-only variable nvim cannot see. Not
+-- like a local one. Host is the machine's name by the rule of
+-- scripts/machine_name.sh: the line of its file, else the hostname up to its
+-- first dot. Not
 -- inside tmux: there the title names the window in the bar, every window
 -- there is on this machine, and tmux's set-titles-string (with its own
 -- lead) titles the terminal.
 if not vim.env.TMUX then
   local where = "local"
   if vim.env.SSH_CONNECTION then
-    where = vim.fn.hostname():gsub("%..*", "")
+    local file = vim.fn.expand("~/.config/dotfiles/machine-name")
+    where = vim.fn.filereadable(file) == 1 and vim.fn.readfile(file)[1] or vim.fn.hostname():gsub("%..*", "")
   end
   title = "(" .. where .. ") " .. title
 end

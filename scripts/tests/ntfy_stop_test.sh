@@ -119,8 +119,10 @@ BAD_URL="http://127.0.0.1:9" # discard port: nothing listens -> curl exit 7
 
 # --- throwaway HOME and tmux server ------------------------------------------
 
-mkdir -p "$H/.config/claude-ntfy"
+mkdir -p "$H/.config/claude-ntfy" "$H/.config/dotfiles"
 echo testtopic >"$H/.config/claude-ntfy/topic"
+# The machine's name, the first half of a push's title (scripts/machine_name.sh).
+echo testbox >"$H/.config/dotfiles/machine-name"
 touch "$WORK/transcript"
 
 t -f /dev/null new-session -d -s keepalive 'sleep 1000'
@@ -367,7 +369,7 @@ has "(\$$sid_tfwait)" "wait: FAILED, tmux -S $SOCK: protocol version mismatch" &
 
 posts=$(grep -c '^POST /testtopic' "$WORK/listener.out")
 [ "$posts" = 3 ] && pass "listener got exactly 3 pushes" || fail "listener got $posts pushes"
-grep -qF "title='CC: $(hostname)/push-ok'" "$WORK/listener.out" && pass "push title names host and session" || fail "push title wrong: $(head -1 "$WORK/listener.out")"
+grep -qF "title='CC: testbox/push-ok'" "$WORK/listener.out" && pass "push title names machine and session" || fail "push title wrong: $(head -1 "$WORK/listener.out")"
 ntfy_log | grep -q testtopic && fail "the topic leaked into the log" || pass "topic never logged"
 
 # Where and how it logs: with the repo's other event logs, UTC-stamped, and

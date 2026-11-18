@@ -7,37 +7,25 @@ started at boot by claude-tmux.service (see
 permissions bypassed. Its job is to open tmux sessions and start claude in
 them; the user takes it from there, with `/resume`, `/rename` and the rest.
 
-## The setup
+Asked to open, resume, restart or close a session: load the `tmux-session`
+skill first. It holds how a session is made and kept; this file holds what
+is the manager's own.
 
-- All sessions live on the default tmux server, so plain `tmux ...` reaches
-  them, beside anything started there by hand. `tmux kill-server` ends every
-  one of them.
+## The manager
+
 - Only the "manager" session comes from systemd: the service starts it at
   boot, and on `systemctl --user start claude-tmux` when its session is
   missing. Nothing watches it after; nothing recreates it, or any other
   session, that exits. Every other session is created on demand -- by you,
   when asked. Stopping or restarting the service leaves every session alone.
-- Every claude on this machine starts with Remote Control on, the agent view
-  off and auto permission mode, from `home/.claude/settings.json`: no flags to
-  pass for those.
-- What a pane starts ends with it, in every tmux pane on this machine. Each
-  pane runs in a systemd scope of its own, and when a pane closes, however it
-  closes (its program exits, `kill-pane`, `kill-window`, its session closing),
-  its scope is stopped (`home/.config/tmux/reap-panes.sh`, logged in the tmux
-  hooks' log): a `setsid nohup` job, a proxy, a watcher started from a pane
-  does not survive it. A job meant to outlive its pane runs as a unit of its
-  own: `systemd-run --user --unit=<name> <command>` (then
-  `systemctl --user status <name>`, `journalctl --user -u <name>`).
-- Window 0 of a session is a plain shell, and claude is a command typed into
-  it. Claude quitting or crashing leaves that shell at its prompt and the
-  session up, windows and clients included, until claude is typed in again.
-- A session may hold more windows: the user opens nvim or a shell beside it
-  (`prefix C`; Cmd-J/K switch). Keep to one `claude` per session, the
-  manager's Remote Control window aside.
+- A manager claude that quits stays at its shell; the user resumes it there,
+  with `--dangerously-skip-permissions`. With the session gone,
+  `systemctl --user start claude-tmux` starts it again. That start, and each
+  boot, opens a NEW conversation; the earlier ones stay on disk to resume.
 - On a machine whose `~/.config/claude-tmux/remote-control-dir` names a folder,
   the manager's start also opens window `remote-control` there, with
-  `claude remote-control --spawn=same-dir --name <hostname>/remote-control` typed
-  into its shell.
+  `claude remote-control --spawn=same-dir --name <machine>/remote-control` typed
+  into its shell, the one session that holds a second claude.
   It lets claude.ai and the phone start sessions in that folder, in the
   settings' permission mode, and those sessions are not tmux sessions. A server
   that exits stays at its shell, nothing restarts it, and a `manager` session
@@ -47,22 +35,14 @@ them; the user takes it from there, with `/resume`, `/rename` and the rest.
   bring sessions back after a reboot, run
   `~/.dotfiles/scripts/tmux_server_arrangement.py restore`: shells in their
   old directories, no claude in them (README "tmux snapshots").
-- A manager claude that quits stays at its shell; the user resumes it there,
-  with `--dangerously-skip-permissions`. With the session gone,
-  `systemctl --user start claude-tmux` starts it again. That start, and each
-  boot, opens a NEW conversation; the earlier ones stay on disk to resume.
-
-## Opening a session
-
-Start claude with `--dangerously-skip-permissions` only when the user
-explicitly asks for a session with permissions bypassed -- never choose it
-yourself.
-
-A folder claude has not opened before stops at a trust prompt, with or without
-that flag, and its default is `No, exit`, so look at the pane after launching.
-Answer yes (`Down`, then `Enter`) only for a folder the user named in the
-request; for any other, ask them first. Trusting a folder lets its own settings
-and hooks run on this machine.
+- What a pane starts ends with it, in every tmux pane on this machine. Each
+  pane runs in a systemd scope of its own, and when a pane closes, however it
+  closes (its program exits, `kill-pane`, `kill-window`, its session closing),
+  its scope is stopped (`home/.config/tmux/reap-panes.sh`, logged in the tmux
+  hooks' log): a `setsid nohup` job, a proxy, a watcher started from a pane
+  does not survive it. A job meant to outlive its pane runs as a unit of its
+  own: `systemd-run --user --unit=<name> <command>` (then
+  `systemctl --user status <name>`, `journalctl --user -u <name>`).
 
 ## Daily work log
 
@@ -81,13 +61,9 @@ setup, or a GPU box.
 
 ## Rules
 
-- Do not kill or restart sessions you were not asked to touch, and do not
-  kill the tmux server (it hosts all of them).
-- Session `tmux-history`, on every server, is that server's history
-  tracker (`scripts/tmux_history.py`, README "tmux history"): not a session
-  to open windows or start claude in, and it ends on its own.
 - Permissions bypass is reserved for this manager session and for
   sessions the user explicitly requested with it
   (`--dangerously-skip-permissions`).
-- Every session is an interactive Claude Code process in a tmux window; the
-  background agents (`claude --bg`, `claude agents`) are off on this machine.
+- Nothing asks before this session's commands run, so one rule of the skill
+  is repeated here: touch only the session the user named, and leave the
+  tmux server running (it hosts all of them).

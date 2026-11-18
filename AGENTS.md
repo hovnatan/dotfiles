@@ -31,8 +31,9 @@ It is kept short on purpose - every line here is paid on every session.
   decides when the pre-push hook runs the test. Tests are safe beside live sessions.
 - This repo is public, commit messages included. Host names, IPs, tailnet
   names and internal documents go in the private repos (`~/.dotfiles-private`
-  personal, `~/.hov-dotfiles-private` work; see CONTEXT.md) or in
-  machine-local state (fish universal variables, `~/.ssh/local_config`);
+  personal, with each machine's own files such as `~/.ssh/local_config`;
+  `~/.hov-dotfiles-private` work; see CONTEXT.md) or in machine-local state
+  (fish universal variables);
   tracked files and commits use placeholders (`<host>`, `vm`). Removing one
   after a push means rewriting history and force-pushing.
 - `scripts/check.sh` runs every check CI runs, and the `pre-push` hook runs it on

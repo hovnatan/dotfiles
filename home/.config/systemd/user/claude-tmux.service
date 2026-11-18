@@ -16,8 +16,9 @@ Type=oneshot
 RemainAfterExit=no
 
 # The one managed session is "manager", started in
-# ~/.dotfiles/claude_tmux_session; the AGENTS.md there documents how that
-# session starts the other Claude Code sessions on this server.
+# ~/.dotfiles/claude_tmux_session; the AGENTS.md there says what is the
+# manager's own, and the tmux-session skill (home/.claude/skills/) how it
+# starts the other Claude Code sessions on this server.
 
 # The sessions run on the default tmux server, beside anything started there
 # by hand. Attach with: tmux attach -t <name>

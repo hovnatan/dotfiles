@@ -28,12 +28,35 @@ into a machine from elsewhere.
 _Avoid_: Remote, second computer
 
 **Machine-local file**:
-A file that lives on one machine only and is never tracked: the git email in
-`~/.gitconfig`, `~/.hammerspoon/local_hammerspoon.lua`, `~/.ssh/local_config`,
-`~/.config/claude-tmux/remote-control-dir`, the light/dark links that
-`scripts/appearance.sh` points.
-The tracked counterpart includes or requires it.
-_Avoid_: Private (that means the private companion repo)
+A file that lives on one machine only and is in no repo, written there by
+hand or by a tool: the git email in `~/.gitconfig`, the light/dark links
+that `scripts/appearance.sh` points, fish universal variables.
+The tracked counterpart includes or requires it. A reinstall of the machine
+loses it.
+_Avoid_: Private (that means the private companion repo), per-machine (that
+one is in a repo)
+
+**Machine name**:
+The short name a machine goes by wherever it is shown: prompts, ssh tab
+titles, claude sessions (`<machine>/<session>`), phone notifications. It is
+the line of the per-machine file `~/.config/dotfiles/machine-name` where
+there is one, else the host name up to its first dot;
+`scripts/machine_name.sh` prints it.
+_Avoid_: Host name (the system's own, a generic `Mac` on a Mac), and the
+`<name>` of `machines/<name>/` (the key the install finds a machine's files
+by)
+
+**Per-machine file**:
+A file for one machine only that is kept in the personal private repo, under
+`machines/<name>/home/`, and linked by the install to the same path under
+that machine's `$HOME`: `~/.ssh/local_config`,
+`~/.hammerspoon/local_hammerspoon.lua`, the ntfy topic in
+`~/.config/claude-ntfy/`, `~/.config/claude-tmux/remote-control-dir`,
+`~/.config/dotfiles/machine-name`.
+An update carries it, and a reinstall brings it back. On a machine with no
+directory under `machines/`, the same path written by hand is a
+machine-local file.
+_Avoid_: Machine-local (that one is in no repo)
 
 **Private repo**:
 One of two optional companion clones for anything that should not be public,

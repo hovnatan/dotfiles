@@ -224,8 +224,11 @@ if c1=$(claude_of manager); then pass "claude (pid $c1) is the shell's child"; e
   exit 1
 fi
 args=$(cat "$WORK/args.$c1")
-[ "$args" = "-n $(hostname)/manager --dangerously-skip-permissions " ] \
-  && pass "typed with its name and permission mode" || fail "claude's args: $args"
+# No file names this machine yet, so it goes by its host name
+# (scripts/machine_name.sh).
+host=$(hostname)
+[ "$args" = "-n ${host%%.*}/manager --dangerously-skip-permissions " ] \
+  && pass "typed with its name, the host's, and permission mode" || fail "claude's args: $args"
 [ "$(t list-windows -t =manager: -F '#W' | wc -l)" = 1 ] && pass "no folder named, no Remote Control window" \
   || fail "windows with no folder named: $(t list-windows -t =manager: -F '#W' | tr '\n' ' ')"
 
@@ -281,9 +284,30 @@ for bad in "$WORK/no-such-folder" "relative/folder"; do
     || fail "a file holding $bad: exit $rc, sessions '$(t ls 2>&1)', output: $out"
 done
 echo "$WORK/rc" >"$RC_FILE"
+
+# The machine named by its file, for the rest of the run: both claudes of the
+# next start go by it. A file that is not one word stops the start, like a
+# folder that is none.
+NAME_FILE="$H/.config/dotfiles/machine-name"
+mkdir -p "${NAME_FILE%/*}"
+echo "two words" >"$NAME_FILE"
+out=$(HOME="$H" PATH="$H/.local/bin:$PATH" "$REPO/scripts/claude_manager_start.sh" 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && [[ "$out" == *"$NAME_FILE holds 'two words'"* ]] && ! t has-session -t =manager 2>/dev/null \
+  && pass "a machine name of two words stops the start and says so" \
+  || fail "a machine name of two words: exit $rc, sessions '$(t ls 2>&1)', output: $out"
+echo testbox >"$NAME_FILE"
+
 start_unit
+if c4=$(claude_of manager); then
+  [ "$(cat "$WORK/args.$c4")" = "-n testbox/manager --dangerously-skip-permissions " ] \
+    && pass "the manager's claude goes by the machine's name from its file" \
+    || fail "the manager's args with the machine named: $(cat "$WORK/args.$c4")"
+else
+  fail "no claude under window 0's shell after the machine was named"
+fi
 if c3=$(claude_of manager remote-control); then
-  [ "$(cat "$WORK/args.$c3")" = "remote-control --spawn=same-dir --name $(hostname)/remote-control " ] \
+  [ "$(cat "$WORK/args.$c3")" = "remote-control --spawn=same-dir --name testbox/remote-control " ] \
     && pass "window remote-control runs claude remote-control under its shell" \
     || fail "the Remote Control window's args: $(cat "$WORK/args.$c3")"
 else

@@ -37,7 +37,8 @@
 # the push. The human-readable name
 # is resolved in hook mode for the log lines, and again at push time for
 # the title (a /rename may have labeled the session meanwhile), in the
-# form <hostname>/<name>.
+# form <machine>/<name>, the name claude's own session goes by
+# (scripts/machine_name.sh).
 #
 # The topic is read from ~/.config/claude-ntfy/topic, which stays OUTSIDE
 # this repo on purpose: an ntfy.sh topic name is a capability -- anyone
@@ -268,8 +269,12 @@ if [ "${1:-}" = --wait ]; then
     note "$who" "wait: session or claude's pane $pane gone, no push"
     exit 0
   fi
+  if ! machine=$("$here/../../scripts/machine_name.sh" 2>&1); then
+    note "$who" "wait: FAILED, $machine; no push"
+    exit 1
+  fi
   curl -sf --max-time 10 \
-    -H "Title: CC: $(hostname)/$session" \
+    -H "Title: CC: $machine/$session" \
     -H "Tags: speech_balloon" \
     -d "finished a turn ${DEBOUNCE_SECONDS}s ago and is still unwatched" \
     "$NTFY_URL/$topic" >/dev/null

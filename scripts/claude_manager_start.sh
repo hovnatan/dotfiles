@@ -16,9 +16,10 @@ set -euo pipefail
 
 session=manager
 dir="$HOME/.dotfiles/claude_tmux_session"
-# Machine-local, one line, an absolute path: the folder this machine's Remote
-# Control server runs from. No file, no window; a file naming no folder stops
-# the start below, before anything opens, so fixing it and starting again works.
+# A per-machine file (CONTEXT.md), one line, an absolute path: the folder this
+# machine's Remote Control server runs from. No file, no window; a file naming
+# no folder stops the start below, before anything opens, so fixing it and
+# starting again works.
 rc_file="$HOME/.config/claude-tmux/remote-control-dir"
 
 # shellcheck source=scripts/lib/event_log.sh
@@ -41,6 +42,14 @@ if [ -e "$rc_file" ]; then
   }
 fi
 
+# The first half of each claude's name here ("mbp/manager"). Asked before
+# anything opens, like the folder above: a file that names the machine badly
+# stops the start, and machine_name.sh has said why on stderr.
+machine=$("${0%/*}/machine_name.sh") || {
+  log "FAILED: scripts/machine_name.sh could not name this machine; see its message, then start again"
+  exit 1
+}
+
 # In a scope of its own, or a server started here would be in the service's
 # cgroup, and `systemctl --user stop|restart claude-tmux` would take every
 # session with it. tmux >= 3.7 marks each pane's scope PartOf= its server's unit:
@@ -53,7 +62,7 @@ fi
 systemd-run --user --scope --quiet --collect tmux new-session -d -s "$session" -c "$dir"
 
 # Typed at once, before the shell has drawn a prompt: the terminal holds the keys.
-tmux send-keys -t "=$session:0" -l -- "claude -n $(hostname)/$session --dangerously-skip-permissions"
+tmux send-keys -t "=$session:0" -l -- "claude -n $machine/$session --dangerously-skip-permissions"
 tmux send-keys -t "=$session:0" Enter
 log "session $session opened in $dir, claude typed"
 
@@ -62,6 +71,6 @@ log "session $session opened in $dir, claude typed"
 # repo the server otherwise asks for a mode, in a window nobody is watching.
 [ -n "$rc_dir" ] || exit 0
 window=$(tmux new-window -d -P -F '#{window_id}' -t "=$session:" -n remote-control -c "$rc_dir")
-tmux send-keys -t "$window" -l -- "claude remote-control --spawn=same-dir --name $(hostname)/remote-control"
+tmux send-keys -t "$window" -l -- "claude remote-control --spawn=same-dir --name $machine/remote-control"
 tmux send-keys -t "$window" Enter
 log "window remote-control opened in $rc_dir, claude remote-control typed"
