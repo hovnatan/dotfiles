@@ -386,7 +386,12 @@ local function chrome()
 end
 -- No input from 10:00, and Chrome keeps the display awake until 30:00.
 -- From 15:00 that is 5 min idle, and a break is due: both ask about Chrome.
-expect(work(s, at(10), at(30), { idleSince = at(10), watching = chrome }), "badge_hidden@900 watching@900")
+-- The break came due under the video, so the badge shows at once, for 5 s,
+-- and 15 min later again.
+expect(
+  work(s, at(10), at(30), { idleSince = at(10), watching = chrome }),
+  "badge_hidden@900 badge_glimpse@900 watching@900 badge_glimpse@1800"
+)
 eq(asked, 181, "asked once a tick from 5 min idle on (181 ticks), not before: times asked")
 v = core.view(s, at(30))
 eq(v.since, 1800, "the clock ran through the video: since")
@@ -444,6 +449,68 @@ core.dueBreakNow(s, at(23, 5))
 expect(work(s, at(23, 5), at(23, 10), { watching = chrome }), "badge_unhidden@1390")
 core.skip(s, at(23, 10))
 expect(work(s, at(23, 10), at(23, 15), { watching = chrome }), "badge_hidden@1395")
+
+-- --- under a video the badge comes up for 5 s every 15 min --------------------
+s = start("a glimpse of the badge under a video")
+work(s, at(0), at(20))
+-- The badge was up until 20:00, when a film starts; a key now and then.
+expect(work(s, at(20), at(34, 55), { watching = chrome }), "badge_hidden@1205")
+eq(badgeLine(core.view(s, at(34, 55))), "hidden", "down for 14 min 55 s: the badge")
+-- 15 min after it was last up: a glimpse.
+expect(tick(s, at(35), { watching = chrome }), "badge_glimpse@2100")
+v = core.view(s, at(35))
+eq(badgeLine(v), "+20m short", "the badge at the glimpse")
+eq(v.glimpse, true, "which asks for ticks by the second: glimpse")
+eq(v.hiddenBy, "Google Chrome", "the menu still names the app")
+-- As eye_breaks.lua ticks it: by the second, and down on the fifth.
+for second = 1, 4 do
+  expect(tick(s, at(35, second), { watching = chrome }), "")
+end
+eq(badgeLine(core.view(s, at(35, 4))), "+20m short", "still up 4 s in")
+expect(tick(s, at(35, 5), { watching = chrome }), "")
+v = core.view(s, at(35, 5))
+eq(badgeLine(v), "hidden", "down again after 5 s")
+eq(v.glimpse, false, "and the slow ticks are back: glimpse")
+-- The next one 15 min after that one began.
+expect(work(s, at(35, 5), at(49, 55), { watching = chrome }), "")
+expect(tick(s, at(50), { watching = chrome }), "badge_glimpse@3000")
+-- The film ends during a glimpse: the badge stays, now for good.
+expect(tick(s, at(50, 2)), "badge_unhidden@3002")
+v = core.view(s, at(50, 2))
+eq(badgeLine(v), "+35m short", "the badge after the film")
+eq(v.glimpse, false, "is no glimpse")
+eq(badgeLine(core.view(s, at(50, 30))), "+35m short", "and is still up half a minute on")
+-- Another film at once: the badge was just up (50:02), so 15 min pass first.
+expect(work(s, at(50, 2), at(64, 57), { watching = chrome }), "badge_hidden@3007")
+expect(tick(s, at(65, 2), { watching = chrome }), "badge_glimpse@3902")
+-- A click on the badge in its glimpse brings the break; skipped, the badge
+-- is down again, and not due up for another 15 min.
+core.dueBreakNow(s, at(65, 3))
+expect(tick(s, at(65, 4), { watching = chrome }), "badge_unhidden@3904")
+eq(core.view(s, at(65, 4)).glimpse, nil, "no glimpse under a break screen")
+core.skip(s, at(65, 5))
+expect(work(s, at(65, 5), at(80), { watching = chrome }), "badge_hidden@3910")
+eq(badgeLine(core.view(s, at(80))), "hidden", "14 min 58 s after the last glimpse began: the badge")
+-- By now the long break is due (75 min), and the glimpse is in its colour.
+expect(work(s, at(80), at(80, 10), { watching = chrome }), "badge_glimpse@4805")
+eq(badgeLine(core.view(s, at(80, 5))), "+5m long", "the badge at a glimpse with the long break due")
+-- Switched off, the badge is not wanted, and there is nothing to glimpse.
+core.setBadge(s, false)
+expect(work(s, at(80, 10), at(100), { watching = chrome }), "badge_unhidden@4815")
+eq(badgeLine(core.view(s, at(100))), "hidden", "switched off, no glimpse in 20 min: the badge")
+
+-- --- a break that comes due under a video shows at once -----------------------
+s = start("due under a video")
+work(s, at(0), at(74))
+eq(badgeLine(core.view(s, at(74))), "+59m short", "the badge was up a minute before the film")
+-- A short break at 74:00, then a film. The long break comes due at 75:00:
+-- the badge has not shown since the rest, so it does not wait out 15 min
+-- from 74:00.
+core.breakNow(s, at(74))
+expect(work(s, at(74), at(74, 30)), "break_done@4470")
+expect(work(s, at(74, 30), at(76), { watching = chrome }), "badge_hidden@4500 badge_glimpse@4500")
+eq(badgeLine(core.view(s, at(75))), "+0m long", "the badge as the long break comes due")
+eq(badgeLine(core.view(s, at(75, 5))), "hidden", "and 5 s later")
 
 -- --- the question costs a process: not asked with input, a lock, or sleep ----
 s = start("watching is asked only when idle")

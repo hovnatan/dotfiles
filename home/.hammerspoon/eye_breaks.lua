@@ -11,11 +11,14 @@
 --
 -- The clock is coloured badge or no badge; the times since each rest are
 -- in the menu. The badge stays down while an app keeps the display awake
--- (a playing video): the break is as due, but not in the way. The timing and its settings are eye_breaks_core.lua (the
--- state machine is drawn there); this file is its senses and its drawing:
+-- (a playing video): the break is as due, but not in the way. It still
+-- comes up for 5 seconds every 15 minutes, so that a film does not bury
+-- it. The timing and its settings are eye_breaks_core.lua (the state
+-- machine is drawn there); this file is its senses and its drawing:
 --
---   hs.timer, every 30 s (1 s during a break), +
---   and each lock and unlock as it happens ----+
+--   hs.timer, every 30 s (1 s during a break,  +
+--   or a glimpse of the badge), and each lock  |
+--   and unlock as it happens ------------------+
 --   hs.host.idleTime, lock watcher, -----------+--> core.tick --> events --> log, sound,
 --                                              |                             phone (ntfy)
 --   display_wake (is a video keeping the       |
@@ -49,7 +52,8 @@ local cfg = core.defaults
 local SETTINGS_KEY = "eye_breaks.state"
 -- Seconds between ticks. Nothing shown is finer than a minute, and a lock
 -- or unlock ticks at once (below), so the regular tick can be slow; the
--- break screen counts down by the second.
+-- break screen counts down by the second, and the badge's 5 s glimpse over
+-- a video ends by it.
 local TICK, BREAK_TICK = 30, 1
 local RETURN_SOUND, RETURN_VOLUME = "Glass", 0.3
 
@@ -402,7 +406,7 @@ local function render()
   drawBadge(v.badge and v.title, v.due)
   drawOverlay(v.overlay)
   save()
-  schedule(v.overlay and BREAK_TICK or TICK)
+  schedule((v.overlay or v.glimpse) and BREAK_TICK or TICK)
   return v
 end
 
@@ -457,6 +461,8 @@ function step()
     elseif event.kind == "badge_hidden" then
       -- watch.holder is the answer the core just got, here and below.
       log('badge hidden: %s keeps the display awake (%s "%s")', event.app, watch.holder.kind, watch.holder.name)
+    elseif event.kind == "badge_glimpse" then
+      log("badge up for %s over %s: not shown for %s", span(cfg.glimpseLength), event.app, span(cfg.glimpseEvery))
     elseif event.kind == "badge_unhidden" then
       log("badge no longer hidden: %s let the display go, or no break is due", event.app)
     elseif event.kind == "watching" then
@@ -551,9 +557,15 @@ local function menuItems()
     },
   }
   -- Says where the badge is, while a break is due and it is not on screen.
+  -- "Badge hidden: Google Chrome keeps the display awake (up 5s every 15m)"
   if v.hiddenBy then
     table.insert(items, {
-      title = string.format("Badge hidden: %s keeps the display awake", v.hiddenBy),
+      title = string.format(
+        "Badge hidden: %s keeps the display awake (up %s every %s)",
+        v.hiddenBy,
+        span(cfg.glimpseLength),
+        span(cfg.glimpseEvery)
+      ),
       disabled = true,
     })
   end

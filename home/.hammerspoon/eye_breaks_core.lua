@@ -58,7 +58,17 @@
 -- An app keeping the display awake is someone watching (a video, a call).
 -- That is no rest, so the clocks run on; but the badge stays down over it,
 -- by request, and is back when the app lets the display go. The menu-bar
--- clock keeps its colour all the while.
+-- clock keeps its colour all the while. Down, the badge still comes up for
+-- glimpseLength (5 s) whenever it has not shown for glimpseEvery (15 min),
+-- also by request: a film should not bury a due break for its two hours.
+--
+--   a film from 20:00, the badge up until then; rested last at 0:00
+--   20:00   down
+--   35:00   up, "+20m", until 35:05
+--   50:00   up, "+35m", until 50:05
+--
+-- A break that comes due under the film has not shown at all since the
+-- rest before it, so its first glimpse is at that moment.
 --
 --   tick at     idle  locked   result (awayAfter 5 min; a break asked for at
 --                              11:20:00)
@@ -86,6 +96,10 @@ M.defaults = {
   -- A short break is due this long after the last rest: the badge comes up,
   -- and the menu-bar clock takes its colour.
   breakAfter = 15 * 60,
+  -- The badge, down over a video: not up for glimpseEvery, it comes up for
+  -- glimpseLength. Long enough to catch the eye, too short to be in the way.
+  glimpseEvery = 15 * 60,
+  glimpseLength = 5,
 }
 
 -- What survives a Hammerspoon reload (M.saved / M.new), and its type.
@@ -138,14 +152,22 @@ end
 -- The eyes rested for `lasted` seconds, until `now` (a break that ran to
 -- its end, or time away): lastRestAt restarts, and the long clock too when
 -- it lasted a long break's length (9 min 55 s away: no; 10 min: yes).
--- Returns whether it was such a long rest.
+-- Returns whether it was such a long rest. The badge has not been up
+-- since (s.badgeUpAt, see M.tick): what it showed was the break before.
 local function rest(s, now, lasted)
   local long = lasted >= s.cfg.longBreakLength
   s.lastRestAt = now
+  s.badgeUpAt = nil
   if long then
     s.lastLongRestAt = now
   end
   return long
+end
+
+-- Seconds since the badge last went up, s.badgeUpAt; no end of them when it
+-- has not since the last rest.
+local function sinceBadgeUp(s, now)
+  return now - (s.badgeUpAt or -math.huge)
 end
 
 -- The break on screen, s.onBreak: when it went up, how long its countdown
@@ -232,6 +254,7 @@ end
 --   { kind = "returned", away = <s>, sound = <bool>, longRest = <bool> }
 --   { kind = "badge_hidden", app = <name> }    the badge is down over what
 --   { kind = "badge_unhidden", app = <name> }  that app shows; and no longer
+--   { kind = "badge_glimpse", app = <name> }   down over it, up for a moment
 --   { kind = "watching", app = <name> }        idle, but not away: see below
 --   { kind = "watching_ended", app = <name> }
 function M.tick(s, obs)
@@ -257,6 +280,21 @@ function M.tick(s, obs)
   if hiding ~= s.hiding then
     table.insert(events, { kind = hiding and "badge_hidden" or "badge_unhidden", app = hiding or s.hiding })
     s.hiding = hiding
+  end
+
+  -- Down, it comes up for a glimpse every glimpseEvery. s.badgeUpAt is when
+  -- the badge last went up: the last tick with nothing hiding it, or the
+  -- start of the last glimpse; nil when it has not since the last rest, as
+  -- on a break that came due under the video, which so shows at once. The
+  -- glimpse lasts glimpseLength from there (M.view), and eye_breaks.lua
+  -- ticks by the second to take it down.
+  if not hiding then
+    if badgeWanted then
+      s.badgeUpAt = now
+    end
+  elseif sinceBadgeUp(s, now) >= cfg.glimpseEvery then
+    s.badgeUpAt = now
+    table.insert(events, { kind = "badge_glimpse", app = hiding })
   end
 
   -- Watching: idle for awayAfter, but an app keeps the display awake.
@@ -372,9 +410,13 @@ end
 --                wins); nil when none is, as under a break screen. It
 --                colours the badge and the menu-bar clock.
 --   badge        whether the badge is up: a break is due, the badge is
---                switched on, and nothing hides it
+--                switched on, and nothing hides it, or it does and this is
+--                a glimpse
 --   hiddenBy     the app whose video (or call) the badge stays down over,
 --                as of the last tick; nil when the badge is not wanted
+--   glimpse      whether the badge is up over that app for a moment: the
+--                glimpseLength after it went up. Ticks must then come by
+--                the second, to take it down on time.
 --   watched      { app = <name>, from = <epoch s>, to = <epoch s> }: the
 --                last idle stretch that was not rest because that app kept
 --                the display awake. Only while it explains the clock, i.e.
@@ -404,7 +446,8 @@ function M.view(s, now)
   v.title = countdown(due == "long" and longIn or math.min(shortIn, longIn))
   local wanted = s.badge and due ~= nil
   v.hiddenBy = wanted and s.hiding or nil
-  v.badge = wanted and not v.hiddenBy
+  v.glimpse = v.hiddenBy ~= nil and sinceBadgeUp(s, now) < s.cfg.glimpseLength
+  v.badge = wanted and (not v.hiddenBy or v.glimpse)
   return v
 end
 
