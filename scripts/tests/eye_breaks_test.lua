@@ -20,7 +20,23 @@ local function note(fmt, ...)
 end
 
 local core = require("eye_breaks_core")
-local cfg = core.defaults
+-- The scenarios' own timings, every setting named, and not core.defaults:
+-- those are tuned by taste (the short break went from every 15 min to every
+-- 20, by request), and each time below would move with them. A setting the
+-- core gains or loses fails the check under eq().
+local cfg = {
+  breakLength = 30,
+  breakAfter = 15 * 60,
+  longBreakLength = 10 * 60,
+  longBreakAfter = 75 * 60,
+  awayAfter = 5 * 60,
+  asleepAfter = 2 * 60,
+  returnSoundAfter = 5 * 60,
+  glimpseEvery = 15 * 60,
+  glimpseLength = 5,
+  snoozeFor = 10 * 60,
+  longSnoozeFor = 30 * 60,
+}
 -- Any moment does: the core reads no calendar, only differences of times.
 local T0 = 1800000000
 
@@ -42,6 +58,13 @@ end
 -- eq(core.fmt(1380), "23m", "fmt(1380)"): a check that says what it got.
 local function eq(got, want, what)
   check(got == want, "%s: got %s, expected %s", what, tostring(got), tostring(want))
+end
+
+for key in pairs(core.defaults) do
+  eq(type(cfg[key]), "number", "the test's settings have the core's " .. key)
+end
+for key in pairs(cfg) do
+  eq(type(core.defaults[key]), "number", "the core has the test's setting " .. key)
 end
 
 -- fn(...) must raise, with `pattern` (plain text) in the error.

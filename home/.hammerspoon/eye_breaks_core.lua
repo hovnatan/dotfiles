@@ -12,7 +12,7 @@
 --                   long break that ran to its end, or that long away. A
 --                   short break does not restart it.
 --
--- A short break is due breakAfter (15 min) after the last rest, a long one
+-- A short break is due breakAfter (20 min) after the last rest, a long one
 -- longBreakAfter (75 min) after the last long rest. The menu bar and the
 -- badge show one number, the same in both: the time until the next break
 -- is due, and once one is, how long it has been. (The badge had the time
@@ -20,8 +20,8 @@
 -- a rest: three numbers for one question, so they went, by request.)
 --
 --   since a rest   since a 10 min rest   shown
---   12m            12m                   "3m"    plain: a short break in 3 min
---   44m            1h05m                 "+29m"  red: it is 29 min overdue
+--   17m            17m                   "3m"    plain: a short break in 3 min
+--   49m            1h05m                 "+29m"  red: it is 29 min overdue
 --   8m             1h17m                 "+2m"   purple: the long one is, 2 min
 --
 -- A break screen comes up only when asked for: a click on the badge, or the
@@ -31,8 +31,8 @@
 -- badge's click brings follows the long clock:
 --
 --   since a rest   since a 10 min rest  the break that comes
---   17m            45m                  short, 30 s
---   17m            1h17m                long, 10 min (longBreakAfter is 75 min)
+--   22m            45m                  short, 30 s
+--   22m            1h17m                long, 10 min (longBreakAfter is 75 min)
 --
 -- A long break skipped after a short one's length was a short rest: 40 s
 -- into the second row's break, skip leaves 0m and 1h18m, and the next break
@@ -49,10 +49,10 @@
 -- counts down plain. That is no rest, and the rest clocks run on under it,
 -- so the break comes back as overdue as it really is:
 --
---   rested last at 0:00, snoozed at 20:00
---   19:59   "+4m"   red
---   20:00   "10m"   plain: nothing is due before 30:00
---   30:00   "+15m"  red again: 15 min overdue, not 0
+--   rested last at 0:00, snoozed at 25:00
+--   24:59   "+4m"   red
+--   25:00   "10m"   plain: nothing is due before 35:00
+--   35:00   "+15m"  red again: 15 min overdue, not 0
 --
 --                  asked for (badge click, menu)
 --     +---------+ ---------------------------------------> +----------+
@@ -111,7 +111,7 @@ M.defaults = {
   returnSoundAfter = 5 * 60, -- back from at least this long away: a sound says the clock restarted
   -- A short break is due this long after the last rest: the badge comes up,
   -- and the menu-bar clock takes its colour.
-  breakAfter = 15 * 60,
+  breakAfter = 20 * 60,
   -- The badge, down over a video: not up for glimpseEvery, it comes up for
   -- glimpseLength. Long enough to catch the eye, too short to be in the way.
   glimpseEvery = 15 * 60,

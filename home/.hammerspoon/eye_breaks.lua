@@ -1,7 +1,7 @@
 -- Eye breaks: a menu-bar clock that counts down to the next break, a tab on
 -- the screen's right edge (the badge) while a break is due, and a break
 -- screen when the badge is clicked; no break comes up by itself. A short
--- break, 30 seconds, is due 15 minutes after the last rest; a long one, 10
+-- break, 30 seconds, is due 20 minutes after the last rest; a long one, 10
 -- minutes, after 75 minutes without a rest of that length. A right click
 -- on the badge snoozes the due break for 10 minutes; the menu has that
 -- too, and a snooze of 30.
