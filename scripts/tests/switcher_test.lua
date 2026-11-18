@@ -1,4 +1,4 @@
--- switcher.lua, through the real ghostty_switcher.lua,
+-- switcher.lua, through the real ghostty_switcher.lua and alttab.lua,
 -- against Hammerspoon doubles:
 --
 --   test --click()--> doubled tap --> onOtherMouse --> doubled timer
@@ -135,7 +135,7 @@ local function load(module, setup)
   for k, v in pairs(setup or {}) do
     world[k] = v
   end
-  for _, name in ipairs({ module, "switcher", "failure", "picker", "event_log" }) do
+  for _, name in ipairs({ module, "switcher", "alttab", "failure", "picker", "event_log" }) do
     package.loaded[name] = nil
   end
   package.preload.picker = function()

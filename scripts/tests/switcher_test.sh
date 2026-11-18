@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/switcher.lua home/.hammerspoon/ghostty_switcher.lua
+# check.sh covers: home/.hammerspoon/switcher.lua home/.hammerspoon/ghostty_switcher.lua home/.hammerspoon/alttab.lua
 # The middle-click window picker against Hammerspoon doubles, so no macOS UI,
 # terminal or Hammerspoon is needed and it runs in CI on Linux and macOS: which
 # clicks are taken, what the picker gets, and how a failure is said.
