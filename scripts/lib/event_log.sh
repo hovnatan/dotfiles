@@ -51,16 +51,22 @@ event_log_prune() {
   event_log_pruned "$today" || "$(dirname "${BASH_SOURCE[0]}")/../prune_logs.sh"
 }
 
-# event_log_start <name> [--no-prune]: make this run's directory; sets
-# EVENT_LOG_FILE. A prune that fails fails the caller: a log directory that
-# cannot be kept in bounds is a finding. --no-prune is for what must not
-# wait on one or fail with it.
+# event_log_start <name> [--no-prune]: make this run's directory and its
+# events.log, empty until the first line; sets EVENT_LOG_FILE. A prune that
+# fails fails the caller: a log directory that cannot be kept in bounds is a
+# finding. --no-prune is for what must not wait on one or fail with it.
+#
+# The file is made here, not by the first line: prune_logs.sh takes a
+# directory by its events.log, so a run with nothing to say would leave a
+# directory that stays for good (periodic.sh's, one for each day with no task
+# due, until 2026-11-19). event_log.lua opens its file at the start too.
 event_log_start() {
   local now dir
   _event_log_time now '%Y%m%d_%H%M%S'
   dir="$EVENT_LOG_ROOT/${now}_$1"
   EVENT_LOG_FILE="$dir/events.log"
   mkdir -p "$dir" || return 1
+  : >>"$EVENT_LOG_FILE" || return 1
   [ "${2:-}" = "--no-prune" ] || event_log_prune || return 1
 }
 

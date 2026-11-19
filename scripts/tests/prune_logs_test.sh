@@ -29,7 +29,9 @@
 #   nothing of   a .logs with no directory of the form is not an error
 #   the form
 #   log start    a script starting its log (scripts/lib/event_log.sh) prunes
-#                if no prune ran today, and not with --no-prune
+#                if no prune ran today, and not with --no-prune; a log
+#                started and never written to has its events.log all the
+#                same, and goes by the rules above once it is old
 #   arguments    an unknown one fails
 #
 # Exit 0 = all passed; on failure the work dir is kept and printed.
@@ -195,6 +197,32 @@ if start_log probe && [ ! -d "$L/20250101_000000_old" ] && [ "$(cat "$L/.pruned"
   pass "log start: prunes when none ran today, and notes the day"
 else
   fail "log start, not pruned today: $(state)"
+fi
+
+# A script that starts its log and has nothing to say, as periodic.sh does on
+# an hour with no task due. Its directory must hold an events.log: the prune
+# takes a directory by that file, so one without it stays for good (the
+# "empty" row above; periodic.sh left one a day until 2026-11-19).
+start_only() {
+  env -i HOME="$H" PATH=/usr/bin:/bin bash -c '. "$1"; shift; event_log_start "$@"' \
+    _ "$REPO/scripts/lib/event_log.sh" "$@" >"$WORK/out" 2>&1
+}
+silent=
+if start_only silent --no-prune; then
+  silent=$(ls -d "$L"/*_silent 2>/dev/null)
+fi
+if [ -n "$silent" ] && [ -f "$silent/events.log" ] && [ ! -s "$silent/events.log" ]; then
+  pass "log start: a log with no line yet has its (empty) events.log"
+  # Old, and not the newest of its name: it goes like any other.
+  age 40 "$silent/events.log"
+  event_log 20990101_000000_silent 0
+  if run --force && [ ! -d "$silent" ]; then
+    pass "log start: a log never written to is pruned once old"
+  else
+    fail "a log never written to, 40 days on: $(state)"
+  fi
+else
+  fail "log start, no line written: no events.log in '${silent:-no directory}': $(state)"
 fi
 
 # --- nothing of the form ------------------------------------------------------------
