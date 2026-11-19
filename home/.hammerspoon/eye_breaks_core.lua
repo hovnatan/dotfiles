@@ -130,9 +130,15 @@ local SAVED = {
   badge = "boolean",
 }
 
+-- The minutes every number shown counts in: whole ones, rounded down.
+--   59 -> 0, 60 -> 1, 1799 -> 29
+local function wholeMinutes(seconds)
+  return math.floor(seconds / 60)
+end
+
 -- 1380 -> "23m", 3900 -> "1h05m"
 function M.fmt(seconds)
-  local minutes = math.floor(seconds / 60)
+  local minutes = wholeMinutes(seconds)
   if minutes < 60 then
     return string.format("%dm", minutes)
   end
@@ -454,6 +460,9 @@ end
 --                "short" (breakAfter since the last rest) or "long" (which
 --                wins); nil when none is, as under a break screen. It
 --                colours the badge and the menu-bar clock.
+--   overdueMinutes  the minutes the due break has been due, the number
+--                in the title ("+29m" is 29); nil when none is due. The
+--                badge's height goes by it, so the two step together.
 --   badge        whether the badge is up: a break is due, the badge is
 --                switched on, and nothing hides it, or it does and this is
 --                a glimpse
@@ -490,8 +499,10 @@ function M.view(s, now)
 
   -- The number is the due break's, the long one's when both are; with
   -- neither due, the nearer one's.
+  local dueIn = due == "long" and longIn or math.min(shortIn, longIn)
   v.due = due
-  v.title = countdown(due == "long" and longIn or math.min(shortIn, longIn))
+  v.title = countdown(dueIn)
+  v.overdueMinutes = due and wholeMinutes(-dueIn) or nil
   local wanted = s.badge and due ~= nil
   v.hiddenBy = wanted and s.hiding or nil
   v.glimpse = v.hiddenBy ~= nil and sinceBadgeUp(s, now) < s.cfg.glimpseLength

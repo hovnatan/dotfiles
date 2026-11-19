@@ -72,6 +72,23 @@ local RETURN_SOUND, RETURN_VOLUME = "Glass", 0.3
 -- No words on it, by request; BADGE_W fits "+1h02m" at BADGE_TEXT, and
 -- padding. Corners are rounded on the left only.
 local BADGE_W, BADGE_H, BADGE_RADIUS, BADGE_TEXT, BADGE_AT = 58, 28, 8, 12, 0.5
+-- The longer the break is overdue, the taller the badge (by request): a
+-- step with each minute its number counts (the core's overdueMinutes), so
+-- the two change together, BADGE_H more over BADGE_DOUBLES_IN minutes, to
+-- BADGE_MAX of the screen's height at most. It grows about the point
+-- BADGE_AT down it, its middle, which stays where it was on the screen.
+--
+--   overdue   height
+--   +0m        28    BADGE_H
+--   +1m        33    and so for all of that minute
+--   +5m        56
+--   +20m      140
+--   +1h       364    or BADGE_MAX of the screen: 300 on one 900 high
+local BADGE_DOUBLES_IN, BADGE_MAX = 5, 1 / 3
+local function badgeHeight(overdueMinutes, screenHeight)
+  local grown = math.floor(BADGE_H * (1 + overdueMinutes / BADGE_DOUBLES_IN))
+  return math.min(grown, math.floor(screenHeight * BADGE_MAX))
+end
 -- The due break's colour, under white text: the badge's fill, and the
 -- menu-bar clock's (below).
 local DUE_COLOR = {
@@ -134,10 +151,11 @@ badge:level(hs.canvas.windowLevels.overlay)
 badge:behavior(ON_TOP)
 badge:clickActivating(false)
 -- Wider than the canvas by the radius: the right corners fall outside it
--- and are cut off, which leaves that side square against the edge. The
--- colour and the text are drawBadge's, at each draw.
-badge[1] = fill(DUE_COLOR.short, BADGE_RADIUS, { x = 0, y = 0, w = BADGE_W + BADGE_RADIUS, h = BADGE_H })
-badge[2] = centredText("", BADGE_TEXT, 1, { x = 0, y = 6, w = BADGE_W, h = BADGE_H - 6 })
+-- and are cut off, which leaves that side square against the edge; and as
+-- tall as the canvas, whatever height drawBadge gives that. The colour,
+-- the text and where the text sits are drawBadge's too, at each draw.
+badge[1] = fill(DUE_COLOR.short, BADGE_RADIUS, { x = 0, y = 0, w = BADGE_W + BADGE_RADIUS, h = "100%" })
+badge[2] = centredText("", BADGE_TEXT, 1)
 badge:canvasMouseEvents(true)
 -- A click takes the due break. A ctrl-click, macOS's other way to
 -- right-click, snoozes it as a right click does (below).
@@ -209,8 +227,9 @@ local function listenForRightClicks(on)
   listening = true
 end
 
--- The badge with `text` on it, in the colour of `due`; hidden with no text.
-local function drawBadge(text, due)
+-- The badge with `text` on it, in the colour of `due` and as tall as
+-- `overdueMinutes` makes it; hidden with no text.
+local function drawBadge(text, due, overdueMinutes)
   -- No screen at all (lid shut, displays asleep) has nowhere to draw.
   local screen = text and hs.screen.mainScreen()
   if not screen then
@@ -222,10 +241,13 @@ local function drawBadge(text, due)
     return
   end
 
+  local f = screen:frame()
+  local height = badgeHeight(overdueMinutes, f.h)
+  badge:frame({ x = f.x + f.w - BADGE_W, y = f.y + math.floor((f.h - height) * BADGE_AT), w = BADGE_W, h = height })
   badge[1].fillColor = dueColor(due)
   badge[2].text = text
-  local f = screen:frame()
-  badge:topLeft({ x = f.x + f.w - BADGE_W, y = f.y + math.floor((f.h - BADGE_H) * BADGE_AT) })
+  -- The text keeps to the middle BADGE_H of a taller badge.
+  badge[2].frame = { x = 0, y = (height - BADGE_H) / 2 + 6, w = BADGE_W, h = BADGE_H - 6 }
   if not badgeShown then
     badge:show()
     badgeShown = true
@@ -480,7 +502,7 @@ end
 local function render()
   local v = core.view(state, clock())
   showTitle(v.title, v.due)
-  drawBadge(v.badge and v.title, v.due)
+  drawBadge(v.badge and v.title, v.due, v.overdueMinutes)
   drawOverlay(v.overlay)
   save()
   schedule((v.overlay or v.glimpse) and BREAK_TICK or TICK)
