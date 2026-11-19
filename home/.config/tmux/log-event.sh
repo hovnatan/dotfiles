@@ -3,6 +3,8 @@
 # say (declared in ~/.config/tmux/tmux.conf; the hooks that also do something log from
 # their own scripts, into the same file):
 #
+#   log-event.sh attached /dev/pts/1 session=backend
+#
 #   log-event.sh focus-in /dev/pts/1 session=backend
 #   -> ~/.dotfiles/.logs/<UTC day>_tmux_hooks/events.log
 #      2026-09-30T14:45:38Z focus-in /dev/pts/1 session=backend

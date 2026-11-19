@@ -93,7 +93,7 @@ def check(name: str, fn: Callable[[], None]) -> None:
 def titles() -> None:
     assert arr.title_session("[api/docs]") == "api/docs"
     assert arr.title_session("(vm) [main]") == "main"
-    assert arr.title_session("(local) [main]") == "main"
+    assert arr.title_session("(a-b.c_1) [main]") == "main"
     assert arr.title_session("fish:~") is None
     assert arr.title_session("(vm) fish:~") is None
 

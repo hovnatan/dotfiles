@@ -37,8 +37,9 @@ _Avoid_: Private (that means the private companion repo), per-machine (that
 one is in a repo)
 
 **Machine name**:
-The short name a machine goes by wherever it is shown: prompts, ssh tab
-titles, claude sessions (`<machine>/<session>`), phone notifications. It is
+The short name a machine goes by wherever it is shown: prompts, terminal
+titles and the tmux bar (`(<machine>) [<session>]`), claude sessions
+(`<machine>/<session>`), phone notifications. It is
 the line of the per-machine file `~/.config/dotfiles/machine-name` where
 there is one, else the host name up to its first dot;
 `scripts/machine_name.sh` prints it.

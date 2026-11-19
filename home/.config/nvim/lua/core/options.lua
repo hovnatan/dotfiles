@@ -35,22 +35,17 @@ vim.opt.title = true
 -- Neogit's status read "nvim: NeogitStatus -" in the tmux bar (until
 -- 2026-11-13), a flag about nothing you can act on.
 local title = "nvim: %t%{&modified ? ' +' : ''}"
--- The title leads with where nvim runs, as the fish and zsh titles do:
--- over ssh the machine ("(<host>) nvim: ..."), else "(local) nvim: ...":
--- nvim's own title replaces theirs, so without it a remote nvim tab read
--- like a local one. Host is the machine's name by the rule of
--- scripts/machine_name.sh: the line of its file, else the hostname up to its
--- first dot. Not
--- inside tmux: there the title names the window in the bar, every window
--- there is on this machine, and tmux's set-titles-string (with its own
--- lead) titles the terminal.
+-- The title leads with the machine nvim runs on, as the fish and zsh titles
+-- do, "(<machine>) nvim: ...": nvim's own title replaces theirs, so without
+-- it a remote nvim tab read like one on this machine. The name is by the
+-- rule of scripts/machine_name.sh: the line of its file, else the hostname
+-- up to its first dot. Not inside tmux: there the title names the window in
+-- the bar, every window there is on this machine, and tmux's
+-- set-titles-string (with its own lead) titles the terminal.
 if not vim.env.TMUX then
-  local where = "local"
-  if vim.env.SSH_CONNECTION then
-    local file = vim.fn.expand("~/.config/dotfiles/machine-name")
-    where = vim.fn.filereadable(file) == 1 and vim.fn.readfile(file)[1] or vim.fn.hostname():gsub("%..*", "")
-  end
-  title = "(" .. where .. ") " .. title
+  local file = vim.fn.expand("~/.config/dotfiles/machine-name")
+  local machine = vim.fn.filereadable(file) == 1 and vim.fn.readfile(file)[1] or vim.fn.hostname():gsub("%..*", "")
+  title = "(" .. machine .. ") " .. title
 end
 vim.opt.titlestring = title
 vim.opt.ruler = true

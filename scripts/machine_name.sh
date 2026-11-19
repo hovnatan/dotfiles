@@ -4,7 +4,7 @@
 #
 #   claude session   mbp/eye-breaks   (<machine>/<tmux session>)
 #   notification     CC: mbp/eye-breaks
-#   ssh tab title    (mbp) fish: ~/x
+#   terminal title   (mbp) [eye-breaks] in tmux, (mbp) fish: ~/x outside it
 #
 # The rule, in order:
 #
@@ -16,10 +16,12 @@
 # private repo, under machines/<name>/home/.config/dotfiles/, since this repo
 # is public and names no machine.
 #
-# Three more read the same file by the same rule, each with its own builtins
-# because it runs at every prompt or redraw: fish (machine_name.fish), zsh's
-# title (home/.zshrc.shared) and nvim's (core/options.lua). They show what
-# they find; this script is the one that checks it.
+# tmux asks this script once, as its config loads (@machine, for the title
+# and the bar). Three more read the same file by the same rule, each with
+# its own builtins because it runs at every prompt or redraw: fish
+# (machine_name.fish), zsh's title (home/.zshrc.shared) and nvim's
+# (core/options.lua). They show what they find; this script is the one that
+# checks it.
 set -euo pipefail
 
 file="$HOME/.config/dotfiles/machine-name"

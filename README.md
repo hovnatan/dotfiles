@@ -201,8 +201,9 @@ a phone notification show; the tmux session is `<session>` alone. `<machine>` is
 `scripts/machine_name.sh` prints: the machine's host name up to its first dot, or, for a
 machine whose host name says nothing (a Mac's is `Mac`), the one line of
 `~/.config/dotfiles/machine-name`, kept per machine in the personal private repo
-(`machines/<name>/home/.config/dotfiles/machine-name`). The ssh tab titles of fish, zsh
-and nvim, and fish's prompt, show the same name.
+(`machines/<name>/home/.config/dotfiles/machine-name`). Terminal titles lead with the
+same name, `(vm) [manager]` in tmux (its bar too) and `(vm) fish: ~/x` outside it, as
+does fish's prompt.
 
 To also run a Remote Control server (`claude remote-control`) in a second window
 of `manager`, name its folder in `~/.config/claude-tmux/remote-control-dir`, as an

@@ -23,21 +23,22 @@
 #   switch-client to b                    -> session-changed ... session=b
 #   client dies                           -> detached ... session=b
 #                                            synthetic focus-out to %N (b)
-#   an attach over ssh (report-attach.sh  -> @title_host the short host
-#   run as tmux runs a hook)                 name, "over ssh" in the log
-#   a control-mode client attaches to b   -> the hook fires, the attach
-#   (no tty)                                 report does not run
+#   a control-mode client attaches to b   -> the hook fires, no attach line
+#   (no tty)                                 is logged
 #
 # Then the window rules, on a second server started from the whole
 # home/.config/tmux/tmux.conf, with a client in a pty typing what a terminal would:
 #
-#   one window, two windows           -> the bar on, on top, "(local) [<session>] |
+#   one window, two windows           -> the bar on, on top, "(box) [<session>] |
 #                                        cpu N% mem N% | <date time zone>"
+#                                        ("box" is the machine's name, from
+#                                        its file in the throwaway HOME)
 #                                        on the right (a stub
 #                                        tmux-mem-cpu-load in the throwaway
 #                                        HOME); closing a middle window
 #                                        renumbers the rest
-#   @title_host <host> on the session -> "(<host>) [<session>]   cpu ..."
+#   a machine name of two words, the  -> the line stops with the reason,
+#   config's naming line run again       the title is "[<session>]" alone
 #   a session of a 40-column name     -> the title cut to 32 columns (an
 #                                        80-column client) and "...", the
 #                                        clock still drawn
@@ -219,8 +220,8 @@ while True:
 PYEOF
 client=$!
 
-wait_for ' attached [^ ]+ session=a: local: @title_host local$' \
-  && pass "attach is logged, with what was reported" || fail "no attach line: $(hooks_log)"
+wait_for ' attached [^ ]+ session=a$' \
+  && pass "attach is logged" || fail "no attach line: $(hooks_log)"
 client_tty=$(t list-clients -t =a -F '#{client_tty}')
 # A bystander on b that never reports focus, attached after the client under
 # test: it is then the client tmux had last, which is the one a wrong format
@@ -259,25 +260,8 @@ wrong=$(hooks_log | grep -E 'Z focus-(in|out) ' | grep -c -v -F " $client_tty se
 # --- session switch, detach ---------------------------------------------------------
 
 t switch-client -c "$client_tty" -t b
-wait_for ' session-changed [^ ]+ session=b: local: @title_host local$' \
-  && pass "a session switch is logged" || fail "no session-changed line: $(hooks_log)"
-
-# --- an attach over ssh -----------------------------------------------------------
-
-# The client, now on b, as if its SSH_CONNECTION had reached the session
-# environment: the title leads with this machine's short name, as the bar
-# shows it. run-shell is how tmux runs the hook; the session id ("$1")
-# quoted, as the hook line's #{q:session_id} does.
-t set-environment -t b SSH_CONNECTION "192.0.2.1 50000 192.0.2.2 22"
-out=$(t run-shell "$H/.dotfiles/home/.config/tmux/report-attach.sh $SOCK '$(t display -p -t b '#{session_id}')' $client_tty $client_tty attached" 2>&1) \
-  || fail "the hook failed over ssh: $out"
-host_short=$(t display -p '#{host_short}')
-[ "$(t show -v -t b @title_host)" = "$host_short" ] \
-  && pass "over ssh, @title_host is the short host name ($host_short)" \
-  || fail "over ssh, @title_host is '$(t show -v -t b @title_host)', not '$host_short'"
-wait_for " attached $client_tty session=b: over ssh: @title_host $host_short\$" \
-  && pass "the ssh attach is logged" || fail "no over-ssh line: $(hooks_log)"
-t set-environment -t b -r SSH_CONNECTION
+wait_for " session-changed $client_tty session=b\$" \
+  && pass "a session switch is logged, naming the client" || fail "no session-changed line: $(hooks_log)"
 
 # wait: without it bash prints the killed job, heredoc and all.
 kill "$client"
@@ -292,19 +276,21 @@ bystander=
 wait_for ' synthetic focus-out to %[0-9]+ \(b\): no client attached$' \
   && pass "the focus-out sent to the clientless claude pane is logged" || fail "no synthetic focus-out line: $(hooks_log)"
 
-# --- a control-mode client: no terminal, no attach report ---------------------------
+# --- a control-mode client: no terminal, no attach line -----------------------------
 
 # A control client (tmux -C, as scripts/tmux_history.py keeps one) has no
-# tty, and in the attach hooks its client_* formats are all empty, so
-# report-attach.sh would get three arguments of five and die on set -u. The
-# hook lines skip such a client. They are sourced again here with the script
-# swapped for a stub that records its arguments, beside a hook that records
-# hook_client, so the attach is seen to fire either way.
+# tty, and in the attach hooks its client_* formats are all empty: the line
+# would name nobody. The hook lines skip such a client. They are sourced
+# again here with the script swapped for a stub that records its arguments,
+# beside a hook that records hook_client, so the attach is seen to fire
+# either way.
 printf '#!/bin/sh\necho "$# args: $*" >>"${0%%/*}/argv.log"\n' >"$WORK/argv.sh"
 chmod +x "$WORK/argv.sh"
-grep -E '^set-hook -g client-(attached|session-changed)\[[0-9]+\] .*report-attach\.sh' \
+grep -E '^set-hook -g client-(attached|session-changed)\[[0-9]+\] .*log-event\.sh (attached|session-changed) ' \
   "$REPO/home/.config/tmux/tmux.conf" \
-  | sed "s|~/.dotfiles/home/.config/tmux/report-attach.sh|$WORK/argv.sh|" >"$WORK/stub_hooks.conf"
+  | sed "s|~/.dotfiles/home/.config/tmux/log-event.sh|$WORK/argv.sh|" >"$WORK/stub_hooks.conf"
+[ "$(wc -l <"$WORK/stub_hooks.conf" | tr -d ' ')" = 2 ] \
+  || fail "home/.config/tmux/tmux.conf has $(wc -l <"$WORK/stub_hooks.conf" | tr -d ' ') attach hook lines, not 2"
 t source-file "$WORK/stub_hooks.conf"
 t set-hook -g client-attached[9] "run-shell -b 'echo attach of #{hook_client} >>$WORK/attach.log'"
 t -C attach -t b </dev/null >/dev/null 2>&1
@@ -317,9 +303,9 @@ sleep 0.5
 if [ ! -s "$WORK/attach.log" ]; then
   fail "a control client's attach fired no client-attached hook"
 elif [ -e "$WORK/argv.log" ]; then
-  fail "the attach report ran for a control client: $(cat "$WORK/argv.log")"
+  fail "an attach line was logged for a control client: $(cat "$WORK/argv.log")"
 else
-  pass "a control client's attach runs no attach report ($(cat "$WORK/attach.log"))"
+  pass "a control client's attach logs no attach line ($(cat "$WORK/attach.log"))"
 fi
 t set-hook -gu client-attached[9]
 
@@ -337,6 +323,14 @@ tw() { env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin" TERM=xterm-2
 status_of() { tw display -p -t "$1": '#{status}' 2>&1; }
 current() { tw display -p -t "$1": '#{window_index}'; }
 mkfifo "$WORK/keys"
+# The machine's name, which the title and the bar lead with
+# (scripts/machine_name.sh, asked as the config loads). A fixed short one,
+# not this machine's host name: the bar cuts the title at 32 columns here,
+# and GitHub's macOS runners are named like "iad20-fj920-<uuid>-<hex>" (70
+# characters, no dot), which the bar rightly draws as "(iad20-...".
+NAME_FILE="$H/.config/dotfiles/machine-name"
+mkdir -p "${NAME_FILE%/*}"
+echo box >"$NAME_FILE"
 # The bar's CPU and memory: status-stats.sh runs $HOME/.nix-profile/bin/
 # tmux-mem-cpu-load, here a stub printing what 3.8.3 prints (memory first,
 # then CPU, a NUL byte before the newline) or, with $WORK/stats_odd there,
@@ -421,40 +415,42 @@ done
 # first draw has the date alone (the job still running): wait for a later one.
 # The minute by pattern: it may turn between this line and the draw.
 stats_clock="cpu  8%  mem 74%   $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
-want="\(local\) \[w\]   $stats_clock"
-for _ in $(seq 50); do
-  grep -aqE "$want" "$WORK/screen" && break
-  sleep 0.1
-done
-grep -aqE "$want" "$WORK/screen" && pass "the bar draws '$(grep -aoE "$want" "$WORK/screen" | tail -1)' on the right" \
-  || fail "the bar never drew '$want'; screen: $(tr -c '[:print:]' ' ' <"$WORK/screen" | grep -o '[a-z]* [0-9.]*% [^E]*' | tail -2)"
-
-# Over ssh the bar names the machine, as the terminal title does. After the
-# attach's own report, which would otherwise reset @title_host behind this check.
-# A fixed short name, not this machine's: the bar cuts the title at 32 columns
-# here, and GitHub's macOS runners are named like "iad20-fj920-<uuid>-<hex>"
-# (70 characters, no dot), which the bar rightly draws as "(iad20-...".
-wait_for ' attached [^ ]+ session=w: local: @title_host local$' \
-  || fail "no attach report for w: $(hooks_log | tail -3)"
-tw set -t =w: @title_host box
-tw refresh-client -t "$(tw list-clients -t =w -F '#{client_name}')"
 want="\(box\) \[w\]   $stats_clock"
 for _ in $(seq 50); do
   grep -aqE "$want" "$WORK/screen" && break
   sleep 0.1
 done
-grep -aqE "$want" "$WORK/screen" && pass "over ssh the bar names the machine: '$(grep -aoE "$want" "$WORK/screen" | tail -1)'" \
+grep -aqE "$want" "$WORK/screen" && pass "the bar draws '$(grep -aoE "$want" "$WORK/screen" | tail -1)' on the right, the machine's name first" \
   || fail "the bar never drew '$want'; screen: $(tr -c '[:print:]' ' ' <"$WORK/screen" | grep -o '[a-z]* [0-9.]*% [^E]*' | tail -2)"
-tw set -t =w: @title_host local
+title() { tw display -p -t =w: '#{T:set-titles-string}'; }
+[ "$(title)" = "(box) [w]" ] && pass "the terminal's title is '$(title)'" || fail "the terminal's title is '$(title)', not '(box) [w]'"
+
+# The config's naming line, run again as a reload runs it: a name the script
+# refuses stops the line with the script's reason, and on a server that has
+# no name yet (the option unset, as at its start) the title is the session
+# alone. The name put right, the same line brings the lead back.
+grep -E "^run-shell -E 'name=.*machine_name\.sh" "$REPO/home/.config/tmux/tmux.conf" >"$WORK/name.conf"
+[ "$(wc -l <"$WORK/name.conf" | tr -d ' ')" = 1 ] || fail "home/.config/tmux/tmux.conf has no one line that names the machine"
+tw set -gu @machine
+echo "two words" >"$NAME_FILE"
+out=$(tw source-file "$WORK/name.conf" 2>&1)
+rc=$?
+[ "$rc" -ne 0 ] && [[ "$out" == *"$NAME_FILE holds 'two words'"* ]] && [ "$(title)" = "[w]" ] \
+  && pass "a machine name of two words stops the naming line and says why; the title is '[w]'" \
+  || fail "a machine name of two words: exit $rc, title '$(title)', output: $out"
+echo box >"$NAME_FILE"
+out=$(tw source-file "$WORK/name.conf" 2>&1) && [ "$(title)" = "(box) [w]" ] \
+  && pass "the name put right, the naming line leads the title with it again" \
+  || fail "after the name was put right: title '$(title)', output: $out"
 
 # A long session name gives way, not the clock: tmux trims status-right from
 # its end, so a name left whole would cut the date off instead. The 32
-# columns (this client's 80 less 48; 48 on a wide one) hold the "(local) ["
-# lead and 23 of the 40 n's.
+# columns (this client's 80 less 48; 48 on a wide one) hold the "(box) ["
+# lead and 25 of the 40 n's.
 long=$(printf 'n%.0s' {1..40})
 tw new-session -d -s "$long" 'sleep 300'
 tw switch-client -t "=$long"
-want="\(local\) \[$(printf 'n%.0s' {1..23})\.\.\.   $stats_clock"
+want="\(box\) \[$(printf 'n%.0s' {1..25})\.\.\.   $stats_clock"
 for _ in $(seq 1 50); do
   grep -aqE "$want" "$WORK/screen" && break
   sleep 0.1
@@ -809,8 +805,8 @@ want="#[fg=#282828,bg=#d79921] solo:$ring! #[default] "
 [ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'"
 case $(right) in
-  "${want}(local) [w]   "*) pass "the marker opens status-right, before '(local) [w]'" ;;
-  *) fail "status-right on w is '$(right)', wanted it to start '${want}(local) [w]   '" ;;
+  "${want}(box) [w]   "*) pass "the marker opens status-right, before '(box) [w]'" ;;
+  *) fail "status-right on w is '$(right)', wanted it to start '${want}(box) [w]   '" ;;
 esac
 # The bell rang in w as well (the step above), whose client has focus (tmux
 # counts a client focused from its attach until its terminal says otherwise)
