@@ -22,6 +22,10 @@
 # reads the file itself, by the same rule and with builtins
 # (machine_name.fish): its prompt asks at every line, in every pane. It
 # shows what it finds; this script is the one that checks it.
+#
+# A claude session named without the machine (an empty /rename makes up
+# "fix-login") gets it at its next prompt, from a hook that asks this script
+# then: home/.claude/session-name-prefix.sh.
 set -euo pipefail
 
 file="$HOME/.config/dotfiles/machine-name"

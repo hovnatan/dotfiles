@@ -42,7 +42,10 @@ titles and the tmux bar (`(<machine>) [<session>]`), claude sessions
 (`<machine>/<session>`), phone notifications. It is
 the line of the per-machine file `~/.config/dotfiles/machine-name` where
 there is one, else the host name up to its first dot;
-`scripts/machine_name.sh` prints it.
+`scripts/machine_name.sh` prints it. A claude session named without it
+(`/rename` with no name makes one up) gets it at its next prompt, from
+`home/.claude/session-name-prefix.sh`, and from then goes by a name its tmux
+session and its phone notifications do not share.
 _Avoid_: Host name (the system's own, a generic `Mac` on a Mac), and the
 `<name>` of `machines/<name>/` (the key the install finds a machine's files
 by)

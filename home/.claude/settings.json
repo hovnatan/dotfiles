@@ -82,6 +82,11 @@
             "type": "command",
             "command": "~/.dotfiles/home/.claude/ntfy-stop.sh --cancel",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.dotfiles/home/.claude/session-name-prefix.sh",
+            "timeout": 5
           }
         ]
       }
