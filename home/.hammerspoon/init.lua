@@ -31,6 +31,9 @@ require("eye_breaks")
 -- logs "incomplete installation of 'hs' and 'hs.1'".
 local cliPrefix = os.getenv("HOME") .. "/.local"
 require("hs.ipc")
+-- hs.ipc echoes print() to each connected `hs`, and one that was killed made
+-- print() raise in every module for up to a minute.
+require("print_guard")
 if not hs.ipc.cliStatus(cliPrefix) then
   for _, dir in ipairs({ "/share", "/share/man", "/share/man/man1" }) do
     hs.fs.mkdir(cliPrefix .. dir)

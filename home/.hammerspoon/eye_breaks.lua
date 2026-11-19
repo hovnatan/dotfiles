@@ -41,9 +41,10 @@
 --   hs -q -c 'require("eye_breaks").breakNow()'
 -- also longBreakNow(), dueBreakNow() (the badge's click), skip(), lock(),
 -- snooze() (a right click on the badge), longSnooze().
--- Keep the -q. Without it Hammerspoon echoes every console line to the
--- connected `hs`, and one that was killed stays registered: print() then
--- raises in whatever module logs next, until a reload (seen 2026-11-17).
+-- Keep the -q: without it Hammerspoon echoes every console line to the
+-- connected `hs`. One that was killed used to make print() raise in whatever
+-- module logged next (2026-11-17, here: the timer stopped); print_guard.lua
+-- unregisters it first now.
 local log = require("event_log").new("eye_breaks")
 local fail, guarded = require("failure").new("eye_breaks", log)
 local core = require("eye_breaks_core")
