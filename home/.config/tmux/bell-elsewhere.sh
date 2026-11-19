@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
-# Tell the terminals elsewhere on the server about a bell in a session that
-# nobody is looking at. tmux passes a bell only to the clients of the session
-# it rang in (bell-action), and a client in a background tab or window is no
-# one looking: a Claude Code or long command finishing there reached no one.
+# Mark a bell in a session that nobody is looking at, for the bars of the
+# other sessions to show. tmux passes a bell only to the clients of the
+# session it rang in (bell-action), and a client in a background tab or window
+# is no one looking: a Claude Code or long command finishing there reached no
+# one.
 #
 #   window 1 of session "solo" rings              (alert-bell, every bell)
 #     -> bell-elsewhere.sh <socket> $3 solo 1 <window name>
 #     -> a client of solo focused, with input in the last 30 min?
 #          yes -> log "watched (...)", exit: tmux's own bell reached it
 #          no  (none attached, all unfocused, or focus gone stale):
-#     -> @bell "1!" and @bell_at <epoch> on solo, for the bar's @bell_marker
-#     -> display-message on each terminal client of another session, 5 s:
-#          bell: solo:1 * vm/fix
+#     -> @bell "1!" and @bell_at <epoch> on solo, which the bar's
+#        @bell_marker (tmux.conf) draws as " solo:1! " first on the right of
+#        every other session's bar, until solo is looked at
 #     -> ~/.dotfiles/.logs/<UTC day>_tmux_hooks/events.log, with what tmux
 #        knew of solo's clients, so a wrong verdict explains itself:
 #        2026-11-10T02:10:00Z bell session=solo window=1 (* vm/fix): unwatched
-#          (ttys002 not focused, input 41s ago), shown to /dev/ttys003
+#          (ttys002 not focused, input 41s ago), marked
+#
+# The marker is all there is. Until 2026-11-19 each terminal of another
+# session was also sent a 5 s message "bell: solo:1 * vm/fix", which took
+# over its whole bar (window list, title and clock) at every bell.
 #
 # Why @bell: tmux marks a bell itself (#{session_alerts}) only in a window no
 # client shows; one in the window an unfocused tab shows leaves no trace.
@@ -40,10 +45,8 @@
 # A terminal that never reports focus stays focused from its attach, so its
 # session counts as watched while someone types there.
 #
-# Control-mode clients (scripts/tmux_history.py's tracker) have no
-# status line to show a message on and no focus, so they are skipped. A client
-# that detaches between the listing and its message fails the script: the
-# hook reports the error, and the log names the client.
+# Control-mode clients (scripts/tmux_history.py's tracker) have no focus to
+# report and no one behind them, so they do not count as someone watching.
 #
 # Runs under bash 3.2 too: run-shell finds bash on the server's PATH.
 set -euo pipefail
@@ -83,28 +86,9 @@ if [ -n "$watched" ]; then
   event_log_note tmux_hooks "$what: watched ($evidence)"
   exit 0
 fi
-what="$what: unwatched (${evidence:-no client})"
 
 # "1!", as tmux writes #{session_alerts}: a bare "0" reads as false in a
 # format's conditional, and window 0's marker never showed.
 t set-option -t "$id" @bell "$window!"
 t set-option -t "$id" @bell_at "$now"
-
-# display-message expands formats in its text: a window name holding "#"
-# (Claude Code's titles may) is shown as typed, not expanded.
-msg="bell: $session:$window $name"
-msg=${msg//#/##}
-
-clients=$(t list-clients -F '#{client_name}	#{client_control_mode}	#{session_id}')
-shown=
-while IFS=$'\t' read -r client control sid; do
-  [ -n "$client" ] || continue
-  [ "$control" = 1 ] && continue
-  [ "$sid" = "$id" ] && continue # its own clients got tmux's bell
-  t display-message -c "$client" -d 5000 "$msg" || {
-    event_log_note tmux_hooks "$what: FAILED: display-message to $client"
-    exit 1
-  }
-  shown="$shown $client"
-done <<<"$clients"
-event_log_note tmux_hooks "$what, shown to${shown:- no client}"
+event_log_note tmux_hooks "$what: unwatched (${evidence:-no client}), marked"

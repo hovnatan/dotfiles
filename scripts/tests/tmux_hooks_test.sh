@@ -78,15 +78,15 @@
 #   10 columns left; prefix x, y         columns narrower; the pane closed
 #   prefix L, L after w -> solo -> w  -> solo, then w
 #   a bell in a window out of view    -> its label on a yellow background
-#   a bell in solo (no client)        -> "bell: solo:N ring #S" shown to the
-#                                        client on w, a red " solo:N! "
-#                                        first on its bar's right, a log
-#                                        line; none on solo itself; gone
-#                                        once shown. The bell in w (its
-#                                        client focused) logs "watched"
-#   a bell in the window bg's client  -> shown to w's client, " bg:0! " by
-#   shows, its terminal unfocused        @bell (tmux keeps no alert); gone
-#                                        at its focus-in
+#   a bell in solo (no client)        -> a yellow " solo:N! " first on the
+#                                        right of w's bar, a log line, and
+#                                        no message over the bar; none on
+#                                        solo itself; gone once shown. The
+#                                        bell in w (its client focused)
+#                                        logs "watched"
+#   a bell in the window bg's client  -> " bg:0! " on w's bar by @bell
+#   shows, its terminal unfocused        (tmux keeps no alert); gone at its
+#                                        focus-in
 #   the same, bg's client focused but -> unwatched, marked; a key typed in
 #   idle past BELL_STALE_SECONDS         bg hides the marker, no focus-in
 #   prefix c from window 0 of 3       -> new window at 1, the rest move up
@@ -778,22 +778,27 @@ grep -aq '48;2;215;153;33' "$WORK/screen" && pass "a bell paints its window's la
   || fail "no yellow background drawn; flags: $(tw list-windows -t =w -F '#{window_index}:#{window_bell_flag}' | tr '\n' ' ')"
 
 # A bell in solo, which no client is attached to (bell-elsewhere.sh): the
-# client on w gets a message naming it, its bar a yellow marker, and the
-# log a line. The window's name holds "#S" (-n expands formats, hence ##S),
-# which a message passed as a format would show as "solo".
+# bar of the client on w gets a yellow marker and the log a line. The
+# window's name holds "#S" (-n expands formats, hence ##S), which the log
+# has as typed: the hook's run-shell line expands formats once, not twice.
 wname=$(tw list-clients -t =w -F '#{client_name}')
 ring=$(tw new-window -d -P -F '#{window_index}' -t =solo: -n 'ring ##S' "printf '\\a'; exec sleep 100")
 [ "$(tw display -p -t "=solo:$ring" '#{window_name}')" = 'ring #S' ] \
   || fail "the ringing window is named '$(tw display -p -t "=solo:$ring" '#{window_name}')', not 'ring #S'"
-wait_for " bell session=solo window=$ring \(ring #S\): unwatched \(no client\), shown to $wname$" \
-  && pass "a bell in a session with no client is logged as shown to w's client" \
-  || fail "no bell line for solo:$ring shown to $wname: $(hooks_log | tail -3)"
+wait_for " bell session=solo window=$ring \(ring #S\): unwatched \(no client\), marked$" \
+  && pass "a bell in a session with no client is logged as unwatched and marked" \
+  || fail "no bell line for solo:$ring: $(hooks_log | tail -3)"
+# The marker is the whole notice: no message is put over w's bar (one "bell:
+# solo:N <name>" for 5 s, until 2026-11-19). The log line above is the
+# script's last act, so a message would have been sent by now; the wait is
+# for the client to draw the marker, after which a message would be drawn too.
 for _ in $(seq 50); do
-  grep -aqF "bell: solo:$ring ring #S" "$WORK/screen" && break
+  grep -aqF " solo:$ring! " "$WORK/screen" && break
   sleep 0.1
 done
-grep -aqF "bell: solo:$ring ring #S" "$WORK/screen" && pass "w's client is shown 'bell: solo:$ring ring #S'" \
-  || fail "w's client never drew 'bell: solo:$ring ring #S'"
+grep -aqF " solo:$ring! " "$WORK/screen" && ! grep -aqF "bell: solo:" "$WORK/screen" \
+  && pass "w's client draws the marker ' solo:$ring! ' and no 'bell: solo:...' message" \
+  || fail "w's client drew: marker $(grep -acF " solo:$ring! " "$WORK/screen") time(s), message '$(grep -aoF "bell: solo:$ring ring #S" "$WORK/screen" | head -1)'"
 # @bell_marker as tmux expands it for that client: the marker in the bell
 # yellow, and it first in status-right, before the session's name.
 # list-clients, not display -p -c: display uses -c's client for formats only
@@ -810,7 +815,7 @@ case $(right) in
 esac
 # The bell rang in w as well (the step above), whose client has focus (tmux
 # counts a client focused from its attach until its terminal says otherwise)
-# and typed a moment ago: watched, logged with that evidence, nothing shown.
+# and typed a moment ago: watched, logged with that evidence, nothing marked.
 w_bell=$(hooks_log | grep ' bell session=w ')
 grep -qE ": watched \(${wname#/dev/} focused, input [0-9]+s ago\)$" <<<"$w_bell" \
   && pass "a bell in a session whose client has focus and fresh input is logged as watched: '${w_bell#* }'" \
@@ -841,8 +846,8 @@ tw kill-window -t "=solo:$ring"
 # '', and the hook once passed the script 4 arguments: "returned 2". Then
 # @bell is unset by hand, as no client looks at solo to clear it.
 ring=$(tw new-window -d -P -F '#{window_index}' -t =solo: -n '' "printf '\\a'; exec sleep 100")
-wait_for " bell session=solo window=$ring \(\): unwatched \(no client\), shown to $wname$" \
-  && pass "a bell in a window with an empty name is shown to w's client" \
+wait_for " bell session=solo window=$ring \(\): unwatched \(no client\), marked$" \
+  && pass "a bell in a window with an empty name is logged and marked" \
   || fail "no bell line for solo:$ring, named '': $(hooks_log | tail -3); messages: $(tw show-messages | tail -3)"
 tw kill-window -t "=solo:$ring"
 tw set-option -u -t =solo: @bell
@@ -886,9 +891,9 @@ for _ in $(seq 50); do
   case ,$(bg_flags), in *,focused,*) sleep 0.1 ;; *) break ;; esac
 done
 tw respawn-pane -k -t =bg: "printf '\\a'; exec sleep 100"
-wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} not focused, input [0-9]+s ago\), shown to $wname$" \
-  && pass "a bell where bg's unfocused client looks is shown to w's client" \
-  || fail "no bell line for bg:0 shown to $wname (bg's client flags: $(bg_flags)): $(hooks_log | tail -3)"
+wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} not focused, input [0-9]+s ago\), marked$" \
+  && pass "a bell where bg's unfocused client looks is logged as unwatched and marked" \
+  || fail "no bell line for bg:0 (bg's client flags: $(bg_flags)): $(hooks_log | tail -3)"
 want="#[fg=#282828,bg=#d79921] bg:0! #[default] "
 [ "$(left)" = "$want" ] && [ -z "$(tw display -p -t =bg: '#{session_alerts}')" ] \
   && pass "w's bell marker marks bg by @bell, tmux holding no alert: '$(left)'" \
@@ -911,7 +916,7 @@ done
 tw set-environment -g BELL_STALE_SECONDS 1
 sleep 2
 tw respawn-pane -k -t =bg: "printf '\\a'; exec sleep 100"
-wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} focused, input [0-9]+s ago\), shown to $wname$" \
+wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} focused, input [0-9]+s ago\), marked$" \
   && pass "a focused client with no input past BELL_STALE_SECONDS leaves its session unwatched" \
   || fail "no stale-focus bell line for bg (bg's client flags: $(bg_flags)): $(hooks_log | tail -3)"
 [ "$(left)" = "$want" ] && pass "and w's bell marker marks bg: '$(left)'" \
