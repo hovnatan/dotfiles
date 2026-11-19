@@ -203,7 +203,9 @@ machine whose host name says nothing (a Mac's is `Mac`), the one line of
 `~/.config/dotfiles/machine-name`, kept per machine in the personal private repo
 (`machines/<name>/home/.config/dotfiles/machine-name`). Terminal titles lead with the
 same name, `(vm) [manager]` in tmux (its bar too) and `(vm) fish: ~/x` outside it, as
-does fish's prompt.
+does fish's prompt. A claude started with no name is listed in Remote Control under one
+Claude Code makes up, `vm-enumerated-harbor`: the same `<machine>` in front, through
+`CLAUDE_REMOTE_CONTROL_SESSION_NAME_PREFIX` (`home/.profile.shared`).
 
 To also run a Remote Control server (`claude remote-control`) in a second window
 of `manager`, name its folder in `~/.config/claude-tmux/remote-control-dir`, as an

@@ -39,7 +39,8 @@ one is in a repo)
 **Machine name**:
 The short name a machine goes by wherever it is shown: prompts, terminal
 titles and the tmux bar (`(<machine>) [<session>]`), claude sessions
-(`<machine>/<session>`), phone notifications. It is
+(`<machine>/<session>`, and `<machine>-<two words>` where Claude Code makes
+a name up), phone notifications. It is
 the line of the per-machine file `~/.config/dotfiles/machine-name` where
 there is one, else the host name up to its first dot;
 `scripts/machine_name.sh` prints it. A `/rename` in a claude session keeps

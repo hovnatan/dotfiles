@@ -23,6 +23,10 @@
 # (machine_name.fish): its prompt asks at every line, in every pane. It
 # shows what it finds; this script is the one that checks it.
 #
+# Every login shell asks as well (home/.profile.shared), for the name
+# Claude Code makes up for a session with none: "mbp-enumerated-harbor" in
+# Remote Control, where it would lead with the host name.
+#
 # A /rename in a claude session asks this script too, through the mod that
 # puts the machine in front of the new name (an empty /rename makes up
 # "fix-login", the session is named "mbp/fix-login"):

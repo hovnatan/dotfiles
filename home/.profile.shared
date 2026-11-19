@@ -27,6 +27,27 @@ export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/rc"
 # same fallback.
 export CLAUDE_CODE_SHELL="$HOME/.nix-profile/bin/bash"
 
+# Claude Code lists a session it has no name for yet in Remote Control as
+# "<prefix>-<two words>", and its prefix is the host name unless this is
+# set; a Mac's host name is "Mac". With the machine name
+# (scripts/machine_name.sh: the per-machine file from the private repo,
+# else the host name):
+#
+#   `claude`, a conversation resumed into it   mac-enumerated-harbor
+#   the same with this set                     mbp-enumerated-harbor
+#   `claude -n mbp/x`, or after a /rename      mbp/x, either way
+#
+# Claude Code lowercases the prefix and turns every run of other characters
+# than a-z and 0-9 into one "-" (read from 2.1.328), so "mbp/" is "mbp".
+# A name machine_name.sh refuses is its message at every login and no
+# prefix, which leaves Claude Code at the host name: a login is not stopped
+# for a session's name.
+if CLAUDE_REMOTE_CONTROL_SESSION_NAME_PREFIX=$("$HOME/.dotfiles/scripts/machine_name.sh"); then
+    export CLAUDE_REMOTE_CONTROL_SESSION_NAME_PREFIX
+else
+    unset CLAUDE_REMOTE_CONTROL_SESSION_NAME_PREFIX
+fi
+
 MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"
 export MAKEFLAGS
 
