@@ -805,8 +805,8 @@ want="#[fg=#282828,bg=#d79921] solo:$ring! #[default] "
 [ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'"
 case $(right) in
-  "${want}(box) [w]   "*) pass "the marker opens status-right, before '(box) [w]'" ;;
-  *) fail "status-right on w is '$(right)', wanted it to start '${want}(box) [w]   '" ;;
+  "${want} (box) [w]   "*) pass "the marker opens status-right, before ' (box) [w]'" ;;
+  *) fail "status-right on w is '$(right)', wanted it to start '${want} (box) [w]   '" ;;
 esac
 # The bell rang in w as well (the step above), whose client has focus (tmux
 # counts a client focused from its attach until its terminal says otherwise)
