@@ -129,16 +129,19 @@ set_terminal_title() {
     fi
     title=$(printf '%.20s' "${title}")
     # The tab leads with the machine the shell runs on, outside the 20-column
-    # budget: its name by the rule of scripts/machine_name.sh (its file's
-    # line, else the hostname up to its first dot), "(<machine>)
-    # ~/.dotfiles". fish and nvim titles do the same. Not inside tmux, where
-    # the title names the window in the bar and tmux's set-titles-string
-    # leads with the same.
+    # budget: "(<machine>) ~/.dotfiles", as fish and nvim titles do. Not
+    # inside tmux, where the title names the window in the bar and tmux's
+    # set-titles-string leads with the same.
+    #
+    # The name is scripts/machine_name.sh's, asked at this shell's first
+    # title and kept: the script checks it (a "%" in it would be expanded by
+    # print -P below), and running it at every prompt would be felt. A name
+    # it refuses leaves the title alone and shows its message at each prompt.
     if [[ -z $TMUX ]]; then
-        local where=${HOST%%.*}
-        # $(<file) is a builtin read: no fork at each prompt.
-        [[ -e ~/.config/dotfiles/machine-name ]] && where=$(<~/.config/dotfiles/machine-name)
-        title="($where) $title"
+        if [[ -z $_title_machine ]]; then
+            _title_machine=$(~/.dotfiles/scripts/machine_name.sh) || return
+        fi
+        title="($_title_machine) $title"
     fi
     print -Pn "\e]0;$title\a"
 }

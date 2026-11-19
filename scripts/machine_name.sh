@@ -16,12 +16,12 @@
 # private repo, under machines/<name>/home/.config/dotfiles/, since this repo
 # is public and names no machine.
 #
-# tmux asks this script once, as its config loads (@machine, for the title
-# and the bar). Three more read the same file by the same rule, each with
-# its own builtins because it runs at every prompt or redraw: fish
-# (machine_name.fish), zsh's title (home/.zshrc.shared) and nvim's
-# (core/options.lua). They show what they find; this script is the one that
-# checks it.
+# Each title asks this script once and keeps the answer: tmux as its config
+# loads (@machine, for the title and the bar), zsh at a shell's first title
+# (home/.zshrc.shared), nvim at its start (core/options.lua). fish alone
+# reads the file itself, by the same rule and with builtins
+# (machine_name.fish): its prompt asks at every line, in every pane. It
+# shows what it finds; this script is the one that checks it.
 set -euo pipefail
 
 file="$HOME/.config/dotfiles/machine-name"

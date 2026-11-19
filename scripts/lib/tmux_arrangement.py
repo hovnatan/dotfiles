@@ -98,15 +98,6 @@ def log(msg: str) -> None:
         f.write(line + "\n")
 
 
-def tmux_session(title: str) -> str | None:
-    """Return the tmux session a tab title shows, or None.
-
-    "[api/docs]" -> "api/docs"; "[main]" -> "main"; "fish:~" -> None.
-    """
-    m = re.fullmatch(r"\[(.+)\]", title)
-    return m[1] if m else None
-
-
 def tmux(socket: str) -> str:
     """Return the tmux command for `socket`: "tmux" or "tmux -L work"."""
     return "tmux" if socket == "default" else f"tmux -L {socket}"

@@ -37,15 +37,17 @@ vim.opt.title = true
 local title = "nvim: %t%{&modified ? ' +' : ''}"
 -- The title leads with the machine nvim runs on, as the fish and zsh titles
 -- do, "(<machine>) nvim: ...": nvim's own title replaces theirs, so without
--- it a remote nvim tab read like one on this machine. The name is by the
--- rule of scripts/machine_name.sh: the line of its file, else the hostname
--- up to its first dot. Not inside tmux: there the title names the window in
--- the bar, every window there is on this machine, and tmux's
+-- it a remote nvim tab read like one on this machine. The name is what
+-- scripts/machine_name.sh prints, asked once here; a name it refuses stops
+-- this file with its message. Not inside tmux: there the title names the
+-- window in the bar, every window there is on this machine, and tmux's
 -- set-titles-string (with its own lead) titles the terminal.
 if not vim.env.TMUX then
-  local file = vim.fn.expand("~/.config/dotfiles/machine-name")
-  local machine = vim.fn.filereadable(file) == 1 and vim.fn.readfile(file)[1] or vim.fn.hostname():gsub("%..*", "")
-  title = "(" .. machine .. ") " .. title
+  local asked = vim.system({ vim.fn.expand("~/.dotfiles/scripts/machine_name.sh") }, { text = true }):wait()
+  if asked.code ~= 0 then
+    error("the title has no machine to lead with: " .. vim.trim(asked.stderr))
+  end
+  title = "(" .. vim.trim(asked.stdout) .. ") " .. title
 end
 vim.opt.titlestring = title
 vim.opt.ruler = true

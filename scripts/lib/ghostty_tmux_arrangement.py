@@ -16,7 +16,7 @@ windows. Only tmux tabs are saved: a plain shell has nothing to come back to.
     tty is a local tmux client  -> tmux [-L <socket>] new-session -A -s <session>
       (tmux list-clients)            -c <its directory>
     ssh, title "[<shown>]" or   -> <login, with -t> tmux [-L <socket>] attach
-      "(<host>) [<shown>]"           -t =<session>
+      "(<machine>) [<shown>]"        -t =<session>
                                    (the host is asked which socket: attach_for)
     anything else               -> skipped, and logged
       |

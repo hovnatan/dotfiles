@@ -286,7 +286,7 @@ wait_for ' synthetic focus-out to %[0-9]+ \(b\): no client attached$' \
 # either way.
 printf '#!/bin/sh\necho "$# args: $*" >>"${0%%/*}/argv.log"\n' >"$WORK/argv.sh"
 chmod +x "$WORK/argv.sh"
-grep -E '^set-hook -g client-(attached|session-changed)\[[0-9]+\] .*log-event\.sh (attached|session-changed) ' \
+grep -E '^set-hook -g client-(attached|session-changed)(\[[0-9]+\])? .*log-event\.sh (attached|session-changed) ' \
   "$REPO/home/.config/tmux/tmux.conf" \
   | sed "s|~/.dotfiles/home/.config/tmux/log-event.sh|$WORK/argv.sh|" >"$WORK/stub_hooks.conf"
 [ "$(wc -l <"$WORK/stub_hooks.conf" | tr -d ' ')" = 2 ] \
@@ -298,7 +298,7 @@ for _ in $(seq 50); do
   [ -s "$WORK/attach.log" ] && break
   sleep 0.1
 done
-# The report hook runs before [9]; this leaves its background job time too.
+# The log hook runs before [9]; this leaves its background job time too.
 sleep 0.5
 if [ ! -s "$WORK/attach.log" ]; then
   fail "a control client's attach fired no client-attached hook"
