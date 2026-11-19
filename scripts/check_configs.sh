@@ -14,7 +14,9 @@
 #   3. nvim   home/.config/nvim starts clean from an empty data dir, as on a
 #             new machine: vim.pack installs the locked plugins, no error
 #             message is left in v:errmsg, and nvim-pack-lock.json is unchanged
-#             (a rewrite means the plugin specs and the lockfile disagree)
+#             (a rewrite means the plugin specs and the lockfile disagree).
+#             It starts in a throwaway HOME whose ~/.dotfiles is this
+#             checkout, and outside tmux (see the section for why)
 #
 # Usage: scripts/check_configs.sh      (exit 0 = all passed)
 # Needs fish (with fish_indent), nvim, git and python3 on PATH (all in
@@ -66,7 +68,24 @@ log "json: $n files parsed"
 
 lock=home/.config/nvim/nvim-pack-lock.json
 data="$tmp/nvim"
-if ! XDG_CONFIG_HOME="$REPO/home/.config" XDG_DATA_HOME="$data/data" \
+
+# The config calls the repo's scripts by their installed path
+# (core/options.lua asks ~/.dotfiles/scripts/machine_name.sh for the title),
+# so nvim gets a HOME where that path is this checkout:
+#
+#   $tmp/home/.dotfiles -> $REPO     a CI runner's checkout   (no ~/.dotfiles)
+#                                    the pre-push worktree    (not the live one)
+#
+# Without it the check failed on every CI run for a path the runner never
+# has (2026-11-19), and before a push it ran the live ~/.dotfiles scripts
+# instead of the pushed commit's. TMUX is unset for the same reason: the
+# title asks for the machine's name only outside tmux, so a check started
+# from a tmux pane skipped that code and passed what CI then failed.
+mkdir -p "$tmp/home"
+ln -s "$REPO" "$tmp/home/.dotfiles"
+
+if ! env -u TMUX HOME="$tmp/home" \
+  XDG_CONFIG_HOME="$REPO/home/.config" XDG_DATA_HOME="$data/data" \
   XDG_STATE_HOME="$data/state" XDG_CACHE_HOME="$data/cache" \
   nvim --headless -c 'if v:errmsg != "" | cquit | endif' -c 'qall!' >"$tmp/nvim.log" 2>&1; then
   fail "nvim: startup reported an error: $(grep -v '^vim.pack' "$tmp/nvim.log" | head -n 5)"
