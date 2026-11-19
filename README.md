@@ -60,9 +60,9 @@ once the rest is done.
 
 ## Checks before a push
 
-`scripts/check.sh` runs every check CI runs (shellcheck, shfmt, stylua, fish/JSON/nvim
-config, markdownlint, yamlfmt/yamllint/actionlint, the Nix flake, the tests in
-`scripts/tests/`); the CI workflows call it too. The installer sets
+`scripts/check.sh` runs every check CI runs (shellcheck, shfmt, stylua, ruff, biome,
+fish/JSON/nvim config, markdownlint, yamlfmt/yamllint/actionlint, the Nix flake, the
+tests in `scripts/tests/`); the CI workflows call it too. The installer sets
 `core.hooksPath` to `scripts/git-hooks`, whose `pre-push` runs
 `check.sh --changed` on each commit being pushed, in a throwaway worktree:
 lint always (a few seconds), the flake check when `nix/` changed, and the tests

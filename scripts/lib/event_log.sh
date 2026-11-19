@@ -2,7 +2,8 @@
 #
 # event_log.sh -- the event log of a script that runs on its own (a hook, a
 # daemon, a job), the repo's rule for those (AGENTS.md). Sourced, not run;
-# home/.hammerspoon/event_log.lua is the same for Hammerspoon modules.
+# home/.hammerspoon/event_log.lua is the same for Hammerspoon modules, and
+# scripts/event_log_note.sh for what can only run a program (a claude mod).
 #
 #   . "$(dirname "$0")/lib/event_log.sh"
 #   event_log_start appearance_sh

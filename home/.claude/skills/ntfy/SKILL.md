@@ -16,6 +16,6 @@ the topic rather than inventing one.
       "https://ntfy.sh/$(cat ~/.config/claude-ntfy/topic)"
 
 From Python, stdlib urllib does the same (POST body = message; Title/Tags
-as headers) -- no dependencies needed. The Stop-hook pipeline
-(`~/.dotfiles/home/.claude/ntfy-stop.sh`) reads the same topic file, so one
+as headers) -- no dependencies needed. The push at a finished turn nobody
+looks at (`~/.dotfiles/home/.claude/mods/ntfy-stop/`) reads the same topic file, so one
 subscription covers both.

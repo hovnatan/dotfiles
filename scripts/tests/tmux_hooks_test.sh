@@ -902,7 +902,7 @@ done
   && pass "bg's client focused again: the marker is gone" \
   || fail "after bg's focus-in: w's bell marker '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
 
-# Focus gone stale (ntfy-stop.sh's rule): bg's client still says focused, as
+# Focus gone stale (the ntfy-stop mod's rule): bg's client still says focused, as
 # a locked Mac's terminal does, but has had no input for longer than
 # BELL_STALE_SECONDS (1 s here, from the server's environment, which run-shell
 # passes on): unwatched. Then a key typed there, its focus flag unchanged as

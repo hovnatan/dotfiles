@@ -169,7 +169,7 @@ ln -sfn ~/.dotfiles/home/.claude/themes ~/.claude/themes
 #
 #   ~/.dotfiles-private      personal: the hunspell word list, the grammar-drill bank,
 #                            and machines/<name>/home/, files for one machine only
-#                            (its ntfy topic, which home/.claude/ntfy-stop.sh pushes to)
+#                            (its ntfy topic, which home/.claude/mods/ntfy-stop/ pushes to)
 #   ~/.hov-dotfiles-private  work: claude-worklog (the work log routine),
 #                            anything naming an internal document or host
 #

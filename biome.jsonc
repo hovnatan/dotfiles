@@ -1,0 +1,33 @@
+// Style and lint rules for every tracked TypeScript and JavaScript file: the
+// claude mods (home/.claude/mods/) and the VS Code extension. scripts/check.sh's
+// `typescript` check runs it (CI: .github/workflows/typescript.yml), with the
+// biome of the pinned nixpkgs (nix/flake.lock), since rules and formatting
+// shift between releases. After a lock bump that changes this file's schema:
+// `biome migrate --write`.
+//
+// Fix by hand:  biome check --write
+//
+// JSON is left out on purpose: most of this repo's is written by the apps
+// that read it (karabiner.json, settings.json, nvim-pack-lock.json), each in
+// its own layout, and scripts/check_configs.sh already parses it.
+{
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    // The one list of what is checked: scripts/check.sh runs `biome check`
+    // with no paths. What Claude Code writes into a mod it has loaded (its
+    // API's types) is the engine's, regenerated at each load.
+    "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.mjs", "!**/.claude-plugin/types"]
+  },
+  // As the Lua (.stylua.toml): spaces, 2 wide, lines to 120.
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
+  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "linter": {
+    "rules": {
+      // Beside the recommended rules, which are on by default. A promise
+      // nobody awaits loses its failure: in a mod, a log line or a toast that
+      // never happens, with nothing said. `void` marks the ones meant to run
+      // on (a timer's tick).
+      "nursery": { "noFloatingPromises": "error" }
+    }
+  }
+}

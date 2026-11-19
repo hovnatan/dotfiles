@@ -4,7 +4,8 @@
     "CLAUDE_CODE_TMUX_TRUECOLOR": "1",
     "CLAUDE_CODE_AUTO_CONNECT_IDE": "false",
     "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
-    "CLAUDE_CODE_DISABLE_AGENT_VIEW": "1"
+    "CLAUDE_CODE_DISABLE_AGENT_VIEW": "1",
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/.dotfiles/home/.claude/mods/session-rename:~/.dotfiles/home/.claude/mods/ntfy-stop"
   },
   "permissions": {
     "allow": [
@@ -71,33 +72,6 @@
             "command": "~/.dotfiles/home/.claude/git-guard.sh",
             "timeout": 5,
             "onFailure": "block"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.dotfiles/home/.claude/ntfy-stop.sh --cancel",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "~/.dotfiles/home/.claude/session-name-prefix.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.dotfiles/home/.claude/ntfy-stop.sh",
-            "timeout": 5
           }
         ]
       }

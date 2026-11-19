@@ -1,0 +1,26 @@
+# Every tracked .ts and .js file must pass biome's lint and match its format
+# (biome.jsonc). biome comes from the pinned nixpkgs (nix/flake.lock), the
+# build `dotup` installs, since its rules and formatting shift between
+# releases. scripts/check.sh's `typescript` check, which the pre-push hook
+# runs too. The types are not checked here: tsc needs what Claude Code writes
+# into a mod it has loaded (scripts/tests/claude_mods_test.sh, on a machine
+# with claude).
+# Fix a failure with:  biome check --write
+name: typescript
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  biome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: biome check
+        run: |
+          nix shell --inputs-from "path:$PWD/nix" nixpkgs#biome --command bash -c \
+            "biome --version && scripts/check.sh typescript"

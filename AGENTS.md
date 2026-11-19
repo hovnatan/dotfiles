@@ -24,9 +24,10 @@ It is kept short on purpose - every line here is paid on every session.
   apt (daemons such as docker), applied by `scripts/apt_bundle.sh`. Read the
   relevant header before any `nix profile` change, brew install, uninstall
   or cask adopt, or apt install.
-- Changing `scripts/claude_manager_start.sh`, the claude-tmux unit,
-  `home/.claude/ntfy-stop.sh` or a tmux hook (`home/.config/tmux/`, the
-  `set-hook` lines): extend `scripts/tests/` with the new behaviour. A new
+- Changing `scripts/claude_manager_start.sh`, the claude-tmux unit or a tmux
+  hook (`home/.config/tmux/`, the `set-hook` lines): extend `scripts/tests/`
+  with the new behaviour; changing a claude mod (`home/.claude/mods/`): its
+  own `hooks/register.test.ts`. A new shell
   test needs a `# check.sh covers:` line (format in `scripts/check.sh`); it
   decides when the pre-push hook runs the test. Tests are safe beside live sessions.
 - This repo is public, commit messages included. Host names, IPs, tailnet
@@ -58,7 +59,8 @@ It is kept short on purpose - every line here is paid on every session.
   one directory per run or load (per UTC day for a hook that fires at every
   turn, `event_log_daily`): a UTC-timestamped line per action,
   line-buffered so the file reads mid-run. Use `scripts/lib/event_log.sh`
-  (shell) or `home/.hammerspoon/event_log.lua`; `.logs` is ignored through
+  (shell), `home/.hammerspoon/event_log.lua` or `scripts/event_log_note.sh`
+  (a claude mod); `.logs` is ignored through
   `home/.config/git/ignore`. A directory holding only `events.log` is pruned
   30 days after its last write (`scripts/prune_logs.sh`), so a record worth
   keeping needs a file of another name beside it.

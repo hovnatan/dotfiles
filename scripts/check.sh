@@ -11,6 +11,8 @@
 #   lua        stylua --check on every tracked .lua            lua.yml
 #   python     ruff check and ruff format --check on every     python.yml
 #              tracked .py, rules in home/.config/ruff
+#   typescript biome check (lint and format; rules and the     typescript.yml
+#              files, .ts and .js, in biome.jsonc)
 #   configs    scripts/check_configs.sh: fish parse and        configs.yml
 #              layout, JSON, nvim startup
 #   markdown   markdownlint-cli2 on every tracked .md          markdown.yml
@@ -30,8 +32,8 @@
 #                                          one a line, and run none
 #
 # --changed picks:
-#   shell lua python configs     always: a few seconds over the whole repo
-#   markdown yaml
+#   shell lua python typescript  always: a few seconds over the whole repo
+#   configs markdown yaml
 #   nix                          a path under nix/, or check_nix_flake.sh
 #   test:<name>                  a path its `# check.sh covers:` line names,
 #                                or the test's own files; every test when
@@ -39,8 +41,8 @@
 #                                tools the tests drive) changed
 #
 #   e.g. --changed home/.config/tmux/log-event.sh README.md
-#        -> shell lua python configs markdown yaml test:appearance
-#           test:tmux_hooks
+#        -> shell lua python typescript configs markdown yaml
+#           test:appearance test:tmux_hooks
 #
 # Each test declares, near its top (bash patterns; `*` also spans `/`):
 #   # check.sh covers: scripts/prune_logs.sh scripts/lib/*
@@ -58,7 +60,7 @@ cd "$REPO" || exit 1
 
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 usage() {
-  echo "usage: $0 [shell|lua|python|configs|markdown|yaml|nix|tests ...] | --changed <path>..." >&2
+  echo "usage: $0 [shell|lua|python|typescript|configs|markdown|yaml|nix|tests ...] | --changed <path>..." >&2
   exit 2
 }
 
@@ -128,6 +130,16 @@ check_python() {
   python_files | xargs -0 ruff format --check --config "$config"
 }
 
+# Lint, import order and format in one pass, a warning failing as an error
+# does. No file list: biome.jsonc names the files, as markdownlint's config
+# does, and git's ignore rules apply. The types are not checked here: tsc needs what Claude Code writes
+# into a mod it has loaded, so that is scripts/tests/claude_mods_test.sh's.
+# Fix a failure with:  biome check --write
+check_typescript() {
+  need biome || return 1
+  biome check --error-on-warnings
+}
+
 check_configs() { scripts/check_configs.sh; }
 
 # Add --fix for the spacing rules, then read its diff: it rewrites `|` in
@@ -183,7 +195,7 @@ test_covers() {
 
 # --- what to run --------------------------------------------------------------
 
-checks=() # shell lua configs markdown yaml nix test:<name> ...
+checks=() # shell lua python typescript configs markdown yaml nix test:<name> ...
 add_all_tests() {
   local t
   for t in scripts/tests/*_test.sh; do checks+=("test:$(test_name "$t")"); done
@@ -197,7 +209,7 @@ fi
 
 if [ "${1:-}" = --changed ]; then
   shift
-  checks=(shell lua python configs markdown yaml)
+  checks=(shell lua python typescript configs markdown yaml)
   for p; do
     case "$p" in nix/* | scripts/check_nix_flake.sh)
       checks+=(nix)
@@ -212,12 +224,12 @@ if [ "${1:-}" = --changed ]; then
     fi
   done
 elif [ $# -eq 0 ]; then
-  checks=(shell lua python configs markdown yaml nix)
+  checks=(shell lua python typescript configs markdown yaml nix)
   add_all_tests
 else
   for c; do
     case "$c" in
-      shell | lua | python | configs | markdown | yaml | nix) checks+=("$c") ;;
+      shell | lua | python | typescript | configs | markdown | yaml | nix) checks+=("$c") ;;
       tests) add_all_tests ;;
       *) usage ;;
     esac

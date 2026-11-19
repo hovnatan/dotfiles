@@ -26,8 +26,8 @@
 # (#{session_activity}: a client's keys, mouse and focus reports, not pane
 # output; tested 2026-11-10, tmux 3.8).
 #
-# Focus is what ntfy-stop.sh (home/.claude/) learned to distrust, and this
-# follows its rule (watched() there):
+# Focus is what the ntfy-stop mod (home/.claude/mods/ntfy-stop/) learned to
+# distrust, and this follows its rule (watched() in its tmux-watch.sh):
 #   - a locked or sleeping Mac freezes the terminal without a focus-out, and
 #     a dropped ssh leaves its client behind for a while: the flag stays
 #     "focused". A frozen terminal sends no input either, so a focused client
@@ -60,7 +60,7 @@ t() { tmux -S "$socket" "$@"; }
 now=$(date +%s)
 
 # Watched: a terminal client of this session focused, with fresh input. The
-# evidence reads as ntfy-stop.sh's: "ttys002 focused, input 3s ago; ...".
+# evidence reads as tmux-watch.sh's: "ttys002 focused, input 3s ago; ...".
 # An assignment, not a substitution in a redirect: set -e sees it fail.
 own=$(t list-clients -t "$id" -F '#{client_control_mode} #{client_activity} #{client_name} #{client_flags}')
 watched=''

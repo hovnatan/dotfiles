@@ -137,6 +137,9 @@
             ]))
             # bash 5 for `#!/usr/bin/env bash` scripts; macOS /bin/bash is 3.2
             pkgs.bashInteractive
+            # biome -- TypeScript/JavaScript linter and formatter, rules in
+            # biome.jsonc; CI checks (scripts/check.sh typescript) (2026-11-19)
+            pkgs.biome
             # ccusage -- token usage and cost reports (daily, monthly, per
             # session, per 5-hour block) from the local session logs Claude
             # Code and other coding agents write; no API key (2026-10-28)
@@ -235,7 +238,7 @@
             # PDF utilities (pdftotext, pdfinfo, ...) from poppler
             pkgs.poppler-utils
             # python3 -- stdlib-only scripts and tests (tmux_hooks_test.sh,
-            # ntfy_stop_test.sh); the Mac's replaces the python.org 3.12 in
+            # ntfy_watch_test.sh); the Mac's replaces the python.org 3.12 in
             # /usr/local/bin, and on Linux it wins over /usr/bin/python3.
             # Packages go in uv projects or `uv run` scripts, not a global pip
             # (2026-09-23)
@@ -274,6 +277,9 @@
             # (home/.config/tmux/tmux.conf status-right); one binary for macOS and
             # Linux, no plugin manager (2026-11-03)
             pkgs.tmux-mem-cpu-load
+            # typescript -- tsc, the type check of the claude mods
+            # (home/.claude/mods/, scripts/tests/claude_mods_test.sh) (2026-11-19)
+            pkgs.typescript
             # Markup-based typesetting system
             pkgs.typst
             # typstyle -- Typst formatter; the resume repo checks it in CI

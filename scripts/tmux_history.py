@@ -74,7 +74,7 @@ job ends, so every line would land on screen.
 Why a session of its own: a control client counts as attached to its session
 and reports itself focused, which would hide that session from
 focus-out-unattached.sh (Claude's synthetic focus-out) and tmux_switch_session.sh,
-and could look like a watcher to ntfy-stop.sh. In "tmux-history" it disturbs
+and could look like a watcher to the ntfy-stop mod. In "tmux-history" it disturbs
 nothing; prefix s and prefix w leave it out. The session lives exactly as
 long as the connection, however the connection ends: that is what lets it
 stand for a running tracker, to tmux.conf's binding and to a second tracker.

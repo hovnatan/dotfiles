@@ -1,0 +1,7 @@
+{
+  "name": "session-rename",
+  "version": "1.0.0",
+  "description": "/rename names a session inside the folder its name is in: mbp/backend/bug-441 -> mbp/backend/<new name>",
+  "author": { "name": "Hovnatan Karapetyan" },
+  "types": "./types/index.d.ts"
+}

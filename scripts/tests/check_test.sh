@@ -60,7 +60,7 @@ picks() {
   fi
 }
 
-lint="shell lua python configs markdown yaml"
+lint="shell lua python typescript configs markdown yaml"
 all_tests=$(for t in "$REPO"/scripts/tests/*_test.sh; do
   n=${t##*/}
   printf 'test:%s ' "${n%_test.sh}"

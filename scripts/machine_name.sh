@@ -23,9 +23,10 @@
 # (machine_name.fish): its prompt asks at every line, in every pane. It
 # shows what it finds; this script is the one that checks it.
 #
-# A claude session named without the machine (an empty /rename makes up
-# "fix-login") gets it at its next prompt, from a hook that asks this script
-# then: home/.claude/session-name-prefix.sh.
+# A /rename in a claude session asks this script too, through the mod that
+# puts the machine in front of the new name (an empty /rename makes up
+# "fix-login", the session is named "mbp/fix-login"):
+# home/.claude/mods/session-rename/.
 set -euo pipefail
 
 file="$HOME/.config/dotfiles/machine-name"

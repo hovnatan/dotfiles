@@ -4,7 +4,7 @@
 --     -> POST https://ntfy.sh/<topic>, header Title; then done(true, "sent"),
 --        or done(false, <why not>) for the caller to log
 --
--- The topic is the one home/.claude/ntfy-stop.sh pushes to, so one
+-- The topic is the one home/.claude/mods/ntfy-stop/ pushes to, so one
 -- subscription on the phone covers both. It is read from a file that stays
 -- outside this repo: a topic name is a capability (who knows it can
 -- subscribe), and this repo is public. The file is the private repo's, one

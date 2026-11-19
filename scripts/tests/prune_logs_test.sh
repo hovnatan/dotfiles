@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/prune_logs.sh scripts/lib/*
+# check.sh covers: scripts/prune_logs.sh scripts/event_log_note.sh scripts/lib/*
 #
 # prune_logs_test.sh -- end-to-end checks for scripts/prune_logs.sh, which
 # removes old event logs from ~/.dotfiles/.logs. Runs the script for real on
@@ -32,6 +32,11 @@
 #                if no prune ran today, and not with --no-prune; a log
 #                started and never written to has its events.log all the
 #                same, and goes by the rules above once it is old
+#   note         scripts/event_log_note.sh, the log for what can only run a
+#                program (a claude mod): its arguments are one line, with
+#                nothing printed; the day's first line prunes and a later
+#                one does not; a prune that fails, or a log that cannot be
+#                written, is said with exit 1; no message is a usage error
 #   arguments    an unknown one fails
 #
 # Exit 0 = all passed; on failure the work dir is kept and printed.
@@ -223,6 +228,65 @@ if [ -n "$silent" ] && [ -f "$silent/events.log" ] && [ ! -s "$silent/events.log
   fi
 else
   fail "log start, no line written: no events.log in '${silent:-no directory}': $(state)"
+fi
+
+# --- a line from what cannot source the library -------------------------------------
+
+# scripts/event_log_note.sh, as a claude mod runs it: a program and its
+# arguments, the name of the log first.
+note() {
+  env -i HOME="${NOTE_HOME:-$H}" PATH=/usr/bin:/bin "$REPO/scripts/event_log_note.sh" "$@" >"$WORK/out" 2>&1
+}
+noted() { grep -c 'Z backend (\$3) stop: watched now, no push$' "$L"/*_claude_ntfy/events.log 2>/dev/null; }
+
+event_log 20250101_000000_old 40
+echo 20250101 >"$L/.pruned"
+if note claude_ntfy 'backend ($3)' 'stop: watched now, no push' && [ ! -s "$WORK/out" ] && [ "$(noted)" = 1 ]; then
+  pass "note: its arguments are one line of the day's log, and nothing is printed"
+else
+  fail "note: exit $?, logged $(noted) time(s): $(state)"
+fi
+if [ ! -d "$L/20250101_000000_old" ] && [ "$(cat "$L/.pruned")" = "$(date -u +%Y%m%d)" ]; then
+  pass "note: the day's first line prunes, and notes the day"
+else
+  fail "note, not pruned today: $(state)"
+fi
+event_log 20250101_000000_old 40
+if note claude_ntfy 'backend ($3)' 'stop: watched now, no push' && [ -d "$L/20250101_000000_old" ] && [ "$(noted)" = 2 ]; then
+  pass "note: no prune when one ran today"
+else
+  fail "note, pruned today: $(state)"
+fi
+
+# A prune that fails (the day cannot be noted: .pruned is a directory) is
+# said, after the line is written.
+rm -f "$L/.pruned"
+mkdir "$L/.pruned"
+note claude_ntfy 'backend ($3)' 'stop: watched now, no push'
+rc=$?
+if [ "$rc" = 1 ] && [ "$(noted)" = 3 ] && grep -q '^event_log_note.sh: the line is logged, but pruning ' "$WORK/out"; then
+  pass "note: a prune that fails is said, exit 1, and the line is logged"
+else
+  fail "note, prune failing: exit $rc, logged $(noted) time(s): $(state)"
+fi
+rmdir "$L/.pruned"
+
+note claude_ntfy
+rc=$?
+if [ "$rc" = 64 ] && grep -q '^event_log_note.sh: usage: ' "$WORK/out"; then
+  pass "note: a name with no message is a usage error"
+else
+  fail "note, no message: exit $rc: $(state)"
+fi
+
+# HOME is a file here: no log directory can be made under it.
+: >"$WORK/nohome"
+NOTE_HOME="$WORK/nohome" note claude_ntfy who what
+rc=$?
+if [ "$rc" = 1 ] && grep -q "^event_log_note.sh: cannot log under $WORK/nohome/.dotfiles/.logs\$" "$WORK/out"; then
+  pass "note: a log that cannot be written is said, exit 1"
+else
+  fail "note, unwritable: exit $rc: $(state)"
 fi
 
 # --- nothing of the form ------------------------------------------------------------
