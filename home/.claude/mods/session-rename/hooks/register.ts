@@ -1,11 +1,11 @@
 // session-rename -- /rename names a session inside the folder its name is in.
 //
-// A name reads <machine>/<folders...>/<what>, and a /rename changes the last
-// part only (the machine here is "mbp"):
+// A name reads <machine>/<folders...>/<what>, and a /rename changes the
+// <what> only (the machine here is "mbp"):
 //
 //   session is                 typed             runs as
 //   mbp/backend/bug-441-fix    /rename           /rename mbp/backend/<made up>
-//   mbp/bug-441-fix            /rename           /rename mbp/<made up>
+//   mbp/backend                /rename           /rename mbp/backend/<made up>
 //   (no name, or not mbp/...)  /rename           /rename mbp/<made up>
 //   any                        /rename foo       /rename mbp/foo
 //   any                        /rename mbp/x/y   as typed
@@ -13,6 +13,15 @@
 // A typed name says where it goes itself, so only the machine is put in
 // front of it; a made-up one stays in the folder the session is in, which is
 // what carries over a /clear: the name is kept, the work under it is new.
+//
+// The part right after the machine is always a folder, never a <what>: a
+// session starts as `claude -n mbp/backend` (the tmux-session skill), named
+// for its tmux session, and the first /rename goes under that. Until
+// 2026-11-19 it was replaced, and hov-8cpu/sdk lost its "sdk". The name alone
+// cannot say which of the two a second part is, so the rule holds for all of
+// them: a session that had no name gets mbp/<made up>, and that made-up name
+// is its folder from then on (the next is mbp/<made up>/<made up>, and no
+// deeper after it). `/rename <folder>/<what>` puts it elsewhere.
 //
 //   classic.SessionStart      \
 //   classic.UserPromptSubmit --(session_title)--> $.state name
@@ -82,10 +91,18 @@ const NAME = /^[a-z0-9]+(-[a-z0-9]+){1,5}$/;
 const BY_HAND = '/rename <name> sets one.';
 
 // folderOf("mbp/backend/bug-441", "mbp") -> "mbp/backend/"
-// folderOf("mbp/bug-441", "mbp")         -> "mbp/"
+// folderOf("mbp/backend", "mbp")         -> "mbp/backend/"   (the second part is a folder)
+// folderOf("mbp/", "mbp")                -> "mbp/"
 // folderOf("bug-441" | null, "mbp")      -> "mbp/"   (not this machine's: start over)
-const folderOf = (name: string | null, machine: string): string =>
-  name?.startsWith(`${machine}/`) ? name.slice(0, name.lastIndexOf('/') + 1) : `${machine}/`;
+const folderOf = (name: string | null, machine: string): string => {
+  if (!name?.startsWith(`${machine}/`)) return `${machine}/`;
+
+  // What follows the machine: "backend/bug-441", "backend", or "".
+  const under = name.slice(machine.length + 1);
+  if (under === '') return name;
+
+  return under.includes('/') ? name.slice(0, name.lastIndexOf('/') + 1) : `${name}/`;
+};
 
 // said(messages) -> ["user: fix the login redirect", "assistant: Found it: ..."]
 // Text alone: no tool calls or results, and none of what the engine adds in

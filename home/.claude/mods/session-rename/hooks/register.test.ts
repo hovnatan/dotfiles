@@ -140,13 +140,19 @@ test('a /rename typed first thing after a resume has the name the session starte
   expect(ran).toEqual(['mbp/backend/upload-rate-limiter']);
 });
 
-test('a name with the machine alone in front keeps the machine alone', async ($, on) => {
-  const { ran } = engine(on);
+// `claude -n mbp/backend` is how a session starts (the tmux-session skill):
+// "backend" is where it lives, not a name to make up over (2026-11-19, when
+// hov-8cpu/sdk became hov-8cpu/release-sdk-pauli-path-limit).
+test('the part after the machine is the folder, and a made-up name goes under it', async ($, on) => {
+  const { ran, logged } = engine(on);
 
-  await named($, 'mbp/bug-441-fix');
+  await $.classic.SessionStart({ source: 'startup', session_title: 'mbp/backend' });
+  await rename($, '');
   await rename($, '');
 
-  expect(ran).toEqual(['mbp/upload-rate-limiter']);
+  // The second one replaces the first's name and goes no deeper.
+  expect(ran).toEqual(['mbp/backend/upload-rate-limiter', 'mbp/backend/upload-rate-limiter']);
+  expect(logged[0]).toBe("s-1: 'mbp/backend' -> 'mbp/backend/upload-rate-limiter'");
 });
 
 test("no name, or one that is not this machine's, starts under the machine", async ($, on) => {
@@ -157,6 +163,22 @@ test("no name, or one that is not this machine's, starts under the machine", asy
   await rename($, '');
 
   expect(ran).toEqual(['mbp/upload-rate-limiter', 'mbp/upload-rate-limiter']);
+});
+
+// The other side of "the part after the machine is the folder": the name
+// cannot say that this second part was made up, so it is one too.
+test('the name made up for a session that had none is its folder from then on', async ($, on) => {
+  const { ran } = engine(on);
+
+  await rename($, '');
+  await rename($, '');
+  await rename($, '');
+
+  expect(ran).toEqual([
+    'mbp/upload-rate-limiter',
+    'mbp/upload-rate-limiter/upload-rate-limiter',
+    'mbp/upload-rate-limiter/upload-rate-limiter',
+  ]);
 });
 
 test('a typed name gets the machine in front, and no folder', async ($, on) => {

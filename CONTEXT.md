@@ -43,7 +43,8 @@ titles and the tmux bar (`(<machine>) [<session>]`), claude sessions
 the line of the per-machine file `~/.config/dotfiles/machine-name` where
 there is one, else the host name up to its first dot;
 `scripts/machine_name.sh` prints it. A `/rename` in a claude session keeps
-it in front, and the folders after it (`mbp/backend/bug-441` becomes
+it in front, and the folders after it, the first of which is the session's
+own name (`mbp/backend` and `mbp/backend/bug-441` both become
 `mbp/backend/<new name>`): the mod `home/.claude/mods/session-rename/`. From
 then the session goes by a name its tmux session and its phone notifications
 do not share.
