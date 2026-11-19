@@ -115,7 +115,7 @@ test('a made-up name stays in the folder the session is in', async ($, on) => {
   // The model reads what was said and nothing the engine added around it.
   expect(asked.length).toBe(1);
   expect(asked[0]).toContain(
-    'haiku: <conversation>\nuser: add a rate limiter to the upload API\n\nassistant: On it.\n</conversation>',
+    'sonnet: <conversation>\nuser: add a rate limiter to the upload API\n\nassistant: On it.\n</conversation>',
   );
   expect(toasts).toEqual([]);
   expect(logged).toEqual(["s-1: 'mbp/backend/bug-441-fix' -> 'mbp/backend/upload-rate-limiter'"]);

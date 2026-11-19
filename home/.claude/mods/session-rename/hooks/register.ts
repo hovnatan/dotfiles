@@ -28,7 +28,7 @@
 // read (its answer is `{ ref }`, no text; Claude Code 2.1.328).
 //
 // What it is made up from: what was said, as text, first words and latest,
-// put to the small model in one request. Not a fork of the conversation,
+// put to Sonnet in one request. Not a fork of the conversation,
 // which the first version used: a session just resumed has nothing to fork
 // until a turn ends, so a /rename typed first thing got no name (2026-11-19),
 // and a fork reads the whole conversation at the session's own model.
@@ -137,8 +137,11 @@ export const register: Register = (on) => {
       const lines = said(await $.session.messages({ as: 'api' }));
       if (lines.length === 0) return kept(`nothing said yet to name. ${BY_HAND}`);
 
+      // The alias, not an id: the newest Sonnet, whichever that is (5.5 on
+      // 2026-11-19; Haiku made the names up until then). The name is about
+      // 15 tokens, well inside the cap.
       const made = await $.model.complete({
-        model: 'haiku',
+        model: 'sonnet',
         prompt: `<conversation>\n${lines.join('\n\n')}\n</conversation>\n\n${ASK}`,
         maxTokens: 40,
       });
