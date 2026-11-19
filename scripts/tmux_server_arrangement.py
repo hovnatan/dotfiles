@@ -4,9 +4,7 @@ r"""Save a tmux server's sessions and windows, and bring them back after a reboo
 What is saved is the layout alone: each session, its windows in order, and
 the directory of each window's active pane. Not the programs, not the
 splits, not the text. A restored window is a fresh shell in its old
-directory. The verbs are the Ghostty arrangement's
-(scripts/ghostty_tmux_arrangement.sh), for one server instead of a
-terminal's windows:
+directory. The verbs:
 
   snapshot          the server now, as "auto-<UTC YYYYMMDD_HHMMSS>", unless
                     it is as the newest snapshot left it; then all but the
@@ -103,15 +101,6 @@ from types import FrameType
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from event_log import EventLog
-from tmux_arrangement import (
-    NO_SERVER,
-    SNAPSHOT_PREFIX,
-    ArrangementError,
-    idle,
-    snapshot_name,
-    socket_dir,
-    stale_snapshots,
-)
 
 STATE = Path.home() / ".local/state/tmux_server_arrangements"
 HISTORY_SESSION = "tmux-history"  # scripts/tmux_history.py's: never saved or closed
@@ -122,10 +111,23 @@ TMUX_TIMEOUT = 10  # s for one tmux command; each takes milliseconds
 # directory holds in practice; one that does is an error (read_server).
 SEP = "\x1f"
 NAME = re.compile(r"[A-Za-z0-9_.@+-]+")  # an arrangement name: a file name, no quoting
+# What tmux prints when no server listens on the socket.
+NO_SERVER = re.compile(r"no server running|error connecting to")
+# The shells idle() takes for one at its prompt.
+IDLE_SHELLS = frozenset({"bash", "fish", "sh", "zsh"})
+SNAPSHOT_PREFIX = "auto-"  # snapshot "auto-20261019_143000", a UTC time
+# The newest 2016 snapshots are kept: two weeks of them (14 x 144) were one
+# written every EVERY seconds, and more days than that in practice, as a
+# snapshot the same as the one before is not written.
+SNAPSHOT_KEEP = 14 * 144
 
 # A saved arrangement: session -> its windows' directories, in window order.
 # Sessions keep the order they were saved in (dicts keep insertion order).
 Arrangement = dict[str, list[str]]
+
+
+class ArrangementError(Exception):
+    """A save or restore that would leave the wrong thing; the message says what."""
 
 
 class ServerGone(Exception):  # noqa: N818 - an end, not an error
@@ -258,6 +260,38 @@ def snapshot_time(name: str) -> datetime | None:
             " YYYYMMDD_HHMMSS time after it; rename or remove it"
         )
         raise ArrangementError(msg) from e
+
+
+def snapshot_name(now: datetime) -> str:
+    """Return the name of a snapshot taken at `now`: "auto-20261019_143000"."""
+    return f"{SNAPSHOT_PREFIX}{now:%Y%m%d_%H%M%S}"
+
+
+def stale_snapshots(names: list[str], directory: Path) -> list[str]:
+    """Return the snapshots among `names` past the newest SNAPSHOT_KEEP of them.
+
+    Kept by count, not age: days without snapshots (the machine off over a
+    weekend) must not cost the last ones from before them, the very ones a
+    restore wants. Ordered by the time in the name, not the file's mtime,
+    which a hand edit moves. A name of no other shape under the prefix is a
+    file this script did not write: an error, not something to delete or skip.
+    """
+    taken = []
+    for name in names:
+        if not name.startswith(SNAPSHOT_PREFIX):
+            continue
+        stamp = name.removeprefix(SNAPSHOT_PREFIX)
+        try:
+            when = datetime.strptime(stamp, "%Y%m%d_%H%M%S").replace(tzinfo=UTC)
+        except ValueError as e:
+            msg = (
+                f"arrangement {name!r} has the snapshot prefix but no"
+                f" YYYYMMDD_HHMMSS time after it;"
+                f" rename or remove {directory / name}.txt"
+            )
+            raise ArrangementError(msg) from e
+        taken.append((when, name))
+    return [name for _, name in sorted(taken, reverse=True)[SNAPSHOT_KEEP:]]
 
 
 def default_restore(saved: list[str], started: datetime | None) -> str:
@@ -484,10 +518,22 @@ def ps(pid: str, field: str) -> str:
     return r.stdout.strip()
 
 
+def idle(command: str) -> bool:
+    """Tell whether a tty's foreground command is a shell at its prompt, or nothing.
+
+    "-fish" and "/bin/zsh" are; "" is; "fish build.fish" and "vim" are not. A
+    shell that shows arguments is running them.
+    """
+    words = command.split()
+    return not words or (
+        len(words) == 1 and Path(words[0]).name.lstrip("-") in IDLE_SHELLS
+    )
+
+
 def busy_panes(server: Server, sessions: list[str]) -> list[str]:
     """Return the panes of `sessions` whose foreground is not an idle shell.
 
-    The whole command line, as idle() reads it (tmux_arrangement.py): a
+    The whole command line, as idle() reads it: a
     shell alone, "fish" or "-zsh", is at its prompt; "bash build.sh" runs a
     script, though tmux names it "bash" all the same.
 
@@ -621,6 +667,12 @@ def run_main(server: Server, every: float) -> int:
 
 
 # --- main --------------------------------------------------------------------------
+
+
+def socket_dir() -> Path:
+    """Return the directory of this user's tmux sockets, as tmux works it out."""
+    tmp = os.environ.get("TMUX_TMPDIR") or "/tmp"  # noqa: S108 - tmux's own default
+    return Path(tmp) / f"tmux-{os.getuid()}"
 
 
 def main(argv: list[str]) -> int:

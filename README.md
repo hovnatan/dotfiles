@@ -283,12 +283,12 @@ or edit by hand.
 ```
 
 `restore` with no name takes the newest snapshot from before this server started: after a
-reboot, the old server's last state. It creates each saved session that is not open, a window
-per saved one, each a fresh shell in its directory; a session already open (`manager`, at
-boot) is left as it is. Run it before the Ghostty arrangement's restore, which would otherwise
-create those sessions with one window each. `replace` also closes every other session
-(`tmux-history` aside), and refuses before touching anything if one of them holds the command
-itself, or has a pane whose foreground command line is more than a bare shell (`claude ...`,
-`nvim ...`, `bash build.sh`). A job left in the background (`cmd &`) is not seen, and dies.
-A saved directory that is gone stops either before anything opens. `-L <name>` after the verb
-picks another server. Each run logs to `~/.dotfiles/.logs/<UTC>_tmux_server_arrangement/events.log`.
+reboot, the old server's last state. It creates each saved session that is not open, a
+window per saved one, each a fresh shell in its directory; a session already open
+(`manager`, at boot) is left as it is. `replace` also closes every other session
+(`tmux-history` aside), and refuses before touching anything if one of them holds the
+command itself, or has a pane whose foreground command line is more than a bare shell
+(`claude ...`, `nvim ...`, `bash build.sh`). A job left in the background (`cmd &`) is not
+seen, and dies. A saved directory that is gone stops either before anything opens. `-L
+<name>` after the verb picks another server. Each run logs to
+`~/.dotfiles/.logs/<UTC>_tmux_server_arrangement/events.log`.

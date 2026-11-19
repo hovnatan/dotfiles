@@ -99,8 +99,8 @@ one, look at everything running on it, not only your own jobs:
       for s in "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)"/*; do tmux -S "$s" list-clients 2>/dev/null; done'
 
 `who` misses a tab attached to tmux by a remote command (`ssh -t remote
-tmux attach ...`, as a restored Ghostty arrangement does): over Tailscale
-SSH that skips login(1), so it gets no `who` line. The tmux client list
+tmux attach ...`): over Tailscale SSH that skips login(1), so it gets no
+`who` line. The tmux client list
 shows it. The box is idle when the load is near zero, nobody is logged in
 or attached to tmux, and nothing on CPU is anyone's work but your own
 finished jobs. When anything

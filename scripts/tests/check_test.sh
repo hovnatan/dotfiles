@@ -71,7 +71,7 @@ picks "$lint test:appearance test:tmux_hooks" --changed home/.config/tmux/log-ev
 picks "$lint" --changed README.md
 picks "$lint nix" --changed nix/flake.nix
 picks "$lint nix $all_tests" --changed nix/flake.lock
-picks "$lint test:ssh_command" --changed scripts/tests/ssh_command_test.py
+picks "$lint test:tmux_history" --changed scripts/tests/tmux_history_test.py
 picks "$lint" --changed
 picks "lua $all_tests" lua tests
 picks "$lint nix $all_tests"

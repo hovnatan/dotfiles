@@ -17,8 +17,8 @@
 --                 prints, which sees the mark, ...: "stack overflow"
 --
 -- Seen 2026-11-17 in eye_breaks.lua, whose timer stops on an error, and
--- 2026-11-18 in ghostty_snapshots.lua. Reproduced on Hammerspoon 1.1.1
--- (2026-11-19), where the last line printed "false ... (early)", then
+-- 2026-11-18 in ghostty_snapshots.lua (since removed). Reproduced on
+-- Hammerspoon 1.1.1 (2026-11-19), where the last line printed "false ... (early)", then
 -- "false ... stack overflow", and "true" from the sweep on:
 --
 --   sleep 300 | hs -n &          a client that stays; then kill -9 the hs

@@ -121,8 +121,7 @@ LIST = "list-sessions -F '#{session_id} #{window_id}'"
 # A window closed: "%window-close @9" for one of the tracker's own session,
 # "%unlinked-window-close @9" for any other.
 CLOSES = {"%window-close", "%unlinked-window-close"}
-# What tmux -N prints when no server listens on the socket. As in
-# tmux_arrangement.py, whose import would pull in ssh_command for one line.
+# What tmux -N prints when no server listens on the socket.
 NO_SERVER = re.compile(r"no server running|error connecting to")
 
 

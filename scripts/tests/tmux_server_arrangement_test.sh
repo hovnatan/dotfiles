@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/tmux_server_arrangement.py scripts/lib/tmux_arrangement.py scripts/lib/event_log.py scripts/tests/tmux_server_arrangement_test.py home/.config/tmux/tmux.conf
+# check.sh covers: scripts/tmux_server_arrangement.py scripts/lib/event_log.py scripts/tests/tmux_server_arrangement_test.py home/.config/tmux/tmux.conf
 #
 # tmux_server_arrangement_test.sh -- the tmux snapshots and their restore
 # (scripts/tmux_server_arrangement.py): the file format and restore's pick,

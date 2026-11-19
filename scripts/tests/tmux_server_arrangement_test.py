@@ -46,7 +46,7 @@ import sys
 import tempfile
 import time
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 REPO, LOG = Path(sys.argv[1]), Path(sys.argv[2])
@@ -107,6 +107,24 @@ def test_default_restore_takes_the_newest_snapshot_before_the_server_started() -
         lambda: ta.default_restore(saved, early),
     )
     assert "no YYYYMMDD_HHMMSS" in raised(lambda: ta.default_restore(["auto-x"], None))
+
+
+def test_snapshots_past_the_newest_kept_are_stale_oldest_last() -> None:
+    start = datetime(2026, 11, 1, tzinfo=UTC)
+    names = [
+        ta.snapshot_name(start + timedelta(minutes=i))
+        for i in range(ta.SNAPSHOT_KEEP + 2)
+    ]
+    # Two more than are kept: the two oldest go, and a saved name is no snapshot.
+    assert ta.stale_snapshots([*names, "all"], Path("/x")) == names[1::-1]
+    assert "/x/auto-x.txt" in raised(lambda: ta.stale_snapshots(["auto-x"], Path("/x")))
+
+
+def test_idle_is_a_bare_shell_or_nothing() -> None:
+    for command in ["", "-fish", "fish", "/bin/zsh", "-zsh", "bash"]:
+        assert ta.idle(command), command
+    for command in ["vim", "fish build.fish", "sleep 100", "ssh vm"]:
+        assert not ta.idle(command), command
 
 
 # --- end to end ------------------------------------------------------------------
