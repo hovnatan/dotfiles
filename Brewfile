@@ -22,7 +22,7 @@
 #
 # Maintenance gotchas:
 # - Agent shells have no tty, so a cask that needs sudo (pkg installers,
-#   /usr/local/bin symlinks: docker-desktop, little-snitch, tunnelblick, zoom,
+#   /usr/local/bin symlinks: docker-desktop, zoom,
 #   ...) fails there - and a failed `--adopt` rolls back by deleting the
 #   adopted app (Docker.app was lost this way on 2026-09-22). Adopting a
 #   hand-installed app whose group is staff, not admin, also needs sudo:
@@ -64,9 +64,7 @@ cask "homerow"
 cask "iina"
 cask "keepassxc"
 cask "libreoffice"
-cask "little-snitch"
 cask "lm-studio"
-cask "lookaway"
 cask "microsoft-teams"
 cask "postico"
 cask "protonvpn"
@@ -76,7 +74,6 @@ cask "temurin"
 cask "tor-browser"
 # transmit -- Panic's SFTP/S3/WebDAV file transfer client (2026-10-19)
 cask "transmit"
-cask "tunnelblick"
 # virtualbox -- local VMs; pkg installer, so install needs sudo (2026-10-05)
 cask "virtualbox"
 cask "visual-studio-code"
