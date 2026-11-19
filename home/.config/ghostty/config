@@ -82,8 +82,13 @@ keybind = ctrl+super+k=next_tab
 # tmux this changes nothing, since tmux already decodes it to ^M.
 keybind = ctrl+m=text:\r
 
-# Don't ask for confirmation when closing a surface/window
-confirm-close-surface = false
+# Always ask before closing a surface. Ghostty has no quit-only setting: this
+# one option is also what makes cmd+q ask, so a stray cmd+q (next to cmd+w)
+# cannot take every window with it. The price is the same dialog on closing a
+# tab, split or window. `always` rather than `true`, because `true` asks only
+# while shell integration reports a running process, so a quit with every
+# shell idle at its prompt would still go through silently.
+confirm-close-surface = always
 
 # Selected text goes straight to the system clipboard
 copy-on-select = clipboard
