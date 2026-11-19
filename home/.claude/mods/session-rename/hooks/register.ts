@@ -1,4 +1,5 @@
-// session-rename -- /rename names a session inside the folder its name is in.
+// session-rename -- /rename names a session inside the folder its name is in,
+// and /clear leaves it the folder alone.
 //
 // A name reads <machine>/<folders...>/<what>, and a /rename changes the
 // <what> only (the machine here is "mbp"):
@@ -10,9 +11,15 @@
 //   any                        /rename foo       /rename mbp/foo
 //   any                        /rename mbp/x/y   as typed
 //
+//   session is                 typed             is then
+//   mbp/backend/bug-441-fix    /clear            mbp/backend
+//   mbp/backend                /clear            mbp/backend   (nothing to drop)
+//   (no name, or not mbp/...)  /clear            as it was
+//
 // A typed name says where it goes itself, so only the machine is put in
-// front of it; a made-up one stays in the folder the session is in, which is
-// what carries over a /clear: the name is kept, the work under it is new.
+// front of it; a made-up one stays in the folder the session is in. The
+// folder is what carries over a /clear: the <what> named the work that was
+// cleared, so it goes with it, and the next /rename names the new work.
 //
 // The part right after the machine is always a folder, never a <what>: a
 // session starts as `claude -n mbp/backend` (the tmux-session skill), named
@@ -31,6 +38,20 @@
 //                   |           event_log_note.sh: "<id>: 'old' -> 'new'"
 //                   v
 //       no name to give: "Not renamed: <why>", and no command runs
+//
+//   /clear --> command.run: core's /clear, then the folder of the name
+//                   |
+//                   v  (a timer: once the /clear has ended)
+//       $.command.run: /rename <folder> --> core's /rename, as if typed
+//                                                 |
+//                   event_log_note.sh: "<id>: 'old' -> 'new' (/clear)"
+//
+// Why /clear renames by running /rename, which leaves a "/rename mbp/backend"
+// row at the top of the cleared conversation: a session start may answer
+// with a title (`sessionTitle`), and the start after a /clear was the first
+// thing tried, but core does not take that title over a name the session
+// already has (the name stayed; Claude Code 2.1.328). /rename is the one
+// thing here that sets a name over a name.
 //
 // Why the mod makes the name up itself: core's /rename makes one up and
 // applies it in the same step, and in a terminal says nothing a hook can
@@ -61,7 +82,7 @@
 // machine's name is scripts/machine_name.sh's, and each rename is a line in
 // ~/.dotfiles/.logs/<day>_claude_session_rename/events.log.
 
-import type { Register } from 'claude-code';
+import type { EngineInterface, Register } from 'claude-code';
 import { atom, read } from 'claude-code';
 
 // Where the name is kept. Written out as a const of this file because the
@@ -104,6 +125,21 @@ const folderOf = (name: string | null, machine: string): string => {
   return under.includes('/') ? name.slice(0, name.lastIndexOf('/') + 1) : `${name}/`;
 };
 
+// clearedOf("mbp/backend/bug-441", "mbp") -> "mbp/backend"
+// clearedOf("mbp/a/b/c", "mbp")           -> "mbp/a/b"
+// clearedOf("mbp/backend", "mbp")         -> null   (the folder alone already)
+// clearedOf("vm/x/y" | null, "mbp")       -> null   (not this machine's: not ours to cut)
+// The name a /clear leaves, or null where the name stays as it is.
+const clearedOf = (name: string | null, machine: string): string | null => {
+  if (!name?.startsWith(`${machine}/`)) return null;
+
+  // "mbp/backend/" -> "mbp/backend"; for "mbp/" that is the machine itself,
+  // which is no name.
+  const folder = folderOf(name, machine).slice(0, -1);
+
+  return folder === name || folder === machine ? null : folder;
+};
+
 // said(messages) -> ["user: fix the login redirect", "assistant: Found it: ..."]
 // Text alone: no tool calls or results, and none of what the engine adds in
 // tags (<system-reminder>, a slash command's <command-name> rows). A long
@@ -122,6 +158,43 @@ const said = (
   return lines.length <= OPENING + LATEST ? lines : [...lines.slice(0, OPENING), '[...]', ...lines.slice(-LATEST)];
 };
 
+// script($, "machine_name.sh") -> "<mod>/../../../../scripts/machine_name.sh"
+// The mod is home/.claude/mods/session-rename/ of the repo, wherever the
+// repo is: its scripts are four folders up. Declared out here because the
+// engine follows `$` into a function of the file's top level and no other.
+const script = ($: EngineInterface, name: string): string => `${$.plugin.root}/../../../../scripts/${name}`;
+
+// renamed($, "mbp/a/x", "mbp/a/y", ""): the rename just made, remembered and
+// put in the day's log as "<id>: 'mbp/a/x' -> 'mbp/a/y'". The log is the
+// repo's rule for what acts by itself (AGENTS.md); a log that cannot be
+// written is said, and the rename stands.
+const renamed = async ($: EngineInterface, old: string | null, name: string, why: string): Promise<void> => {
+  await $.state.set(NAME_KEPT, name);
+
+  const line = `${await $.session.id()}: '${old ?? ''}' -> '${name}'${why}`;
+  const logged = await $.process.run([script($, 'event_log_note.sh'), 'claude_session_rename', line]);
+  if (logged.exitCode !== 0) {
+    $.ui.toast(`the rename is not in the log: ${logged.stderr.trim()}`);
+  }
+};
+
+// cut($, "mbp/backend/bug-441", "mbp/backend"): the /rename a /clear ends in.
+// It runs by itself after the /clear, with no command of its own to answer
+// through, so a rename the engine refuses is said in a toast. The engine
+// keeps a mod's own run from the mod's own hooks, so the /rename hook below
+// never sees this one: it is remembered and logged here.
+const cut = async ($: EngineInterface, old: string, name: string): Promise<void> => {
+  try {
+    await $.command.run({ command: 'rename', args: name });
+  } catch (refused) {
+    $.ui.toast(`the session keeps its name, ${old}: /rename ${name} after the /clear did not run. ${String(refused)}`);
+
+    return;
+  }
+
+  await renamed($, old, name, ' (/clear)');
+};
+
 export const register: Register = (on) => {
   // The prompt's runs at every prompt of every session, so it is one write
   // to the engine's memory and nothing else: no process, no file.
@@ -136,15 +209,41 @@ export const register: Register = (on) => {
     return next(e);
   });
 
+  // The clear runs first and whole: the name is cut on the cleared session,
+  // whose start has just handed its name over (classic.SessionStart above),
+  // and nothing here can stop a /clear.
+  on('command.run', { command: 'clear' }, async ($, e, next) => {
+    const done = await next(e);
+
+    const old = await read($, current);
+    if (old === null) return done;
+
+    // The clear stands and its answer is core's, so what keeps the name from
+    // being cut is said in a toast.
+    const asked = await $.process.run([script($, 'machine_name.sh')]);
+    if (asked.exitCode !== 0) {
+      $.ui.toast(`the session keeps its name, ${old}: no machine name to read it by. ${asked.stderr.trim()}`);
+
+      return done;
+    }
+
+    const name = clearedOf(old, asked.stdout.trim());
+    if (name === null) return done;
+
+    // From a timer, not from here: the engine refuses a command run inside a
+    // command's hook, which holds the turn that run would wait for. The run
+    // is queued, and happens once this /clear has ended and the session idles.
+    $.clock.after(0, () => void cut($, old, name));
+
+    return done;
+  });
+
   on('command.run', { command: 'rename' }, async ($, e, next) => {
     // The one way out with no name to give: no command runs beneath, and
     // this is the command's answer, for the person alone.
     const kept = (why: string) => ({ text: `Not renamed: ${why}`, isTextDisplayOnly: true as const });
 
-    // The mod is home/.claude/mods/session-rename/ of the repo, wherever the
-    // repo is: its scripts are four folders up.
-    const scripts = `${$.plugin.root}/../../../../scripts`;
-    const asked = await $.process.run([`${scripts}/machine_name.sh`]);
+    const asked = await $.process.run([script($, 'machine_name.sh')]);
     if (asked.exitCode !== 0) return kept(`no machine name to put in front. ${asked.stderr.trim()}`);
     const machine = asked.stdout.trim();
     const old = await read($, current);
@@ -173,15 +272,7 @@ export const register: Register = (on) => {
     }
 
     const done = await next({ ...e, args: name });
-    await $.state.set(NAME_KEPT, name);
-
-    // The log is the repo's rule for what acts by itself (AGENTS.md); a log
-    // that cannot be written is said, and the rename stands.
-    const line = `${await $.session.id()}: '${old ?? ''}' -> '${name}'`;
-    const logged = await $.process.run([`${scripts}/event_log_note.sh`, 'claude_session_rename', line]);
-    if (logged.exitCode !== 0) {
-      $.ui.toast(`the rename is not in the log: ${logged.stderr.trim()}`);
-    }
+    await renamed($, old, name, '');
 
     return done;
   });

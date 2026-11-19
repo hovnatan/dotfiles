@@ -4,7 +4,7 @@
 // and keeps what the mod asked of each.
 
 import type { TestBody } from 'claude-code/testing';
-import { expect, test } from 'claude-code/testing';
+import { expect, mock, test } from 'claude-code/testing';
 
 type Engine = { machineFails?: true; made?: string; modelFails?: true; isCleared?: true };
 
@@ -42,15 +42,17 @@ const CLEARED = [
 const USAGE = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
 const RAN = { stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false };
 
-// engine(on, {...}) -> { ran, toasts, logged, asked }: the /rename arguments
-// that reached core, the toasts shown, the lines handed to the event log, and
-// the prompts put to the model. Scripts are told apart by their last part:
-// the mod finds both from its own folder, which is the test's to place.
+// engine(on, {...}) -> { ran, toasts, logged, asked, clock }: the /rename
+// arguments that reached core, the toasts shown, the lines handed to the
+// event log, the prompts put to the model, and the clock to move (a /clear's
+// rename waits on a timer). Scripts are told apart by their last part: the
+// mod finds both from its own folder, which is the test's to place.
 const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
   const ran: string[] = [];
   const toasts: string[] = [];
   const logged: string[] = [];
   const asked: string[] = [];
+  const clock = mock.clock(on, { now: 1_000_000 });
 
   on('session.id', () => ({ value: 's-1' }));
   on('process.run', (_, e) => {
@@ -81,6 +83,8 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
     return { value: undefined };
   });
   on('command.run', (_, e) => {
+    // Core's /clear: it says nothing, and the name stays as it was.
+    if (e.command === 'clear') return {};
     ran.push(e.args);
 
     return { text: `Session renamed to: ${e.args}` };
@@ -88,7 +92,7 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
   on('classic.UserPromptSubmit', () => ({}));
   on('classic.SessionStart', () => ({}));
 
-  return { ran, toasts, logged, asked };
+  return { ran, toasts, logged, asked, clock };
 };
 
 // named($, "mbp/x"): a prompt in a session of that name, which is where the
@@ -104,6 +108,18 @@ const rename = ($: Parameters<TestBody>[0], args: string) =>
     origin: { kind: 'composer' },
     presentation: { isFullscreen: false, columns: 80 },
   });
+
+// clear($, clock): the person typing `/clear` there, and the moment after
+// it, when the rename the mod left on a timer runs.
+const clear = async ($: Parameters<TestBody>[0], clock: ReturnType<typeof mock.clock>) => {
+  await $.command.run({
+    command: 'clear',
+    args: '',
+    origin: { kind: 'composer' },
+    presentation: { isFullscreen: false, columns: 80 },
+  });
+  await clock.advance(1);
+};
 
 test('a made-up name stays in the folder the session is in', async ($, on) => {
   const { ran, toasts, logged, asked } = engine(on);
@@ -244,4 +260,56 @@ test('a /rename after one that gave no name still knows the folder', async ($, o
   await rename($, 'mbp/backend/by-hand');
 
   expect(ran).toEqual(['mbp/backend/by-hand']);
+});
+
+// The second table at the top of register.ts.
+test('a /clear leaves the folder of the name, and the next /rename goes under it', async ($, on) => {
+  const { ran, logged, clock } = engine(on);
+
+  await named($, 'mbp/backend/bug-441-fix');
+  await clear($, clock);
+  await rename($, '');
+
+  expect(ran).toEqual(['mbp/backend', 'mbp/backend/upload-rate-limiter']);
+  // One line a rename: the /clear's own, which the mod's /rename hook never
+  // sees and so does not log a second time, then the made-up one.
+  expect(logged).toEqual([
+    "s-1: 'mbp/backend/bug-441-fix' -> 'mbp/backend' (/clear)",
+    "s-1: 'mbp/backend' -> 'mbp/backend/upload-rate-limiter'",
+  ]);
+});
+
+test('a /clear cuts one part, the last, however deep the name is', async ($, on) => {
+  const { ran, clock } = engine(on);
+
+  await named($, 'mbp/a/b/c');
+  await clear($, clock);
+
+  expect(ran).toEqual(['mbp/a/b']);
+});
+
+test("a /clear of a name with no part to drop, of no name, or of another machine's renames nothing", async ($, on) => {
+  const { ran, logged, toasts, clock } = engine(on);
+
+  await clear($, clock);
+  await named($, 'mbp/backend');
+  await clear($, clock);
+  await named($, 'vm/backend/bug-441-fix');
+  await clear($, clock);
+
+  expect(ran).toEqual([]);
+  expect(logged).toEqual([]);
+  expect(toasts).toEqual([]);
+});
+
+test('with no machine name, a /clear keeps the name and a toast says why', async ($, on) => {
+  const { ran, toasts, clock } = engine(on, { machineFails: true });
+
+  await named($, 'mbp/backend/bug-441-fix');
+  await clear($, clock);
+
+  expect(ran).toEqual([]);
+  expect(toasts).toEqual([
+    'the session keeps its name, mbp/backend/bug-441-fix: no machine name to read it by. machine_name.sh: hostname prints nothing',
+  ]);
 });
