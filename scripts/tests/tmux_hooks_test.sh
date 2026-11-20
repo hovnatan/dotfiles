@@ -46,7 +46,7 @@
 #   sets none                            pane's title, glyph and all, and
 #                                        renamed when it changes; the
 #                                        titleless one after its program
-#   prefix c C n p l w s S 0-9,       -> bound; c new window, C new
+#   prefix c C n p l w s S C-s 0-9,   -> bound; c new window, C new
 #   User0/1                              session, l last window, s the
 #                                        session picker
 #   Cmd-K Cmd-K Cmd-J (\e[5;30002~,   -> windows 1, 2, 1, nothing typed into
@@ -84,6 +84,10 @@
 #                                        focus-in
 #   the same, bg's client focused but -> unwatched, marked; a key typed in
 #   idle past TMUX_WATCHED_STALE_SECONDS bg hides the marker, no focus-in
+#   bells in w (out of view), q2, q1, -> prefix C-s from w: q2, w, q1, each
+#   a second apart                       at the window that rang, then "no
+#                                        other session holds a bell"; a
+#                                        session with no bell time first
 #   prefix c from window 0 of 3       -> new window at 1, the rest move up
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
@@ -489,13 +493,13 @@ what_key() {
   }'
 }
 missing=""
-for k in c C n p l w s S 0 1 2 3 4 5 6 7 8 9; do
+for k in c C n p l w s S C-s 0 1 2 3 4 5 6 7 8 9; do
   [ -n "$(what_key prefix "$k")" ] || missing+=" prefix-$k"
 done
 for k in User0 User1; do
   [ -n "$(what_key root "$k")" ] || missing+=" $k"
 done
-[ -z "$missing" ] && pass "window bindings: prefix c C n p l w s S 0-9, User0 User1" || fail "unbound:$missing"
+[ -z "$missing" ] && pass "window bindings: prefix c C n p l w s S C-s 0-9, User0 User1" || fail "unbound:$missing"
 [ -z "$(what_key prefix t)" ] || fail "what_key reads prefix t, which the config leaves unbound, as bound: '$(what_key prefix t)'"
 [[ "$(what_key prefix c)" == "new-window -a -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
   && [ "$(what_key prefix l)" = last-window ] \
@@ -897,6 +901,64 @@ kill "$bgclient"
 wait "$bgclient" 2>/dev/null
 bgclient=
 tw kill-session -t =bg
+
+# prefix C-s (bell-next.sh): the client goes to the session whose bell is
+# oldest, at the window that rang, and pressed again to the next. Three
+# bells a second apart (the times are by the second): in w, in a window out
+# of view of its focused client ("watched", so held by tmux's alert alone),
+# then in q2, then in q1. The order is by time, not by name (q1 lists
+# first), and the client's own session is left out: w's turn comes once the
+# client is on q2. w's earlier alerts are shown first, so w holds this bell
+# alone.
+wcur=$(current w)
+for i in $(tw list-windows -t =w -f '#{window_bell_flag}' -F '#{window_index}'); do
+  tw select-window -t "=w:$i"
+done
+tw select-window -t "=w:$wcur"
+tw new-session -d -s q1 'sleep 300'
+tw new-session -d -s q2 'sleep 300'
+# ring_in <session> <window name>: a new window out of view rings; its index
+ring_in() { tw new-window -d -P -F '#{window_index}' -t "=$1:" -n "$2" "printf '\\a'; exec sleep 100"; }
+where() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{client_session}:#{window_index}'; }
+held() { tw list-sessions -F '#{session_name}=#{E:@bell_held}' | paste -sd ' ' -; }
+rw=$(ring_in w next-w)
+wait_for " bell session=w window=$rw \(next-w\): watched " || fail "no watched bell line for w:$rw: $(hooks_log | tail -3)"
+sleep 1.1
+r2=$(ring_in q2 next-q2)
+wait_for " bell session=q2 window=$r2 \(next-q2\): unwatched .*, marked$" || fail "no bell line for q2:$r2: $(hooks_log | tail -3)"
+sleep 1.1
+r1=$(ring_in q1 next-q1)
+wait_for " bell session=q1 window=$r1 \(next-q1\): unwatched .*, marked$" || fail "no bell line for q1:$r1: $(hooks_log | tail -3)"
+[ "$(held)" = "q1=$r1! q2=$r2! solo= w=$rw!" ] || fail "before prefix C-s the sessions hold '$(held)', wanted 'q1=$r1! q2=$r2! solo= w=$rw!'"
+# next_bell <where the client lands> <the log line's end>: press prefix C-s
+next_bell() {
+  send_keys '\x01\x13'
+  wait_for " bell-next ${wname#/dev/}: $2\$" && [ "$(where)" = "$1" ] \
+    && pass "prefix C-s: $1 ($2)" \
+    || fail "prefix C-s: the client is on $(where), wanted $1; log: $(hooks_log | grep ' bell-next ' | tail -2); held: $(held)"
+}
+next_bell "q2:$r2" "-> q2:$r2 \(rang [0-9]+s ago, 2 held\)"
+next_bell "w:$rw" "-> w:$rw \(rang [0-9]+s ago, 2 held\)"
+next_bell "q1:$r1" "-> q1:$r1 \(rang [0-9]+s ago, 1 held\)"
+next_bell "q1:$r1" "no other session holds a bell"
+grep -aqF "no other session holds a bell" "$WORK/screen" && pass "with no bell left, the client is told so" \
+  || fail "no 'no other session holds a bell' drawn for the client"
+# A session that holds a bell with no time (rung under a server whose
+# bell-elsewhere.sh stamped unwatched bells only) goes first, though solo
+# rings after q2 here.
+r2=$(ring_in q2 next-q2b)
+wait_for " bell session=q2 window=$r2 \(next-q2b\): unwatched .*, marked$" || fail "no bell line for q2:$r2: $(hooks_log | tail -3)"
+rs=$(ring_in solo next-solo)
+wait_for " bell session=solo window=$rs \(next-solo\): unwatched .*, marked$" || fail "no bell line for solo:$rs: $(hooks_log | tail -3)"
+tw set-option -u -t =solo: @bell_at
+next_bell "solo:$rs" "-> solo:$rs \(rang at a time not recorded, 2 held\)"
+next_bell "q2:$r2" "-> q2:$r2 \(rang [0-9]+s ago, 1 held\)"
+tw switch-client -c "$wname" -t =w
+tw kill-window -t "=w:$rw"
+tw select-window -t "=w:$wcur"
+tw kill-window -t "=solo:$rs"
+tw kill-session -t =q1
+tw kill-session -t =q2
 
 # prefix c from window 0 of three: the new window takes number 1, the old 1 moves to
 # 2. The panes need no shell, so the new one runs sleep in place of the config's fish.

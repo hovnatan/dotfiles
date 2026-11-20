@@ -12,7 +12,8 @@
 #          no  (none attached, all unfocused, or focus gone stale):
 #     -> @bell "1!" and @bell_at <epoch> on solo, which the bar's
 #        @bell_marker (tmux.conf) draws as " solo:1! " first on the right of
-#        every other session's bar, until solo is looked at
+#        every other session's bar, until solo is looked at; prefix C-s
+#        goes there (bell-next.sh, the oldest @bell_at first)
 #     -> ~/.dotfiles/.logs/<UTC day>_tmux_hooks/events.log, with what tmux
 #        knew of solo's clients, so a wrong verdict explains itself:
 #        2026-11-10T02:10:00Z bell session=solo window=1 (* vm/fix): unwatched
@@ -48,6 +49,8 @@ SCRIPTS="${0%/*}/../../../scripts"
 # shellcheck source=scripts/lib/event_log.sh
 . "$SCRIPTS/lib/event_log.sh"
 what="bell session=$session window=$window ($name)"
+# A builtin from bash 5 on; 3.2 forks date.
+now=${EPOCHSECONDS:-$(date +%s)}
 
 # The verdict by the exit status, the evidence on stdout either way:
 # "ttys002 focused, input 3s ago; ...". An assignment, so the status is the
@@ -55,13 +58,19 @@ what="bell session=$session window=$window ($name)"
 rc=0
 evidence=$("$SCRIPTS/tmux_watched.sh" -S "$socket" session "$id") || rc=$?
 case $rc in
-  0) event_log_note tmux_hooks "$what: watched ($evidence)" ;;
+  0)
+    # The time of every bell, for bell-next.sh's order: a watched session
+    # still holds this one where its window is out of view. An @bell that
+    # input had hidden goes, as under the new time it would show again.
+    tmux -S "$socket" set-option -t "$id" @bell_at "$now" \; \
+      set-option -qu -t "$id" @bell
+    event_log_note tmux_hooks "$what: watched ($evidence)"
+    ;;
   1)
     # "1!", as tmux writes #{session_alerts}: a bare "0" reads as false in a
-    # format's conditional, and window 0's marker never showed. The time is
-    # a builtin from bash 5 on; 3.2 forks date.
+    # format's conditional, and window 0's marker never showed.
     tmux -S "$socket" set-option -t "$id" @bell "$window!" \; \
-      set-option -t "$id" @bell_at "${EPOCHSECONDS:-$(date +%s)}"
+      set-option -t "$id" @bell_at "$now"
     event_log_note tmux_hooks "$what: unwatched ($evidence), marked"
     ;;
   # Killed between its bell and this hook: nothing left to mark.

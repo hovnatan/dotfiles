@@ -9,8 +9,9 @@
 #
 #   outer server (-f /dev/null): stands in for the terminal, 120 columns
 #     its one pane runs a client of
-#   inner server (-f /dev/null + four lines of tmux.conf: @bell_marker,
-#     status-right, status-right-length, window-status-current-style)
+#   inner server (-f /dev/null + five lines of tmux.conf: @bell_held,
+#     @bell_marker, status-right, status-right-length,
+#     window-status-current-style)
 #     session t, window "tab", prefix C-b (tmux's default),
 #     title "(box) [t]", status-stats.sh stood in for: "cpu  1%  mem  2%"
 #
@@ -64,12 +65,12 @@ trap cleanup EXIT
 
 # --- the lines under test -----------------------------------------------------
 
-grep -E '^set-option -g (@bell_marker|status-right|status-right-length|window-status-current-style) ' \
+grep -E '^set-option -g (@bell_held|@bell_marker|status-right|status-right-length|window-status-current-style) ' \
   "$CONF" >"$WORK/bar.conf"
-if [ "$(wc -l <"$WORK/bar.conf")" -eq 4 ]; then
-  pass "tmux.conf has the four lines: the marker, status-right, its length, the tab's style"
+if [ "$(wc -l <"$WORK/bar.conf")" -eq 5 ]; then
+  pass "tmux.conf has the five lines: the marker and its rule, status-right, its length, the tab's style"
 else
-  fail "tmux.conf: expected four lines, got: $(cat "$WORK/bar.conf")"
+  fail "tmux.conf: expected five lines, got: $(cat "$WORK/bar.conf")"
 fi
 
 # status-right runs ~/.dotfiles/home/.config/tmux/status-stats.sh: the
