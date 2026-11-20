@@ -24,9 +24,10 @@
 #
 # The setting outlives the mod. With the mod gone, or no longer loading (a
 # claude started with hooks off, a Claude Code whose mod API moved on),
-# nothing rings after a turn at all, and nothing says so: the mod's "session:
-# started" line, one at each claude start, stops coming to its log
-# (~/.dotfiles/.logs/*_claude_session_done/events.log). To undo:
+# nothing rings after a turn at all. loaded-check.sh beside this file, a
+# SessionStart hook of settings.json, says so on screen at each claude start
+# where the mod did not: it looks for the mod's "session: started" line in
+# ~/.dotfiles/.logs/*_claude_session_done/events.log. To undo:
 #   jq 'del(.messageIdleNotifThresholdMs)' ~/.claude.json, written back the same way
 
 set -euo pipefail
