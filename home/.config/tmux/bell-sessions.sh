@@ -17,7 +17,8 @@
 #       a session that rings again goes to the back, and an unstamped one
 #       first. Then the rest, <held> empty, the one used last on top: by
 #       #{session_activity}, a client's last input in the session, or its
-#       creation for one never attached to.
+#       creation for one never attached to. Of these the ones a client is
+#       on come last: a tab shows them already.
 #       The client's own session holds its #{session_alerts} alone: its
 #       @bell is of the window the client is looking at, and the hooks that
 #       clear it may still be running after a switch.
@@ -39,8 +40,8 @@ bell_sessions() {
     -F '#{session_id}|#{session_attached}|#{session_activity}|#{@bell_at}|#{E:@bell_held}|#{session_alerts}|#{session_windows}|#{session_name}') \
     || stop "tmux could not list the sessions of $1"
   # Two sort keys ahead of each line, cut off again: 0 and when it rang, or
-  # 1 and when it was used, negated for the latest first. -s: equal ones
-  # stay in tmux's order.
+  # 1 (2 with a client on it) and when it was used, negated for the latest
+  # first. -s: equal ones stay in tmux's order.
   while IFS='|' read -r id attached used at held alerts windows name; do
     [ "$id" != "$2" ] || held=$alerts
     window=''
@@ -50,8 +51,10 @@ bell_sessions() {
       [ -n "$window" ] || stop "session $name holds '$held', which names no window"
       at=${at:-0}
       printf '0|%s|' "$at"
-    else
+    elif [ "$attached" = 0 ]; then
       printf '1|%s|' "-$used"
+    else
+      printf '2|%s|' "-$used"
     fi
     printf '%s|%s|%s|%s|%s|%s|%s|%s\n' "$id" "$window" "$attached" "$used" "$at" "$held" "$windows" "$name"
   done <<<"$list" | sort -s -t '|' -k1,1n -k2,2n | cut -d '|' -f3-

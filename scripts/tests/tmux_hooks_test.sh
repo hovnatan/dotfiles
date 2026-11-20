@@ -48,11 +48,14 @@
 #   prefix c C n p l w s S C-s 0-9,   -> bound; c new window, C new
 #   User0/1                              session, l last window, s the
 #                                        session picker
-#   prefix s, Enter; then "solo",     -> fzf in a popup (session-pick.sh):
-#   Enter; then Esc                      solo, used last; solo again, by
+#   prefix s, Enter; then "solo",     -> fzf in a popup (session-pick.sh),
+#   Enter; then Up, Enter; then Esc      its own session the first row and
+#                                        the second, solo, used last, the
+#                                        one it opens on; solo again, by
 #                                        name, though a newer session is the
-#                                        first row; the client left where it
-#                                        is
+#                                        second row; its own row, staying;
+#                                        the client left where it is
+#   a second client on a session      -> the picker's last row, "(attached)"
 #   Cmd-K Cmd-K Cmd-J (\e[5;30002~,   -> windows 1, 2, 1, nothing typed into
 #   \e[5;30001~ as Ghostty sends them)   the pane; in a one-window session
 #                                        nothing moves and nothing is shown
@@ -80,7 +83,7 @@
 #   a bell in solo (no client)        -> a yellow " solo:N! " first on the
 #                                        right of w's bar, a log line, and
 #                                        no message over the bar; solo the
-#                                        session picker's first row, with
+#                                        session picker's second row, with
 #                                        the label, and prefix s, Enter goes
 #                                        to the window that rang; none on
 #                                        solo itself; gone once shown. The
@@ -709,19 +712,27 @@ send_keys '\x01L'
 b=$(tw display -p -c "$wname" '#{client_session}')
 [ "$a $b" = "solo w" ] && pass "prefix L, L: sessions solo, w" || fail "prefix L, L: sessions $a $b, wanted solo w"
 
-# prefix s: the picker's first row is the session used last, solo, so Enter
-# alone goes there. Typed letters narrow the rows: "solo" picks solo though
-# pk, made a second later, is now the first row. Esc picks nothing.
+# prefix s: the picker's first row is the client's own session, w, and it
+# opens on the second, the session used last, solo, so Enter alone goes
+# there. Typed letters narrow the rows: "solo" picks solo though pk, made a
+# second later, is now the second row. Up is w's own row: the client stays.
+# Esc picks nothing.
 solo_at="solo:$(current solo)"
+[[ "$(picker_rows | head -1)" == "$(sid w):"$'\t'"w "*" ago  (current)" ]] \
+  && pass "the session picker's first row is the client's own session, marked (current)" \
+  || fail "the session picker's rows are: $(picker_rows | cat -v)"
 pick '\r'
-picked "-> $solo_at" "$solo_at" "prefix s, Enter: the session used last, solo"
+picked "-> $solo_at" "$solo_at" "prefix s, Enter: the second row, the session used last, solo"
 tw switch-client -c "$wname" -t =w
 sleep 1.1
 tw new-session -d -s pk 'sleep 300'
-[ "$(picker_rows | head -1 | cut -f1)" = "$(sid pk):" ] || fail "pk, just made, is not the picker's first row: $(picker_rows | cat -v)"
+[ "$(picker_rows | sed -n 2p | cut -f1)" = "$(sid pk):" ] || fail "pk, just made, is not the picker's second row: $(picker_rows | cat -v)"
 pick 'solo' '\r'
-picked "-> $solo_at" "$solo_at" "prefix s, 'solo', Enter: solo, not the first row"
+picked "-> $solo_at" "$solo_at" "prefix s, 'solo', Enter: solo, not the row it opens on"
 tw switch-client -c "$wname" -t =w
+w_at="w:$(current w)"
+pick '\x1b[A' '\r'
+picked "-> $w_at" "$w_at" "prefix s, Up, Enter: its own row, the client stays where it is"
 pick '\x1b'
 picked "closed, nothing picked" "w:$(current w)" "prefix s, Esc: the client stays where it is"
 tw kill-session -t =pk
@@ -761,10 +772,15 @@ right() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:status-right}
 want="#[fg=#282828,bg=#d79921] solo:$ring! #[default] "
 [ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'"
-row=$(picker_rows | head -1)
+row=$(picker_rows | sed -n 2p)
 [[ $row == "$(sid solo):$ring"$'\t'"solo "*$'\033[38;2;40;40;40;48;2;215;153;33m'" $ring! "$'\033[0m'" "* ]] \
-  && pass "the session picker's first row is solo, at the window that rang, labelled in the bar's bell colours" \
-  || fail "the session picker's first row is '$(cat -v <<<"$row")'"
+  && pass "the session picker's second row is solo, at the window that rang, labelled in the bar's bell colours" \
+  || fail "the session picker's second row is '$(cat -v <<<"$row")'"
+# w's own row holds the bell of its window out of view, from the step above.
+w_rang=$(tw list-windows -t =w -f '#{window_bell_flag}' -F '#{window_index}')
+[[ "$(picker_rows | head -1)" == "$(sid w):$w_rang"$'\t'"w "*" $w_rang! "*" ago  (current)" ]] \
+  && pass "the client's own row is at its window out of view that rang, labelled" \
+  || fail "w's window $w_rang rang; the session picker's rows are: $(picker_rows | cat -v)"
 case $(right) in
   "${want} (box) [w]   "*) pass "the marker opens status-right, before ' (box) [w]'" ;;
   *) fail "status-right on w is '$(right)', wanted it to start '${want} (box) [w]   '" ;;
@@ -786,7 +802,7 @@ case $(left) in *" solo:"*) false ;; *" w:"*) true ;; *) false ;; esac \
   || fail "on solo: bell marker '$(left)', solo's alerts '$(tw display -p -t =solo: '#{session_alerts}')'"
 tw switch-client -c "$wname" -t =w
 pick '\r'
-picked "-> solo:$ring" "solo:$ring" "prefix s, Enter: the session holding a bell, at the window that rang"
+picked "-> solo:$ring" "solo:$ring" "prefix s, Enter: the second row, the session holding a bell, at the window that rang"
 tw switch-client -c "$wname" -t =w
 # The switch's set-option -qu @bell waits behind client-session-changed[0],
 # focus-out-unattached.sh, which runs without -b: the marker clears a moment
@@ -817,6 +833,9 @@ python3 "$PTY_CLIENT" "$TMUX_BIN" "$WSOCK" "$H" bg --keys "$WORK/bgkeys" &
 bgclient=$!
 until_ok 5 attached tw bg || fail "no client attached to bg"
 bgname=$(tw list-clients -t =bg -F '#{client_name}')
+[[ "$(picker_rows | tail -1)" == "$(sid bg):"$'\t'"bg "*" ago  (attached)" ]] \
+  && pass "a session another client is on is the picker's last row, marked (attached)" \
+  || fail "with a client on bg, just made, the picker's rows are: $(picker_rows | cat -v)"
 bg_flags() { tw list-clients -t =bg -F '#{client_flags}'; }
 bg_unfocused() { case ,$(bg_flags), in *,focused,*) return 1 ;; esac }
 printf '%s\n' '\x1b[O' >"$WORK/bgkeys"
@@ -888,11 +907,11 @@ sleep 1.1
 ring_in q1 next-q1 "$unwatched"
 r1=$rang
 [ "$(held)" = "q1=$r1! q2=$r2! solo= w=$rw!" ] || fail "before prefix C-s the sessions hold '$(held)', wanted 'q1=$r1! q2=$r2! solo= w=$rw!'"
-# The picker lists the same order: the bells by when they rang, then the
-# rest; its own session, w, is not a row.
-want="$(sid q2):$r2 $(sid q1):$r1 $(sid solo):"
+# The picker lists the same order below its own session, w: the bells by
+# when they rang, then the rest.
+want="$(sid w):$rw $(sid q2):$r2 $(sid q1):$r1 $(sid solo):"
 got=$(picker_rows | cut -f1 | paste -sd ' ' -)
-[ "$got" = "$want" ] && pass "the session picker's rows: q2 and q1 by their bells' times, then solo" \
+[ "$got" = "$want" ] && pass "the session picker's rows: w, q2 and q1 by their bells' times, then solo" \
   || fail "the session picker's rows are '$got', wanted '$want'"
 # next_bell <where the client lands> <the log line's end>: press prefix C-s
 next_bell() {
