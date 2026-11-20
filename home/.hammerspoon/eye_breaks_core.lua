@@ -355,8 +355,15 @@ function M.tick(s, obs)
   -- 11:00 after 40 idle minutes makes it away at 11:05, not at once. Input
   -- after the stretch is later than its end, so obs.idle is then the smaller.
   local idleFor = s.watch and math.min(obs.idle, now - s.watch.to) or obs.idle
-  -- Kept for the badge's second line (M.view).
+  -- Kept for the badge's second line (M.view), and from a minute on as a
+  -- stretch for the menu, which outlasts it: the click that opens the menu
+  -- is input, so the idle time anyone could read there is always over.
+  --   no input 10:00 to 10:07, ticks 30 s apart   { from = 10:00, to = 10:07 }
+  --   typing since, then none from 10:20 to 10:21 { from = 10:20, to = 10:21 }
   s.idleFor = idleFor
+  if wholeMinutes(idleFor) >= 1 then
+    s.lastIdle = { from = now - idleFor, to = now }
+  end
 
   -- Away: idle or asleep for their thresholds, or locked. `unseen` is how
   -- far back the away time starts: the idle or sleep time, or 0 for a
@@ -489,6 +496,9 @@ end
 --                  no input since 10:00, at 10:03          "3m"
 --                  the same, a video playing all along     nil
 --                  that video ended at 10:20, at 10:22     "2m"
+--   lastIdle     { from = <epoch s>, to = <epoch s> }: the last such time
+--                of a minute or more, running still or over, for the
+--                menu; nil when there has been none since the load
 function M.view(s, now)
   local due, shortIn, longIn, snoozedFor = dueAt(s, now)
   local v = {
@@ -499,6 +509,7 @@ function M.view(s, now)
     badgeOn = s.badge,
     snoozed = snoozedFor and countdown(snoozedFor),
     idle = wholeMinutes(s.idleFor) >= 1 and M.fmt(s.idleFor) or nil,
+    lastIdle = s.lastIdle,
     watched = s.watch and s.watch.to > s.lastRestAt and s.watch or nil,
   }
 

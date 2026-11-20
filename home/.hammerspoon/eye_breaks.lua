@@ -71,8 +71,10 @@ local RETURN_SOUND, RETURN_VOLUME = "Glass", 0.3
 --       (    +29m    |   the menu-bar clock's text: the due break is 29
 --        +-----------|   minutes overdue
 -- No words on it, by request; BADGE_W fits "+1h02m" at BADGE_TEXT, and
--- padding. Corners are rounded on the left only.
+-- padding. Corners are rounded on the left only. BADGE_PAD is the fill
+-- above and below the text, in BADGE_H: 6 + the number's 16 + 6.
 local BADGE_W, BADGE_H, BADGE_RADIUS, BADGE_TEXT, BADGE_AT = 58, 28, 8, 12, 0.5
+local BADGE_PAD = 6
 -- A second line under the number, smaller: the time without input, once
 -- that is a minute (by request; the core's view.idle), which says how far
 -- a rest taken by just stopping has got. It is as old as the last tick,
@@ -82,25 +84,28 @@ local BADGE_W, BADGE_H, BADGE_RADIUS, BADGE_TEXT, BADGE_AT = 58, 28, 8, 12, 0.5
 --       (    +29m    |   29 minutes overdue,
 --       (     3m     |   and no key or mouse for 3 of them
 --        +-----------|
--- The line is BADGE_IDLE_H high, and a badge with it is at least the two
--- lines tall, however little overdue.
+-- The line takes BADGE_IDLE_H between the number and the padding under
+-- it: 6 + 16 + 12 + 6, 40 in all.
 local BADGE_IDLE_TEXT, BADGE_IDLE_H = 10, 12
 -- The longer the break is overdue, the taller the badge (by request): a
 -- step with each minute its number counts (the core's overdueMinutes), so
 -- the two change together, BADGE_H more over BADGE_DOUBLES_IN minutes, to
 -- BADGE_MAX of the screen's height at most. It grows about the point
 -- BADGE_AT down it, its middle, which stays where it was on the screen.
+-- And never less than `lines`, the height of the text on it: with the
+-- idle line that is 40, which the first minutes' heights are under.
 --
---   overdue   height
---   +0m        28    BADGE_H
---   +1m        33    and so for all of that minute
---   +5m        56
---   +20m      140
---   +1h       364    or BADGE_MAX of the screen: 300 on one 900 high
+--   overdue   height   with the idle line
+--   +0m        28       40    BADGE_H; the two lines
+--   +1m        33       40    and so for all of that minute
+--   +2m        39       40
+--   +5m        56       56
+--   +20m      140      140
+--   +1h       364      364    or BADGE_MAX of the screen: 300 on one 900 high
 local BADGE_DOUBLES_IN, BADGE_MAX = 5, 1 / 3
-local function badgeHeight(overdueMinutes, screenHeight)
+local function badgeHeight(overdueMinutes, screenHeight, lines)
   local grown = math.floor(BADGE_H * (1 + overdueMinutes / BADGE_DOUBLES_IN))
-  return math.min(grown, math.floor(screenHeight * BADGE_MAX))
+  return math.max(lines, math.min(grown, math.floor(screenHeight * BADGE_MAX)))
 end
 -- The due break's colour, under white text: the badge's fill, and the
 -- menu-bar clock's (below).
@@ -257,17 +262,21 @@ local function drawBadge(text, due, overdueMinutes, idle)
   end
 
   local f = screen:frame()
-  -- The text is the number's BADGE_H, and the idle line's height under it.
+  -- The text is the number's BADGE_H, and the idle line's height in it.
   local lines = BADGE_H + (idle and BADGE_IDLE_H or 0)
-  local height = math.max(badgeHeight(overdueMinutes, f.h), lines)
+  local height = badgeHeight(overdueMinutes, f.h, lines)
   badge:frame({ x = f.x + f.w - BADGE_W, y = f.y + math.floor((f.h - height) * BADGE_AT), w = BADGE_W, h = height })
   badge[1].fillColor = dueColor(due)
-  -- The text keeps to the middle of a taller badge.
+  -- The text keeps to the middle of a taller badge. From `top` down:
+  -- BADGE_PAD, the number, the idle line where the number's lower padding
+  -- would be, and that padding under it (its box runs to there, for a
+  -- text line is taller than its letters).
   local top = (height - lines) / 2
+  local idleTop = top + BADGE_H - BADGE_PAD
   badge[2].text = text
-  badge[2].frame = { x = 0, y = top + 6, w = BADGE_W, h = BADGE_H - 6 }
+  badge[2].frame = { x = 0, y = top + BADGE_PAD, w = BADGE_W, h = BADGE_H - BADGE_PAD }
   badge[3].text = idle or ""
-  badge[3].frame = { x = 0, y = top + BADGE_H - 6, w = BADGE_W, h = BADGE_IDLE_H + 6 }
+  badge[3].frame = { x = 0, y = idleTop, w = BADGE_W, h = BADGE_IDLE_H + BADGE_PAD }
   if not badgeShown then
     badge:show()
     badgeShown = true
@@ -688,6 +697,21 @@ local function menuItems()
       disabled = true,
     },
   }
+  -- The last time without input of a minute or more (by request), always
+  -- there: the click that opened this menu ended the idle time, so "now"
+  -- would read 0m; this is the stretch it ended, or an earlier one, and
+  -- its times say which. It is as the last tick saw it, 30 s old at most.
+  --   "Last idle: 7m (12:05-12:12)"
+  local idle = v.lastIdle
+  table.insert(items, {
+    title = idle and string.format(
+      "Last idle: %s (%s-%s)",
+      core.fmt(idle.to - idle.from),
+      os.date("%H:%M", idle.from),
+      os.date("%H:%M", idle.to)
+    ) or "Last idle: none of a minute yet",
+    disabled = true,
+  })
   -- Says where the badge is, while a break is due and it is not on screen.
   -- "Badge hidden: Google Chrome keeps the display awake (up 5s every 15m)"
   if v.hiddenBy then
