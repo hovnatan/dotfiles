@@ -89,6 +89,3 @@ Done when the pane shows the end of that conversation above the prompt box.
   `tmux ...` reaches them all, and `tmux kill-server` would end them all.
   Close a session with `tmux kill-session -t =<name>`, and only the one I
   named.
-- **`tmux-history`** is the server's history tracker
-  (`scripts/tmux_history.py`): it takes no windows and no claude, and ends on
-  its own.

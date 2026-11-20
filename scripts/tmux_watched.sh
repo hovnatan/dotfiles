@@ -41,11 +41,6 @@
 #   pane %4    -> 1: nobody has seen the turn; the push's wait starts
 #
 # The rule: a client is there when all of these hold.
-#   - It is a terminal. A control-mode client (tmux -C: the history tracker,
-#     scripts/tmux_history.py) has nobody behind it, yet counts as attached
-#     and reports itself focused. Known limit: iTerm2's tmux integration
-#     (tmux -CC) is a control-mode client with a person behind it, who never
-#     counts here; nobody on these machines uses it.
 #   - It is focused. tmux asks the terminal for focus reports once, at
 #     attach; one that never reports stays focused from then on.
 #   - It gave input within TMUX_WATCHED_STALE_SECONDS (default 1800). Focus
@@ -102,8 +97,8 @@ what=$1 target=$2
 #   gone        -> "||||"
 WHERE='#{session_id}|#{window_id}|#{window_index}|#{?#{&&:#{window_zoomed_flag},#{!=:#{pane_active},1}},zoomed,}|#{session_name}'
 # Every client of the server, one a line; a server with none prints nothing:
-#   "0|$3|@2|1|1795149619|/dev/ttys001|attached,focused,UTF-8"
-CLIENTS='#{client_control_mode}|#{session_id}|#{window_id}|#{window_index}|#{client_activity}|#{client_name}|#{client_flags}'
+#   "$3|@2|1|1795149619|/dev/ttys001|attached,focused,UTF-8"
+CLIENTS='#{session_id}|#{window_id}|#{window_index}|#{client_activity}|#{client_name}|#{client_flags}'
 
 # Both in one call, the target's line first. A failure ends this script:
 # with 2 if the server is gone (the messages tmux prints when nothing
@@ -134,9 +129,8 @@ evidence=''
     exit 0
   fi
 
-  while IFS='|' read -r control csid cwin cidx activity client flags; do
+  while IFS='|' read -r csid cwin cidx activity client flags; do
     [ -n "$client" ] || continue
-    [ "$control" = 1 ] && continue
 
     # In scope for the evidence: the clients of the target's session, and
     # for a pane any other that shows its window (one linked into two

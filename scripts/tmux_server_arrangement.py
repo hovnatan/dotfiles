@@ -54,15 +54,12 @@ What restore does with a saved session (plan_restore):
 
 replace opens before it closes, and refuses before it does either:
 
-    the sessions open but not saved are the ones to close; tmux-history
-      (scripts/tmux_history.py's) is never closed
+    the sessions open but not saved are the ones to close
     refused if this command runs in one of them, which would end it
     refused if a pane of one has anything but an idle shell in its
       foreground, by its whole command line ("bash build.sh" is busy),
       naming each; a job left in the background is not seen
     restore, then kill-session each
-
-Never saved: session tmux-history, the history tracker's own.
 
 One run per server, for the server's life:
 
@@ -103,7 +100,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from event_log import EventLog
 
 STATE = Path.home() / ".local/state/tmux_server_arrangements"
-HISTORY_SESSION = "tmux-history"  # scripts/tmux_history.py's: never saved or closed
 EVERY = 600.0  # s between snapshots
 DEFAULT_SAVE = "all"
 TMUX_TIMEOUT = 10  # s for one tmux command; each takes milliseconds
@@ -328,7 +324,7 @@ def default_restore(saved: list[str], started: datetime | None) -> str:
 
 
 def read_server(server: Server) -> Arrangement:
-    """Return what the server holds now, tmux-history left out.
+    """Return what the server holds now.
 
     list-windows -a -> "api<US>0<US>/home/me/src/api" per window
     -> {"api": ["/home/me/src/api", ...], ...}, windows by index
@@ -345,8 +341,7 @@ def read_server(server: Server) -> Arrangement:
             )
             raise ArrangementError(msg)
         session, index, directory = fields
-        if session != HISTORY_SESSION:
-            rows.append((session, int(index), directory))
+        rows.append((session, int(index), directory))
     arr: Arrangement = {}
     for session, _, directory in sorted(rows, key=lambda r: (r[0], r[1])):
         arr.setdefault(session, []).append(directory)
@@ -560,7 +555,7 @@ def replace(server: Server, name: str | None, log: EventLog) -> None:
     """Restore arrangement `name`, then close every session it does not hold."""
     name, arr = load(server, name)
     live = live_sessions(server)
-    close = [s for s in live if s not in arr and s != HISTORY_SESSION]
+    close = [s for s in live if s not in arr]
     own = own_session(server)
     if own in close:
         msg = (

@@ -8,9 +8,8 @@ end       every second, not ten minutes), on throwaway servers in a socket
           folder of their own (TMUX_TMPDIR) and a throwaway HOME:
 
   server 1: api (a; f, its       -> a snapshot, by the run: api [a, f, "b  c "],
-    window 1 split, f active;       solo [e]; no tmux-history; then none
-    "b  c "), solo (e),             written while nothing changes
-    tmux-history
+    window 1 split, f active;       solo [e]; then none written while
+    "b  c "), solo (e)              nothing changes
   tmux.conf sourced again        -> the second run exits; still one
   save keep, list                -> keep.txt; list names both
   kill-server                    -> the run stops
@@ -25,8 +24,7 @@ end       every second, not ten minutes), on throwaway servers in a socket
     <script>`, job started as       command line (tmux names them "bash"
     `sh <script>`                   and "sh")
   the same from inside solo      -> refused: it would close its own session
-  replace only-api, main idle    -> main and solo closed, api kept,
-                                    tmux-history kept
+  replace only-api, main idle    -> main and solo closed, api kept
   restore of a session whose     -> exit 1, the directory named, nothing
     directory is gone               created
 
@@ -278,12 +276,11 @@ def run_end_to_end() -> None:  # noqa: PLR0915 - one story, step by step
     t("split-window", "-t", "=api:1", "-c", f)  # the split is active: f
     t("new-window", "-d", "-t", "=api:", "-c", bc)
     t("new-session", "-d", "-s", "solo", "-c", e)
-    t("new-session", "-d", "-s", "tmux-history", "-c", a)
     until("a snapshot", lambda: bool(snapshots()))
     first = snapshots()[0]
     got = ta.parse((STATE / f"{first}.txt").read_text(), first)
     assert got == {"api": [a, f, bc], "solo": [e]}, got
-    passed("the run snapshots each session's windows and directories, no tmux-history")
+    passed("the run snapshots each session's windows and directories")
     time.sleep(2.5)
     assert snapshots() == [first], snapshots()
     assert f"snapshot: unchanged since {first}; none written" in logged(), logged()
@@ -328,7 +325,6 @@ def run_end_to_end() -> None:  # noqa: PLR0915 - one story, step by step
     passed("restore again: nothing changes, each session logged as already open")
 
     # replace: refused while main is busy, or from inside solo; then done
-    t("new-session", "-d", "-s", "tmux-history", "-c", a)
     (STATE / "only-api.txt").write_text(f"session api\n  window {a}\n")
     t("send-keys", "-t", "=main:0", "exec sleep 300", "Enter")
     until(
@@ -341,7 +337,7 @@ def run_end_to_end() -> None:  # noqa: PLR0915 - one story, step by step
     r = cli("replace", "only-api")
     assert r.returncode == 1, r.stdout + r.stderr
     assert "main:0.0 sleep" in r.stdout, r.stdout
-    assert sorted(windows()) == ["api", "main", "solo", "tmux-history"], windows()
+    assert sorted(windows()) == ["api", "main", "solo"], windows()
     passed("replace refuses while a session to close runs a program, naming its pane")
     t("respawn-pane", "-k", "-t", "=main:0", "-c", main)
 
@@ -360,7 +356,7 @@ def run_end_to_end() -> None:  # noqa: PLR0915 - one story, step by step
     assert f"main:0.0 bash {script}" in r.stdout, r.stdout
     # tmux starts a pane's command by `sh -c`, which may stay in front of it
     assert re.search(rf"job:0\.0 (sh -c )?sh {re.escape(str(script))}", r.stdout)
-    assert sorted(windows()) == ["api", "job", "main", "solo", "tmux-history"]
+    assert sorted(windows()) == ["api", "job", "main", "solo"]
     passed("replace reads the whole command line: a script run by sh or bash is busy")
     t("kill-session", "-t", "=job")
     t("respawn-pane", "-k", "-t", "=main:0", "-c", main)
@@ -377,8 +373,8 @@ def run_end_to_end() -> None:  # noqa: PLR0915 - one story, step by step
     passed("replace refuses to close the session it runs in")
     r = cli("replace", "only-api")
     assert r.returncode == 0, r.stdout + r.stderr
-    assert sorted(windows()) == ["api", "tmux-history"], windows()
-    passed("replace closes main and solo, keeps api and tmux-history")
+    assert sorted(windows()) == ["api"], windows()
+    passed("replace closes main and solo, keeps api")
 
     # a directory gone
     (STATE / "gone.txt").write_text(f"session new\n  window {D / 'missing'}\n")

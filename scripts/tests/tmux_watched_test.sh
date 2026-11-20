@@ -25,8 +25,6 @@
 #   moved       the pane's window moved into     0 (a client counts by the
 #               another session, where a           window it shows), and
 #               focused client shows it            session-name names it
-#   control     a control-mode client alone      1 "no client attached"  1
-#               (tmux -C), which says "focused"
 #   panegone    the pane killed, its session     2
 #               kept by another window
 #   goes        the session killed               2                       2
@@ -149,13 +147,6 @@ new_session movedto >/dev/null
 t move-window -s "=movedfrom:0" -t "=movedto:"
 t select-window -t "$(t display -p -t "$pane_moved" '#{window_id}')"
 focused_client movedto
-# control: a control-mode client and no terminal. Its stdin is a FIFO held
-# open both ways, so it neither blocks nor reads an end of file.
-sid_control=$(new_session control)
-mkfifo "$WORK/control"
-tmux -S "$SOCK" -C attach -t =control <>"$WORK/control" >/dev/null 2>&1 &
-clients_pids+=" $!"
-wait_focus "=control" yes
 sid_panegone=$(new_session panegone)
 t new-window -d -t "=panegone:" 'sleep 1000'
 pane_gone=$(pane_of "$sid_panegone")
@@ -192,10 +183,6 @@ TMUX_WATCHED_STALE_SECONDS=0 pane_is "focused, but its input is stale" 1 "^$SEEN
 pane_is "a focused client on another window" 1 "^$SEEN, on window 1 \(the pane's is 0\)\$" "$sid_else"
 pane_is "its window zoomed onto another pane" 1 "^$SEEN, the pane's window zoomed onto another pane\$" "$sid_zoom"
 is "pane, its window shown in another session by a focused client" 0 "^$SEEN\$" -S "$SOCK" pane "$pane_moved"
-# The control client says it is focused, and that is what must not count.
-[[ ",$(t list-clients -t =control -F '#{client_flags}')," == *,focused,* ]] \
-  || fail "the control client does not report itself focused, so the checks of it test nothing"
-pane_is "a control-mode client alone" 1 '^no client attached$' "$sid_control"
 
 # --- session: is anybody on it, at any window --------------------------------
 
@@ -206,7 +193,6 @@ TMUX_WATCHED_STALE_SECONDS=0 session_is "focused, but its input is stale" 1 "^$S
 session_is "a focused client on another window than the pane's" 0 "^$SEEN\$" "$sid_else"
 session_is "a focused client, the window zoomed" 0 "^$SEEN\$" "$sid_zoom"
 session_is "the one a window was moved out of" 1 '^no client attached$' "$sid_moved"
-session_is "a control-mode client alone" 1 '^no client attached$' "$sid_control"
 
 # The same client loses focus.
 touch "$WORK/unfocus"

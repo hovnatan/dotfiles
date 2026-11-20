@@ -3,10 +3,10 @@
 The repo's rule for those (AGENTS.md), as scripts/lib/event_log.sh is for
 shell scripts and home/.hammerspoon/event_log.lua for Hammerspoon:
 
-    log = EventLog.start("tmux_history")
-    log.note("connected to /tmp/tmux-1000/default")
-    -> ~/.dotfiles/.logs/20261109_174200_tmux_history/events.log
-       2026-11-09T17:42:00Z connected to /tmp/tmux-1000/default
+    log = EventLog.start("tmux_server_arrangement")
+    log.note("restored api: 3 windows")
+    -> ~/.dotfiles/.logs/20261109_174200_tmux_server_arrangement/events.log
+       2026-11-09T17:42:00Z restored api: 3 windows
 
 One directory per run, named by its UTC start; a second run starting in the
 same second gets "_2" after the name, and so on, rather than share the file.
