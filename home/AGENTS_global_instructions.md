@@ -102,13 +102,6 @@ trade. The same goes for your own long tasks - surface a finding when you
 have it instead of holding everything for the final report, unless the task's
 output contract is a single structured payload.
 
-Background jobs: wake on every stage, not only on exit. When you start a long
-job in the background, also arm a Monitor on its log that prints each stage
-line and every failure signature, so a failure two minutes in reaches me then,
-not when the job exits twenty minutes later. Write job scripts to stop at the
-first failed stage, rather than waiting out health checks or running later
-stages against a broken state.
-
 Following a job: when a background job will run for more than a few minutes
 and `$TMUX` is set, also open a window in the current tmux session that tails
 its most detailed live output, not just its stage lines: when it writes
