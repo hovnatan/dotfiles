@@ -3,8 +3,8 @@
 # tmux_hooks_test.sh -- end-to-end checks for the tmux hooks' log: the hook
 # lines of home/.config/tmux/tmux.conf and the scripts they run, in a throwaway tmux
 # server and HOME, with a client in a pty that reports focus as a terminal
-# does. Needs tmux (3.6 or later, for the focus hooks) and python3; about
-# 30 s.
+# does. Needs tmux (3.6 or later, for the focus hooks), python3 and fzf;
+# about 70 s.
 #
 #   sessions   a: sleep           b: a stand-in "claude" (a link to bash,
 #                                    idle on a FIFO; the name and the
@@ -48,6 +48,11 @@
 #   prefix c C n p l w s S C-s 0-9,   -> bound; c new window, C new
 #   User0/1                              session, l last window, s the
 #                                        session picker
+#   prefix s, Enter; then "solo",     -> fzf in a popup (session-pick.sh):
+#   Enter; then Esc                      solo, used last; solo again, by
+#                                        name, though a newer session is the
+#                                        first row; the client left where it
+#                                        is
 #   Cmd-K Cmd-K Cmd-J (\e[5;30002~,   -> windows 1, 2, 1, nothing typed into
 #   \e[5;30001~ as Ghostty sends them)   the pane; in a one-window session
 #                                        nothing moves and nothing is shown
@@ -74,9 +79,10 @@
 #   a bell in a window out of view    -> its label on a yellow background
 #   a bell in solo (no client)        -> a yellow " solo:N! " first on the
 #                                        right of w's bar, a log line, and
-#                                        no message over the bar, and the
-#                                        same label on solo's row in the
-#                                        session picker; none on
+#                                        no message over the bar; solo the
+#                                        session picker's first row, with
+#                                        the label, and prefix s, Enter goes
+#                                        to the window that rang; none on
 #                                        solo itself; gone once shown. The
 #                                        bell in w (its client focused)
 #                                        logs "watched"
@@ -106,7 +112,7 @@
 
 set -uo pipefail
 
-for cmd in tmux python3; do
+for cmd in tmux python3 fzf; do
   command -v "$cmd" >/dev/null || {
     echo "tmux_hooks_test.sh: $cmd not on PATH" >&2
     exit 1
@@ -261,7 +267,9 @@ wait_for ' synthetic focus-out to %[0-9]+ \(b\): no client attached$' \
 # (Python escapes, "\x01S" = prefix S). Panes run sleep: the config's
 # default-command is fish, and nothing here needs a shell.
 WSOCK="$SOCKDIR/win"
-tw() { env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin" TERM=xterm-256color "$TMUX_BIN" -S "$WSOCK" "$@"; }
+# The server's PATH: this tmux, and fzf for prefix s (session-pick.sh).
+SERVER_PATH="$(dirname "$TMUX_BIN"):$(dirname "$(command -v fzf)"):/usr/bin:/bin"
+tw() { env -i HOME="$H" PATH="$SERVER_PATH" TERM=xterm-256color "$TMUX_BIN" -S "$WSOCK" "$@"; }
 # status_of <session>: the bar as the session sees it, its own value or the
 # global one it inherits
 status_of() { tw display -p -t "$1": '#{status}' 2>&1; }
@@ -323,6 +331,33 @@ wclient=$!
 send_keys() {
   printf '%s\n' "$1" >"$WORK/keys"
   sleep 0.5
+}
+# The session picker, prefix s (session-pick.sh), for the client on w.
+# picker_rows: its rows, as <target> TAB <text>
+picker_rows() {
+  env -i HOME="$H" PATH="$SERVER_PATH" "$H/.dotfiles/home/.config/tmux/session-pick.sh" \
+    --rows "$WSOCK" "$wname" "$(sid w)"
+}
+sid() { tw display -p -t "=$1:" '#{session_id}'; }
+# rows_drawn: how many times a row's end, " ago", was sent to the terminal
+rows_drawn() { grep -aoF ' ago' "$WORK/screen" | wc -l; }
+more_rows_drawn() { [ "$(rows_drawn)" -gt "$1" ]; }
+# pick <keys>...: prefix s, then each of the keys once the popup has drawn
+# its rows
+pick() {
+  local keys n
+  n=$(rows_drawn)
+  printf '%s\n' '\x01s' >"$WORK/keys"
+  until_ok 5 more_rows_drawn "$n" || fail "prefix s: no row of the picker was drawn"
+  for keys in "$@"; do send_keys "$keys"; done
+}
+# where: the session and window w's client shows
+where() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{client_session}:#{window_index}'; }
+is_where() { [ "$(where)" = "$1" ]; }
+# picked <the log line's end> <where the client lands> <what>
+picked() {
+  until_ok 5 is_where "$2" && wait_for " session-pick ${wname#/dev/}: $1\$" && pass "$3" \
+    || fail "$3: the client is on $(where), wanted $2; log: $(hooks_log | grep ' session-pick ' | tail -2); rows: $(picker_rows | cat -v)"
 }
 until_ok 5 attached tw w || fail "no client attached to w"
 # What the client draws on the right: the stub's numbers labelled and
@@ -441,7 +476,7 @@ done
 [ -z "$(what_key prefix t)" ] || fail "what_key reads prefix t, which the config leaves unbound, as bound: '$(what_key prefix t)'"
 [[ "$(what_key prefix c)" == "new-window -a -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
   && [ "$(what_key prefix l)" = last-window ] \
-  && [ "$(what_key prefix s)" = 'choose-tree -Zs -F "#{E:@tree_row}" -O activity \; send-keys Down' ] \
+  && [ "$(what_key prefix s)" = "run-shell \"$H/.dotfiles/home/.config/tmux/session-pick.sh #{q:socket_path} #{q:client_name} #{q:session_id}\"" ] \
   && pass "prefix c: new window, C: new session, l: last window, s: session picker" \
   || fail "prefix c '$(what_key prefix c)', C '$(what_key prefix C)', l '$(what_key prefix l)', s '$(what_key prefix s)'"
 
@@ -665,23 +700,31 @@ got=$(tw display -p -t =w: '#{window_panes}')
 tw kill-window
 
 # prefix L flips the client back to the session it showed before, and again.
-cname=$(tw list-clients -t =w -F '#{client_name}')
-tw switch-client -c "$cname" -t =solo
-tw switch-client -c "$cname" -t =w
+wname=$(tw list-clients -t =w -F '#{client_name}')
+tw switch-client -c "$wname" -t =solo
+tw switch-client -c "$wname" -t =w
 send_keys '\x01L'
-a=$(tw display -p -c "$cname" '#{client_session}')
+a=$(tw display -p -c "$wname" '#{client_session}')
 send_keys '\x01L'
-b=$(tw display -p -c "$cname" '#{client_session}')
+b=$(tw display -p -c "$wname" '#{client_session}')
 [ "$a $b" = "solo w" ] && pass "prefix L, L: sessions solo, w" || fail "prefix L, L: sessions $a $b, wanted solo w"
 
-# prefix s opens the picker one row below the client's own session: Enter
-# alone goes to the session used before it, solo.
-send_keys '\x01s'
-send_keys '\r'
-a=$(tw display -p -c "$cname" '#{client_session}')
-[ "$a" = solo ] && pass "prefix s, Enter: the session used before this one, solo" \
-  || fail "prefix s, Enter: session $a, wanted solo; sessions: $(tw list-sessions -F '#{session_name}=#{session_activity}' | paste -sd ' ' -)"
-tw switch-client -c "$cname" -t =w
+# prefix s: the picker's first row is the session used last, solo, so Enter
+# alone goes there. Typed letters narrow the rows: "solo" picks solo though
+# pk, made a second later, is now the first row. Esc picks nothing.
+solo_at="solo:$(current solo)"
+pick '\r'
+picked "-> $solo_at" "$solo_at" "prefix s, Enter: the session used last, solo"
+tw switch-client -c "$wname" -t =w
+sleep 1.1
+tw new-session -d -s pk 'sleep 300'
+[ "$(picker_rows | head -1 | cut -f1)" = "$(sid pk):" ] || fail "pk, just made, is not the picker's first row: $(picker_rows | cat -v)"
+pick 'solo' '\r'
+picked "-> $solo_at" "$solo_at" "prefix s, 'solo', Enter: solo, not the first row"
+tw switch-client -c "$wname" -t =w
+pick '\x1b'
+picked "closed, nothing picked" "w:$(current w)" "prefix s, Esc: the client stays where it is"
+tw kill-session -t =pk
 
 # A bell in a window out of view: its label is drawn on a yellow background (#d79921, as
 # the RGB parameters the client is sent).
@@ -694,7 +737,6 @@ grep -aq '48;2;215;153;33' "$WORK/screen" && pass "a bell paints its window's la
 # bar of the client on w gets a yellow marker and the log a line. The
 # window's name holds "#S" (-n expands formats, hence ##S), which the log
 # has as typed: the hook's run-shell line expands formats once, not twice.
-wname=$(tw list-clients -t =w -F '#{client_name}')
 ring=$(tw new-window -d -P -F '#{window_index}' -t =solo: -n 'ring ##S' "printf '\\a'; exec sleep 100")
 [ "$(tw display -p -t "=solo:$ring" '#{window_name}')" = 'ring #S' ] \
   || fail "the ringing window is named '$(tw display -p -t "=solo:$ring" '#{window_name}')', not 'ring #S'"
@@ -719,10 +761,10 @@ right() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:status-right}
 want="#[fg=#282828,bg=#d79921] solo:$ring! #[default] "
 [ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'"
-row=$(tw list-sessions -f '#{==:#{session_name},solo}' -F '#{E:@tree_row}')
-[ "$row" = "#[fg=#282828,bg=#d79921] $ring! #[default] #[fg=themelightgrey]$(tw display -p -t =solo: '#{session_windows}') windows" ] \
-  && pass "the session picker's row for solo carries the bell label: '$row'" \
-  || fail "the session picker's row for solo is '$row'"
+row=$(picker_rows | head -1)
+[[ $row == "$(sid solo):$ring"$'\t'"solo "*$'\033[38;2;40;40;40;48;2;215;153;33m'" $ring! "$'\033[0m'" "* ]] \
+  && pass "the session picker's first row is solo, at the window that rang, labelled in the bar's bell colours" \
+  || fail "the session picker's first row is '$(cat -v <<<"$row")'"
 case $(right) in
   "${want} (box) [w]   "*) pass "the marker opens status-right, before ' (box) [w]'" ;;
   *) fail "status-right on w is '$(right)', wanted it to start '${want} (box) [w]   '" ;;
@@ -742,7 +784,9 @@ case $(left) in *" solo:"*) false ;; *" w:"*) true ;; *) false ;; esac \
   && [ -n "$(tw display -p -t =solo: '#{session_alerts}')" ] \
   && pass "a client on solo marks w's bell, not solo's own: '$(left)'" \
   || fail "on solo: bell marker '$(left)', solo's alerts '$(tw display -p -t =solo: '#{session_alerts}')'"
-tw select-window -t "=solo:$ring"
+tw switch-client -c "$wname" -t =w
+pick '\r'
+picked "-> solo:$ring" "solo:$ring" "prefix s, Enter: the session holding a bell, at the window that rang"
 tw switch-client -c "$wname" -t =w
 # The switch's set-option -qu @bell waits behind client-session-changed[0],
 # focus-out-unattached.sh, which runs without -b: the marker clears a moment
@@ -834,7 +878,6 @@ ring_in() {
   wait_for " bell session=$1 window=$rang \($2\): $3" || fail "no bell line for $1:$rang ($2): $(hooks_log | tail -3)"
 }
 unwatched='unwatched .*, marked$'
-where() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{client_session}:#{window_index}'; }
 held() { tw list-sessions -F '#{session_name}=#{E:@bell_held}' | paste -sd ' ' -; }
 ring_in w next-w 'watched '
 rw=$rang
@@ -845,6 +888,12 @@ sleep 1.1
 ring_in q1 next-q1 "$unwatched"
 r1=$rang
 [ "$(held)" = "q1=$r1! q2=$r2! solo= w=$rw!" ] || fail "before prefix C-s the sessions hold '$(held)', wanted 'q1=$r1! q2=$r2! solo= w=$rw!'"
+# The picker lists the same order: the bells by when they rang, then the
+# rest; its own session, w, is not a row.
+want="$(sid q2):$r2 $(sid q1):$r1 $(sid solo):"
+got=$(picker_rows | cut -f1 | paste -sd ' ' -)
+[ "$got" = "$want" ] && pass "the session picker's rows: q2 and q1 by their bells' times, then solo" \
+  || fail "the session picker's rows are '$got', wanted '$want'"
 # next_bell <where the client lands> <the log line's end>: press prefix C-s
 next_bell() {
   send_keys '\x01\x13'

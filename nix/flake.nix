@@ -170,7 +170,8 @@
             # databases), the fish greeting
             # (home/.config/fish/functions/fish_greeting.fish) (2026-10-05)
             pkgs.fortune
-            # fzf -- the fish fzf plugin's ctrl-t/alt-c pickers
+            # fzf -- the fish fzf plugin's ctrl-t/alt-c pickers, and tmux's
+            # prefix s and prefix Tab (session-pick.sh, extrakto)
             pkgs.fzf
             # GitHub command-line tool
             pkgs.gh
@@ -271,10 +272,7 @@
             pkgs.stylua
             # Terraform, for app_backend/deploy_scripts; unfree, see pkgs above
             pkgs.terraform
-            # tmux -- latest release; Ubuntu 24.04 ships 3.4. When a lock
-            # update moves its version, run scripts/tests/tmux_prefix_bar_test.sh:
-            # @tree_row (home/.config/tmux/tmux.conf) is a copy of its picker's
-            # row format, and the test says whether the copy still matches.
+            # tmux -- latest release; Ubuntu 24.04 ships 3.4
             pkgs.tmux
             # tmux-mem-cpu-load -- memory and CPU % for the tmux status bar
             # (home/.config/tmux/tmux.conf status-right); one binary for macOS and
