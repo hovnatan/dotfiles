@@ -37,7 +37,8 @@
 --                    core.saved --> hs.settings "eye_breaks.state"
 --
 -- The menu-bar item has the two breaks and the badge's switch, which is
--- saved, so it outlives a reload. From a shell:
+-- saved, so it outlives a reload. Option-9 anywhere is the badge's click
+-- from the keyboard, with a break due or not. From a shell:
 --   hs -q -c 'require("eye_breaks").breakNow()'
 -- also longBreakNow(), dueBreakNow() (the badge's click), skip(), lock(),
 -- snooze() (a right click on the badge), longSnooze().
@@ -672,6 +673,13 @@ end)
 M.dueBreakNow = action("break asked for", function(now)
   return core.dueBreakNow(state, now) and ": the long one, which was due"
 end)
+-- Not under a break screen: there the press would start its countdown again.
+M.hotkey = hs.hotkey.bind({ "alt" }, "9", function()
+  if not overlays then
+    M.dueBreakNow()
+  end
+end) or fail("could not bind Option-9 for the due break: something else holds that shortcut")
+
 -- A long break up for a short one's length is a short rest, the core says.
 M.skip = action("break skipped", function(now)
   return core.skip(state, now) and ", a long break up long enough for a short rest: clock restarted"
