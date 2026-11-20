@@ -102,18 +102,6 @@ trade. The same goes for your own long tasks - surface a finding when you
 have it instead of holding everything for the final report, unless the task's
 output contract is a single structured payload.
 
-Following a job: when a background job will run for more than a few minutes
-and `$TMUX` is set, also open a window in the current tmux session that tails
-its most detailed live output, not just its stage lines: when it writes
-several logs (per lane, per stage, a remote mirror), tail them all
-(`tmux new-window -d -n <job> "tail -F <log> <log> ..."`; tail labels each
-file), and tell me the window name. If what the job writes is only stage
-lines minutes apart, say so: the job is under-logging (see Observability), and
-the window cannot fix that. The window only displays the logs; the job does
-not run in it, so closing the window leaves the job running. When the job exits, close the
-window if it succeeded (`tmux kill-window -t <job>`); on failure leave it open
-so the error stays on screen, and say so.
-
 # Results: leave a handoff document next to the artifacts
 
 When a task produces results someone will later read, compare against, or
