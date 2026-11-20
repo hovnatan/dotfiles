@@ -75,7 +75,9 @@
 #   a bell in a window out of view    -> its label on a yellow background
 #   a bell in solo (no client)        -> a yellow " solo:N! " first on the
 #                                        right of w's bar, a log line, and
-#                                        no message over the bar; none on
+#                                        no message over the bar, and the
+#                                        same label on solo's row in the
+#                                        session picker; none on
 #                                        solo itself; gone once shown. The
 #                                        bell in w (its client focused)
 #                                        logs "watched"
@@ -84,10 +86,14 @@
 #                                        focus-in
 #   the same, bg's client focused but -> unwatched, marked; a key typed in
 #   idle past TMUX_WATCHED_STALE_SECONDS bg hides the marker, no focus-in
-#   bells in w (out of view), q2, q1, -> prefix C-s from w: q2, w, q1, each
-#   a second apart                       at the window that rang, then "no
-#                                        other session holds a bell"; a
-#                                        session with no bell time first
+#   bells in w (out of view), q2, q1, -> prefix C-s from w: w's window, q2,
+#   a second apart                       q1, each at the window that rang;
+#                                        then, no bell left, back to q2 and
+#                                        to q1 (attached to last, no client
+#                                        on them); a session with no bell
+#                                        time first
+#   prefix C-s with no bell, the one  -> the client stays and is told so
+#   other session never attached to
 #   prefix c from window 0 of 3       -> new window at 1, the rest move up
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
@@ -503,7 +509,7 @@ done
 [ -z "$(what_key prefix t)" ] || fail "what_key reads prefix t, which the config leaves unbound, as bound: '$(what_key prefix t)'"
 [[ "$(what_key prefix c)" == "new-window -a -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
   && [ "$(what_key prefix l)" = last-window ] \
-  && [ "$(what_key prefix s)" = "choose-tree -Zs" ] \
+  && [ "$(what_key prefix s)" = 'choose-tree -Zs -F "#{E:@tree_row}" -O activity' ] \
   && pass "prefix c: new window, C: new session, l: last window, s: session picker" \
   || fail "prefix c '$(what_key prefix c)', C '$(what_key prefix C)', l '$(what_key prefix l)', s '$(what_key prefix s)'"
 
@@ -775,6 +781,10 @@ right() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:status-right}
 want="#[fg=#282828,bg=#d79921] solo:$ring! #[default] "
 [ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'"
+row=$(tw list-sessions -f '#{==:#{session_name},solo}' -F '#{E:@tree_row}')
+[ "$row" = "#[fg=#282828,bg=#d79921] $ring! #[default] #[fg=themelightgrey]$(tw display -p -t =solo: '#{session_windows}') windows" ] \
+  && pass "the session picker's row for solo carries the bell label: '$row'" \
+  || fail "the session picker's row for solo is '$row'"
 case $(right) in
   "${want} (box) [w]   "*) pass "the marker opens status-right, before ' (box) [w]'" ;;
   *) fail "status-right on w is '$(right)', wanted it to start '${want} (box) [w]   '" ;;
@@ -902,14 +912,11 @@ wait "$bgclient" 2>/dev/null
 bgclient=
 tw kill-session -t =bg
 
-# prefix C-s (bell-next.sh): the client goes to the session whose bell is
-# oldest, at the window that rang, and pressed again to the next. Three
-# bells a second apart (the times are by the second): in w, in a window out
-# of view of its focused client ("watched", so held by tmux's alert alone),
-# then in q2, then in q1. The order is by time, not by name (q1 lists
-# first), and the client's own session is left out: w's turn comes once the
-# client is on q2. w's earlier alerts are shown first, so w holds this bell
-# alone.
+# prefix C-s (bell-next.sh). Three bells a second apart (the times are by
+# the second): in w, the client's own session, in a window out of view
+# ("watched", so held by tmux's alert alone), then in q2, then in q1. The
+# order is by time, not by name (q1 lists first). w's earlier alerts are
+# shown first, so w holds this bell alone.
 wcur=$(current w)
 for i in $(tw list-windows -t =w -f '#{window_bell_flag}' -F '#{window_index}'); do
   tw select-window -t "=w:$i"
@@ -917,18 +924,23 @@ done
 tw select-window -t "=w:$wcur"
 tw new-session -d -s q1 'sleep 300'
 tw new-session -d -s q2 'sleep 300'
-# ring_in <session> <window name>: a new window out of view rings; its index
-ring_in() { tw new-window -d -P -F '#{window_index}' -t "=$1:" -n "$2" "printf '\\a'; exec sleep 100"; }
+# ring_in <session> <window name> <the log line's verdict>: a new window out
+# of view rings, and its index is in $rang once the hook has logged it
+ring_in() {
+  rang=$(tw new-window -d -P -F '#{window_index}' -t "=$1:" -n "$2" "printf '\\a'; exec sleep 100")
+  wait_for " bell session=$1 window=$rang \($2\): $3" || fail "no bell line for $1:$rang ($2): $(hooks_log | tail -3)"
+}
+unwatched='unwatched .*, marked$'
 where() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{client_session}:#{window_index}'; }
 held() { tw list-sessions -F '#{session_name}=#{E:@bell_held}' | paste -sd ' ' -; }
-rw=$(ring_in w next-w)
-wait_for " bell session=w window=$rw \(next-w\): watched " || fail "no watched bell line for w:$rw: $(hooks_log | tail -3)"
+ring_in w next-w 'watched '
+rw=$rang
 sleep 1.1
-r2=$(ring_in q2 next-q2)
-wait_for " bell session=q2 window=$r2 \(next-q2\): unwatched .*, marked$" || fail "no bell line for q2:$r2: $(hooks_log | tail -3)"
+ring_in q2 next-q2 "$unwatched"
+r2=$rang
 sleep 1.1
-r1=$(ring_in q1 next-q1)
-wait_for " bell session=q1 window=$r1 \(next-q1\): unwatched .*, marked$" || fail "no bell line for q1:$r1: $(hooks_log | tail -3)"
+ring_in q1 next-q1 "$unwatched"
+r1=$rang
 [ "$(held)" = "q1=$r1! q2=$r2! solo= w=$rw!" ] || fail "before prefix C-s the sessions hold '$(held)', wanted 'q1=$r1! q2=$r2! solo= w=$rw!'"
 # next_bell <where the client lands> <the log line's end>: press prefix C-s
 next_bell() {
@@ -937,28 +949,35 @@ next_bell() {
     && pass "prefix C-s: $1 ($2)" \
     || fail "prefix C-s: the client is on $(where), wanted $1; log: $(hooks_log | grep ' bell-next ' | tail -2); held: $(held)"
 }
+next_bell "w:$rw" "-> w:$rw \(rang [0-9]+s ago, 3 held\)"
 next_bell "q2:$r2" "-> q2:$r2 \(rang [0-9]+s ago, 2 held\)"
-next_bell "w:$rw" "-> w:$rw \(rang [0-9]+s ago, 2 held\)"
 next_bell "q1:$r1" "-> q1:$r1 \(rang [0-9]+s ago, 1 held\)"
-next_bell "q1:$r1" "no other session holds a bell"
-grep -aqF "no other session holds a bell" "$WORK/screen" && pass "with no bell left, the client is told so" \
-  || fail "no 'no other session holds a bell' drawn for the client"
-# A session that holds a bell with no time (rung under a server whose
-# bell-elsewhere.sh stamped unwatched bells only) goes first, though solo
-# rings after q2 here.
-r2=$(ring_in q2 next-q2b)
-wait_for " bell session=q2 window=$r2 \(next-q2b\): unwatched .*, marked$" || fail "no bell line for q2:$r2: $(hooks_log | tail -3)"
-rs=$(ring_in solo next-solo)
-wait_for " bell session=solo window=$rs \(next-solo\): unwatched .*, marked$" || fail "no bell line for solo:$rs: $(hooks_log | tail -3)"
+next_bell "q2:$r2" "no bell held, -> q2 \(last attached [0-9]+s ago\)"
+grep -aqF "no bell held: back to q2" "$WORK/screen" && pass "going back for want of a bell, the client is told so" \
+  || fail "no 'no bell held: back to q2' drawn for the client"
+next_bell "q1:$r1" "no bell held, -> q1 \(last attached [0-9]+s ago\)"
+# A session that holds a bell with no time (its hook not yet done) goes
+# first, though solo rings after q2 here.
+ring_in q2 next-q2b "$unwatched"
+r2=$rang
+ring_in solo next-solo "$unwatched"
+rs=$rang
 tw set-option -u -t =solo: @bell_at
 next_bell "solo:$rs" "-> solo:$rs \(rang at a time not recorded, 2 held\)"
 next_bell "q2:$r2" "-> q2:$r2 \(rang [0-9]+s ago, 1 held\)"
 tw switch-client -c "$wname" -t =w
 tw kill-window -t "=w:$rw"
 tw select-window -t "=w:$wcur"
-tw kill-window -t "=solo:$rs"
 tw kill-session -t =q1
 tw kill-session -t =q2
+# No bell and nowhere to go back to: the one other session, a new solo, was
+# never attached to, so tmux has no time for it.
+tw kill-session -t =solo
+tw new-session -d -s solo 'sleep 300'
+nowhere="no bell held, and no detached session to go back to"
+next_bell "w:$wcur" "$nowhere"
+grep -aqF "$nowhere" "$WORK/screen" && pass "with no bell and no session to go back to, the client is told so" \
+  || fail "no '$nowhere' drawn for the client"
 
 # prefix c from window 0 of three: the new window takes number 1, the old 1 moves to
 # 2. The panes need no shell, so the new one runs sleep in place of the config's fish.

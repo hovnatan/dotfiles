@@ -271,7 +271,10 @@
             pkgs.stylua
             # Terraform, for app_backend/deploy_scripts; unfree, see pkgs above
             pkgs.terraform
-            # tmux -- latest release; Ubuntu 24.04 ships 3.4
+            # tmux -- latest release; Ubuntu 24.04 ships 3.4. When a lock
+            # update moves its version, run scripts/tests/tmux_prefix_bar_test.sh:
+            # @tree_row (home/.config/tmux/tmux.conf) is a copy of its picker's
+            # row format, and the test says whether the copy still matches.
             pkgs.tmux
             # tmux-mem-cpu-load -- memory and CPU % for the tmux status bar
             # (home/.config/tmux/tmux.conf status-right); one binary for macOS and

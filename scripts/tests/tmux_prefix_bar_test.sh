@@ -9,8 +9,8 @@
 #
 #   outer server (-f /dev/null): stands in for the terminal, 120 columns
 #     its one pane runs a client of
-#   inner server (-f /dev/null + five lines of tmux.conf: @bell_held,
-#     @bell_marker, status-right, status-right-length,
+#   inner server (-f /dev/null + six lines of tmux.conf: @bell_held,
+#     @bell_marker, @tree_row, status-right, status-right-length,
 #     window-status-current-style)
 #     session t, window "tab", prefix C-b (tmux's default),
 #     title "(box) [t]", status-stats.sh stood in for: "cpu  1%  mem  2%"
@@ -23,6 +23,9 @@
 #     nothing pressed   [t] 0:tab*        (box) [t]   cpu  1%  mem  2%   19 Nov 12:58 EST
 #     C-b               [t] 0:tab*    <R> (box) [t]   cpu  1%  mem  2%   19 Nov 12:58 EST
 #     Escape (unbound)  as nothing pressed: the prefix took its key
+#
+#   Then the session picker's rows (prefix s, @tree_row), read off the same
+#   pane: with no bell held they are tmux's own, colours included.
 #
 # Exit 0 = all passed; on failure the work dir is kept and printed.
 
@@ -65,12 +68,12 @@ trap cleanup EXIT
 
 # --- the lines under test -----------------------------------------------------
 
-grep -E '^set-option -g (@bell_held|@bell_marker|status-right|status-right-length|window-status-current-style) ' \
+grep -E '^set-option -g (@bell_held|@bell_marker|@tree_row|status-right|status-right-length|window-status-current-style) ' \
   "$CONF" >"$WORK/bar.conf"
-if [ "$(wc -l <"$WORK/bar.conf")" -eq 5 ]; then
-  pass "tmux.conf has the five lines: the marker and its rule, status-right, its length, the tab's style"
+if [ "$(wc -l <"$WORK/bar.conf")" -eq 6 ]; then
+  pass "tmux.conf has the six lines: the marker and its rule, the picker's row, status-right, its length, the tab's style"
 else
-  fail "tmux.conf: expected five lines, got: $(cat "$WORK/bar.conf")"
+  fail "tmux.conf: expected six lines, got: $(cat "$WORK/bar.conf")"
 fi
 
 # status-right runs ~/.dotfiles/home/.config/tmux/status-stats.sh: the
@@ -135,6 +138,40 @@ expect "$REVERSED" "prefix pressed: reversed from the space before the title to 
 # the client is back in the root table.
 outer send-keys Escape
 expect "$PLAIN" "the next key pressed: no part of the bar is reversed"
+
+# --- the picker's rows ---------------------------------------------------------
+
+# @tree_row is a copy of tmux's own row format with a bell label added, as
+# the picker's -F replaces every row. With no bell held the picker must draw
+# the same with it as without, colours included, for a session, a window, a
+# pane and a marked pane. When this fails after a tmux update, tmux's own
+# format has changed: copy the new one into @tree_row, the label kept
+# (strings -a <the tmux binary> | grep -F '#{?pane_format,#{?pane_marked').
+# The new pane is the active one, so the picker's selection, which draws in
+# its own colours, is on it and not on the marked pane.
+inner split-window -t t: 'sleep 100'
+inner select-pane -m -t t:0.0
+inner new-session -d -s u 'sleep 100'
+# picker_rows [choose-tree arguments]: the rows of the picker, which without
+# -s or -w opens with every session and window expanded
+picker_rows() {
+  local rows=""
+  inner choose-tree -Z -N -t t: "$@"
+  for _ in $(seq 50); do
+    rows=$(outer capture-pane -e -p | grep -E '\([0-9]+\) ')
+    [ "$(wc -l <<<"$rows")" -ge 5 ] && break
+    sleep 0.1
+  done
+  outer send-keys q
+  printf '%s\n' "$rows"
+}
+own=$(picker_rows)
+ours=$(picker_rows -F '#{E:@tree_row}')
+if [ "$(wc -l <<<"$own")" -ge 5 ] && [ "$ours" = "$own" ]; then
+  pass "the picker's rows with @tree_row are tmux's own while no bell is held ($(wc -l <<<"$own" | tr -d ' ') rows)"
+else
+  fail "the picker's rows differ. tmux's own: $(cat -v <<<"$own") with @tree_row: $(cat -v <<<"$ours")"
+fi
 
 log "$failures failure(s)"
 [ "$failures" -eq 0 ]

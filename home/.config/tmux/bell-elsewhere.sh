@@ -8,7 +8,8 @@
 #   window 1 of session "solo" rings              (alert-bell, every bell)
 #     -> bell-elsewhere.sh <socket> $3 solo 1 <window name>
 #     -> is anybody on solo? (scripts/tmux_watched.sh session)
-#          yes -> log "watched (...)", exit: tmux's own bell reached it
+#          yes -> @bell_at <epoch>, no @bell, log "watched (...)": tmux's
+#                 own bell reached it
 #          no  (none attached, all unfocused, or focus gone stale):
 #     -> @bell "1!" and @bell_at <epoch> on solo, which the bar's
 #        @bell_marker (tmux.conf) draws as " solo:1! " first on the right of
