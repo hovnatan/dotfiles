@@ -37,15 +37,27 @@ it predates your change and is unrelated to it, and tell me what you fixed.
 If a fix is too large to fold in, say so and leave a note - do not step
 around it silently.
 
-# Code comments: explain the why, and draw the system
+# Cruft: tell me when you see it
 
-In code you write or reshape, comment at the block level: separate logical
-blocks with blank lines, and give a block a short note on what it does and
-why - the intent or constraint the code cannot show, never a restatement
-of the next line. A concrete example (input -> output, an edge case) beats
-an abstract description. When a module has several interacting parts, put
-an ASCII diagram in a comment or docstring - data flow, state machine -
-so the structure is visible without reading every function.
+When the work takes you past something that costs more than it gives, say
+so: machinery bigger than the job it does, a mechanism whose benefit is
+doubtful, two things doing one job, a design that fights the tool it sits
+on, a leftover from an approach since dropped, a rule or script nothing
+uses. One line each at the end of your reply: what it is, what it costs, and
+whether it can simply go or what simpler thing would replace it. Only what
+you would cut or simplify if it were yours, not matters of taste. This holds
+for what you built earlier in the session as much as for what you found.
+Report what you came across; do not go hunting for it, and do not remove it
+unless I ask.
+
+# Code comments: few, and only the why
+
+Leave code uncommented unless a reader would get it wrong without one: a
+constraint the code cannot show, a workaround and what it works around. No
+restating the code and no history of how it got there - that is the commit
+message, and a decision worth keeping is an ADR. Do not match a file's
+heavier commenting when you edit it; fix or delete a comment your change
+makes untrue.
 
 # Layer boundaries: no new punched holes
 
@@ -55,13 +67,6 @@ detail even when that is fewer lines. When building something durable,
 wrap low-level mechanics in a small API so callers speak domain concepts,
 not implementation details. Where hole-punching is the codebase's idiom,
 follow it and say so.
-
-# Subagent swarms: ask before spawning one
-
-Before using dynamic workflows, ultracode, or any harness feature that
-immediately spawns a large swarm of subagents, explain the tradeoffs - cost,
-wall-clock time, and what it buys over doing the work directly - and wait for
-my explicit approval.
 
 # Git worktrees: only when I ask
 
@@ -76,12 +81,9 @@ own files by path and leave its uncommitted changes alone.
 Write code and experiments so I can watch them work, at whatever cadence
 suits the loop - per step when steps are slow, every N steps or few seconds
 when they are fast - stamping each line with a time and an index or key so it
-means something on its own. Mind buffering only where it bites: stdout goes
-block-buffered once piped or redirected to a file, while a terminal, stderr
-and `logging` stay line-buffered on their own. Flush at the emit site with
-`print(..., flush=True)` and line-buffered result files; save
-PYTHONUNBUFFERED=1 for programs you cannot edit (`stdbuf` has no effect on
-Python).
+means something on its own. Output piped or redirected to a file is
+block-buffered, so flush at the emit site (`print(..., flush=True)`,
+line-buffered result files) and the lines land as they are written.
 
 Persist as you go, not only to the terminal. Append results as they are
 produced, and write anything expensive to recompute to a temp file in the
@@ -91,10 +93,9 @@ inspectable mid-flight. Unless the project has its own layout, put it under
 `.logs/<timestamp>_<work_description>/` (UTC `YYYYMMDD_HHMMSS`) in the most
 specific folder the work belongs to - the experiment's own
 package/environment folder, not the repo root; fall back to the repo root
-`.logs/` only when no subfolder clearly owns the work. Remote work follows
-the `remote-run` skill's naming. `.logs` is gitignored on this machine only -
-add it to the project's .gitignore anywhere else. Tell me the path when the run
-starts (for a remote mirror, once the first refresh lands).
+`.logs/` only when no subfolder clearly owns the work. `.logs` is gitignored
+on this machine only - add it to the project's .gitignore anywhere else. Tell
+me the path when the run starts.
 
 Keep it proportionate: where reporting genuinely costs real performance,
 lengthen the interval rather than dropping it, and say when you make that
@@ -121,13 +122,6 @@ and the gotchas that cost me time - stale config fields, CLI flags whose
 defaults surprised us, wall-clock per stage. Prefer plain numbers over
 adjectives, and say which result is noise.
 
-# Memory updates: consider promoting to repo-tracked docs
-
-When you write to the memory directory, decide in the same turn (and say)
-whether the fact belongs in a git-tracked layer instead: project skills for
-pipeline lessons, repo CLAUDE.md/AGENTS.md for conventions. Personal
-preferences and machine/account specifics stay in memory only.
-
 # File paths: give them in full
 
 When you point me at a file or folder, write its full path from `~`
@@ -141,15 +135,8 @@ are both working in.
 Claude Code folds a reply's prose at 90 columns, and the fold is a real
 newline, so a path cut by it comes out broken when copied. Put each path I am
 meant to open or `cd` to on its own line, flush left with no list indent, so no
-words around it can push it into the fold. If the path is longer than about 85
-characters, put the folder alone on one line and list the files under it by
-bare name (if the folder is still too long, split at a deeper folder):
-
-```text
-~/work/repo/.logs/20261113_101500_sweep/
-  README.md
-  events.log
-```
+words around it can push it into the fold. A path longer than about 85
+characters goes as its folder on one line and the file names under it.
 
 # Plain ASCII
 
@@ -161,30 +148,23 @@ RUF001-003. Use `-`/`--`, straight quotes, `...`, `->`.
 # Markdown: lint what you write
 
 Lint every markdown file you create or edit with markdownlint-cli2 before
-calling it done, and get it to 0 issues. The binary is in my Nix package set
-(pinned, so its rules do not shift under you); on a machine without it,
-`npx markdownlint-cli2` is the same tool at its latest release. Where the
-project has its own config (`.markdownlint-cli2.*` or `.markdownlint.*`), run
-it the way the project does - its rules win, and if it lints a whole set of
-files the whole set must pass. Where it has none, pass mine:
+calling it done, and get it to 0 issues (it is in my Nix package set; on a
+machine without it, `npx markdownlint-cli2`). Where the project has its own
+config (`.markdownlint-cli2.*` or `.markdownlint.*`), run it the way the
+project does - its rules win, and if it lints a whole set of files the whole
+set must pass. Where it has none, pass mine, which holds prose and lists to
+90 characters per line:
 
 ```bash
 markdownlint-cli2 --config ~/.config/markdownlint/.markdownlint.yaml <files>
 ```
 
-That config holds prose and lists to 90 characters per line, the top of the
-45-90 that Butterick's Practical Typography gives for comfortable reading.
-Table rows and code blocks cannot wrap and are exempt, front matter is
-skipped, and a line whose overflow is one unbreakable token (a long path or
-URL) is allowed. Keep table cells to a phrase: when a cell needs a sentence,
-write a list or a section instead.
-
 The findings worth the most are text that renders wrong: a `|` inside a table
-cell (write `\|`), `*` or `_` in math read as emphasis (escape it or use a
-code span), a line starting with `+` read as a bullet, a `<placeholder>`
-outside a code span read as HTML. `--fix` is safe for spacing but rewrites
-exactly those cases wrongly - it turned a `+` into a `-` and subscripts into
-`*` - so read its diff before keeping it, and fix them by hand.
+cell (write `\|`), `*` or `_` in math read as emphasis, a line starting with
+`+` read as a bullet, a `<placeholder>` outside a code span read as HTML.
+`--fix` is safe for spacing but rewrites exactly those cases wrongly, so fix
+them by hand and read its diff before keeping it. Keep table cells to a
+phrase: when a cell needs a sentence, write a list or a section instead.
 
 Lint the files you touched. Do not reflow or re-style someone else's file to
 satisfy the linter unless I ask or the project's config already covers it.
