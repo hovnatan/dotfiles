@@ -31,8 +31,9 @@
 # (#{session_activity}: a client's keys, mouse and focus reports, not pane
 # output; tested 2026-11-10, tmux 3.8).
 #
-# Focus is what the ntfy-stop mod (home/.claude/mods/ntfy-stop/) learned to
-# distrust, and this follows its rule (watched() in its tmux-watch.sh):
+# Focus is what the session-done mod's push (home/.claude/mods/session-done/)
+# learned to distrust, and this follows its rule (watched() in its
+# tmux-watch.sh):
 #   - a locked or sleeping Mac freezes the terminal without a focus-out, and
 #     a dropped ssh leaves its client behind for a while: the flag stays
 #     "focused". A frozen terminal sends no input either, so a focused client

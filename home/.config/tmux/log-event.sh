@@ -8,8 +8,8 @@
 #      2026-09-30T14:45:38Z focus-in /dev/pts/1 session=backend
 #
 # The file is the terminal's side of the story as tmux hears it: attaches,
-# detaches, session switches, focus in and out. The ntfy mod decides from
-# tmux's focus flag (home/.claude/mods/ntfy-stop/), and a terminal that stops
+# detaches, session switches, focus in and out. The ntfy push decides from
+# tmux's focus flag (home/.claude/mods/session-done/), and a terminal that stops
 # reporting focus shows here as the moment the focus lines stop.
 set -eu
 # shellcheck source=scripts/lib/event_log.sh

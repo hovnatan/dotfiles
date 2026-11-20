@@ -17,5 +17,5 @@ the topic rather than inventing one.
 
 From Python, stdlib urllib does the same (POST body = message; Title/Tags
 as headers) -- no dependencies needed. The push at a finished turn nobody
-looks at (`~/.dotfiles/home/.claude/mods/ntfy-stop/`) reads the same topic file, so one
+looks at (`~/.dotfiles/home/.claude/mods/session-done/`) reads the same topic file, so one
 subscription covers both.

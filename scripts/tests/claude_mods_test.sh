@@ -22,8 +22,9 @@
 # only a machine with claude can say whether a mod still fits it. Lint and
 # format need no claude: scripts/check.sh's `typescript` check.
 #
-# Not here: the ntfy-stop mod's tmux-watch.sh against a real tmux
-# (scripts/tests/ntfy_watch_test.sh), and scripts/event_log_note.sh, the
+# Not here: the session-done mod's two scripts, tmux-watch.sh against a real
+# tmux (scripts/tests/ntfy_watch_test.sh) and engine-bell-off.sh
+# (scripts/tests/engine_bell_off_test.sh), and scripts/event_log_note.sh, the
 # mods' way to the event log (scripts/tests/prune_logs_test.sh).
 #
 # Needs jq, and tsc beside claude (nix/flake.nix); about 2 s.
@@ -51,7 +52,7 @@ fail() {
 }
 
 # --- settings.json and the mods folder name the same mods --------------------
-# "~/.dotfiles/home/.claude/mods/session-rename:~/.dotfiles/home/.claude/mods/ntfy-stop"
+# "~/.dotfiles/home/.claude/mods/session-rename:~/.dotfiles/home/.claude/mods/session-done"
 # -> each folder, as a path in this checkout, holds a manifest; and each
 # folder of home/.claude/mods/ is in the list.
 dirs=$(jq -r '.env.CLAUDE_CODE_PLUGIN_DIRS // ""' "$REPO/home/.claude/settings.json")

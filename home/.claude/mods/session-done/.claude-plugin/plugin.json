@@ -1,0 +1,6 @@
+{
+  "name": "session-done",
+  "version": "1.0.0",
+  "description": "When a session's turn ended with nothing left to wake it: rings the bell at once, in place of Claude Code's own a minute after every turn end, and pushes to ntfy if nobody looked at its tmux pane for ten minutes",
+  "author": { "name": "Hovnatan Karapetyan" }
+}

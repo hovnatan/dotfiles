@@ -1,6 +1,0 @@
-{
-  "name": "ntfy-stop",
-  "version": "1.0.0",
-  "description": "Pushes to ntfy when a session's turn ended, nothing is left to wake it, and nobody looked at its tmux pane for ten minutes",
-  "author": { "name": "Hovnatan Karapetyan" }
-}

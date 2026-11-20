@@ -5,7 +5,7 @@
     "CLAUDE_CODE_AUTO_CONNECT_IDE": "false",
     "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
     "CLAUDE_CODE_DISABLE_AGENT_VIEW": "1",
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/.dotfiles/home/.claude/mods/session-rename:~/.dotfiles/home/.claude/mods/ntfy-stop"
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/.dotfiles/home/.claude/mods/session-rename:~/.dotfiles/home/.claude/mods/session-done"
   },
   "permissions": {
     "allow": [

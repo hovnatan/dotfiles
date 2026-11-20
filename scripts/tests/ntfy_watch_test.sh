@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.claude/mods/ntfy-stop/tmux-watch.sh
+# check.sh covers: home/.claude/mods/session-done/tmux-watch.sh
 #
-# ntfy_watch_test.sh -- home/.claude/mods/ntfy-stop/tmux-watch.sh against a
-# real tmux: the script the ntfy-stop mod asks whether claude's pane is being
-# watched. Runs it on a throwaway tmux server, with real clients attached in
-# ptys, and reads its exit status and what it prints. What the mod does with
-# the answers is hooks/register.test.ts's (scripts/tests/claude_mods_test.sh
-# runs it). Needs tmux and python3; about 2 s.
+# ntfy_watch_test.sh -- home/.claude/mods/session-done/tmux-watch.sh against
+# a real tmux: the script the session-done mod asks, for its ntfy push,
+# whether claude's pane is being watched. Runs it on a throwaway tmux server,
+# with real clients attached in ptys, and reads its exit status and what it
+# prints. What the mod does with the answers is hooks/register.test.ts's
+# (scripts/tests/claude_mods_test.sh runs it). Needs tmux and python3; about
+# 2 s.
 #
 #   watched <$TMUX> <pane>, per scenario session:
 #     nobody      no client attached                -> 1 "no client attached"
@@ -27,8 +28,8 @@
 #     tmuxfail    tmux failing (a wrapper on PATH, "protocol version
 #                 mismatch") -> 3 and "tmux -S <socket>: <the message>":
 #                 never 2, which the mod reads as nothing left to push about
-#   who <$TMUX>               -> "<name> ($<id>)", "? ($<id>)" for no such
-#   session <$TMUX> <pane>    -> the pane's session; 2 gone; 3 failing
+#   session <$TMUX> <pane>    -> the pane's session, on a socket whose path
+#                                has a comma in it too; 2 gone; 3 failing
 #
 # Exit 0 = all passed.
 
@@ -45,7 +46,7 @@ REPO=$(cd "$(dirname "$0")/../.." && pwd)
 . "$REPO/scripts/lib/event_log.sh"
 event_log_start ntfy_watch_test --no-prune
 
-WATCH="$REPO/home/.claude/mods/ntfy-stop/tmux-watch.sh"
+WATCH="$REPO/home/.claude/mods/session-done/tmux-watch.sh"
 WORK=$(mktemp -d)
 # Unix socket paths are capped near 108 bytes, so not under $WORK.
 SOCK="/tmp/ntfywatch-$$.sock"
@@ -195,15 +196,14 @@ t kill-session -t =goes
 is "the session killed" 2 '^$' watched "$(tmux_of "$sid_goes")" "$pane_goes"
 is "no server on the socket" 2 '^$' watched "$WORK/nosuch.sock,$$,0" %0
 
-# --- who and session ---------------------------------------------------------
+# --- session -----------------------------------------------------------------
 
-is "who names the session and its id" 0 "^nobody \(\\\$$sid_nobody\)\$" who "$(tmux_of "$sid_nobody")"
-is "who of no such session" 0 '^\? \(\$9999\)$' who "$(tmux_of 9999)"
+is "session: where the pane is now" 0 '^movedto$' session "$(tmux_of "$sid_moved")" "$pane_moved"
 # A socket path with a comma in it is still the socket: $TMUX is cut from
 # the right. A second server, as the path is the server's.
 tmux -S "$COMMA" -f /dev/null new-session -d -s comma 'sleep 1000'
-is "who, a comma in the socket's path" 0 '^comma \(\$0\)$' who "$COMMA,$$,0"
-is "session: where the pane is now" 0 '^movedto$' session "$(tmux_of "$sid_moved")" "$pane_moved"
+is "session, a comma in the socket's path" 0 '^comma$' session "$COMMA,$$,0" \
+  "$(tmux -S "$COMMA" list-panes -t '=comma:' -F '#{pane_id}')"
 is "session of a pane that is gone" 2 '^$' session "$(tmux_of "$sid_panegone")" "$pane_gone"
 is "session with no server on the socket" 2 '^$' session "$WORK/nosuch.sock,$$,0" %0
 

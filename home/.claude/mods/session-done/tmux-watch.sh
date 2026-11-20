@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 # tmux-watch.sh -- what tmux knows of the pane a claude session runs in, for
-# the ntfy-stop mod beside it (hooks/register.ts), which decides whether a
-# finished turn was seen. The mod hands over claude's $TMUX and $TMUX_PANE as
-# they are and reads the answer off the exit status; every tmux detail,
-# $TMUX's layout and each format string, is in this file.
+# the push of the session-done mod it belongs to (hooks/push.ts), which
+# decides whether a finished turn was seen. The mod hands over claude's $TMUX
+# and $TMUX_PANE as they are and reads the answer off the exit status; every
+# tmux detail, $TMUX's layout and each format string, is in this file.
 #
-#   tmux-watch.sh who <$TMUX>
-#       "backend ($3)", the session as the log names it ("? ($3)" when tmux
-#       cannot say: watched reports why)
 #   tmux-watch.sh watched <$TMUX> <pane>
 #       0  watched
 #       1  not watched; stdout: what tmux knew of the clients (see clients())
@@ -128,12 +125,12 @@ watched() {
 }
 
 usage() {
-  echo "tmux-watch.sh: usage: tmux-watch.sh who <\$TMUX> | watched <\$TMUX> <pane> | session <\$TMUX> <pane>" >&2
+  echo "tmux-watch.sh: usage: tmux-watch.sh watched <\$TMUX> <pane> | session <\$TMUX> <pane>" >&2
   exit 64
 }
 
 case "${1:-} $#" in
-  "who 2" | "watched 3" | "session 3") ;;
+  "watched 3" | "session 3") ;;
   *) usage ;;
 esac
 
@@ -142,16 +139,12 @@ esac
 sid=${2##*,}
 socket=${2%,*}
 socket=${socket%,*}
-pane=${3:-}
+pane=$3
 
 # failed: tmux's own message, with the socket it was asked on.
 failed() { printf 'tmux -S %s: %s\n' "$socket" "$tmux_out"; }
 
 case $1 in
-  who)
-    name=$(tmux -S "$socket" display-message -p -t "\$$sid" '#{session_name}' 2>/dev/null)
-    printf '%s ($%s)\n' "${name:-?}" "$sid"
-    ;;
   watched)
     watched "$socket" "$sid" "$pane"
     rc=$?

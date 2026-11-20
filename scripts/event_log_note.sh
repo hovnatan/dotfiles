@@ -5,9 +5,9 @@
 #
 #   event_log_note.sh <name> <message...>   one line in today's log of <name>
 #
-#   event_log_note.sh claude_ntfy 'backend ($3)' 'stop: watched now, no push'
-#   -> ~/.dotfiles/.logs/<UTC day>_claude_ntfy/events.log
-#      2026-11-19T19:02:11Z backend ($3) stop: watched now, no push
+#   event_log_note.sh claude_session_done 'bench 4f1c9a2e' 'push: none, watched now'
+#   -> ~/.dotfiles/.logs/<UTC day>_claude_session_done/events.log
+#      2026-11-19T19:02:11Z bench 4f1c9a2e push: none, watched now
 #
 # The day's first line also prunes the old logs, as any log's start does
 # (event_log_start): whatever writes logs keeps them in bounds, and a mod
