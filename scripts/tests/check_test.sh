@@ -17,8 +17,6 @@
 #                 commit: the commit is checked, not the working tree
 #     worktrees   none left behind
 #     log         each push is noted in the day's event log
-#     output      the failed push's check.sh output is kept beside the
-#                 event log, named in its FAILED line; passes keep none
 #
 # Exit 0 = all passed; on failure the work dir is kept and printed.
 
@@ -154,15 +152,6 @@ if [ "$(grep -c 'checks passed' <<<"$events")" -eq 2 ] \
   pass "hook log: two passes and one failure noted"
 else
   fail "hook log: $events"
-fi
-
-kept=("$H"/.dotfiles/.logs/*_git_pre_push/*_check.log)
-if [ ${#kept[@]} -eq 1 ] && [ -f "${kept[0]}" ] \
-  && grep -q 'stub: FAIL present' "${kept[0]}" \
-  && grep -qF "output: ${kept[0]}" <<<"$events"; then
-  pass "hook output: the failure's output kept and named in the log"
-else
-  fail "hook output: kept ${kept[*]}; log: $events"
 fi
 
 log "$failures failure(s)"

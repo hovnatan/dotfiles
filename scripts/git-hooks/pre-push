@@ -14,15 +14,10 @@
 #       -> a throwaway worktree at <local sha>, so what is checked is the
 #          commit being pushed, not a working tree with uncommitted edits
 #       -> <worktree>/scripts/check.sh lint: that commit's own lint
-#       -> any failure stops the whole push, and check.sh's whole output is
-#          kept beside the day's event log as <HHMMSS>_<sha>_check.log
+#       -> any failure stops the whole push
 #
 # Skip it once with `git push --no-verify`; CI still runs every check.
-# Each push is noted in the day's event log (.logs/<day>_git_pre_push/). A
-# failure's output is kept because the terminal's copy is easily lost (a
-# flaky check that passed on the retry left nothing to read, 2026-11-16);
-# a passing run's is not, which also lets the log directory be pruned
-# (scripts/prune_logs.sh keeps one holding more than its events.log).
+# Each push is noted in the day's event log (.logs/<day>_git_pre_push/).
 
 set -uo pipefail
 
@@ -60,17 +55,11 @@ while read -r lref lsha rref _; do
   # Run with git's hook environment cleared: an inherited GIT_DIR or
   # GIT_INDEX_FILE would point check.sh's `git ls-files` at this clone's
   # index instead of the pushed commit's.
-  # The output goes to the terminal as it comes and to a file, which a
-  # failure moves next to the event log (pipefail: tee does not mask the
-  # exit).
-  out=$tmp/check-$lsha.log
   # shellcheck disable=SC2046 # one variable name per word
-  if (cd "$wt" && unset $(git rev-parse --local-env-vars) && scripts/check.sh lint) 2>&1 | tee "$out"; then
+  if (cd "$wt" && unset $(git rev-parse --local-env-vars) && scripts/check.sh lint); then
     log "${lsha:0:12}: checks passed"
   else
-    kept="$(dirname "$EVENT_LOG_FILE")/$(date -u +%H%M%S)_${lsha:0:12}_check.log"
-    mv "$out" "$kept"
-    log "${lsha:0:12}: checks FAILED - push stopped (fix, or skip once with git push --no-verify); output: $kept"
+    log "${lsha:0:12}: checks FAILED - push stopped (fix, or skip once with git push --no-verify)"
     status=1
   fi
 done
