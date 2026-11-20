@@ -2,9 +2,8 @@
 #
 # pre-push -- lints each commit being pushed (scripts/check.sh lint, a few
 # seconds), so a push that would turn CI's lint red stops on this machine
-# instead. The tests and the flake check are left to CI (minutes here until
-# 2026-11-20, when the hook ran the tests a change touched): a push that
-# breaks one lands, and CI says so after. Installed by
+# instead. The tests and the flake check take minutes and are left to CI: a
+# push that breaks one lands, and CI says so after. Installed by
 # scripts/setup_user_symlinks.sh (core.hooksPath = scripts/git-hooks), so
 # it holds for every push from this clone: a terminal's, Neogit's, or an
 # agent's started from another project.
