@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/periodic.sh
 #
 # periodic_test.sh -- end-to-end checks for scripts/periodic.sh, the runner
 # of recurring tasks. A throwaway HOME holds task directories for the public

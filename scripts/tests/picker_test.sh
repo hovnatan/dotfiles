@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/picker.lua home/.hammerspoon/picker.html
 # The picker panel against Hammerspoon doubles, so no macOS UI or Hammerspoon is
 # needed and it runs in CI on Linux and macOS: an opening stays unseen until its
 # page has painted, and a page that never does cannot keep the keyboard.

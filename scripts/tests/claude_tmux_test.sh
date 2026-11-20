@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/claude_manager_start.sh scripts/lib/* home/.config/systemd/user/claude-tmux.service home/.profile.shared home/.config/tmux/reap-panes.sh home/.config/tmux/tmux.conf
 # check.sh runs-on: Linux
 #
 # claude_tmux_test.sh -- end-to-end checks of the manager's boot start and of

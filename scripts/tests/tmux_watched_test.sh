@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/tmux_watched.sh
 #
 # tmux_watched_test.sh -- scripts/tmux_watched.sh against a real tmux: the
 # one rule for "somebody is looking", which the session-done mod asks about

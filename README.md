@@ -67,9 +67,8 @@ tests in `scripts/tests/`); the CI workflows call it too. The installer sets
 `check.sh lint` on each commit being pushed, in a throwaway worktree: the
 linters, a few seconds. A failure stops the push; `git push --no-verify` skips
 it once. The flake check and the tests are left to CI, so a push that breaks one
-lands and CI reports it after; `check.sh --changed <paths>` runs the lint and
-the tests whose `# check.sh covers:` line names a changed path, for a change
-worth testing first. The script's header says how each piece is picked.
+lands and CI reports it after; for a change worth testing first, run the test
+it touches by hand (`scripts/tests/<name>_test.sh`).
 
 The Linux-only tests are skipped on a Mac. `vagrant/Vagrantfile` runs them there, in a
 local Ubuntu guest with the Nix set, Docker and a copy of the working tree; its header

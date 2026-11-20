@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/eye_breaks_core.lua home/.hammerspoon/display_wake.lua scripts/tests/eye_breaks_test.lua scripts/lib/*
 # The eye-break timing (when a break is due, what counts as rest, what the
 # menu bar and badge show) on a made-up clock, and display_wake.lua's reading
 # of saved `pmset -g assertions` output. Neither makes a Hammerspoon call

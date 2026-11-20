@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.config/tmux/* scripts/appearance.sh scripts/lib/* scripts/tmux_watched.sh
 #
 # tmux_hooks_test.sh -- end-to-end checks for the tmux hooks' log: the hook
 # lines of home/.config/tmux/tmux.conf and the scripts they run, in a throwaway tmux

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.claude/mods/* home/.claude/settings.json
 #
 # claude_mods_test.sh -- the mods Claude Code loads from this repo
 # (home/.claude/mods/<mod>/), checked from the outside in:

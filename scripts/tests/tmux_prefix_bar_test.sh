@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.config/tmux/tmux.conf
 #
 # tmux_prefix_bar_test.sh -- the bar's right part, from the title to the
 # zone, is drawn reversed while the prefix waits for its key, and only then;

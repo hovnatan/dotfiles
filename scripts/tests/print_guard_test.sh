@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/print_guard.lua scripts/lib/*
 # print() under a killed `hs` client, against a double of hs.ipc's print
 # hook, so no Hammerspoon is needed and it runs in CI on Linux and macOS:
 # the dead client is unregistered before the line is sent, the live ones

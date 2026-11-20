@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.config/tmux/client-clock.sh home/.config/tmux/tmux.conf home/.config/fish/conf.d/client_tz.fish scripts/lib/event_log.sh
 #
 # tmux_client_clock_test.sh -- the tmux bar's clock in each client's own zone
 # (home/.config/tmux/client-clock.sh, the LC_CLIENT_TZ that

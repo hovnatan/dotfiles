@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/atuin_import_remote.sh
 #
 # atuin_import_remote_test.sh -- end-to-end checks for
 # scripts/atuin_import_remote.sh. Two throwaway HOMEs stand for this machine

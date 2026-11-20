@@ -30,29 +30,12 @@
 #   scripts/check.sh lint                  shell to yaml in the table: all
 #                                          but nix and the tests (the
 #                                          pre-push hook's mode)
-#   scripts/check.sh --changed <path>...   what a change to those paths
-#                                          needs, tests included
 #   --list first (before the rest)         print the checks it would run,
 #                                          one a line, and run none
 #
-# --changed picks:
-#   shell lua python typescript  always: a few seconds over the whole repo
-#   configs markdown yaml
-#   nix                          a path under nix/, or check_nix_flake.sh
-#   test:<name>                  a path its `# check.sh covers:` line names,
-#                                or the test's own files; every test when
-#                                check.sh, tests.yml or nix/flake.lock (the
-#                                tools the tests drive) changed
-#
-#   e.g. --changed home/.config/tmux/log-event.sh README.md
-#        -> shell lua python typescript configs markdown yaml
-#           test:appearance test:tmux_hooks
-#
-# Each test declares, near its top (bash patterns; `*` also spans `/`):
-#   # check.sh covers: scripts/prune_logs.sh scripts/lib/*
-#   # check.sh runs-on: Linux        (optional: `uname`; else any OS)
-# A test missing its covers line fails: --changed would otherwise never
-# pick it. One whose runs-on is another OS is skipped, and says so.
+# A test that runs on one OS only says so near its top (`uname`'s name), and
+# is skipped on another, which is logged:
+#   # check.sh runs-on: Linux
 #
 # Output: a UTC-stamped line as each check starts and ends, and a failing
 # check's whole output. Exit 0 = every selected check passed.
@@ -64,7 +47,7 @@ cd "$REPO" || exit 1
 
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 usage() {
-  echo "usage: $0 [lint|shell|lua|python|typescript|configs|markdown|yaml|nix|tests ...] | --changed <path>..." >&2
+  echo "usage: $0 [--list] [lint|shell|lua|python|typescript|configs|markdown|yaml|nix|tests ...]" >&2
   exit 2
 }
 
@@ -170,31 +153,13 @@ check_yaml() {
 
 check_nix() { scripts/check_nix_flake.sh; }
 
-# test_meta <test> <key>: the value of the test's `# check.sh <key>:` line.
-test_meta() { sed -n "s/^# check\.sh $2: //p" "$1" | head -n 1; }
+# test_os <test>: the OS of the test's `# check.sh runs-on:` line, if any.
+test_os() { sed -n 's/^# check\.sh runs-on: //p' "$1" | head -n 1; }
 
 # test_name <test>: scripts/tests/tmux_hooks_test.sh -> tmux_hooks
 test_name() {
   local n=${1##*/}
   echo "${n%_test.sh}"
-}
-
-# test_covers <test> <path>...: whether a change to any path needs the test.
-test_covers() {
-  local t=$1 p g
-  shift
-  local -a globs
-  read -ra globs <<<"$(test_meta "$t" covers)"
-  for p; do
-    case "$p" in
-      "${t%_test.sh}"_test.* | scripts/check.sh | .github/workflows/tests.yml | nix/flake.lock) return 0 ;;
-    esac
-    for g in "${globs[@]}"; do
-      # shellcheck disable=SC2053 # $g is a pattern on purpose
-      [[ $p == $g ]] && return 0
-    done
-  done
-  return 1
 }
 
 # --- what to run --------------------------------------------------------------
@@ -212,23 +177,7 @@ if [ "${1:-}" = --list ]; then
   shift
 fi
 
-if [ "${1:-}" = --changed ]; then
-  shift
-  checks=("${lint[@]}")
-  for p; do
-    case "$p" in nix/* | scripts/check_nix_flake.sh)
-      checks+=(nix)
-      break
-      ;;
-    esac
-  done
-  # A test without its covers line is picked too, to fail on that below.
-  for t in scripts/tests/*_test.sh; do
-    if [ -z "$(test_meta "$t" covers)" ] || test_covers "$t" "$@"; then
-      checks+=("test:$(test_name "$t")")
-    fi
-  done
-elif [ $# -eq 0 ]; then
+if [ $# -eq 0 ]; then
   checks=("${lint[@]}" nix)
   add_all_tests
 else
@@ -274,11 +223,8 @@ for c in "${checks[@]}"; do
   case "$c" in
     test:*)
       t=scripts/tests/${c#test:}_test.sh
-      os=$(test_meta "$t" runs-on)
-      if [ -z "$(test_meta "$t" covers)" ]; then
-        log "FAIL  $c: $t has no '# check.sh covers:' line (see scripts/check.sh)"
-        failed+=("$c")
-      elif [ -n "$os" ] && [ "$os" != "$(uname)" ]; then
+      os=$(test_os "$t")
+      if [ -n "$os" ] && [ "$os" != "$(uname)" ]; then
         log "skip  $c (runs on $os only)"
       else
         run "$c" "$t"

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/apt_bundle.sh scripts/install_docker.sh scripts/lib/* apt/*
 # check.sh runs-on: Linux
 #
 # apt_bundle_test.sh -- end-to-end checks for scripts/apt_bundle.sh, which

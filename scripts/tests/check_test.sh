@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/check.sh scripts/git-hooks/* scripts/lib/*
 #
 # check_test.sh -- checks for scripts/check.sh's choice of checks and for
 # the pre-push hook (scripts/git-hooks/pre-push) that runs it. About 2 s.
 #
-#   selection    check.sh --list: what --changed picks for a path, read
-#                against this repo's real tests and their covers lines
-#     a tmux script      -> lint, test:appearance, test:tmux_hooks
-#     README.md          -> lint only
-#     nix/flake.nix      -> lint and nix
-#     nix/flake.lock     -> lint, nix and every test
-#     a test's own .lua  -> that test
+#   selection    check.sh --list: what it picks, read against this repo's
+#                real tests
 #     named / none       -> just those / every check
 #     lint               -> the seven lint checks, no nix, no test
 #
@@ -67,12 +61,6 @@ all_tests=$(for t in "$REPO"/scripts/tests/*_test.sh; do
 done)
 all_tests=${all_tests% }
 
-picks "$lint test:appearance test:tmux_hooks" --changed home/.config/tmux/log-event.sh
-picks "$lint" --changed README.md
-picks "$lint nix" --changed nix/flake.nix
-picks "$lint nix $all_tests" --changed nix/flake.lock
-picks "$lint test:tmux_server_arrangement" --changed scripts/tests/tmux_server_arrangement_test.py
-picks "$lint" --changed
 picks "lua $all_tests" lua tests
 picks "$lint" lint
 picks "$lint nix $all_tests"

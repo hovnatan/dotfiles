@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.claude/git-guard.sh
 #
 # git_guard_test.sh -- checks for home/.claude/git-guard.sh: each command below is
 # fed to the hook as a PreToolUse payload, the way Claude Code sends it, and

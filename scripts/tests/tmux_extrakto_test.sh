@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.config/tmux/tmux.conf home/.config/tmux/vendor/extrakto/*
 #
 # tmux_extrakto_test.sh -- end-to-end check of prefix Tab, the vendored
 # extrakto: its lines of home/.config/tmux/tmux.conf in a throwaway tmux server and

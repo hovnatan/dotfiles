@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/url_dispatcher.lua home/.hammerspoon/chrome.lua home/.hammerspoon/local_config.lua home/.hammerspoon/failure.lua scripts/tests/url_dispatcher_test.lua scripts/lib/*
 # Which Chrome profile a clicked link opens in (and that it gets a new
 # window), the command line Chrome is handed, and how the machine-private
 # config loads, against Hammerspoon doubles (url_dispatcher_test.lua), so no

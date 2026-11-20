@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: scripts/machine_name.sh home/.config/fish/functions/machine_name.fish
 #
 # machine_name_test.sh -- scripts/machine_name.sh against a throwaway HOME
 # and a stand-in `hostname`, and fish's machine_name against the same HOME,

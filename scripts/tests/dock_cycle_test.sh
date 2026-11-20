@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.hammerspoon/dock_cycle.lua home/.hammerspoon/alttab.lua
 # The Dock click's walk through the front app's windows against Hammerspoon
 # doubles, so no macOS UI, Dock or Hammerspoon is needed and it runs in CI on
 # Linux and macOS: when the tap runs, which clicks are taken, the order the

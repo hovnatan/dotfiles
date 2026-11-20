@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.claude/mods/session-done/loaded-check.sh scripts/lib/event_log.sh
 #
 # session_done_loaded_check_test.sh --
 # home/.claude/mods/session-done/loaded-check.sh, the SessionStart hook that
