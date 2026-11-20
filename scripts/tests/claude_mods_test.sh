@@ -85,8 +85,8 @@ else
       || fail "$name: claude plugin test: $out"
 
     # The types are the installed claude's, written where it loads the mod
-    # from (the path settings.json names), not into this checkout: the
-    # pre-push hook runs this test in a throwaway worktree, which has none.
+    # from (the path settings.json names), not into this checkout: a
+    # worktree or a second clone has none.
     # So this checkout's sources are checked against those types:
     #   $WORK/<mod>.tsconfig.json: extends <where claude loads it>/.claude-plugin/types/tsconfig.json,
     #                              include <this checkout's mod>/hooks and /types

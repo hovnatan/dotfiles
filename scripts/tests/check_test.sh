@@ -12,12 +12,12 @@
 #     nix/flake.lock     -> lint, nix and every test
 #     a test's own .lua  -> that test
 #     named / none       -> just those / every check
+#     lint               -> the seven lint checks, no nix, no test
 #
 #   hook         a throwaway clone whose scripts/check.sh is a stub that
 #                logs its arguments and fails when the pushed commit holds
 #                a file named FAIL; pushes go to a throwaway bare remote
-#     pass        the push lands; the stub saw --changed and the paths of
-#                the new commits only
+#     pass        the push lands; the stub was asked for lint, no more
 #     fail        the push is stopped and the remote is left as it was
 #     committed   an uncommitted FAIL in the clone does not stop a clean
 #                 commit: the commit is checked, not the working tree
@@ -74,6 +74,7 @@ picks "$lint nix $all_tests" --changed nix/flake.lock
 picks "$lint test:tmux_server_arrangement" --changed scripts/tests/tmux_server_arrangement_test.py
 picks "$lint" --changed
 picks "lua $all_tests" lua tests
+picks "$lint" lint
 picks "$lint nix $all_tests"
 
 # --- hook ---------------------------------------------------------------------
@@ -115,8 +116,8 @@ g commit -qm a
 : >"$WORK/check_args"
 if g push -q origin main >"$WORK/out" 2>&1 \
   && [ "$(git -C "$REMOTE" rev-parse main)" = "$(g rev-parse main)" ]; then
-  if [ "$(cat "$WORK/check_args")" = "--changed a.txt" ]; then
-    pass "hook pass: the push landed; check.sh got --changed a.txt"
+  if [ "$(cat "$WORK/check_args")" = "lint" ]; then
+    pass "hook pass: the push landed; check.sh was asked for lint alone"
   else
     fail "hook pass: check.sh got '$(cat "$WORK/check_args")'"
   fi

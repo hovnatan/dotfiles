@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 #
-# pre-push -- runs scripts/check.sh on each commit being pushed, so a push
-# that would turn CI red stops on this machine instead. Installed by
+# pre-push -- lints each commit being pushed (scripts/check.sh lint, a few
+# seconds), so a push that would turn CI's lint red stops on this machine
+# instead. The tests and the flake check are left to CI (minutes here until
+# 2026-11-20, when the hook ran the tests a change touched): a push that
+# breaks one lands, and CI says so after. Installed by
 # scripts/setup_user_symlinks.sh (core.hooksPath = scripts/git-hooks), so
 # it holds for every push from this clone: a terminal's, Neogit's, or an
 # agent's started from another project.
 #
 #   git push
 #     stdin, a line per ref:  <local ref> <local sha> <remote ref> <remote sha>
-#       -> paths: every file the commits no remote has yet touch
+#       -> nothing to do unless <local sha> has a commit no remote has yet
 #       -> a throwaway worktree at <local sha>, so what is checked is the
 #          commit being pushed, not a working tree with uncommitted edits
-#       -> <worktree>/scripts/check.sh --changed <paths>: that commit's own
-#          checks, picked for those paths (lint always, nix and tests as
-#          they apply; check.sh says which)
+#       -> <worktree>/scripts/check.sh lint: that commit's own lint
 #       -> any failure stops the whole push, and check.sh's whole output is
 #          kept beside the day's event log as <HHMMSS>_<sha>_check.log
 #
@@ -48,16 +49,13 @@ while read -r lref lsha rref _; do
   wt=$tmp/wt-$lsha
   [ -d "$wt" ] && continue
 
-  paths=()
-  while IFS= read -r -d '' p; do
-    [ -n "$p" ] && paths+=("$p")
-  done < <(git log -z --no-renames --format= --name-only "$lsha" --not --remotes | sort -zu)
-  if [ ${#paths[@]} -eq 0 ]; then
+  new=$(git rev-list --count "$lsha" --not --remotes) || exit 1
+  if [ "$new" -eq 0 ]; then
     log "$lref -> $rref ${lsha:0:12}: no commit new to the remotes, nothing to check"
     continue
   fi
 
-  log "$lref -> $rref ${lsha:0:12}: checking ${#paths[@]} changed path(s) in a worktree"
+  log "$lref -> $rref ${lsha:0:12}: linting $new new commit(s) at their tip, in a worktree"
   git worktree add --detach --quiet "$wt" "$lsha" || exit 1
 
   # Run with git's hook environment cleared: an inherited GIT_DIR or
@@ -68,7 +66,7 @@ while read -r lref lsha rref _; do
   # exit).
   out=$tmp/check-$lsha.log
   # shellcheck disable=SC2046 # one variable name per word
-  if (cd "$wt" && unset $(git rev-parse --local-env-vars) && scripts/check.sh --changed "${paths[@]}") 2>&1 | tee "$out"; then
+  if (cd "$wt" && unset $(git rev-parse --local-env-vars) && scripts/check.sh lint) 2>&1 | tee "$out"; then
     log "${lsha:0:12}: checks passed"
   else
     kept="$(dirname "$EVENT_LOG_FILE")/$(date -u +%H%M%S)_${lsha:0:12}_check.log"

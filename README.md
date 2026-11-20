@@ -64,11 +64,12 @@ once the rest is done.
 fish/JSON/nvim config, markdownlint, yamlfmt/yamllint/actionlint, the Nix flake, the
 tests in `scripts/tests/`); the CI workflows call it too. The installer sets
 `core.hooksPath` to `scripts/git-hooks`, whose `pre-push` runs
-`check.sh --changed` on each commit being pushed, in a throwaway worktree:
-lint always (a few seconds), the flake check when `nix/` changed, and the tests
-whose `# check.sh covers:` line names a changed path. A failure stops the push;
-`git push --no-verify` skips it once, and CI still runs everything. The
-script's header says how each piece is picked.
+`check.sh lint` on each commit being pushed, in a throwaway worktree: the
+linters, a few seconds. A failure stops the push; `git push --no-verify` skips
+it once. The flake check and the tests are left to CI, so a push that breaks one
+lands and CI reports it after; `check.sh --changed <paths>` runs the lint and
+the tests whose `# check.sh covers:` line names a changed path, for a change
+worth testing first. The script's header says how each piece is picked.
 
 The Linux-only tests are skipped on a Mac. `vagrant/Vagrantfile` runs them there, in a
 local Ubuntu guest with the Nix set, Docker and a copy of the working tree; its header

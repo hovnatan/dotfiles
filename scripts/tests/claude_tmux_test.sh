@@ -34,7 +34,7 @@ UNIT="cttest-$$"
 WORK=$(mktemp -d)
 # Not under $WORK: a socket path has about 100 characters to live in. Every
 # `tmux` below rests on these lines: an empty TMUX_TMPDIR, or a TMUX left by a
-# pane this runs in (the pre-push hook can), would mean the live server.
+# pane this runs in, would mean the live server.
 TMUX_TMPDIR=$(mktemp -d /tmp/cttest.XXXXXX) || exit 1
 export TMUX_TMPDIR
 unset TMUX TMUX_PANE

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
 # check.sh -- every check CI runs on this repo, in one place. The CI
-# workflows call it, and so does the pre-push hook (scripts/git-hooks/), so
-# a push is checked on the machine before CI sees it.
+# workflows call it, and the pre-push hook (scripts/git-hooks/) runs its
+# lint, a few seconds, before a push; the flake check and the tests are
+# CI's, or run by hand here.
 #
 #   check      what                                            CI workflow
 #   shell      shellcheck -S warning and shfmt -d (style in    shellcheck.yml
@@ -26,8 +27,11 @@
 # Usage:
 #   scripts/check.sh                       every check
 #   scripts/check.sh lua tests             just those
+#   scripts/check.sh lint                  shell to yaml in the table: all
+#                                          but nix and the tests (the
+#                                          pre-push hook's mode)
 #   scripts/check.sh --changed <path>...   what a change to those paths
-#                                          needs (the pre-push hook's mode)
+#                                          needs, tests included
 #   --list first (before the rest)         print the checks it would run,
 #                                          one a line, and run none
 #
@@ -47,8 +51,8 @@
 # Each test declares, near its top (bash patterns; `*` also spans `/`):
 #   # check.sh covers: scripts/prune_logs.sh scripts/lib/*
 #   # check.sh runs-on: Linux        (optional: `uname`; else any OS)
-# A test missing its covers line fails: it would otherwise never run before
-# a push. One whose runs-on is another OS is skipped, and says so.
+# A test missing its covers line fails: --changed would otherwise never
+# pick it. One whose runs-on is another OS is skipped, and says so.
 #
 # Output: a UTC-stamped line as each check starts and ends, and a failing
 # check's whole output. Exit 0 = every selected check passed.
@@ -60,7 +64,7 @@ cd "$REPO" || exit 1
 
 log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 usage() {
-  echo "usage: $0 [shell|lua|python|typescript|configs|markdown|yaml|nix|tests ...] | --changed <path>..." >&2
+  echo "usage: $0 [lint|shell|lua|python|typescript|configs|markdown|yaml|nix|tests ...] | --changed <path>..." >&2
   exit 2
 }
 
@@ -196,6 +200,7 @@ test_covers() {
 # --- what to run --------------------------------------------------------------
 
 checks=() # shell lua python typescript configs markdown yaml nix test:<name> ...
+lint=(shell lua python typescript configs markdown yaml)
 add_all_tests() {
   local t
   for t in scripts/tests/*_test.sh; do checks+=("test:$(test_name "$t")"); done
@@ -209,7 +214,7 @@ fi
 
 if [ "${1:-}" = --changed ]; then
   shift
-  checks=(shell lua python typescript configs markdown yaml)
+  checks=("${lint[@]}")
   for p; do
     case "$p" in nix/* | scripts/check_nix_flake.sh)
       checks+=(nix)
@@ -224,12 +229,13 @@ if [ "${1:-}" = --changed ]; then
     fi
   done
 elif [ $# -eq 0 ]; then
-  checks=(shell lua python typescript configs markdown yaml nix)
+  checks=("${lint[@]}" nix)
   add_all_tests
 else
   for c; do
     case "$c" in
       shell | lua | python | typescript | configs | markdown | yaml | nix) checks+=("$c") ;;
+      lint) checks+=("${lint[@]}") ;;
       tests) add_all_tests ;;
       *) usage ;;
     esac

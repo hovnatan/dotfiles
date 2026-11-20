@@ -29,7 +29,7 @@ It is kept short on purpose - every line here is paid on every session.
   with the new behaviour; changing a claude mod (`home/.claude/mods/`): its
   own `hooks/register.test.ts`. A new shell
   test needs a `# check.sh covers:` line (format in `scripts/check.sh`); it
-  decides when the pre-push hook runs the test. Tests are safe beside live sessions.
+  decides when `check.sh --changed` runs the test. Tests are safe beside live sessions.
 - This repo is public, commit messages included. Host names, IPs, tailnet
   names and internal documents go in the private repos (`~/.dotfiles-private`
   personal, with each machine's own files such as `~/.ssh/local_config`;
@@ -37,10 +37,12 @@ It is kept short on purpose - every line here is paid on every session.
   (fish universal variables);
   tracked files and commits use placeholders (`<host>`, `vm`). Removing one
   after a push means rewriting history and force-pushing.
-- `scripts/check.sh` runs every check CI runs, and the `pre-push` hook runs it on
-  each pushed commit (`scripts/git-hooks/`, wired by the installer): when it stops a
-  push, fix what it names and push again. `scripts/check.sh --changed <paths>` checks
-  before committing. Linux-only tests skip on a Mac: run them in the local Ubuntu guest,
+- `scripts/check.sh` runs every check CI runs. The `pre-push` hook runs its lint
+  alone (`check.sh lint`, seconds; `scripts/git-hooks/`, wired by the installer): when
+  it stops a push, fix what it names and push again. The tests and the flake check are
+  CI's: do not run the full set before a commit, only the test a change extends
+  (`scripts/tests/<name>_test.sh`). Linux-only tests skip on a Mac: run them in the
+  local Ubuntu guest,
   `vagrant/Vagrantfile` (commands in its header), which has no live sessions to disturb.
   Vendored skills are ignored in `.markdownlint-cli2.yaml`: add a skill there when
   vendoring it.
