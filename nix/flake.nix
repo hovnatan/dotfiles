@@ -238,7 +238,7 @@
             # PDF utilities (pdftotext, pdfinfo, ...) from poppler
             pkgs.poppler-utils
             # python3 -- stdlib-only scripts and tests (tmux_hooks_test.sh,
-            # ntfy_watch_test.sh); the Mac's replaces the python.org 3.12 in
+            # tmux_watched_test.sh); the Mac's replaces the python.org 3.12 in
             # /usr/local/bin, and on Linux it wins over /usr/bin/python3.
             # Packages go in uv projects or `uv run` scripts, not a global pip
             # (2026-09-23)

@@ -15,9 +15,10 @@
 //     |                                         decides
 //     '-- 10 min unwatched -------------------> push
 //
-// Watched means a tmux client shows claude's pane, is focused, and gave
-// input lately; tmux-watch.sh beside this folder asks tmux and says which
-// (its header has the rule and why focus alone is not believed). This
+// Watched means a terminal shows claude's pane, is focused, and gave input
+// lately: scripts/tmux_watched.sh asks tmux and says which. Its header has
+// the rule, which the bell marker on tmux's bars goes by too, for a session
+// whole (home/.config/tmux/bell-elsewhere.sh). This
 // channel is a deliberate backup to Claude Code's own mobile push: it goes
 // by tmux's client focus, not by claude's idea of presence, and waits out a
 // debounce the native push does not have.
@@ -41,13 +42,14 @@ const POLL_MS = 5000;
 // the turn's end is not held for the 30 s a process is given by default.
 const TMUX_MS = 3000;
 
-// Where this claude runs ($TMUX and $TMUX_PANE, handed to tmux-watch.sh as
-// they are) and where its pushes go, read each time the session is waiting.
-type Here = { tmux: string; pane: string; topic: string; debounce: number; url: string };
+// Where this claude runs (its tmux server's socket and its pane, as
+// tmux_watched.sh takes them) and where its pushes go, read each time the
+// session is waiting.
+type Here = { socket: string; pane: string; topic: string; debounce: number; url: string };
 
-// tmux-watch.sh's answer, by its exit status 0 to 3, and what it printed:
-//   watched   yes | no (said: the clients it saw) | gone | failed (said: why)
-//   session   yes (said: the pane's session)      | gone | failed
+// tmux_watched.sh's answer, by its exit status 0 to 3, and what it printed:
+//   pane           yes | no (said: the clients it saw) | gone | failed (said: why)
+//   session-name   yes (said: the pane's session)      | gone | failed
 const ANSWERS = ['yes', 'no', 'gone', 'failed'] as const;
 type Answer = { is: (typeof ANSWERS)[number]; said: string };
 
@@ -71,6 +73,12 @@ const redacted = (here: Here, err: unknown): string => String(err).replaceAll(he
 async function where($: EngineInterface): Promise<Here | string> {
   const tmux = await $.env.get('TMUX');
   if (tmux === undefined || tmux === '') return 'not in tmux';
+  // $TMUX = "/tmp/tmux-501/default,52401,3": the socket, the server's pid
+  // and the session claude started in. Cut from the right, so a socket path
+  // with a comma in it stays whole. The session is not kept: the pane may
+  // have moved since, and tmux is asked where it is each time.
+  const socket = tmux.split(',').slice(0, -2).join(',');
+  if (socket === '') throw new Error(`$TMUX is "${tmux}", not "<socket>,<server pid>,<session id>"`);
 
   const home = await $.env.get('HOME');
   if (home === undefined) throw new Error('HOME is not set, so ~/.config/claude-ntfy/topic cannot be found');
@@ -97,16 +105,16 @@ async function where($: EngineInterface): Promise<Here | string> {
   }
   const url = (await $.env.get('CLAUDE_NTFY_URL')) ?? 'https://ntfy.sh';
 
-  return { tmux, pane, topic, debounce: Number(debounce), url };
+  return { socket, pane, topic, debounce: Number(debounce), url };
 }
 
-// ask($, here, 'watched') -> { is: 'no', said: 'pts/1 not focused, input 41s ago' }
-async function ask($: EngineInterface, here: Here, what: 'watched' | 'session'): Promise<Answer> {
-  const ran = await $.process.run([`${$.plugin.root}/tmux-watch.sh`, what, here.tmux, here.pane], {
+// ask($, here, 'pane') -> { is: 'no', said: 'pts/1 not focused, input 41s ago' }
+async function ask($: EngineInterface, here: Here, what: 'pane' | 'session-name'): Promise<Answer> {
+  const ran = await $.process.run([script($, 'tmux_watched.sh'), what, here.socket, here.pane], {
     timeoutMs: TMUX_MS,
   });
   const is = ANSWERS[ran.exitCode];
-  if (is === undefined) throw new Error(`tmux-watch.sh ${what}: exit ${ran.exitCode}: ${ran.stderr.trim()}`);
+  if (is === undefined) throw new Error(`tmux_watched.sh ${what}: exit ${ran.exitCode}: ${ran.stderr.trim()}`);
 
   return { is, said: ran.stdout.trim() };
 }
@@ -127,7 +135,7 @@ const lost = (here: Here, answer: Answer): string | null => {
 //   "CC: mbp/backend" / "done 600s ago and is still unwatched"
 async function push($: EngineInterface, it: Wait, waited: number, evidence: string): Promise<void> {
   const { here } = it;
-  const session = await ask($, here, 'session');
+  const session = await ask($, here, 'session-name');
   const over = lost(here, session);
   if (over !== null) return note($, over);
   const machine = await $.process.run([script($, 'machine_name.sh')]);
@@ -161,7 +169,7 @@ async function poll($: EngineInterface, it: Wait): Promise<void> {
   it.isAsking = true;
 
   try {
-    const seen = await ask($, it.here, 'watched');
+    const seen = await ask($, it.here, 'pane');
     if (wait !== it) return;
     const waited = Math.round(((await $.clock.now()) - it.since) / 1000);
 
@@ -201,7 +209,7 @@ export async function armPush($: EngineInterface, how: string): Promise<void> {
   try {
     here = await where($);
     if (typeof here === 'string') return note($, `push: none, ${here}`);
-    seen = await ask($, here, 'watched');
+    seen = await ask($, here, 'pane');
   } catch (err) {
     return fail($, 'push', err instanceof Error ? err.message : String(err));
   }

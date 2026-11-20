@@ -3,9 +3,9 @@
 // (the diagrams at the top of register.ts and push.ts). Nothing sits beneath
 // the mod in a test: engine() stands for the machine's environment, the
 // clock, the event log, the notification channel, engine-bell-off.sh,
-// tmux-watch.sh's answers and ntfy, and keeps what the mod asked of each.
+// tmux_watched.sh's answers and ntfy, and keeps what the mod asked of each.
 // The two scripts themselves are scripts/tests/engine_bell_off_test.sh's and
-// scripts/tests/ntfy_watch_test.sh's.
+// scripts/tests/tmux_watched_test.sh's.
 
 import type { TestBody } from 'claude-code/testing';
 import { expect, mock, test } from 'claude-code/testing';
@@ -21,9 +21,9 @@ const exited = (exitCode: number, stdout = '', stderr = '') => ({
 const SESSION = { cwd: '/home/u/work/bench', session_id: '4f1c9a2e-0000-4000-8000-000000000000' };
 const WHO = 'bench 4f1c9a2e';
 
-// tmux-watch.sh watched's answers: exit status and what it prints.
+// tmux_watched.sh pane's answers: exit status and what it prints.
 type Look = [number, string];
-const WATCHED: Look = [0, ''];
+const WATCHED: Look = [0, 'pts/1 focused, input 3s ago'];
 const NOBODY: Look = [1, 'no client attached'];
 const AWAY: Look = [1, 'pts/1 not focused, input 41s ago'];
 const GONE: Look = [2, ''];
@@ -32,7 +32,7 @@ const BROKEN: Look = [3, 'tmux -S /tmp/tmux-1/default: protocol version mismatch
 const HUNG: Look = [-1, ''];
 
 type Engine = {
-  // The answers of `watched`, in the order asked; the last one repeats.
+  // The answers of `pane`, in the order asked; the last one repeats.
   looks?: Look[];
   env?: Record<string, string>;
   // false: no topic file.
@@ -83,15 +83,15 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
     const name = program.slice(program.lastIndexOf('/') + 1);
     ran.push([name, ...args].join(' '));
 
-    switch (name === 'tmux-watch.sh' ? `${name} ${args[0]}` : name) {
-      case 'tmux-watch.sh watched': {
+    switch (name === 'tmux_watched.sh' ? `${name} ${args[0]}` : name) {
+      case 'tmux_watched.sh pane': {
         if (e.init?.timeoutMs !== 3000) throw new Error('tmux asked with no 3 s limit');
         const look = (looks.length > 1 ? looks.shift() : looks[0]) as Look;
-        if (look === HUNG) throw new Error('tmux-watch.sh: timed out after 3000ms');
+        if (look === HUNG) throw new Error('tmux_watched.sh: timed out after 3000ms');
 
         return exited(...look);
       }
-      case 'tmux-watch.sh session':
+      case 'tmux_watched.sh session-name':
         return how.sessionGone ? exited(2) : exited(0, 'backend');
       case 'machine_name.sh':
         return exited(0, 'mbp');
@@ -406,7 +406,7 @@ test('a session that is done and nobody comes to look at is pushed once the debo
   expect(rung).toEqual([BELL]);
 });
 
-test('tmux is asked with the $TMUX and the pane claude runs in', async ($, on) => {
+test("tmux is asked on $TMUX's socket about the pane claude runs in", async ($, on) => {
   const { ran, clock } = engine(on);
 
   await ends($);
@@ -414,10 +414,31 @@ test('tmux is asked with the $TMUX and the pane claude runs in', async ($, on) =
 
   expect(ran).toEqual([
     `event_log_note.sh claude_session_done ${WHO} ${RUNG}`,
-    'tmux-watch.sh watched /tmp/tmux-1/default,4242,3 %4',
+    'tmux_watched.sh pane /tmp/tmux-1/default %4',
     `event_log_note.sh claude_session_done ${WHO} ${ARMED}`,
-    'tmux-watch.sh watched /tmp/tmux-1/default,4242,3 %4',
+    'tmux_watched.sh pane /tmp/tmux-1/default %4',
   ]);
+});
+
+// $TMUX is cut from the right: the server's pid and the session id go, and
+// whatever is before them is the socket.
+test("a comma in the socket's path stays in it", async ($, on) => {
+  const { ran } = engine(on, { env: { TMUX: '/tmp/a,b/default,4242,3' } });
+
+  await ends($);
+
+  expect(ran.filter((r) => r.startsWith('tmux_watched.sh'))).toEqual(['tmux_watched.sh pane /tmp/a,b/default %4']);
+});
+
+test('a $TMUX that is not socket, pid and session: the bell, and the push fails loudly', async ($, on) => {
+  const { log, toasts, rung, ran } = engine(on, { env: { TMUX: '/tmp/tmux-1/default' } });
+
+  await ends($);
+
+  expect(rung).toEqual([BELL]);
+  expect(log).toEqual([RUNG, 'push: FAILED, $TMUX is "/tmp/tmux-1/default", not "<socket>,<server pid>,<session id>"']);
+  expect(toasts.length).toBe(1);
+  expect(ran.filter((r) => r.startsWith('tmux_watched.sh'))).toEqual([]);
 });
 
 test('a turn an API error ended is pushed as such', async ($, on) => {
@@ -471,7 +492,7 @@ test('watched at the end: the bell, and no wait', async ($, on) => {
 
   expect(rung).toEqual([BELL]);
   expect(log).toEqual([RUNG, 'push: none, watched now']);
-  expect(ran.filter((r) => r.startsWith('tmux-watch.sh watched')).length).toBe(1);
+  expect(ran.filter((r) => r.startsWith('tmux_watched.sh pane')).length).toBe(1);
 });
 
 test('seen during the wait: no push', async ($, on) => {
@@ -589,7 +610,7 @@ test('with no topic file: the bell, the reason in the log, and tmux is asked not
 
   expect(rung).toEqual([BELL]);
   expect(log).toEqual([RUNG, 'push: none, no topic file']);
-  expect(ran.filter((r) => r.startsWith('tmux-watch.sh'))).toEqual([]);
+  expect(ran.filter((r) => r.startsWith('tmux_watched.sh'))).toEqual([]);
 });
 
 // The real failure names the URL, topic and all, and the mod writes

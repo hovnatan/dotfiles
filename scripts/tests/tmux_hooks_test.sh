@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# check.sh covers: home/.config/tmux/* scripts/appearance.sh scripts/lib/*
+# check.sh covers: home/.config/tmux/* scripts/appearance.sh scripts/lib/* scripts/tmux_watched.sh
 #
 # tmux_hooks_test.sh -- end-to-end checks for the tmux hooks' log: the hook
 # lines of home/.config/tmux/tmux.conf and the scripts they run, in a throwaway tmux
@@ -88,7 +88,7 @@
 #   shows, its terminal unfocused        (tmux keeps no alert); gone at its
 #                                        focus-in
 #   the same, bg's client focused but -> unwatched, marked; a key typed in
-#   idle past BELL_STALE_SECONDS         bg hides the marker, no focus-in
+#   idle past TMUX_WATCHED_STALE_SECONDS bg hides the marker, no focus-in
 #   prefix c from window 0 of 3       -> new window at 1, the rest move up
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
@@ -785,7 +785,7 @@ wname=$(tw list-clients -t =w -F '#{client_name}')
 ring=$(tw new-window -d -P -F '#{window_index}' -t =solo: -n 'ring ##S' "printf '\\a'; exec sleep 100")
 [ "$(tw display -p -t "=solo:$ring" '#{window_name}')" = 'ring #S' ] \
   || fail "the ringing window is named '$(tw display -p -t "=solo:$ring" '#{window_name}')', not 'ring #S'"
-wait_for " bell session=solo window=$ring \(ring #S\): unwatched \(no client\), marked$" \
+wait_for " bell session=solo window=$ring \(ring #S\): unwatched \(no client attached\), marked$" \
   && pass "a bell in a session with no client is logged as unwatched and marked" \
   || fail "no bell line for solo:$ring: $(hooks_log | tail -3)"
 # The marker is the whole notice: no message is put over w's bar (one "bell:
@@ -846,7 +846,7 @@ tw kill-window -t "=solo:$ring"
 # '', and the hook once passed the script 4 arguments: "returned 2". Then
 # @bell is unset by hand, as no client looks at solo to clear it.
 ring=$(tw new-window -d -P -F '#{window_index}' -t =solo: -n '' "printf '\\a'; exec sleep 100")
-wait_for " bell session=solo window=$ring \(\): unwatched \(no client\), marked$" \
+wait_for " bell session=solo window=$ring \(\): unwatched \(no client attached\), marked$" \
   && pass "a bell in a window with an empty name is logged and marked" \
   || fail "no bell line for solo:$ring, named '': $(hooks_log | tail -3); messages: $(tw show-messages | tail -3)"
 tw kill-window -t "=solo:$ring"
@@ -907,17 +907,17 @@ done
   && pass "bg's client focused again: the marker is gone" \
   || fail "after bg's focus-in: w's bell marker '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
 
-# Focus gone stale (the rule of the session-done mod's push): bg's client
+# Focus gone stale (scripts/tmux_watched.sh's rule): bg's client
 # still says focused, as a locked Mac's terminal does, but has had no input for longer than
-# BELL_STALE_SECONDS (1 s here, from the server's environment, which run-shell
+# TMUX_WATCHED_STALE_SECONDS (1 s here, from the server's environment, which run-shell
 # passes on): unwatched. Then a key typed there, its focus flag unchanged as
 # when a terminal's focus reports stopped, so no focus-in clears @bell: the
 # marker hides by the input alone (@bell_at older than #{session_activity}).
-tw set-environment -g BELL_STALE_SECONDS 1
+tw set-environment -g TMUX_WATCHED_STALE_SECONDS 1
 sleep 2
 tw respawn-pane -k -t =bg: "printf '\\a'; exec sleep 100"
 wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} focused, input [0-9]+s ago\), marked$" \
-  && pass "a focused client with no input past BELL_STALE_SECONDS leaves its session unwatched" \
+  && pass "a focused client with no input past TMUX_WATCHED_STALE_SECONDS leaves its session unwatched" \
   || fail "no stale-focus bell line for bg (bg's client flags: $(bg_flags)): $(hooks_log | tail -3)"
 [ "$(left)" = "$want" ] && pass "and w's bell marker marks bg: '$(left)'" \
   || fail "after the stale-focus bell: w's bell marker '$(left)', wanted '$want'"
@@ -930,7 +930,7 @@ done
 [ -z "$(left)" ] && [ "$(tw show -t =bg: -qv @bell)" = '0!' ] \
   && pass "a key typed in bg hides the marker, @bell still set (no focus-in came)" \
   || fail "after a key in bg: w's bell marker '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
-tw set-environment -gu BELL_STALE_SECONDS
+tw set-environment -gu TMUX_WATCHED_STALE_SECONDS
 kill "$bgclient"
 wait "$bgclient" 2>/dev/null
 bgclient=
