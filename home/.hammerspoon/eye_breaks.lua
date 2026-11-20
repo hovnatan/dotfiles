@@ -117,6 +117,8 @@ local function dueColor(due)
   return DUE_COLOR[due] or fail("no colour for a break called " .. tostring(due))
 end
 -- Above other apps' windows, on every Space, and over full-screen apps.
+-- A canvas with it is deleted when it comes down, never kept hidden to be
+-- shown again: macOS takes a hidden one off its Spaces (the badge, below).
 local ON_TOP = { "canJoinAllSpaces", "stationary", "fullScreenAuxiliary" }
 
 -- The two canvas elements everything here is drawn from: a filled
@@ -164,39 +166,61 @@ end
 -- on it starts the due break (so it takes the clicks on its own rectangle;
 -- they do not reach the window, or the scroll bar, under it), without
 -- taking focus.
-local badge = hs.canvas.new({ x = 0, y = 0, w = BADGE_W, h = BADGE_H })
-badge:level(hs.canvas.windowLevels.overlay)
-badge:behavior(ON_TOP)
-badge:clickActivating(false)
--- Wider than the canvas by the radius: the right corners fall outside it
--- and are cut off, which leaves that side square against the edge; and as
--- tall as the canvas, whatever height drawBadge gives that. The colour,
--- the text and where the text sits are drawBadge's too, at each draw.
-badge[1] = fill(DUE_COLOR.short, BADGE_RADIUS, { x = 0, y = 0, w = BADGE_W + BADGE_RADIUS, h = "100%" })
-badge[2] = centredText("", BADGE_TEXT, 1)
-badge[3] = centredText("", BADGE_IDLE_TEXT, 1)
-badge:canvasMouseEvents(true)
--- A click takes the due break. A ctrl-click, macOS's other way to
--- right-click, snoozes it as a right click does (below).
-badge:mouseCallback(function(_, message)
-  if message ~= "mouseDown" then
-    return
-  end
-  if hs.eventtap.checkKeyboardModifiers().ctrl then
-    M.snooze()
-  else
-    M.dueBreakNow()
-  end
-end)
-M.badge = badge
-local badgeShown = false
+--
+-- A new canvas each time the badge goes up, deleted when it comes down,
+-- and never one kept hidden in between: when a full-screen Space is
+-- removed (an app's full-screen window closes), macOS leaves a hidden
+-- window on Desktop 1 alone, and shown again it is drawn over no
+-- full-screen Space. Seen 2026-11-20, with the one canvas this had then:
+--
+--   05:04:26  badge down for a video        canvas hidden
+--   05:05:17  a full-screen Space removed   macOS: that window -> Desktop 1
+--   05:05:26  badge up again                up, as far as this file knew;
+--                                           drawn on Desktop 1 only
+--
+-- Nothing brought that window back (hide and show, its behaviour or its
+-- level set again); a new canvas joins every Space. One that is up when
+-- the Space goes keeps them all: both tried with stand-in canvases that
+-- day, so nothing here watches for a badge that is up and not drawn.
+--
+-- M.badge is that canvas while the badge is up, and nil while it is down;
+-- on M so that a shell can look at it:
+--   hs -q -c 'local b = require("eye_breaks").badge return b and b:isOccluded()'
+-- true there, on a full-screen Space, is the fault above.
+local function newBadge()
+  local canvas = hs.canvas.new({ x = 0, y = 0, w = BADGE_W, h = BADGE_H })
+  canvas:level(hs.canvas.windowLevels.overlay)
+  canvas:behavior(ON_TOP)
+  canvas:clickActivating(false)
+  -- Wider than the canvas by the radius: the right corners fall outside it
+  -- and are cut off, which leaves that side square against the edge; and as
+  -- tall as the canvas, whatever height drawBadge gives that. The colour,
+  -- the text and where the text sits are drawBadge's too, at each draw.
+  canvas[1] = fill(DUE_COLOR.short, BADGE_RADIUS, { x = 0, y = 0, w = BADGE_W + BADGE_RADIUS, h = "100%" })
+  canvas[2] = centredText("", BADGE_TEXT, 1)
+  canvas[3] = centredText("", BADGE_IDLE_TEXT, 1)
+  canvas:canvasMouseEvents(true)
+  -- A click takes the due break. A ctrl-click, macOS's other way to
+  -- right-click, snoozes it as a right click does (below).
+  canvas:mouseCallback(function(_, message)
+    if message ~= "mouseDown" then
+      return
+    end
+    if hs.eventtap.checkKeyboardModifiers().ctrl then
+      M.snooze()
+    else
+      M.dueBreakNow()
+    end
+  end)
+  return canvas
+end
 
 -- A right click on the badge snoozes the due break (by request), as the
 -- menu's "Snooze this break" does. The canvas calls back "mouseDown" for
 -- every button without saying which, and the buttons read at that moment
 -- are up again after a quick click, so the right button is caught as its
--- own event, on a tap that runs only while the badge is up (listenFor-
--- RightClicks, from drawBadge):
+-- own event, on a tap that runs only while the badge is up (drawBadge
+-- starts it, closeBadge stops it):
 --
 --   right button down, on the badge  --> swallowed; snooze
 --   right button up after it         --> swallowed too, so that nothing
@@ -210,8 +234,8 @@ local rightTap = hs.eventtap.new({ TYPES.rightMouseDown, TYPES.rightMouseUp }, f
     swallowUp = false
     return mine
   end
-  local at, f = event:location(), badge:frame()
-  if not (badgeShown and at.x >= f.x and at.x < f.x + f.w and at.y >= f.y and at.y < f.y + f.h) then
+  local at, f = event:location(), M.badge and M.badge:frame()
+  if not (f and at.x >= f.x and at.x < f.x + f.w and at.y >= f.y and at.y < f.y + f.h) then
     return false
   end
   swallowUp = true
@@ -222,42 +246,43 @@ local rightTap = hs.eventtap.new({ TYPES.rightMouseDown, TYPES.rightMouseUp }, f
 end)
 M.rightTap = rightTap
 
--- The tap on or off, with the badge. macOS can switch a tap off by itself
--- (one that was slow to answer); the next draw of the badge finds that
--- here and starts it again, with a line in the log.
-local listening = false
-local function listenForRightClicks(on)
-  if rightTap:isEnabled() == on then
-    listening = on
+-- The tap on, for a badge that is up. macOS can switch a tap off by itself
+-- (one that was slow to answer); a draw of a badge that `wasUp` already
+-- finds that here and starts it again, with a line in the log.
+local function listenForRightClicks(wasUp)
+  if rightTap:isEnabled() then
     return
   end
-  if not on then
-    rightTap:stop()
-    listening = false
-    return
-  end
-  if listening then
+  if wasUp then
     log("macOS had switched off the tap for right clicks on the badge: starting it again")
   end
   rightTap:start()
   if not rightTap:isEnabled() then
     fail("could not start the event tap for right clicks on the badge: does Hammerspoon have Accessibility access?")
   end
-  listening = true
+end
+
+-- The badge down: its canvas deleted, and the tap off with it. M.badge is
+-- cleared before the delete, as closeOverlay does, so that a delete that
+-- raises leaves no dead canvas for the next draw to use.
+local function closeBadge()
+  local canvas = M.badge
+  if not canvas then
+    return
+  end
+  M.badge = nil
+  rightTap:stop()
+  canvas:delete()
 end
 
 -- The badge with `text` on it, and `idle` under that if given, in the
--- colour of `due` and as tall as `overdueMinutes` makes it; hidden with no
--- text.
+-- colour of `due` and as tall as `overdueMinutes` makes it; down, its
+-- canvas deleted, with no text.
 local function drawBadge(text, due, overdueMinutes, idle)
   -- No screen at all (lid shut, displays asleep) has nowhere to draw.
   local screen = text and hs.screen.mainScreen()
   if not screen then
-    if badgeShown then
-      badge:hide()
-      badgeShown = false
-    end
-    listenForRightClicks(false)
+    closeBadge()
     return
   end
 
@@ -265,6 +290,13 @@ local function drawBadge(text, due, overdueMinutes, idle)
   -- The text is the number's BADGE_H, and the idle line's height in it.
   local lines = BADGE_H + (idle and BADGE_IDLE_H or 0)
   local height = badgeHeight(overdueMinutes, f.h, lines)
+  -- A new canvas is drawn in full before it is shown (below), so that it
+  -- does not come up empty at the screen's corner first.
+  local new = not M.badge
+  if new then
+    M.badge = newBadge()
+  end
+  local badge = M.badge
   badge:frame({ x = f.x + f.w - BADGE_W, y = f.y + math.floor((f.h - height) * BADGE_AT), w = BADGE_W, h = height })
   badge[1].fillColor = dueColor(due)
   -- The text keeps to the middle of a taller badge. From `top` down:
@@ -277,11 +309,10 @@ local function drawBadge(text, due, overdueMinutes, idle)
   badge[2].frame = { x = 0, y = top + BADGE_PAD, w = BADGE_W, h = BADGE_H - BADGE_PAD }
   badge[3].text = idle or ""
   badge[3].frame = { x = 0, y = idleTop, w = BADGE_W, h = BADGE_IDLE_H + BADGE_PAD }
-  if not badgeShown then
+  if new then
     badge:show()
-    badgeShown = true
   end
-  listenForRightClicks(true)
+  listenForRightClicks(not new)
 end
 
 -- --- the break screen ---------------------------------------------------------
