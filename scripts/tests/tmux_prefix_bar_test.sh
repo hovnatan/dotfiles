@@ -35,21 +35,14 @@ command -v tmux >/dev/null || {
   exit 1
 }
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 CONF="$REPO/home/.config/tmux/tmux.conf"
 WORK=$(mktemp -d)
 # Unix socket paths are capped near 104 bytes, so not under $WORK.
 SOCKDIR=$(mktemp -d /tmp/pfxtest.XXXXXX)
 TMUX_BIN=$(command -v tmux)
 ESC=$'\033'
-
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 
 # Both servers get an empty environment: no TMUX to refuse the nesting, and
 # nothing of the machine's own config.
@@ -61,7 +54,7 @@ cleanup() {
   inner kill-server 2>/dev/null
   outer kill-server 2>/dev/null
   rm -rf "$SOCKDIR"
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
+  drop_work
 }
 trap cleanup EXIT
 
@@ -172,5 +165,4 @@ else
   fail "the picker's rows differ. tmux's own: $(cat -v <<<"$own") with @tree_row: $(cat -v <<<"$ours")"
 fi
 
-log "$failures failure(s)"
-[ "$failures" -eq 0 ]
+finish

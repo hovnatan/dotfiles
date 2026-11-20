@@ -22,20 +22,11 @@
 
 set -uo pipefail
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 WORK=$(mktemp -d)
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
-cleanup() {
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
-}
-trap cleanup EXIT
+trap drop_work EXIT
 
 # --- selection ----------------------------------------------------------------
 
@@ -154,5 +145,4 @@ else
   fail "hook log: $events"
 fi
 
-log "$failures failure(s)"
-[ "$failures" -eq 0 ]
+finish

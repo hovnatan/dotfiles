@@ -47,7 +47,8 @@ for cmd in python3 tmux; do
   }
 done
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 SCRIPT="$REPO/scripts/appearance.sh"
 WORK=$(mktemp -d)
 H="$WORK/home"
@@ -55,19 +56,11 @@ H="$WORK/home"
 SOCKDIR=$(mktemp -d /tmp/apptest.XXXXXX)
 TMUX_BIN=$(command -v tmux)
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
-
 cleanup() {
   [ -n "${listener:-}" ] && kill "$listener" 2>/dev/null
   "$TMUX_BIN" -S "$SOCKDIR/tmux" kill-server 2>/dev/null
   rm -rf "$SOCKDIR"
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
+  drop_work
 }
 trap cleanup EXIT
 
@@ -320,30 +313,19 @@ if [ "\$1" = dark ]; then sleep 1; fi
 exec "$REPO/scripts/appearance.sh" "\$@"
 SH
 chmod +x "$H/.dotfiles/scripts/appearance.sh"
-python3 - "$TMUX_BIN" "$SOCKDIR/tmux" "$H" >"$WORK/stale.out" 2>&1 <<'PYEOF'
-import os, pty, select, sys, time
-tmux, sock, home = sys.argv[1:]
-pid, fd = pty.fork()
-if pid == 0:
-    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=t"], {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"})
-
-def drain(seconds):
-    end = time.time() + seconds
-    while time.time() < end:
-        if select.select([fd], [], [], 0.1)[0]:
-            try: os.read(fd, 65536)
-            except OSError: return
-
-drain(1)
-os.write(fd, b"\x1b[?997;1n\x1b[?997;2n\x1b[?997;2n")
-drain(3)  # past the slow run, however the runs are ordered
-print(os.readlink(home + "/.claude/themes/gruvbox.json"), flush=True)
-PYEOF
-if [ "$(cat "$WORK/stale.out")" = gruvbox-light.json ]; then
+# The client reports dark, light, light, at once.
+mkfifo "$WORK/stale_keys"
+python3 "$PTY_CLIENT" "$TMUX_BIN" "$SOCKDIR/tmux" "$H" t --keys "$WORK/stale_keys" &
+stale=$!
+sleep 1
+printf '%s\n' '\x1b[?997;1n\x1b[?997;2n\x1b[?997;2n' >"$WORK/stale_keys"
+sleep 3 # past the slow run, however the runs are ordered
+kill "$stale"
+ended=$(readlink "$H/.claude/themes/gruvbox.json")
+if [ "$ended" = gruvbox-light.json ]; then
   pass "tmux: a stale report's slow run does not undo the theme reported after it"
 else
-  fail "tmux: dark then light reported, the link ended at: $(cat "$WORK/stale.out")"
+  fail "tmux: dark then light reported, the link ended at: $ended"
 fi
 
-log "$failures failure(s)"
-[ "$failures" -eq 0 ]
+finish

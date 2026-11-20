@@ -2,26 +2,36 @@ r"""A terminal for a tmux test: attach to a session in a pty until tmux goes.
 
 usage: pty_client.py <tmux> <socket> <home> <session>
                      [--keys <fifo>] [--screen <file>]
+                     [--path <PATH>] [--env <NAME=VALUE>]... [--size <RxC>]
 
   --keys    each line written to the fifo is sent to tmux as the bytes it
             spells in Python escapes: \x01s is C-a s, \x1b[I a focus-in
   --screen  what tmux sends the terminal to draw, as it comes
+  --path    the client's PATH; /usr/bin:/bin without it
+  --env     one more variable for the client, beside HOME, PATH and TERM
+  --size    the terminal's rows and columns, as 40x120
 """
 
 # ruff: noqa: INP001, CPY001
 
 import argparse
+import fcntl
 import os
 import pty
 import select
+import struct
+import termios
 
 
-def attach(tmux: str, socket: str, home: str, session: str) -> int:
-    """Start tmux attached to the session in a new pty; return the pty."""
+def attach(command: list[str], env: dict[str, str], size: str | None) -> int:
+    """Run the command in a new pty of that size; return the pty."""
     pid, tty = pty.fork()
     if pid == 0:
-        env = {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"}
-        os.execve(tmux, [tmux, "-S", socket, "attach", "-t", "=" + session], env)  # noqa: S606
+        if size:
+            rows, columns = map(int, size.split("x"))
+            window = struct.pack("HHHH", rows, columns, 0, 0)
+            fcntl.ioctl(0, termios.TIOCSWINSZ, window)
+        os.execve(command[0], command, env)  # noqa: S606
     return tty
 
 
@@ -56,9 +66,15 @@ def main() -> None:
     parser.add_argument("session")
     parser.add_argument("--keys")
     parser.add_argument("--screen")
+    parser.add_argument("--path", default="/usr/bin:/bin")
+    parser.add_argument("--env", action="append", default=[])
+    parser.add_argument("--size")
     args = parser.parse_args()
 
-    tty = attach(args.tmux, args.socket, args.home, args.session)
+    env = {"HOME": args.home, "PATH": args.path, "TERM": "xterm-256color"}
+    env.update(pair.split("=", 1) for pair in args.env)
+    command = [args.tmux, "-S", args.socket, "attach", "-t", "=" + args.session]
+    tty = attach(command, env, args.size)
     # RDWR: no end of file while no writer has the fifo open.
     keys = os.open(args.keys, os.O_RDWR) if args.keys else None
     screen = None

@@ -28,7 +28,8 @@ done
   exit 1
 }
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 UNIT="cttest-$$"
 WORK=$(mktemp -d)
 # Not under $WORK: a socket path has about 100 characters to live in. Every
@@ -43,13 +44,6 @@ SOCKPATH="$TMUX_TMPDIR/tmux-$(id -u)/default"
 MANAGER_DIR="$H/.dotfiles/claude_tmux_session"
 TRANSCRIPTS="$H/.claude/projects/${MANAGER_DIR//[^a-zA-Z0-9]/-}"
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 # The test's servers read the real config, with ~ the throwaway HOME: the
 # hooks are what is under test.
 t() { HOME="$H" tmux "$@"; }
@@ -129,7 +123,7 @@ cleanup() {
     sleep 0.1
   done
   rm -rf "$TMUX_TMPDIR"
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
+  drop_work
 }
 trap cleanup EXIT
 
@@ -464,5 +458,4 @@ failed_reaps=$(grep -h 'FAILED to stop' "$H"/.dotfiles/.logs/*_tmux_hooks/events
 ls "$H"/.dotfiles/.logs/*_claude_manager_start/events.log >/dev/null 2>&1 \
   && pass "the start keeps its event log" || fail "no claude_manager_start event log"
 
-if [ "$failures" -eq 0 ]; then log "all checks passed"; else log "$failures check(s) failed"; fi
-exit "$((failures > 0))"
+finish

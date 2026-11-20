@@ -31,24 +31,15 @@ for tool in atuin sqlite3; do
   }
 done
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 SCRIPT="$REPO/scripts/atuin_import_remote.sh"
 WORK=$(mktemp -d)
 LOCAL="$WORK/local"
 REMOTE="$WORK/remote"
 mkdir -p "$LOCAL" "$REMOTE" "$WORK/bin"
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
-cleanup() {
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
-}
-trap cleanup EXIT
+trap drop_work EXIT
 
 # ssh stub: drop the options and the host, run the rest in the remote HOME.
 # `bash -l` loses its -l: a login profile is the real machine's concern.
@@ -171,5 +162,4 @@ for args in "" "a b"; do
   if [ $? -eq 2 ]; then pass "usage error for '$args'"; else fail "no usage error for '$args'"; fi
 done
 
-log "$([ "$failures" -eq 0 ] && echo "all passed" || echo "$failures failed")"
-exit $((failures > 0))
+finish

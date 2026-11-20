@@ -47,23 +47,14 @@ command -v python3 >/dev/null || {
   exit 1
 }
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 SCRIPT="$REPO/scripts/prune_logs.sh"
 WORK=$(mktemp -d)
 H="$WORK/home"
 L="$H/.dotfiles/.logs"
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
-cleanup() {
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
-}
-trap cleanup EXIT
+trap drop_work EXIT
 
 run() { env -i HOME="$H" PATH=/usr/bin:/bin "$SCRIPT" "$@" >"$WORK/out" 2>&1; }
 # age <days> <path>...: set the last write of each to that many days ago
@@ -308,5 +299,4 @@ else
   fail "arguments: $(cat "$WORK/out")"
 fi
 
-log "$failures failure(s)"
-[ "$failures" -eq 0 ]
+finish

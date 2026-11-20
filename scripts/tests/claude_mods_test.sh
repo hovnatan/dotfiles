@@ -31,7 +31,8 @@
 # Usage: scripts/tests/claude_mods_test.sh (exit 0 = all passed)
 set -u
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 . "$REPO/scripts/lib/event_log.sh"
 event_log_start claude_mods_test --no-prune
 
@@ -42,14 +43,6 @@ command -v jq >/dev/null || {
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
-
-failures=0
-# log prints each line as well as recording it (scripts/lib/event_log.sh).
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 
 # --- settings.json and the mods folder name the same mods --------------------
 # "~/.dotfiles/home/.claude/mods/session-rename:~/.dotfiles/home/.claude/mods/session-done"
@@ -100,5 +93,4 @@ else
   done
 fi
 
-log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"
-exit $((failures > 0))
+finish

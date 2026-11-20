@@ -36,7 +36,8 @@ for cmd in tmux python3 fish; do
   }
 done
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 WORK=$(mktemp -d)
 H="$WORK/home"
 # Unix socket paths are capped near 104 bytes, so not under $WORK.
@@ -46,20 +47,13 @@ TMUX_BIN=$(command -v tmux)
 OS=$(uname)
 FORMAT='%d %b %H:%M %Z'
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 pids=()
 cleanup() {
   local p
   for p in "${pids[@]}"; do kill "$p" 2>/dev/null; done
   t kill-server 2>/dev/null
   rm -rf "$SOCKDIR"
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
+  drop_work
 }
 trap cleanup EXIT
 
@@ -165,34 +159,16 @@ t set-option -g status-right "${right/"$FORMAT"/'#(~/.dotfiles/home/.config/tmux
 # attach <name> <zone|->: a client of w in a pty, with LC_CLIENT_TZ as an
 # ssh login would hand it; what tmux draws to it goes to $WORK/<name>.screen
 attach() {
-  python3 - "$TMUX_BIN" "$SOCK" "$H" "$2" "$WORK/$1.screen" <<'PYEOF' &
-import os, pty, sys
-tmux, sock, home, zone, screen = sys.argv[1:]
-env = {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"}
-if zone != "-":
-    env["LC_CLIENT_TZ"] = zone
-out = open(screen, "wb", buffering=0)
-pid, fd = pty.fork()
-if pid == 0:
-    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=w"], env)
-while True:
-    try:
-        data = os.read(fd, 65536)
-    except OSError:
-        break
-    if not data:
-        break
-    out.write(data)
-PYEOF
+  local tz=()
+  [ "$2" = - ] || tz=(--env "LC_CLIENT_TZ=$2")
+  python3 "$PTY_CLIENT" "$TMUX_BIN" "$SOCK" "$H" w --screen "$WORK/$1.screen" "${tz[@]}" &
   pids+=($!)
 }
 attach yerevan Asia/Yerevan
 attach kiritimati Pacific/Kiritimati
 attach server -
-for _ in $(seq 50); do
-  [ "$(t list-clients -t =w | wc -l)" -ge 3 ] && break
-  sleep 0.1
-done
+three_attached() { [ "$(t list-clients -t =w | wc -l)" -ge 3 ]; }
+until_ok 5 three_attached || fail "the three clients never attached: $(t list-clients -t =w)"
 
 # Each client's bar ends with a clock in its zone, after the stub's memory
 # figure (status-stats.sh rounds its 73.98 to 74). The #() job's first draw
@@ -204,10 +180,7 @@ for client in yerevan:Asia/Yerevan kiritimati:Pacific/Kiritimati server:-; do
   zone=$(expect_zone "$sent")
   before=$(in_zone "$zone" '%H:%M')
   want="mem 74%   $(in_zone "$zone" '%d %b') [0-9]{2}:[0-9]{2} $(in_zone "$zone" '%Z' | sed 's/+/\\+/')"
-  for _ in $(seq 100); do
-    grep -aqE "$want" "$WORK/$name.screen" && break
-    sleep 0.1
-  done
+  until_ok 10 grep -aqE "$want" "$WORK/$name.screen"
   drawn=$(grep -aoE "$want" "$WORK/$name.screen" | tail -1)
   after=$(in_zone "$zone" '%H:%M')
   hm=$(grep -oE '[0-9]{2}:[0-9]{2}' <<<"$drawn")
@@ -244,5 +217,4 @@ else
     || fail "fish on $OS set LC_CLIENT_TZ='$got'"
 fi
 
-[ "$failures" -eq 0 ] && log "all passed" || log "$failures failed"
-[ "$failures" -eq 0 ]
+finish

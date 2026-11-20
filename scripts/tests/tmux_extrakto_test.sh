@@ -24,7 +24,8 @@ for cmd in tmux fzf python3; do
   }
 done
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 WORK=$(mktemp -d)
 H="$WORK/home"
 # Unix socket paths are capped near 104 bytes, so not under $WORK.
@@ -35,18 +36,11 @@ TMUX_BIN=$(command -v tmux)
 # cannot talk to this server, see tmux_hooks_test.sh), fzf and python3.
 SERVER_PATH="$(dirname "$TMUX_BIN"):$(dirname "$(command -v fzf)"):$(dirname "$(command -v python3)"):/usr/bin:/bin"
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 cleanup() {
   [ -n "${client:-}" ] && kill "$client" 2>/dev/null
   t kill-server 2>/dev/null
   rm -rf "$SOCKDIR"
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
+  drop_work
 }
 trap cleanup EXIT
 
@@ -61,21 +55,11 @@ cursor_line() {
   y=$(t display-message -p -t %1 '#{cursor_y}')
   t capture-pane -p -t %1 -S "$y" -E "$y" | sed 's/ *$//'
 }
-# until_ok <seconds> <command...>: retry the command every 0.1 s until it passes
-until_ok() {
-  local n=$(($1 * 10))
-  shift
-  for _ in $(seq "$n"); do
-    "$@" && return 0
-    sleep 0.1
-  done
-  return 1
-}
 line_is() { [ "$(cursor_line)" = "$1" ]; }
 # fzf_up: extrakto's fzf runs in the popup; a beat more for it to read keys
 fzf_up() { pgrep -f 'fzf --multi --print-query' >/dev/null && sleep 0.3; }
-# press <bytes>: what the terminal sends, written into the client's pty
-press() { printf '%b' "$1" >"$WORK/keys"; }
+# press <keys>: what the terminal sends, in Python escapes (pty_client.py)
+press() { printf '%s\n' "$1" >"$WORK/keys"; }
 
 grep -E '^(set-option -g prefix |set-option -g @extrakto_|run-shell .*/extrakto\.tmux)' \
   "$REPO/home/.config/tmux/tmux.conf" >"$WORK/extrakto.conf"
@@ -92,25 +76,10 @@ fi
 
 # --- the client -------------------------------------------------------------------
 
-# Attaches to a in a 120x40 pty and writes whatever arrives on the fifo into
-# it, as keystrokes; then stays until killed.
+# A 120x40 terminal on a, sent each line written to the fifo as the keys it
+# spells.
 mkfifo "$WORK/keys"
-python3 - "$TMUX_BIN" "$SOCK" "$H" "$SERVER_PATH" "$WORK/keys" <<'PYEOF' &
-import fcntl, os, pty, select, struct, sys, termios
-tmux, sock, home, path, keys = sys.argv[1:]
-pid, fd = pty.fork()
-if pid == 0:
-    fcntl.ioctl(0, termios.TIOCSWINSZ, struct.pack("HHHH", 40, 120, 0, 0))
-    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=a"], {"HOME": home, "PATH": path, "TERM": "xterm-256color"})
-fifo = os.open(keys, os.O_RDWR)
-while True:
-    ready = select.select([fd, fifo], [], [])[0]
-    if fifo in ready:
-        os.write(fd, os.read(fifo, 4096))
-    if fd in ready:
-        try: os.read(fd, 65536)
-        except OSError: break
-PYEOF
+python3 "$PTY_CLIENT" "$TMUX_BIN" "$SOCK" "$H" a --keys "$WORK/keys" --path "$SERVER_PATH" --size 40x120 &
 client=$!
 attached() { [ -n "$(t list-clients -F x)" ]; }
 until_ok 5 attached || fail "the client never attached"
@@ -145,5 +114,4 @@ else
   fail "no extrakto fzf for the copy"
 fi
 
-[ "$failures" -eq 0 ] && log "all passed" || log "$failures failed"
-[ "$failures" -eq 0 ]
+finish

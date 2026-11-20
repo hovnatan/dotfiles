@@ -113,8 +113,8 @@ for cmd in tmux python3; do
   }
 done
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
-PTY="$REPO/scripts/tests/pty_client.py"
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 WORK=$(mktemp -d)
 H="$WORK/home"
 # Unix socket paths are capped near 104 bytes, so not under $WORK.
@@ -122,13 +122,6 @@ SOCKDIR=$(mktemp -d /tmp/hooktest.XXXXXX)
 SOCK="$SOCKDIR/hooks"
 TMUX_BIN=$(command -v tmux)
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 cleanup() {
   [ -n "${client:-}" ] && kill "$client" 2>/dev/null
   [ -n "${bystander:-}" ] && kill "$bystander" 2>/dev/null
@@ -137,7 +130,7 @@ cleanup() {
   t kill-server 2>/dev/null
   [ -n "${WSOCK:-}" ] && tw kill-server 2>/dev/null
   rm -rf "$SOCKDIR"
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
+  drop_work
 }
 trap cleanup EXIT
 
@@ -181,16 +174,6 @@ ln -s "$REPO/home" "$H/.dotfiles/home"
 ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
 t() { env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin" TERM=xterm-256color "$TMUX_BIN" -S "$SOCK" "$@"; }
 hooks_log() { cat "$H"/.dotfiles/.logs/*_tmux_hooks/events.log 2>/dev/null; }
-# until_ok <seconds> <command...>: poll until the command succeeds
-until_ok() {
-  local n=$(($1 * 10))
-  shift
-  for _ in $(seq "$n"); do
-    "$@" && return 0
-    sleep 0.1
-  done
-  return 1
-}
 log_has() { hooks_log | grep -q -E -- "$1"; }
 # wait_for <pattern>: until the log has a line matching it, 5 s at most
 wait_for() { until_ok 5 log_has "$1"; }
@@ -220,7 +203,7 @@ fi
 # The client under test, on a: a terminal (pty_client.py) that is sent each
 # line written to its fifo as the bytes the line spells.
 mkfifo "$WORK/akeys"
-python3 "$PTY" "$TMUX_BIN" "$SOCK" "$H" a --keys "$WORK/akeys" &
+python3 "$PTY_CLIENT" "$TMUX_BIN" "$SOCK" "$H" a --keys "$WORK/akeys" &
 client=$!
 
 wait_for ' attached [^ ]+ session=a$' \
@@ -230,7 +213,7 @@ client_tty=$(t list-clients -t =a -F '#{client_tty}')
 # test: it is then the client tmux had last, which is the one a wrong format
 # names. With a single client, or with the bystander first, every format
 # names the right one.
-python3 "$PTY" "$TMUX_BIN" "$SOCK" "$H" b &
+python3 "$PTY_CLIENT" "$TMUX_BIN" "$SOCK" "$H" b &
 bystander=$!
 until_ok 5 attached t b || fail "the bystander never attached to b"
 bystander_tty=$(t list-clients -t =b -F '#{client_tty}')
@@ -333,7 +316,7 @@ tw new-session -d -s solo 'sleep 300'
   && pass "a session of one window has the bar, on top" \
   || fail "one window: status w=$(status_of w) solo=$(status_of solo), position $(tw show -gv status-position), right '$(tw show -gv status-right)'"
 
-python3 "$PTY" "$TMUX_BIN" "$WSOCK" "$H" w --keys "$WORK/keys" --screen "$WORK/screen" &
+python3 "$PTY_CLIENT" "$TMUX_BIN" "$WSOCK" "$H" w --keys "$WORK/keys" --screen "$WORK/screen" &
 wclient=$!
 # send_keys <python escapes>: what the terminal would send; tmux handles it at once,
 # the pause lets the commands it runs (run-shell -C) finish
@@ -786,7 +769,7 @@ tw set-option -u -t =solo: @bell_at
 # clears it. Each line written to $WORK/bgkeys is sent as the bytes it spells.
 tw new-session -d -s bg 'sleep 300'
 mkfifo "$WORK/bgkeys"
-python3 "$PTY" "$TMUX_BIN" "$WSOCK" "$H" bg --keys "$WORK/bgkeys" &
+python3 "$PTY_CLIENT" "$TMUX_BIN" "$WSOCK" "$H" bg --keys "$WORK/bgkeys" &
 bgclient=$!
 until_ok 5 attached tw bg || fail "no client attached to bg"
 bgname=$(tw list-clients -t =bg -F '#{client_name}')
@@ -1013,5 +996,4 @@ odd=$(hooks_log | grep -c -v -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[
 [ "$odd" = 0 ] && pass "every line is UTC-stamped ($(hooks_log | wc -l | tr -d ' ') lines, one file for all the hooks)" \
   || fail "$odd line(s) without a UTC stamp"
 
-log "$failures failure(s)"
-[ "$failures" -eq 0 ]
+finish

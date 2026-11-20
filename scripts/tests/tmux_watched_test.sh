@@ -45,7 +45,8 @@ for cmd in tmux python3; do
   }
 done
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 . "$REPO/scripts/lib/event_log.sh"
 event_log_start tmux_watched_test --no-prune
 
@@ -54,13 +55,6 @@ WORK=$(mktemp -d)
 # Unix socket paths are capped near 108 bytes, so not under $WORK.
 SOCK="/tmp/tmuxwatched-$$.sock"
 
-failures=0
-# log prints each line as well as recording it (scripts/lib/event_log.sh).
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 t() { tmux -S "$SOCK" "$@"; }
 
 clients_pids=""
@@ -96,29 +90,19 @@ wait_focus() {
   done
 }
 
-# focused_client <session> [<file>]: a real tmux client in a pty, attached to
-# the session; the focus-in sequence it is sent is what a terminal emits when
-# its window gains focus, which sets client_flags focused and refreshes
-# client_activity -- exactly what the rule tests. When <file> appears it
-# sends the focus-out a terminal emits on losing focus. Waits until tmux
-# has the client focused (wait_focus); its pid is appended to $clients_pids.
+# focused_client <session>: a terminal (pty_client.py) attached to the
+# session and sent the focus-in a terminal emits when its window gains focus,
+# which sets client_flags focused and refreshes client_activity -- exactly
+# what the rule tests. Waits until tmux has the client focused (wait_focus);
+# its pid is appended to $clients_pids. A line written to
+# $WORK/keys.<session> is sent to it as the bytes it spells.
+attached() { [ -n "$(t list-clients -t "=$1" -F x 2>/dev/null)" ]; }
 focused_client() {
-  python3 - "$SOCK" "$1" "${2:-$WORK/never}" <<'PYEOF' &
-import os, pty, select, sys, time
-pid, fd = pty.fork()
-if pid == 0:
-    env = {k: v for k, v in os.environ.items() if k not in ("TMUX", "TMUX_PANE")} | {"TERM": "xterm-256color"}
-    os.execvpe("tmux", ["tmux", "-S", sys.argv[1], "attach", "-t", "=" + sys.argv[2]], env)
-time.sleep(1); os.write(fd, b"\x1b[I")
-end = time.time() + 60; unfocused = False
-while time.time() < end:
-    if not unfocused and os.path.exists(sys.argv[3]):
-        os.write(fd, b"\x1b[O"); unfocused = True
-    if select.select([fd], [], [], 0.1)[0]:
-        try: os.read(fd, 65536)
-        except OSError: break
-PYEOF
+  mkfifo "$WORK/keys.$1"
+  python3 "$PTY_CLIENT" "$(command -v tmux)" "$SOCK" "$HOME" "$1" --keys "$WORK/keys.$1" --path "$PATH" &
   clients_pids+=" $!"
+  until_ok 5 attached "$1" || fail "no client attached to $1"
+  printf '%s\n' '\x1b[I' >"$WORK/keys.$1"
   wait_focus "=$1" yes
 }
 
@@ -126,7 +110,7 @@ sid_nobody=$(new_session nobody)
 # watched: the pane's window 0 is the current one of two.
 sid_watched=$(new_session watched)
 t new-window -d -t "=watched:" 'sleep 1000'
-focused_client watched "$WORK/unfocus"
+focused_client watched
 # elsewhere: the client is on window 1, a shell beside the pane's.
 sid_else=$(new_session elsewhere)
 t new-window -t "=elsewhere:" 'sleep 1000'
@@ -194,7 +178,7 @@ session_is "a focused client, the window zoomed" 0 "^$SEEN\$" "$sid_zoom"
 session_is "the one a window was moved out of" 1 '^no client attached$' "$sid_moved"
 
 # The same client loses focus.
-touch "$WORK/unfocus"
+printf '%s\n' '\x1b[O' >"$WORK/keys.watched"
 wait_focus "\$$sid_watched" no
 pane_is "after focus-out" 1 "^$TTY not focused, input [0-9]+s ago\$" "$sid_watched"
 session_is "after focus-out" 1 "^$TTY not focused, input [0-9]+s ago\$" "$sid_watched"
@@ -242,5 +226,4 @@ is "an unknown question" 64 '^tmux_watched.sh: usage: ' bogus
 is "pane with no pane" 64 '^tmux_watched.sh: usage: ' -S "$SOCK" pane
 is "a socket and no question" 64 '^tmux_watched.sh: usage: ' -S "$SOCK"
 
-log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"
-exit $((failures > 0))
+finish

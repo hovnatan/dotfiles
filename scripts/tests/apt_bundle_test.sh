@@ -36,9 +36,8 @@
 
 set -uo pipefail
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
-
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 
 # --- host: hand over to the container -------------------------------------------
 
@@ -58,8 +57,7 @@ fi
 
 # --- container ------------------------------------------------------------------
 
-failures=0
-pass() { log "PASS $*"; }
+# lib.sh's, and the output the check looked at
 fail() {
   log "FAIL $*"
   sed 's/^/    | /' "$OUT"
@@ -244,9 +242,4 @@ says_not "apt-get install docker-ce" "drift: installs only what is missing"
 bundle check
 expect 0 "drift: check afterwards"
 
-if [ "$failures" -eq 0 ]; then
-  log "all passed"
-else
-  log "$failures failed"
-  exit 1
-fi
+finish

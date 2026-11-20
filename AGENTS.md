@@ -27,7 +27,9 @@ It is kept short on purpose - every line here is paid on every session.
 - Changing `scripts/claude_manager_start.sh`, the claude-tmux unit or a tmux
   hook (`home/.config/tmux/`, the `set-hook` lines): extend `scripts/tests/`
   with the new behaviour; changing a claude mod (`home/.claude/mods/`): its
-  own `hooks/register.test.ts`. Tests are safe beside live sessions.
+  own `hooks/register.test.ts`. A shell test sources `scripts/tests/lib.sh`
+  (its header lists what it gives; a tmux client is `pty_client.py`). Tests
+  are safe beside live sessions.
 - This repo is public, commit messages included. Host names, IPs, tailnet
   names and internal documents go in the private repos (`~/.dotfiles-private`
   personal, with each machine's own files such as `~/.ssh/local_config`;

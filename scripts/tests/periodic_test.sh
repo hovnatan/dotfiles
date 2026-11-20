@@ -26,7 +26,8 @@ command -v gtimeout >/dev/null || {
   exit 1
 }
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 SCRIPT="$REPO/scripts/periodic.sh"
 WORK=$(mktemp -d)
 H="$WORK/home"
@@ -37,17 +38,7 @@ NOTES="$WORK/notifications"
 mkdir -p "$PUB" "$PRIV" "$WORK/bin"
 : >"$NOTES"
 
-failures=0
-log() { printf '%s %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
-cleanup() {
-  if [ "$failures" -eq 0 ]; then rm -rf "$WORK"; else log "kept work dir: $WORK"; fi
-}
-trap cleanup EXIT
+trap drop_work EXIT
 
 # Notification stubs: one line per notification, whichever OS this is.
 for stub in osascript notify-send; do
@@ -174,5 +165,4 @@ else
 fi
 rm -rf "$STATE/.lock"
 
-log "$([ "$failures" -eq 0 ] && echo "all passed" || echo "$failures failed")"
-exit $((failures > 0))
+finish

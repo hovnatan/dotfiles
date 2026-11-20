@@ -28,21 +28,14 @@ command -v jq >/dev/null || {
   exit 1
 }
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 . "$REPO/scripts/lib/event_log.sh"
 event_log_start session_done_loaded_check_test --no-prune
 
 CHECK="$REPO/home/.claude/mods/session-done/loaded-check.sh"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
-
-failures=0
-# log prints each line as well as recording it (scripts/lib/event_log.sh).
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 
 ID=4f1c9a2e-0000-4000-8000-000000000000
 INPUT="{\"session_id\":\"$ID\",\"cwd\":\"/home/u/work/bench\",\"hook_event_name\":\"SessionStart\",\"source\":\"startup\"}"
@@ -97,5 +90,4 @@ h=$(home noid)
 is "an input with no session_id" "$h" '' 1 '^loaded-check.sh: no session_id or cwd in the SessionStart input: \{"cwd":"/x"\}$' '' '{"cwd":"/x"}'
 is "an input that is not JSON" "$h" '' 1 'loaded-check.sh: the SessionStart input is not JSON: nonsense$' '' 'nonsense'
 
-log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"
-exit $((failures > 0))
+finish

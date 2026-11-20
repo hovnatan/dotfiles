@@ -18,7 +18,8 @@
 # not have, not a dependency of the script.
 set -u
 
-REPO=$(cd "$(dirname "$0")/../.." && pwd)
+# shellcheck source=scripts/tests/lib.sh
+. "$(dirname "$0")/lib.sh"
 . "$REPO/scripts/lib/event_log.sh"
 event_log_start machine_name_test --no-prune
 
@@ -27,14 +28,6 @@ trap 'rm -rf "$WORK"' EXIT
 H="$WORK/home"
 FILE="$H/.config/dotfiles/machine-name"
 mkdir -p "${FILE%/*}" "$WORK/bin"
-
-failures=0
-# log prints each line as well as recording it (scripts/lib/event_log.sh).
-pass() { log "PASS $*"; }
-fail() {
-  log "FAIL $*"
-  failures=$((failures + 1))
-}
 
 # hostname prints what $WORK/hostname holds.
 printf '#!/bin/sh\ncat "%s/hostname"\n' "$WORK" >"$WORK/bin/hostname"
@@ -89,5 +82,4 @@ rm "$FILE"
 : >"$WORK/hostname"
 expect_refused "a hostname that prints nothing" "hostname prints nothing"
 
-log "$failures failed"
-[ "$failures" = 0 ]
+finish
