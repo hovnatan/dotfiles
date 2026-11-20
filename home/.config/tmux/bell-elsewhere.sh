@@ -20,10 +20,6 @@
 #        2026-11-10T02:10:00Z bell session=solo window=1 (* vm/fix): unwatched
 #          (ttys002 not focused, input 41s ago), marked
 #
-# The marker is all there is. Until 2026-11-19 each terminal of another
-# session was also sent a 5 s message "bell: solo:1 * vm/fix", which took
-# over its whole bar (window list, title and clock) at every bell.
-#
 # Why @bell: tmux marks a bell itself (#{session_alerts}) only in a window no
 # client shows; one in the window an unfocused tab shows leaves no trace.
 # tmux.conf's client-attached, client-session-changed and client-focus-in
