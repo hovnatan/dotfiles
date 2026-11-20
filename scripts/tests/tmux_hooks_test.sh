@@ -114,6 +114,7 @@ for cmd in tmux python3; do
 done
 
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
+PTY="$REPO/scripts/tests/pty_client.py"
 WORK=$(mktemp -d)
 H="$WORK/home"
 # Unix socket paths are capped near 104 bytes, so not under $WORK.
@@ -180,14 +181,23 @@ ln -s "$REPO/home" "$H/.dotfiles/home"
 ln -s "$REPO/scripts" "$H/.dotfiles/scripts"
 t() { env -i HOME="$H" PATH="$(dirname "$TMUX_BIN"):/usr/bin:/bin" TERM=xterm-256color "$TMUX_BIN" -S "$SOCK" "$@"; }
 hooks_log() { cat "$H"/.dotfiles/.logs/*_tmux_hooks/events.log 2>/dev/null; }
-# wait_for <pattern>: until the log has a line matching it, 5 s at most
-wait_for() {
-  for _ in $(seq 50); do
-    hooks_log | grep -q -E -- "$1" && return 0
+# until_ok <seconds> <command...>: poll until the command succeeds
+until_ok() {
+  local n=$(($1 * 10))
+  shift
+  for _ in $(seq "$n"); do
+    "$@" && return 0
     sleep 0.1
   done
   return 1
 }
+log_has() { hooks_log | grep -q -E -- "$1"; }
+# wait_for <pattern>: until the log has a line matching it, 5 s at most
+wait_for() { until_ok 5 log_has "$1"; }
+# attached <t|tw> <session>: a client is on the session
+attached() { [ -n "$("$1" list-clients -t "=$2" -F x)" ]; }
+# gone <pid>: no such process
+gone() { ! kill -0 "$1" 2>/dev/null; }
 
 # bash, not sleep: Ubuntu 26.04's sleep is uutils' multi-call binary, which
 # refuses to run under another name (a copy: "coreutils: unknown program
@@ -207,23 +217,10 @@ fi
 
 # --- the clients ------------------------------------------------------------------
 
-# Attaches to a and, once the bystander is there too, reports focus in, out,
-# in, a second apart, as a terminal with focus reporting on does; then stays
-# until killed.
-python3 - "$TMUX_BIN" "$SOCK" "$H" <<'PYEOF' &
-import os, pty, select, sys, time
-tmux, sock, home = sys.argv[1:]
-pid, fd = pty.fork()
-if pid == 0:
-    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=a"], {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"})
-start = time.time(); todo = [(3.0, b"\x1b[I"), (4.0, b"\x1b[O"), (5.0, b"\x1b[I")]
-while True:
-    if todo and time.time() - start >= todo[0][0]:
-        os.write(fd, todo.pop(0)[1])
-    if select.select([fd], [], [], 0.05)[0]:
-        try: os.read(fd, 65536)
-        except OSError: break
-PYEOF
+# The client under test, on a: a terminal (pty_client.py) that is sent each
+# line written to its fifo as the bytes the line spells.
+mkfifo "$WORK/akeys"
+python3 "$PTY" "$TMUX_BIN" "$SOCK" "$H" a --keys "$WORK/akeys" &
 client=$!
 
 wait_for ' attached [^ ]+ session=a$' \
@@ -233,26 +230,17 @@ client_tty=$(t list-clients -t =a -F '#{client_tty}')
 # test: it is then the client tmux had last, which is the one a wrong format
 # names. With a single client, or with the bystander first, every format
 # names the right one.
-python3 - "$TMUX_BIN" "$SOCK" "$H" <<'PYEOF' &
-import os, pty, sys
-tmux, sock, home = sys.argv[1:]
-pid, fd = pty.fork()
-if pid == 0:
-    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=b"], {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"})
-while True:
-    try:
-        if not os.read(fd, 65536): break
-    except OSError: break
-PYEOF
+python3 "$PTY" "$TMUX_BIN" "$SOCK" "$H" b &
 bystander=$!
-for _ in $(seq 50); do
-  [ -n "$(t list-clients -t =b -F '#{client_tty}')" ] && break
-  sleep 0.1
-done
+until_ok 5 attached t b || fail "the bystander never attached to b"
 bystander_tty=$(t list-clients -t =b -F '#{client_tty}')
 
-wait_for ' focus-in [^ ]+ session=a$' || true
-sleep 3
+# Focus in, out, in, a second apart, as a terminal with focus reporting on
+# sends them.
+for report in '\x1b[I' '\x1b[O' '\x1b[I'; do
+  printf '%s\n' "$report" >"$WORK/akeys"
+  sleep 1
+done
 focus=$(hooks_log | sed -n -E 's/.* (focus-(in|out)) [^ ]+ session=a$/\1/p' | tr '\n' ' ')
 case "$focus" in
   *"focus-in focus-out focus-in ") pass "focus in, out, in are logged in order ($focus)" ;;
@@ -321,11 +309,7 @@ tw_stop() {
   local pid
   pid=$(tw display-message -p '#{pid}' 2>/dev/null) || return 0
   tw kill-server
-  for _ in $(seq 50); do
-    kill -0 "$pid" 2>/dev/null || return 0
-    sleep 0.1
-  done
-  fail "tmux server $pid outlived kill-server by 5 s"
+  until_ok 5 gone "$pid" || fail "tmux server $pid outlived kill-server by 5 s"
 }
 stats() { env -i HOME="$H" PATH=/usr/bin:/bin "$H/.dotfiles/home/.config/tmux/status-stats.sh" 2>&1; }
 out=$(stats)
@@ -349,29 +333,7 @@ tw new-session -d -s solo 'sleep 300'
   && pass "a session of one window has the bar, on top" \
   || fail "one window: status w=$(status_of w) solo=$(status_of solo), position $(tw show -gv status-position), right '$(tw show -gv status-right)'"
 
-python3 - "$TMUX_BIN" "$WSOCK" "$H" "$WORK/keys" "$WORK/screen" <<'PYEOF' &
-import os, pty, select, sys
-tmux, sock, home, keys, screen = sys.argv[1:]
-out = open(screen, "wb", buffering=0)  # what the terminal was sent to draw
-pid, fd = pty.fork()
-if pid == 0:
-    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=w"], {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"})
-kfd = os.open(keys, os.O_RDWR)  # RDWR: no EOF while no writer is open
-buf = b""
-while True:
-    r = select.select([fd, kfd], [], [], 0.1)[0]
-    if kfd in r:
-        buf += os.read(kfd, 4096)
-        while b"\n" in buf:
-            line, buf = buf.split(b"\n", 1)
-            os.write(fd, line.decode().encode("latin-1").decode("unicode_escape").encode("latin-1"))
-    if fd in r:
-        try:
-            data = os.read(fd, 65536)
-        except OSError: break
-        if not data: break
-        out.write(data)
-PYEOF
+python3 "$PTY" "$TMUX_BIN" "$WSOCK" "$H" w --keys "$WORK/keys" --screen "$WORK/screen" &
 wclient=$!
 # send_keys <python escapes>: what the terminal would send; tmux handles it at once,
 # the pause lets the commands it runs (run-shell -C) finish
@@ -379,21 +341,15 @@ send_keys() {
   printf '%s\n' "$1" >"$WORK/keys"
   sleep 0.5
 }
-for _ in $(seq 50); do
-  [ -n "$(tw list-clients -t =w -F '#{client_tty}')" ] && break
-  sleep 0.1
-done
+until_ok 5 attached tw w || fail "no client attached to w"
 # What the client draws on the right: the stub's numbers labelled and
 # rounded, then the server's date, time and zone, groups three spaces apart. The numbers are a #() job, so the
 # first draw has the date alone (the job still running): wait for a later one.
 # The minute by pattern: it may turn between this line and the draw.
 stats_clock="cpu  8%  mem 74%   $(tw display -p '%d %b') [0-9]{2}:[0-9]{2} $(tw display -p '%Z')"
 want="\(box\) \[w\]   $stats_clock"
-for _ in $(seq 50); do
-  grep -aqE "$want" "$WORK/screen" && break
-  sleep 0.1
-done
-grep -aqE "$want" "$WORK/screen" && pass "the bar draws '$(grep -aoE "$want" "$WORK/screen" | tail -1)' on the right, the machine's name first" \
+until_ok 5 grep -aqE "$want" "$WORK/screen" \
+  && pass "the bar draws '$(grep -aoE "$want" "$WORK/screen" | tail -1)' on the right, the machine's name first" \
   || fail "the bar never drew '$want'; screen: $(tr -c '[:print:]' ' ' <"$WORK/screen" | grep -o '[a-z]* [0-9.]*% [^E]*' | tail -2)"
 title() { tw display -p -t =w: '#{T:set-titles-string}'; }
 [ "$(title)" = "(box) [w]" ] && pass "the terminal's title is '$(title)'" || fail "the terminal's title is '$(title)', not '(box) [w]'"
@@ -424,11 +380,8 @@ long=$(printf 'n%.0s' {1..40})
 tw new-session -d -s "$long" 'sleep 300'
 tw switch-client -t "=$long"
 want="\(box\) \[$(printf 'n%.0s' {1..25})\.\.\.   $stats_clock"
-for _ in $(seq 1 50); do
-  grep -aqE "$want" "$WORK/screen" && break
-  sleep 0.1
-done
-grep -aqE "$want" "$WORK/screen" && pass "a long session name is cut, the clock kept: '$(grep -aoE "$want" "$WORK/screen" | tail -1)'" \
+until_ok 5 grep -aqE "$want" "$WORK/screen" \
+  && pass "a long session name is cut, the clock kept: '$(grep -aoE "$want" "$WORK/screen" | tail -1)'" \
   || fail "the bar never drew '$want'; screen: $(tr -c '[:print:]' ' ' <"$WORK/screen" | grep -o '[a-z]* [0-9.]*% [^E]*' | tail -2)"
 tw switch-client -t =w
 tw kill-session -t "=$long"
@@ -473,13 +426,8 @@ tw new-window -d -t =cc: "$WORK/cc/notitle -c 'while :; do echo .; read -r -t 0.
 # -u: the client tw starts has no locale (env -i), and without it tmux
 # prints the glyph as "_"
 names() { tw -u list-windows -t =cc: -F '#{window_name}' | paste -sd '|' -; }
-wait_names() {
-  for _ in $(seq 40); do
-    [ "$(names)" = "$1" ] && return 0
-    sleep 0.1
-  done
-  return 1
-}
+names_are() { [ "$(names)" = "$1" ]; }
+wait_names() { until_ok 4 names_are "$1"; }
 wait_names "$cc_title|nvim: init.lua|notitle" \
   && pass "windows are named after their pane's title as reported (glyph kept), a titleless one after its program" \
   || fail "window names: '$(names)', titles $(tw list-panes -s -t =cc: -F '#{pane_title}' | paste -sd '|' -)"
@@ -774,11 +722,7 @@ wait_for " bell session=solo window=$ring \(ring #S\): unwatched \(no client att
 # solo:N <name>" for 5 s, until 2026-11-19). The log line above is the
 # script's last act, so a message would have been sent by now; the wait is
 # for the client to draw the marker, after which a message would be drawn too.
-for _ in $(seq 50); do
-  grep -aqF " solo:$ring! " "$WORK/screen" && break
-  sleep 0.1
-done
-grep -aqF " solo:$ring! " "$WORK/screen" && ! grep -aqF "bell: solo:" "$WORK/screen" \
+until_ok 5 grep -aqF " solo:$ring! " "$WORK/screen" && ! grep -aqF "bell: solo:" "$WORK/screen" \
   && pass "w's client draws the marker ' solo:$ring! ' and no 'bell: solo:...' message" \
   || fail "w's client drew: marker $(grep -acF " solo:$ring! " "$WORK/screen") time(s), message '$(grep -aoF "bell: solo:$ring ring #S" "$WORK/screen" | head -1)'"
 # @bell_marker as tmux expands it for that client: the marker in the bell
@@ -787,6 +731,7 @@ grep -aqF " solo:$ring! " "$WORK/screen" && ! grep -aqF "bell: solo:" "$WORK/scr
 # when it is on the target session, by default the latest active client's,
 # so with a second client in bg it expanded bg's bar (#{client_session} bg).
 left() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:@bell_marker}'; }
+no_marker() { [ -z "$(left)" ]; }
 right() { tw list-clients -f "#{==:#{client_name},$wname}" -F '#{E:status-right}'; }
 want="#[fg=#282828,bg=#d79921] solo:$ring! #[default] "
 [ "$(left)" = "$want" ] && pass "w's bell marker marks solo: '$(left)'" \
@@ -819,11 +764,7 @@ tw switch-client -c "$wname" -t =w
 # The switch's set-option -qu @bell waits behind client-session-changed[0],
 # focus-out-unattached.sh, which runs without -b: the marker clears a moment
 # after the switch returns, not at once.
-for _ in $(seq 50); do
-  [ -z "$(left)" ] && break
-  sleep 0.1
-done
-[ -z "$(left)" ] && pass "once the window was shown, the marker is gone" \
+until_ok 5 no_marker && pass "once the window was shown, the marker is gone" \
   || fail "after showing solo:$ring: bell marker '$(left)'"
 tw kill-window -t "=solo:$ring"
 
@@ -845,37 +786,14 @@ tw set-option -u -t =solo: @bell_at
 # clears it. Each line written to $WORK/bgkeys is sent as the bytes it spells.
 tw new-session -d -s bg 'sleep 300'
 mkfifo "$WORK/bgkeys"
-python3 - "$TMUX_BIN" "$WSOCK" "$H" "$WORK/bgkeys" <<'PYEOF' &
-import os, pty, select, sys
-tmux, sock, home, keys = sys.argv[1:]
-pid, fd = pty.fork()
-if pid == 0:
-    os.execve(tmux, [tmux, "-S", sock, "attach", "-t", "=bg"], {"HOME": home, "PATH": "/usr/bin:/bin", "TERM": "xterm-256color"})
-kfd = os.open(keys, os.O_RDWR)
-buf = b""
-while True:
-    r = select.select([fd, kfd], [], [], 0.1)[0]
-    if kfd in r:
-        buf += os.read(kfd, 4096)
-        while b"\n" in buf:
-            line, buf = buf.split(b"\n", 1)
-            os.write(fd, line.decode().encode("latin-1").decode("unicode_escape").encode("latin-1"))
-    if fd in r:
-        try:
-            if not os.read(fd, 65536): break
-        except OSError: break
-PYEOF
+python3 "$PTY" "$TMUX_BIN" "$WSOCK" "$H" bg --keys "$WORK/bgkeys" &
 bgclient=$!
-for _ in $(seq 50); do
-  bgname=$(tw list-clients -t =bg -F '#{client_name}')
-  [ -n "$bgname" ] && break
-  sleep 0.1
-done
+until_ok 5 attached tw bg || fail "no client attached to bg"
+bgname=$(tw list-clients -t =bg -F '#{client_name}')
 bg_flags() { tw list-clients -t =bg -F '#{client_flags}'; }
+bg_unfocused() { case ,$(bg_flags), in *,focused,*) return 1 ;; esac }
 printf '%s\n' '\x1b[O' >"$WORK/bgkeys"
-for _ in $(seq 50); do
-  case ,$(bg_flags), in *,focused,*) sleep 0.1 ;; *) break ;; esac
-done
+until_ok 5 bg_unfocused
 tw respawn-pane -k -t =bg: "printf '\\a'; exec sleep 100"
 wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} not focused, input [0-9]+s ago\), marked$" \
   && pass "a bell where bg's unfocused client looks is logged as unwatched and marked" \
@@ -885,11 +803,7 @@ want="#[fg=#282828,bg=#d79921] bg:0! #[default] "
   && pass "w's bell marker marks bg by @bell, tmux holding no alert: '$(left)'" \
   || fail "w's bell marker is '$(left)', wanted '$want'; bg's alerts '$(tw display -p -t =bg: '#{session_alerts}')', @bell '$(tw show -t =bg: -qv @bell)'; clients: $(tw list-clients -F '#{client_name} on #{client_session}' | paste -sd ' ' -); sessions: $(tw list-sessions -F '#{session_name}=#{session_id}@bell[#{@bell}]alerts[#{session_alerts}]' | paste -sd ' ' -)"
 printf '%s\n' '\x1b[I' >"$WORK/bgkeys"
-for _ in $(seq 50); do
-  [ -z "$(left)" ] && break
-  sleep 0.1
-done
-[ -z "$(left)" ] && [ -z "$(tw show -t =bg: -qv @bell)" ] \
+until_ok 5 no_marker && [ -z "$(tw show -t =bg: -qv @bell)" ] \
   && pass "bg's client focused again: the marker is gone" \
   || fail "after bg's focus-in: w's bell marker '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
 
@@ -909,11 +823,7 @@ wait_for " bell session=bg window=0 \([^)]*\): unwatched \(${bgname#/dev/} focus
   || fail "after the stale-focus bell: w's bell marker '$(left)', wanted '$want'"
 sleep 1.1 # input in a later second than @bell_at: the compare is by the second
 printf '%s\n' 'x' >"$WORK/bgkeys"
-for _ in $(seq 50); do
-  [ -z "$(left)" ] && break
-  sleep 0.1
-done
-[ -z "$(left)" ] && [ "$(tw show -t =bg: -qv @bell)" = '0!' ] \
+until_ok 5 no_marker && [ "$(tw show -t =bg: -qv @bell)" = '0!' ] \
   && pass "a key typed in bg hides the marker, @bell still set (no focus-in came)" \
   || fail "after a key in bg: w's bell marker '$(left)', bg's @bell '$(tw show -t =bg: -qv @bell)'"
 tw set-environment -gu TMUX_WATCHED_STALE_SECONDS
@@ -1026,18 +936,9 @@ if [ "$(uname)" = Darwin ]; then
   }
   job_of() { # <timeout>: the job's pid, once it is up. Anchored: the pane's
     # own sh -c line holds the same words until it execs.
-    for _ in $(seq 30); do
-      pgrep -f -- "^$BASH_BIN -c read -r -t $1 " && return
-      sleep 0.1
-    done
+    until_ok 3 pgrep -f -- "^$BASH_BIN -c read -r -t $1 "
   }
-  ended() { # <pid>: true once it has exited, within 6 s
-    for _ in $(seq 60); do
-      kill -0 "$1" 2>/dev/null || return 0
-      sleep 0.1
-    done
-    return 1
-  }
+  ended() { until_ok 6 gone "$1"; } # <pid>: true once it has exited, within 6 s
 
   tw -f "$H/.dotfiles/home/.config/tmux/tmux.conf" new-session -d -s w -x 120 -y 30 'sleep 300'
   gone_pane=$(detached_job "$GONE")
