@@ -7,6 +7,10 @@
 #                          replaced; "was unset" for none) when it changed
 #                          the file, and nothing when the bell was off already
 #                          exit 1 and the reason on stderr when it cannot
+#   engine-bell-off.sh --state
+#                       -> the bell as it is, and nothing written: "off", or
+#                          "on" for any other value or none (loaded-check.sh
+#                          asks, to say what a session without the mod rings)
 #
 # The bell is the `idle_prompt` notification, raised
 # messageIdleNotifThresholdMs after a turn's end (60000 when unset). The key
@@ -25,12 +29,19 @@
 # The setting outlives the mod. With the mod gone, or no longer loading (a
 # claude started with hooks off, a Claude Code whose mod API moved on),
 # nothing rings after a turn at all. loaded-check.sh beside this file, a
-# SessionStart hook of settings.json, says so on screen at each claude start
-# where the mod did not: it looks for the mod's "session: started" line in
-# ~/.dotfiles/.logs/*_claude_session_done/events.log. To undo:
+# SessionStart hook of settings.json, says so on screen in each session
+# where the mod is not running. To undo:
 #   jq 'del(.messageIdleNotifThresholdMs)' ~/.claude.json, written back the same way
 
 set -euo pipefail
+
+case "$#:${1:-}" in
+  0: | 1:--state) ;;
+  *)
+    echo "engine-bell-off.sh: usage: engine-bell-off.sh [--state]" >&2
+    exit 1
+    ;;
+esac
 
 OFF=2147483647
 # Where claude keeps the file: its config directory when one is named.
@@ -42,6 +53,10 @@ file="${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json"
 }
 
 was=$(jq -r '.messageIdleNotifThresholdMs // "unset"' "$file")
+if [ $# -eq 1 ]; then
+  if [ "$was" = "$OFF" ]; then echo off; else echo on; fi
+  exit 0
+fi
 [ "$was" = "$OFF" ] && exit 0
 
 # Beside the file, so the rename stays on one filesystem; mktemp makes it

@@ -29,10 +29,10 @@ export async function ring($: EngineInterface): Promise<string> {
 
 // engine-bell-off.sh, beside this folder, sees to the engine's bell and says
 // what it found (its header has the setting and what turning it off costs).
-// A line at every start, also when there was nothing to do: with the
-// engine's bell off, a mod that has stopped loading means no bell at all,
-// and this line is what loaded-check.sh (a SessionStart hook of
-// settings.json, beside this folder) looks for to say so on screen.
+// A line at every start, also when there was nothing to do: the log then
+// shows which sessions the mod started in. With the engine's bell off, a mod
+// that has stopped loading means no bell at all; loaded-check.sh, beside
+// this folder, says that on screen (register.ts has the mark it goes by).
 export async function engineBellOff($: EngineInterface): Promise<void> {
   const ran = await $.process.run([`${$.plugin.root}/engine-bell-off.sh`]);
   if (ran.exitCode !== 0) {

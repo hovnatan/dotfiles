@@ -91,11 +91,11 @@ pane_of() { t list-panes -t "\$$1:0" -F '#{pane_id}' | head -1; }
 # focused, or none is; 6 s at the most.
 wait_focus() {
   local has
-  for _ in $(seq 30); do
+  for _ in $(seq 120); do
     has=no
     t list-clients -t "$1" -F '#{client_flags}' 2>/dev/null | grep -q focused && has=yes
     [ "$has" = "$2" ] && return
-    sleep 0.2
+    sleep 0.05
   done
 }
 
@@ -176,8 +176,8 @@ is() {
 }
 # pane_is / session_is <label> <want status> <want output> <session id>: the
 # question about that session's first pane, or about the session.
-pane_is() { is "pane, $1" "$2" "$3" pane "$SOCK" "$(pane_of "$4")"; }
-session_is() { is "session, $1" "$2" "$3" session "$SOCK" "\$$4"; }
+pane_is() { is "pane, $1" "$2" "$3" -S "$SOCK" pane "$(pane_of "$4")"; }
+session_is() { is "session, $1" "$2" "$3" -S "$SOCK" session "\$$4"; }
 TTY='(ttys[0-9]+|pts/[0-9]+)'
 SEEN="$TTY focused, input [0-9]+s ago"
 MISMATCH="^tmux -S $SOCK: protocol version mismatch \(client 8, server 9\)\$"
@@ -191,7 +191,7 @@ pane_is "a focused client on its window" 0 "^$SEEN\$" "$sid_watched"
 TMUX_WATCHED_STALE_SECONDS=0 pane_is "focused, but its input is stale" 1 "^$SEEN\$" "$sid_watched"
 pane_is "a focused client on another window" 1 "^$SEEN, on window 1 \(the pane's is 0\)\$" "$sid_else"
 pane_is "its window zoomed onto another pane" 1 "^$SEEN, the pane's window zoomed onto another pane\$" "$sid_zoom"
-is "pane, its window shown in another session by a focused client" 0 "^$SEEN\$" pane "$SOCK" "$pane_moved"
+is "pane, its window shown in another session by a focused client" 0 "^$SEEN\$" -S "$SOCK" pane "$pane_moved"
 # The control client says it is focused, and that is what must not count.
 [[ ",$(t list-clients -t =control -F '#{client_flags}')," == *,focused,* ]] \
   || fail "the control client does not report itself focused, so the checks of it test nothing"
@@ -216,18 +216,24 @@ session_is "after focus-out" 1 "^$TTY not focused, input [0-9]+s ago\$" "$sid_wa
 
 # --- session-name ------------------------------------------------------------
 
-is "session-name: where the pane is now" 0 '^movedto$' session-name "$SOCK" "$pane_moved"
+is "session-name: where the pane is now" 0 '^movedto$' -S "$SOCK" session-name "$pane_moved"
+
+# --- no -S: the server is the caller's, by $TMUX ------------------------------
+
+# As the mod asks, from inside a pane: tmux reads $TMUX, and nothing else does.
+TMUX="$SOCK,$(t display -p '#{pid}'),0" is "pane, the server found by \$TMUX" 0 "^$SEEN\$" pane "$pane_moved"
+TMUX="$WORK/nosuch.sock,1,0" is "pane, \$TMUX naming a server that is gone" 2 '^$' pane %0
 
 # --- gone: the pane, the session, the server ---------------------------------
 
 t kill-pane -t "$pane_gone"
-is "pane killed, its session kept" 2 '^$' pane "$SOCK" "$pane_gone"
-is "session-name of a pane that is gone" 2 '^$' session-name "$SOCK" "$pane_gone"
+is "pane killed, its session kept" 2 '^$' -S "$SOCK" pane "$pane_gone"
+is "session-name of a pane that is gone" 2 '^$' -S "$SOCK" session-name "$pane_gone"
 t kill-session -t =goes
-is "pane, its session killed" 2 '^$' pane "$SOCK" "$pane_goes"
-is "session killed" 2 '^$' session "$SOCK" "\$$sid_goes"
+is "pane, its session killed" 2 '^$' -S "$SOCK" pane "$pane_goes"
+is "session killed" 2 '^$' -S "$SOCK" session "\$$sid_goes"
 for what in pane session session-name; do
-  is "$what with no server on the socket" 2 '^$' "$what" "$WORK/nosuch.sock" %0
+  is "$what with no server on the socket" 2 '^$' -S "$WORK/nosuch.sock" "$what" %0
 done
 
 # --- tmux failing is not "gone" ----------------------------------------------
@@ -241,14 +247,15 @@ EOF
 chmod +x "$WORK/failtmux/tmux"
 # The pane is asked for before PATH changes: pane_of needs the real tmux.
 pane_nobody=$(pane_of "$sid_nobody")
-PATH="$WORK/failtmux:$PATH" is "pane, tmux failing" 3 "$MISMATCH" pane "$SOCK" "$pane_nobody"
-PATH="$WORK/failtmux:$PATH" is "session, tmux failing" 3 "$MISMATCH" session "$SOCK" "\$$sid_nobody"
-PATH="$WORK/failtmux:$PATH" is "session-name, tmux failing" 3 "$MISMATCH" session-name "$SOCK" "$pane_nobody"
+PATH="$WORK/failtmux:$PATH" is "pane, tmux failing" 3 "$MISMATCH" -S "$SOCK" pane "$pane_nobody"
+PATH="$WORK/failtmux:$PATH" is "session, tmux failing" 3 "$MISMATCH" -S "$SOCK" session "\$$sid_nobody"
+PATH="$WORK/failtmux:$PATH" is "session-name, tmux failing" 3 "$MISMATCH" -S "$SOCK" session-name "$pane_nobody"
 
 # --- asked wrongly -----------------------------------------------------------
 
 is "an unknown question" 64 '^tmux_watched.sh: usage: ' bogus
-is "pane with no pane" 64 '^tmux_watched.sh: usage: ' pane "$SOCK"
+is "pane with no pane" 64 '^tmux_watched.sh: usage: ' -S "$SOCK" pane
+is "a socket and no question" 64 '^tmux_watched.sh: usage: ' -S "$SOCK"
 
 log "$([ "$failures" -eq 0 ] && echo "all checks passed" || echo "$failures check(s) failed")"
 exit $((failures > 0))

@@ -7,7 +7,7 @@
 #
 #   window 1 of session "solo" rings              (alert-bell, every bell)
 #     -> bell-elsewhere.sh <socket> $3 solo 1 <window name>
-#     -> a client of solo focused, with input in the last 30 min?
+#     -> is anybody on solo? (scripts/tmux_watched.sh session)
 #          yes -> log "watched (...)", exit: tmux's own bell reached it
 #          no  (none attached, all unfocused, or focus gone stale):
 #     -> @bell "1!" and @bell_at <epoch> on solo, which the bar's
@@ -31,14 +31,10 @@
 # (#{session_activity}: a client's keys, mouse and focus reports, not pane
 # output; tested 2026-11-10, tmux 3.8).
 #
-# Watched is scripts/tmux_watched.sh's rule, asked for the session whole:
-# a terminal client of the session that is focused, with input in the last
-# 30 minutes, whatever window of the session it shows (its header has why
-# focus alone is not believed, and why a control-mode client is no one). The
-# session-done mod's push (home/.claude/mods/session-done/) asks the same
-# rule about claude's pane alone, so the two may differ on one bell: a
-# client on another window of the session is on the session, and has not
-# seen the turn.
+# Watched is scripts/tmux_watched.sh's rule (its header has it), asked for
+# the session whole. The session-done mod's push asks it about claude's pane
+# alone, so the two may differ on one bell: a client on another window of
+# the session is on the session, and has not seen the turn.
 #
 # Runs under bash 3.2 too: run-shell finds bash on the server's PATH.
 set -euo pipefail
@@ -48,27 +44,28 @@ set -euo pipefail
   exit 2
 }
 socket=$1 id=$2 session=$3 window=$4 name=$5
-t() { tmux -S "$socket" "$@"; }
+SCRIPTS="${0%/*}/../../../scripts"
 # shellcheck source=scripts/lib/event_log.sh
-. "${0%/*}/../../../scripts/lib/event_log.sh"
+. "$SCRIPTS/lib/event_log.sh"
 what="bell session=$session window=$window ($name)"
 
 # The verdict by the exit status, the evidence on stdout either way:
 # "ttys002 focused, input 3s ago; ...". An assignment, so the status is the
 # script's.
 rc=0
-evidence=$("${0%/*}/../../../scripts/tmux_watched.sh" session "$socket" "$id") || rc=$?
+evidence=$("$SCRIPTS/tmux_watched.sh" -S "$socket" session "$id") || rc=$?
 case $rc in
-  0)
-    event_log_note tmux_hooks "$what: watched ($evidence)"
-    exit 0
+  0) event_log_note tmux_hooks "$what: watched ($evidence)" ;;
+  1)
+    # "1!", as tmux writes #{session_alerts}: a bare "0" reads as false in a
+    # format's conditional, and window 0's marker never showed. The time is
+    # a builtin from bash 5 on; 3.2 forks date.
+    tmux -S "$socket" set-option -t "$id" @bell "$window!" \; \
+      set-option -t "$id" @bell_at "${EPOCHSECONDS:-$(date +%s)}"
+    event_log_note tmux_hooks "$what: unwatched ($evidence), marked"
     ;;
-  1) ;;
-  2)
-    # Killed between its bell and this hook: nothing left to mark.
-    event_log_note tmux_hooks "$what: session gone, not marked"
-    exit 0
-    ;;
+  # Killed between its bell and this hook: nothing left to mark.
+  2) event_log_note tmux_hooks "$what: session gone, not marked" ;;
   *)
     # tmux shows a run-shell that fails as "... returned 1" on the client.
     event_log_note tmux_hooks "$what: FAILED, tmux_watched.sh exit $rc: $evidence"
@@ -76,9 +73,3 @@ case $rc in
     exit 1
     ;;
 esac
-
-# "1!", as tmux writes #{session_alerts}: a bare "0" reads as false in a
-# format's conditional, and window 0's marker never showed.
-t set-option -t "$id" @bell "$window!"
-t set-option -t "$id" @bell_at "$(date +%s)"
-event_log_note tmux_hooks "$what: unwatched ($evidence), marked"

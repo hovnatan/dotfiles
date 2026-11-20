@@ -29,6 +29,21 @@ export async function note($: EngineInterface, event: string): Promise<void> {
   if (logged.exitCode !== 0) toast($, `${logged.stderr.trim()} (at "${event}")`);
 }
 
+// words(err) -> what was thrown, in words for a log line: an Error's message
+// ("$TMUX_PANE is not set"), not "Error: $TMUX_PANE is not set".
+export const words = (err: unknown): string => (err instanceof Error ? err.message : String(err));
+
+// The length of a wait, as the environment has it:
+//   seconds('CLAUDE_NTFY_DEBOUNCE_SECONDS', await $.env.get('CLAUDE_NTFY_DEBOUNCE_SECONDS'), 600)
+//   unset -> 600   "45" -> 45   "10m" -> thrown, in words for the log
+// Thrown, because "10m" read as 10 would wait the wrong time without a word.
+export const seconds = (name: string, value: string | undefined, fallback: number): number => {
+  if (value === undefined) return fallback;
+  if (!/^[1-9][0-9]*$/.test(value)) throw new Error(`${name} is "${value}", not a whole number of seconds above 0`);
+
+  return Number(value);
+};
+
 // Something the mod cannot do or judge: said in the log and on screen.
 //   fail($, 'push', '$TMUX is set but ...') -> "push: FAILED, $TMUX is set but ..."
 export async function fail($: EngineInterface, event: string, what: string): Promise<void> {

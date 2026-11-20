@@ -13,6 +13,8 @@
 #   the key at 60000     -> set, "was 60000"
 #   off already          -> nothing printed, the file not rewritten
 #   $HOME's file         -> used when CLAUDE_CONFIG_DIR names none
+#   --state              -> "on" for the key unset or at 60000, "off" for it
+#                           off, and the file as it was either way
 #   no file              -> exit 1, the path named
 #   a file that is not JSON -> exit non-zero, the file as it was
 #
@@ -51,9 +53,10 @@ config() {
 }
 
 # is <label> <want status> <want output, an extended regex> <config dir>
+#    [<engine-bell-off.sh's argument>]
 is() {
   local label=$1 want=$2 re=$3 out rc
-  out=$(CLAUDE_CONFIG_DIR="$4" "$OFF_SH" 2>&1)
+  out=$(CLAUDE_CONFIG_DIR="$4" "$OFF_SH" ${5:+"$5"} 2>&1)
   rc=$?
   if [ "$rc" = "$want" ] && [[ "$out" =~ $re ]]; then
     pass "$label: exit $rc${out:+, \"$out\"}"
@@ -131,6 +134,15 @@ else
   fail "no CLAUDE_CONFIG_DIR: exit $rc, output \"$out\""
 fi
 holds "no CLAUDE_CONFIG_DIR: now off" "$dir" "$OFF"
+
+# --- --state: asked, nothing written -------------------------------------------
+
+dir=$(config asked '{"numStartups": 41}')
+is "--state, the key unset" 0 '^on$' "$dir" --state
+holds "--state leaves the key unset" "$dir" '.messageIdleNotifThresholdMs == null'
+is "--state, the key at 60000" 0 '^on$' "$(config asked60 '{"messageIdleNotifThresholdMs": 60000}')" --state
+is "--state, off" 0 '^off$' "$(config askedoff '{"messageIdleNotifThresholdMs": 2147483647}')" --state
+is "an argument it does not know" 1 '^engine-bell-off.sh: usage: ' "$dir" --off
 
 # --- it cannot ----------------------------------------------------------------
 

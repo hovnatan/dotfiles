@@ -2,19 +2,25 @@
 # tmux_watched.sh -- is somebody looking? The one rule for "a tmux client
 # counts as a person who is there", and the two questions asked with it:
 #
-#   tmux_watched.sh pane <socket> <pane id>
+#   tmux_watched.sh [-S <socket>] pane <pane id>
 #       is this pane on somebody's screen?   asked by the session-done mod,
 #       for its ntfy push (home/.claude/mods/session-done/hooks/push.ts)
-#   tmux_watched.sh session <socket> <session id>
+#   tmux_watched.sh [-S <socket>] session <session id>
 #       is anybody on this session, at any of its windows?   asked by
 #       home/.config/tmux/bell-elsewhere.sh, for the bell marker on the bars
-#   tmux_watched.sh session-name <socket> <pane id>
+#   tmux_watched.sh [-S <socket>] session-name <pane id>
 #       the name of the session the pane is in now, for the push's title
+#
+#   The server is the one -S names, as tmux's own -S; with none it is the
+#   caller's, which tmux finds by $TMUX. Nothing but tmux reads $TMUX's
+#   layout: a caller inside a pane passes no socket (the mod), and one that
+#   tmux runs is handed #{socket_path} (the bell's hook).
 #
 #   exit 0  watched; for session-name, the name on stdout
 #        1  not watched
 #        2  gone: the server, the pane or the session
-#        3  tmux failed otherwise; stdout: "tmux -S <socket>: <its message>"
+#        3  tmux failed otherwise; stdout: "tmux: <its message>", or
+#           "tmux -S <socket>: <its message>" with a socket named
 #   pane and session print the evidence with 0 and 1 alike, what tmux knew of
 #   the clients, so a verdict in a log explains itself:
 #     "ttys002 focused, input 3s ago"
@@ -62,99 +68,105 @@
 #                 current window is per session in tmux, so every client of
 #                 a session agrees on it.
 #
-# Two tmux calls a question: where the target is, then every client of the
-# server, judged here. Runs on stock macOS too (bash 3.2, which run-shell
-# finds on the server's PATH): builtins and tmux alone.
+# One tmux call a question, for where the target is and for every client of
+# the server, judged here: this runs at every bell, and every 5 s while a
+# push waits. Runs on stock macOS too (bash 3.2, which run-shell finds on
+# the server's PATH): builtins and tmux alone.
 set -u
 
 STALE=${TMUX_WATCHED_STALE_SECONDS:-1800}
 
 usage() {
-  echo "tmux_watched.sh: usage: tmux_watched.sh pane <socket> <pane id> | session <socket> <session id> | session-name <socket> <pane id>" >&2
+  echo "tmux_watched.sh: usage: tmux_watched.sh [-S <socket>] pane <pane id> | session <session id> | session-name <pane id>" >&2
   exit 64
 }
 
+tmux=(tmux)
+if [ "${1:-}" = -S ]; then
+  [ $# -ge 2 ] || usage
+  tmux=(tmux -S "$2")
+  shift 2
+fi
 case "${1:-} $#" in
-  "pane 3" | "session 3" | "session-name 3") ;;
+  "pane 2" | "session 2" | "session-name 2") ;;
   *) usage ;;
 esac
-what=$1 socket=$2 target=$3
+what=$1 target=$2
 
-# ask <tmux args...>: run tmux on the socket, its output in $out. On a
-# failure this script ends: with 2 if the server is gone (the messages tmux
-# prints when nothing listens on the socket), with 3 and tmux's message on
-# any other, a client too old for the server, say. That one must not read as
-# "gone": a caller told so drops what it had to say without a word.
-ask() {
-  out=$(tmux -S "$socket" "$@" 2>&1) && return 0
+# Where the target is now. display-message does not fail on a target that is
+# gone, it expands every format to nothing (tmux 3.8). The name is last: it
+# is the one field that may hold a "|".
+#   pane %4     -> "$3|@1|0||solo"   or "$3|@1|0|zoomed|solo" while its window
+#                  shows another of its panes
+#   session $3  -> "$3|@2|1||solo"   its current window, which is not asked
+#   gone        -> "||||"
+WHERE='#{session_id}|#{window_id}|#{window_index}|#{?#{&&:#{window_zoomed_flag},#{!=:#{pane_active},1}},zoomed,}|#{session_name}'
+# Every client of the server, one a line; a server with none prints nothing:
+#   "0|$3|@2|1|1795149619|/dev/ttys001|attached,focused,UTF-8"
+CLIENTS='#{client_control_mode}|#{session_id}|#{window_id}|#{window_index}|#{client_activity}|#{client_name}|#{client_flags}'
+
+# Both in one call, the target's line first. A failure ends this script:
+# with 2 if the server is gone (the messages tmux prints when nothing
+# listens on the socket), with 3 and tmux's message on any other, a client
+# too old for the server, say. That one must not read as "gone": a caller
+# told so drops what it had to say without a word.
+if [ "$what" = session-name ]; then
+  out=$("${tmux[@]}" display-message -p -t "$target" "$WHERE" 2>&1)
+else
+  out=$("${tmux[@]}" display-message -p -t "$target" "$WHERE" \; list-clients -F "$CLIENTS" 2>&1)
+fi || {
   case $out in
     "no server running on "* | "error connecting to "*"(No such file or directory)" | \
       "error connecting to "*"(Connection refused)") exit 2 ;;
   esac
-  printf 'tmux -S %s: %s\n' "$socket" "$out"
+  printf '%s: %s\n' "${tmux[*]}" "$out"
   exit 3
 }
 
-# Where the target is now. display-message does not fail on a target that is
-# gone, it expands every format to nothing (tmux 3.8):
-#   pane %4     -> "$3|@1|0|solo|"   or "...|zoomed" while its window shows
-#                  another of its panes
-#   session $3  -> "$3|@2|1|solo|"   its current window, which is not asked
-#   gone        -> "||||"
-ask display-message -p -t "$target" \
-  '#{session_id}|#{window_id}|#{window_index}|#{session_name}|#{?#{&&:#{window_zoomed_flag},#{!=:#{pane_active},1}},zoomed,}'
-IFS='|' read -r sid win idx name zoomed <<WHERE
-$out
-WHERE
-[ -n "$sid" ] || exit 2
-
-if [ "$what" = session-name ]; then
-  printf '%s\n' "$name"
-  exit 0
-fi
-
-# Every client of the server, one a line; a server with none prints nothing:
-#   "0|$3|@2|1|1795149619|/dev/ttys001|attached,focused,UTF-8"
-ask list-clients -F \
-  '#{client_control_mode}|#{session_id}|#{window_id}|#{window_index}|#{client_activity}|#{client_name}|#{client_flags}'
 now=${EPOCHSECONDS:-$(date +%s)} # a builtin from bash 5 on; 3.2 forks date
-
 watched=1
 evidence=''
-while IFS='|' read -r control csid cwin cidx activity client flags; do
-  [ -n "$client" ] || continue # no clients: the listing is one empty line
-  [ "$control" = 1 ] && continue
-
-  # In scope for the evidence: the clients of the target's session, and for
-  # a pane any other that shows its window (one linked into two sessions).
-  if [ "$csid" != "$sid" ]; then
-    [ "$what" = pane ] && [ "$cwin" = "$win" ] || continue
+{
+  IFS='|' read -r sid win idx zoomed name
+  [ -n "$sid" ] || exit 2
+  if [ "$what" = session-name ]; then
+    printf '%s\n' "$name"
+    exit 0
   fi
 
-  age=$((now - activity))
-  case ",$flags," in
-    *,focused,*) state=focused ;;
-    *) state="not focused" ;;
-  esac
-  line="${client#/dev/} $state, input ${age}s ago"
+  while IFS='|' read -r control csid cwin cidx activity client flags; do
+    [ -n "$client" ] || continue
+    [ "$control" = 1 ] && continue
 
-  # A pane is seen by a client that shows it; a session by any of its own.
-  sees=1
-  if [ "$what" = pane ]; then
-    if [ "$cwin" != "$win" ]; then
-      sees=''
-      line="$line, on window $cidx (the pane's is $idx)"
-    elif [ -n "$zoomed" ]; then
-      sees=''
-      line="$line, the pane's window zoomed onto another pane"
+    # In scope for the evidence: the clients of the target's session, and
+    # for a pane any other that shows its window (one linked into two
+    # sessions).
+    if [ "$csid" != "$sid" ]; then
+      [ "$what" = pane ] && [ "$cwin" = "$win" ] || continue
     fi
-  fi
 
-  if [ -n "$sees" ] && [ "$state" = focused ] && [ "$age" -lt "$STALE" ]; then watched=0; fi
-  evidence="${evidence:+$evidence; }$line"
-done <<CLIENTS
+    age=$((now - activity))
+    case ",$flags," in
+      *,focused,*) state=focused ;;
+      *) state="not focused" ;;
+    esac
+
+    # A pane is seen by a client that shows it; a session by any of its own.
+    unseen=''
+    if [ "$what" = pane ]; then
+      if [ "$cwin" != "$win" ]; then
+        unseen=", on window $cidx (the pane's is $idx)"
+      elif [ -n "$zoomed" ]; then
+        unseen=", the pane's window zoomed onto another pane"
+      fi
+    fi
+
+    if [ -z "$unseen" ] && [ "$state" = focused ] && [ "$age" -lt "$STALE" ]; then watched=0; fi
+    evidence="${evidence:+$evidence; }${client#/dev/} $state, input ${age}s ago$unseen"
+  done
+} <<ANSWER
 $out
-CLIENTS
+ANSWER
 
 printf '%s\n' "${evidence:-no client attached}"
 exit "$watched"

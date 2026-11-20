@@ -35,17 +35,17 @@
 // No topic file, or a claude outside tmux: nothing is pushed, by design,
 // and the log says which. The topic is never logged.
 import type { EngineInterface } from 'claude-code';
-import { fail, note, script } from './log';
+import { fail, note, script, seconds, words } from './log';
 
 const POLL_MS = 5000;
 // tmux answers in about 20 ms. One that does not within this has hung, and
 // the turn's end is not held for the 30 s a process is given by default.
 const TMUX_MS = 3000;
 
-// Where this claude runs (its tmux server's socket and its pane, as
-// tmux_watched.sh takes them) and where its pushes go, read each time the
+// Where this claude runs (its tmux pane; tmux_watched.sh finds the server by
+// $TMUX, which it inherits) and where its pushes go, read each time the
 // session is waiting.
-type Here = { socket: string; pane: string; topic: string; debounce: number; url: string };
+type Here = { pane: string; topic: string; debounce: number; url: string };
 
 // tmux_watched.sh's answer, by its exit status 0 to 3, and what it printed:
 //   pane           yes | no (said: the clients it saw) | gone | failed (said: why)
@@ -53,8 +53,9 @@ type Here = { socket: string; pane: string; topic: string; debounce: number; url
 const ANSWERS = ['yes', 'no', 'gone', 'failed'] as const;
 type Answer = { is: (typeof ANSWERS)[number]; said: string };
 
-// The pending push: where from and to, how the turn ended in register.ts's
-// words ("done"), when (ms), and whether tmux is being asked now.
+// The pending push: where from and to, how the session came to wait in
+// register.ts's words ("done", "went quiet with ..."), when (ms), and
+// whether tmux is being asked now.
 type Wait = { here: Here; how: string; since: number; isAsking: boolean; timer: { cancel: () => void } };
 
 let wait: Wait | null = null;
@@ -73,12 +74,6 @@ const redacted = (here: Here, err: unknown): string => String(err).replaceAll(he
 async function where($: EngineInterface): Promise<Here | string> {
   const tmux = await $.env.get('TMUX');
   if (tmux === undefined || tmux === '') return 'not in tmux';
-  // $TMUX = "/tmp/tmux-501/default,52401,3": the socket, the server's pid
-  // and the session claude started in. Cut from the right, so a socket path
-  // with a comma in it stays whole. The session is not kept: the pane may
-  // have moved since, and tmux is asked where it is each time.
-  const socket = tmux.split(',').slice(0, -2).join(',');
-  if (socket === '') throw new Error(`$TMUX is "${tmux}", not "<socket>,<server pid>,<session id>"`);
 
   const home = await $.env.get('HOME');
   if (home === undefined) throw new Error('HOME is not set, so ~/.config/claude-ntfy/topic cannot be found');
@@ -99,20 +94,17 @@ async function where($: EngineInterface): Promise<Here | string> {
     );
   }
 
-  const debounce = (await $.env.get('CLAUDE_NTFY_DEBOUNCE_SECONDS')) ?? '600';
-  if (!/^[1-9][0-9]*$/.test(debounce)) {
-    throw new Error(`CLAUDE_NTFY_DEBOUNCE_SECONDS is "${debounce}", not a whole number of seconds above 0`);
-  }
+  const debounce = seconds('CLAUDE_NTFY_DEBOUNCE_SECONDS', await $.env.get('CLAUDE_NTFY_DEBOUNCE_SECONDS'), 600);
   const url = (await $.env.get('CLAUDE_NTFY_URL')) ?? 'https://ntfy.sh';
 
-  return { socket, pane, topic, debounce: Number(debounce), url };
+  return { pane, topic, debounce, url };
 }
 
 // ask($, here, 'pane') -> { is: 'no', said: 'pts/1 not focused, input 41s ago' }
+// No socket is passed: the script's tmux reads $TMUX, as any tmux command
+// typed in claude's pane does, and $TMUX's layout stays tmux's own.
 async function ask($: EngineInterface, here: Here, what: 'pane' | 'session-name'): Promise<Answer> {
-  const ran = await $.process.run([script($, 'tmux_watched.sh'), what, here.socket, here.pane], {
-    timeoutMs: TMUX_MS,
-  });
+  const ran = await $.process.run([script($, 'tmux_watched.sh'), what, here.pane], { timeoutMs: TMUX_MS });
   const is = ANSWERS[ran.exitCode];
   if (is === undefined) throw new Error(`tmux_watched.sh ${what}: exit ${ran.exitCode}: ${ran.stderr.trim()}`);
 
@@ -197,10 +189,10 @@ export async function cancelPush($: EngineInterface, why: string): Promise<void>
   await note($, `${why}, pending push cancelled`);
 }
 
-// The session is waiting for the person: start the wait, unless the turn is
-// being looked at already. `how` is how the turn ended, the push's opening
-// word. What cannot be judged here is said on screen too: whoever is there
-// has just seen the turn end.
+// The session is waiting for the person: start the wait, unless claude's
+// pane is being looked at already. `how` is how it came to wait, the push's
+// opening words: "done", "went quiet with background tasks running (shell)".
+// What cannot be judged here is said on screen too, for whoever is there.
 export async function armPush($: EngineInterface, how: string): Promise<void> {
   if (wait !== null) throw new Error('armPush: a push is pending already; cancelPush comes first');
 
@@ -211,7 +203,7 @@ export async function armPush($: EngineInterface, how: string): Promise<void> {
     if (typeof here === 'string') return note($, `push: none, ${here}`);
     seen = await ask($, here, 'pane');
   } catch (err) {
-    return fail($, 'push', err instanceof Error ? err.message : String(err));
+    return fail($, 'push', words(err));
   }
   if (seen.is === 'yes') return note($, 'push: none, watched now');
   if (seen.is === 'gone') return note($, `push: none, session or claude's pane ${here.pane} gone`);

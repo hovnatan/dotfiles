@@ -59,11 +59,15 @@
             "type": "command",
             "command": "~/.dotfiles/home/.config/tmux/focus-out-unattached.sh",
             "timeout": 5
-          },
+          }
+        ]
+      },
+      {
+        "hooks": [
           {
             "type": "command",
             "command": "~/.dotfiles/home/.claude/mods/session-done/loaded-check.sh",
-            "timeout": 10
+            "timeout": 5
           }
         ]
       }
