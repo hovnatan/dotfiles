@@ -1,20 +1,17 @@
-// What the mod decides at each end of a turn, what becomes of the bell, and
-// what the push's wait does at each tick and at a turn's start, case by case
-// (the diagrams at the top of register.ts and push.ts). Nothing sits beneath
-// the mod in a test: engine() stands for the machine's environment, the
-// clock, the event log, the notification channel, engine-bell-off.sh,
-// tmux_watched.sh's answers and ntfy, and keeps what the mod asked of each.
-// The two scripts themselves are scripts/tests/engine_bell_off_test.sh's and
+// What the mod decides at each end of a turn, and what the push's wait does
+// at each tick and at a turn's start, case by case (the diagrams at the top
+// of register.ts and push.ts). Nothing sits beneath the mod in a test:
+// engine() stands for the machine's environment, the clock, the event log,
+// tmux_watched.sh's answers and ntfy, and keeps what the mod asked of each. tmux_watched.sh itself is
 // scripts/tests/tmux_watched_test.sh's.
 
 import type { TestBody } from 'claude-code/testing';
 import { expect, mock, test } from 'claude-code/testing';
 
 // exited(1, 'no client attached'): what $.process.run answers for a program
-// that printed that and left with that status; `stderr` for one that
-// complained.
-const exited = (exitCode: number, stdout = '', stderr = '') => ({
-  value: { exitCode, stdout: `${stdout}\n`, stderr, isStdoutTruncated: false, isStderrTruncated: false },
+// that printed that and left with that status.
+const exited = (exitCode: number, stdout = '') => ({
+  value: { exitCode, stdout: `${stdout}\n`, stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
 });
 
 // The session the tests play: its folder and id, "bench 4f1c9a2e" in the log.
@@ -40,26 +37,19 @@ type Engine = {
   // The POST's answer: a status, or no answer at all (ntfy unreachable).
   post?: 'unreachable' | number;
   sessionGone?: true;
-  // engine-bell-off.sh's answer; the bell off already unless given.
-  engineBell?: ReturnType<typeof exited>;
-  // What the notification channel answers; the terminal bell unless given.
-  // 'broken': the call rejects.
-  channel?: 'broken' | { isSent: false; reason: 'disabled' | 'no-channel' | 'no-surface' | 'refused' };
 };
 
-// A claude outside tmux: the rule and the bell alone, and no push to wait for.
+// A claude outside tmux: the rule alone, and no push to wait for.
 const BARE: Engine = { env: { TMUX: '' } };
 
-// engine(on, {...}) -> { log, toasts, rung, posts, ran, clock }: the events
-// handed to the event log (less the log's name and "bench 4f1c9a2e", which
-// every line must carry), the toasts shown, the notifications raised
-// ("<title>: <text>"), the POSTs made ("<url> <title> | <tags> | <body>"),
-// every program run (by its last path part and arguments), and the clock to
-// move.
+// engine(on, {...}) -> { log, toasts, posts, ran, clock }: the events handed
+// to the event log (less the log's name and "bench 4f1c9a2e", which every
+// line must carry), the toasts shown, the POSTs made ("<url> <title> | <tags>
+// | <body>"), every program run (by its last path part and arguments), and
+// the clock to move.
 const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
   const log: string[] = [];
   const toasts: string[] = [];
-  const rung: string[] = [];
   const posts: string[] = [];
   const ran: string[] = [];
   const looks = [...(how.looks ?? [NOBODY])];
@@ -95,8 +85,6 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
         return how.sessionGone ? exited(2) : exited(0, 'backend');
       case 'machine_name.sh':
         return exited(0, 'mbp');
-      case 'engine-bell-off.sh':
-        return how.engineBell ?? exited(0);
       case 'event_log_note.sh': {
         const [name, who, event = ''] = args;
         if (name !== 'claude_session_done' || who !== WHO) throw new Error(`a line for another log: ${args.join(' ')}`);
@@ -116,12 +104,6 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
 
     return { value: { status, ok: status < 300, headers: {}, text: '' } };
   });
-  on('ui.notify', (_, e) => {
-    rung.push(`${e.title}: ${e.text}`);
-    if (how.channel === 'broken') throw new Error('broken');
-
-    return { value: how.channel ?? { isSent: true, channel: 'terminal_bell' } };
-  });
   on('ui.toast', (_, e) => {
     toasts.push(e.text);
 
@@ -129,13 +111,12 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
   });
   on('session.id', () => ({ value: SESSION.session_id }));
   on('session.cwd', () => ({ value: SESSION.cwd }));
-  on('session.start', (_, e) => ({ cwd: e.cwd }));
   on('classic.Stop', () => ({}));
   on('turn.start', (_, e) => ({ turnId: e.turnId }));
   on('prompt.submit', (_, e) => ({ text: e.text }));
   on('turn.complete', (_, e) => ({ text: e.answer }));
 
-  return { log, toasts, rung, posts, ran, clock };
+  return { log, toasts, posts, ran, clock };
 };
 
 type Engine$ = Parameters<TestBody>[0];
@@ -168,22 +149,24 @@ const prompts = async (
   await $.turn.start({ text: 'go on', turnId: 't2' });
 };
 
-const starts = ($: Engine$) => $.session.start({ cwd: SESSION.cwd, surface: 'terminal', isInteractive: true });
-
 const MONITOR = { id: 'b5o4', type: 'monitor', status: 'running', description: 'stages' };
 const SHELL = { id: 'bq2x', type: 'shell', status: 'pending', description: 'wait' };
 const BUILD = { id: 'bz7k', type: 'shell', status: 'running', description: 'build' };
 const WAKEUP = { id: 'c1', schedule: '31 2 20 11 *', recurring: false, prompt: '/loop check the run' };
-const BELL = 'Claude Code: Claude is waiting for your input';
-const RUNG = 'stop: done, bell rung via terminal_bell';
+const DONE = 'stop: done';
 const ARMED = 'push: unwatched, waiter armed (debounce 600s; no client attached)';
 const OUTSIDE = 'push: none, not in tmux';
 // notDone('monitor'): the line of a turn's end that those tasks hold back.
-const notDone = (tasks: string) => `stop: not done, background tasks running (${tasks}), no bell, no push`;
-const HELD = `${notDone('shell')}; 600s with no turn rings`;
-const SERVED = 'stop: done beside 1 shell(s) from before the last prompt, bell rung via terminal_bell';
-const QUIET =
-  'quiet: no turn for 600s with background tasks running (shell), taken for waiting, bell rung via terminal_bell';
+const notDone = (tasks: string) => `stop: not done, background tasks running (${tasks}), no push`;
+// held(): the line of an end that shells alone hold, and quiet(): the line
+// of the wait that then passed with no turn.
+const held = (tasks = 'shell', wait = 600) => `${notDone(tasks)}; waiting if no turn starts in ${wait}s`;
+const quiet = (tasks = 'shell', wait = 600) =>
+  `quiet: no turn for ${wait}s with background tasks running (${tasks}), taken for waiting`;
+const HELD = held();
+const QUIET = quiet();
+const WAKING = 'stop: not done, 1 wakeup(s) scheduled, no push';
+const SERVED = 'stop: done beside 1 shell(s) from before the last prompt';
 // pushed('done 600s ago ...'): the POST of a push with that body.
 const pushed = (body: string) => `POST http://ntfy.test/testtopic CC: mbp/backend | speech_balloon | ${body}`;
 // asked(ran): what the mod asked tmux_watched.sh, of all it ran.
@@ -191,71 +174,66 @@ const asked = (ran: string[]) => ran.filter((r) => r.startsWith('tmux_watched.sh
 
 // --- the rule: when a session is waiting for the person -----------------------
 
-test('a turn that ended with nothing left rings at once', async ($, on) => {
-  const { log, toasts, rung, ran } = engine(on, BARE);
+test('a turn that ended with nothing left is done', async ($, on) => {
+  const { log, toasts, ran } = engine(on, BARE);
 
   await ends($);
 
-  expect(rung).toEqual([BELL]);
   expect(toasts).toEqual([]);
   // Outside tmux nothing but the log is run: tmux is asked nothing.
   expect(ran).toEqual([
-    `event_log_note.sh claude_session_done ${WHO} ${RUNG}`,
+    `event_log_note.sh claude_session_done ${WHO} ${DONE}`,
     `event_log_note.sh claude_session_done ${WHO} ${OUTSIDE}`,
   ]);
-  expect(log).toEqual([RUNG, OUTSIDE]);
+  expect(log).toEqual([DONE, OUTSIDE]);
 });
 
-// The complaint this mod answers: the engine's own bell rang a minute after
-// each of a monitor's events (2026-11-19).
+// The monitor's next event starts a turn: the session is working, however
+// long it takes.
 test('a turn that ended with a monitor or a shell still running is not done', async ($, on) => {
-  const { log, rung, ran, clock } = engine(on);
+  const { log, ran, clock } = engine(on);
 
   await ends($, [SHELL, MONITOR]);
   await clock.advance(600_000);
 
-  expect(rung).toEqual([]);
   expect(log).toEqual([notDone('shell, monitor')]);
   // Neither tmux nor ntfy is asked anything.
   expect(ran.length).toBe(1);
 });
 
 test('a turn that ended with a wakeup scheduled is not done', async ($, on) => {
-  const { log, rung, posts, clock } = engine(on);
+  const { log, posts, clock } = engine(on);
 
   await ends($, [], [WAKEUP]);
   await clock.advance(600_000);
 
-  expect(rung).toEqual([]);
   expect(posts).toEqual([]);
-  expect(log).toEqual(['stop: not done, 1 wakeup(s) scheduled, no bell, no push']);
+  expect(log).toEqual([WAKING]);
 });
 
-test('the last event of a monitor rings: the turn after the task is gone', async ($, on) => {
-  const { log, rung } = engine(on, BARE);
+test('the last event of a monitor is done: the turn after the task is gone', async ($, on) => {
+  const { log } = engine(on, BARE);
 
   await ends($, [MONITOR]);
   await $.turn.start({ text: '', turnId: 't2' });
   await ends($);
 
-  expect(rung).toEqual([BELL]);
-  expect(log).toEqual([notDone('monitor'), RUNG, OUTSIDE]);
+  expect(log).toEqual([notDone('monitor'), DONE, OUTSIDE]);
 });
 
-// A session that kept a dev server running never rang at all (2026-11-20):
+// A session that kept a dev server running was never done (2026-11-20):
 // nothing tells a server from a build but whether the person has prompted
 // since it started.
 test('a shell holds until the person prompts again: from then on it is a server', async ($, on) => {
-  const { log, rung } = engine(on, BARE);
+  const { log } = engine(on, BARE);
 
   await prompts($);
   await ends($, [SHELL]);
-  expect(rung).toEqual([]);
+  expect(log).toEqual([HELD]);
 
   await prompts($);
   await ends($, [SHELL]);
 
-  expect(rung).toEqual([BELL]);
   expect(log).toEqual([HELD, SERVED, OUTSIDE]);
 });
 
@@ -272,7 +250,7 @@ test('a prompt over Remote Control is the person too', async ($, on) => {
 // Both are prompts to the engine (seen live, 2026-11-20), and neither is the
 // person: the build they report on is still the turn's own.
 test("a task's notification and a wakeup draw no line: the shell still holds", async ($, on) => {
-  const { log, rung } = engine(on, BARE);
+  const { log } = engine(on, BARE);
 
   await ends($, [SHELL]);
   await prompts($, 'task-notification');
@@ -280,30 +258,28 @@ test("a task's notification and a wakeup draw no line: the shell still holds", a
   await prompts($, 'scheduled-trigger');
   await ends($, [SHELL]);
 
-  expect(rung).toEqual([]);
   expect(log).toEqual([HELD, HELD, HELD]);
 });
 
 test('a shell started since the prompt holds beside a server', async ($, on) => {
-  const { log, rung } = engine(on, BARE);
+  const { log } = engine(on, BARE);
 
   await ends($, [SHELL]);
   await prompts($);
   await ends($, [SHELL, BUILD]);
-  expect(rung).toEqual([]);
+  expect(log).toEqual([HELD, HELD]);
 
   // The build's exit starts a turn, and the server alone is left.
   await prompts($, 'task-notification');
   await ends($, [SHELL]);
 
-  expect(rung).toEqual([BELL]);
   expect(log).toEqual([HELD, HELD, SERVED, OUTSIDE]);
 });
 
 // Only a shell can be a server: a monitor or a wakeup taken for one would
-// ring at each of its events.
+// be done at each of its events.
 test('a monitor and a wakeup from before the prompt still hold', async ($, on) => {
-  const { log, rung, clock } = engine(on, BARE);
+  const { log, clock } = engine(on, BARE);
 
   await ends($, [MONITOR, SHELL], [WAKEUP]);
   await prompts($);
@@ -312,111 +288,93 @@ test('a monitor and a wakeup from before the prompt still hold', async ($, on) =
   await ends($, [SHELL], [WAKEUP]);
   await clock.advance(600_000);
 
-  expect(rung).toEqual([]);
-  expect(log).toEqual([
-    notDone('monitor, shell'),
-    notDone('monitor'),
-    'stop: not done, 1 wakeup(s) scheduled, no bell, no push',
-  ]);
+  expect(log).toEqual([notDone('monitor, shell'), notDone('monitor'), WAKING]);
 });
 
 // The turn that started the server and then asked something: time is all
 // that tells it from a build.
-test('shells alone and ten quiet minutes: taken for waiting, the bell and the push', async ($, on) => {
-  const { log, rung, posts, clock } = engine(on);
+test('shells alone and ten quiet minutes: taken for waiting, and the push after ten more', async ($, on) => {
+  const { log, posts, clock } = engine(on);
 
   await ends($, [SHELL]);
   await clock.advance(599_000);
-  expect(rung).toEqual([]);
+  expect(log).toEqual([HELD]);
 
   await clock.advance(1_000);
-  expect(rung).toEqual([BELL]);
   expect(log).toEqual([HELD, QUIET, ARMED]);
 
   await clock.advance(600_000);
   expect(posts).toEqual([pushed('went quiet with background tasks running (shell) 600s ago and is still unwatched')]);
-  expect(rung).toEqual([BELL]);
 });
 
 // One of two shells exits after the quiet wait: its notification's turn ends
 // beside the other, which is a server by now, and not ten more minutes on.
-test('the shells of a quiet wait are servers after it: a later end beside one rings at once', async ($, on) => {
-  const { log, rung, clock } = engine(on, BARE);
+test('the shells of a quiet wait are servers after it: a later end beside one is done at once', async ($, on) => {
+  const { log, clock } = engine(on, BARE);
 
   await ends($, [SHELL, BUILD]);
   await clock.advance(600_000);
-  expect(rung).toEqual([BELL]);
+  expect(log.length).toBe(3);
 
   await prompts($, 'task-notification');
   await ends($, [SHELL]);
 
-  expect(rung).toEqual([BELL, BELL]);
-  expect(log).toEqual([
-    `${notDone('shell, shell')}; 600s with no turn rings`,
-    'quiet: no turn for 600s with background tasks running (shell, shell), taken for waiting, bell rung via terminal_bell',
-    OUTSIDE,
-    SERVED,
-    OUTSIDE,
-  ]);
+  expect(log).toEqual([held('shell, shell'), quiet('shell, shell'), OUTSIDE, SERVED, OUTSIDE]);
 });
 
 test('a turn that starts ends the quiet wait, and its end starts another', async ($, on) => {
-  const { log, rung, clock } = engine(on, BARE);
+  const { log, clock } = engine(on, BARE);
 
   await ends($, [SHELL]);
   await clock.advance(400_000);
   await prompts($, 'task-notification');
   await clock.advance(400_000);
-  expect(rung).toEqual([]);
+  expect(log).toEqual([HELD]);
 
   await ends($, [SHELL]);
   await clock.advance(599_000);
-  expect(rung).toEqual([]);
+  expect(log).toEqual([HELD, HELD]);
   await clock.advance(1_000);
 
-  expect(rung).toEqual([BELL]);
   expect(log).toEqual([HELD, HELD, QUIET, OUTSIDE]);
 });
 
 test('the quiet wait is as long as CLAUDE_SESSION_QUIET_SECONDS says', async ($, on) => {
-  const { log, rung, clock } = engine(on, { env: { TMUX: '', CLAUDE_SESSION_QUIET_SECONDS: '30' } });
+  const { log, clock } = engine(on, { env: { TMUX: '', CLAUDE_SESSION_QUIET_SECONDS: '30' } });
 
   await ends($, [SHELL]);
   await clock.advance(30_000);
 
-  expect(rung).toEqual([BELL]);
-  expect(log[0]).toBe('stop: not done, background tasks running (shell), no bell, no push; 30s with no turn rings');
+  expect(log).toEqual([held('shell', 30), quiet('shell', 30), OUTSIDE]);
 });
 
 test('a CLAUDE_SESSION_QUIET_SECONDS that is no number is a failure said aloud', async ($, on) => {
-  const { log, toasts, rung, clock } = engine(on, { env: { TMUX: '', CLAUDE_SESSION_QUIET_SECONDS: '10m' } });
+  const { log, toasts, clock } = engine(on, { env: { TMUX: '', CLAUDE_SESSION_QUIET_SECONDS: '10m' } });
 
   await ends($, [SHELL]);
   await clock.advance(600_000);
 
   const what =
-    'CLAUDE_SESSION_QUIET_SECONDS is "10m", not a whole number of seconds above 0; background tasks running (shell): no bell, no push';
+    'CLAUDE_SESSION_QUIET_SECONDS is "10m", not a whole number of seconds above 0; background tasks running (shell): no push';
   expect(log).toEqual([`stop: FAILED, ${what}`]);
   expect(toasts).toEqual([`session-done: ${what}`]);
-  expect(rung).toEqual([]);
 });
 
 // A Stop hook that blocks (a /goal, a plugin's) sends the same turn on, with
 // no turn.start, and the Stop fires again when it is over.
 test('a Stop is not the end: a blocked one decides nothing, and the last one is what counts', async ($, on) => {
-  const { log, rung, ran } = engine(on);
+  const { log, ran } = engine(on);
 
   await stop($);
   expect(ran).toEqual([]);
 
   await ends($, [SHELL]);
 
-  expect(rung).toEqual([]);
   expect(log).toEqual([HELD]);
 });
 
 test("a subagent's end decides nothing, and leaves what the main loop's Stop said", async ($, on) => {
-  const { log, rung, ran } = engine(on, BARE);
+  const { log, ran } = engine(on, BARE);
 
   await over($, 'answer', 'a1');
   await over($, 'error', 'a1');
@@ -426,23 +384,11 @@ test("a subagent's end decides nothing, and leaves what the main loop's Stop sai
   await over($, 'answer', 'a1');
   await over($);
 
-  expect(rung).toEqual([]);
   expect(log).toEqual([notDone('monitor')]);
 });
 
-// Such a turn has no Stop (seen live, 2026-11-20), so nothing says what is
-// left; whatever is, claude is stuck until the person looks.
-test('a turn an API error ended rings, with no Stop to say what is left', async ($, on) => {
-  const { log, rung } = engine(on, BARE);
-
-  await over($, 'error');
-
-  expect(rung).toEqual([BELL]);
-  expect(log).toEqual(['stop: ended on an API error, bell rung via terminal_bell', OUTSIDE]);
-});
-
-test('a turn the model refused rings', async ($, on) => {
-  const { log, rung } = engine(on, BARE);
+test('a turn the model refused is waiting', async ($, on) => {
+  const { log } = engine(on, BARE);
 
   await $.turn.complete({
     answer: '',
@@ -453,21 +399,19 @@ test('a turn the model refused rings', async ($, on) => {
     refusal: { category: null, explanation: null },
   });
 
-  expect(rung).toEqual([BELL]);
-  expect(log).toEqual(['stop: refused, bell rung via terminal_bell', OUTSIDE]);
+  expect(log).toEqual(['stop: refused', OUTSIDE]);
 });
 
 test('an interrupted turn decides nothing', async ($, on) => {
-  const { rung, ran } = engine(on);
+  const { ran } = engine(on);
 
   await over($, 'aborted');
 
-  expect(rung).toEqual([]);
   expect(ran).toEqual([]);
 });
 
-test('an end that cannot be judged is a failure said aloud: no bell, no push', async ($, on) => {
-  const { log, toasts, rung, posts, clock } = engine(on);
+test('an end that cannot be judged is a failure said aloud: no push', async ($, on) => {
+  const { log, toasts, posts, clock } = engine(on);
 
   // No Stop before the end; a Stop without each list in turn; and a reason
   // for the end that a later Claude Code might give.
@@ -479,7 +423,7 @@ test('an end that cannot be judged is a failure said aloud: no bell, no push', a
   await over($, 'paused' as 'answer');
   await clock.advance(600_000);
 
-  const so = ', so whether the session is done is unknown: no bell, no push';
+  const so = ', so whether the session is done is unknown: no push';
   expect(log).toEqual([
     `stop: FAILED, the turn ended with no Stop before it${so}`,
     `stop: FAILED, the Stop input has no background_tasks (update Claude Code: 2.1.329 sends it)${so}`,
@@ -488,7 +432,6 @@ test('an end that cannot be judged is a failure said aloud: no bell, no push', a
   ]);
   expect(toasts[0]).toBe(`session-done: the turn ended with no Stop before it${so}`);
   expect(toasts.length).toBe(4);
-  expect(rung).toEqual([]);
   expect(posts).toEqual([]);
 });
 
@@ -505,27 +448,7 @@ test('what a Stop said is for its own turn: the next end with no Stop is not jud
   expect(log[0]?.startsWith('stop: FAILED, the turn ended with no Stop before it')).toBe(true);
 });
 
-// --- the bell ----------------------------------------------------------------
-
-test('notifications turned off: the bell is not sent, and the log says so', async ($, on) => {
-  const { log, toasts } = engine(on, { ...BARE, channel: { isSent: false, reason: 'disabled' } });
-
-  await ends($);
-
-  expect(log).toEqual(['stop: done, bell not sent (disabled)', OUTSIDE]);
-  expect(toasts).toEqual([]);
-});
-
-test('a channel that fails is said in the log and on screen, and the push is still decided', async ($, on) => {
-  const { log, toasts } = engine(on, { channel: 'broken' });
-
-  await ends($);
-
-  expect(log[0]?.startsWith('stop: done, bell FAILED, ')).toBe(true);
-  expect(toasts.length).toBe(1);
-  expect(toasts[0]?.startsWith('session-done: the bell could not be rung: ')).toBe(true);
-  expect(log.slice(1)).toEqual([ARMED]);
-});
+// --- the mark that the mod is running -----------------------------------------
 
 // loaded-check.sh, a SessionStart hook of settings.json, runs beneath the mod
 // and reads the mark from claude's environment
@@ -565,44 +488,10 @@ test('a mark the engine would not set is a failure said aloud', async ($, on) =>
   expect(toasts).toEqual([`session-done: ${said}`]);
 });
 
-test("a session's start turns the engine's own bell off, and says what it was", async ($, on) => {
-  const { log, toasts, ran } = engine(on, { engineBell: exited(0, 'was 60000') });
-
-  await starts($);
-
-  expect(ran[0]).toBe('engine-bell-off.sh');
-  expect(log).toEqual([
-    "session: started, turned Claude Code's own idle bell off (messageIdleNotifThresholdMs was 60000)",
-  ]);
-  expect(toasts).toEqual([]);
-});
-
-// The line a mod that still loads leaves at every start.
-test("a session's start with the engine's bell off already says so", async ($, on) => {
-  const { log } = engine(on);
-
-  await starts($);
-
-  expect(log).toEqual(["session: started, Claude Code's own idle bell is off"]);
-});
-
-test("the engine's bell that cannot be turned off is a failure said aloud", async ($, on) => {
-  const { log, toasts } = engine(on, {
-    engineBell: exited(1, '', 'engine-bell-off.sh: no /home/u/.claude.json\n'),
-  });
-
-  await starts($);
-
-  const said =
-    "Claude Code's own idle bell could not be turned off, so it rings beside this one: engine-bell-off.sh: no /home/u/.claude.json";
-  expect(log).toEqual([`session: FAILED, ${said}`]);
-  expect(toasts).toEqual([`session-done: ${said}`]);
-});
-
 // --- the push ------------------------------------------------------------------
 
 test('a session that is done and nobody comes to look at is pushed once the debounce has passed', async ($, on) => {
-  const { log, toasts, rung, posts, clock } = engine(on, { looks: [NOBODY, AWAY] });
+  const { log, toasts, posts, clock } = engine(on, { looks: [NOBODY, AWAY] });
 
   await ends($);
   await clock.advance(595_000);
@@ -611,16 +500,15 @@ test('a session that is done and nobody comes to look at is pushed once the debo
 
   expect(posts).toEqual([pushed('done 600s ago and is still unwatched')]);
   expect(log).toEqual([
-    RUNG,
+    DONE,
     ARMED,
     'push: sent via http://ntfy.test as mbp/backend after 600s unwatched (pts/1 not focused, input 41s ago)',
   ]);
   expect(toasts).toEqual([]);
 
-  // The wait is over: nothing more is asked or sent, and the bell rang once.
+  // The wait is over: nothing more is asked or sent.
   await clock.advance(600_000);
   expect(posts.length).toBe(1);
-  expect(rung).toEqual([BELL]);
 });
 
 // No socket is passed: tmux_watched.sh's tmux finds the server by $TMUX, which
@@ -632,19 +520,22 @@ test('tmux is asked about the pane claude runs in, and is not told which server'
   await clock.advance(5_000);
 
   expect(ran).toEqual([
-    `event_log_note.sh claude_session_done ${WHO} ${RUNG}`,
+    `event_log_note.sh claude_session_done ${WHO} ${DONE}`,
     'tmux_watched.sh pane %4',
     `event_log_note.sh claude_session_done ${WHO} ${ARMED}`,
     'tmux_watched.sh pane %4',
   ]);
 });
 
-test('a turn an API error ended is pushed as such', async ($, on) => {
-  const { posts, clock } = engine(on, { env: { CLAUDE_NTFY_DEBOUNCE_SECONDS: '10' } });
+// Such a turn has no Stop (seen live, 2026-11-20), so nothing says what is
+// left; whatever is, claude is stuck until the person looks.
+test('a turn an API error ended is waiting with no Stop before it, and is pushed as such', async ($, on) => {
+  const { log, posts, clock } = engine(on, { env: { CLAUDE_NTFY_DEBOUNCE_SECONDS: '10' } });
 
   await over($, 'error');
   await clock.advance(10_000);
 
+  expect(log[0]).toBe('stop: ended on an API error');
   expect(posts).toEqual([pushed('ended on an API error 10s ago and is still unwatched')]);
 });
 
@@ -656,7 +547,7 @@ test('a prompt cancels the pending push', async ($, on) => {
   await $.turn.start({ text: 'and the tests?', turnId: 't2' });
   await clock.advance(600_000);
 
-  expect(log).toEqual([RUNG, ARMED, 'prompt: user replied, pending push cancelled']);
+  expect(log).toEqual([DONE, ARMED, 'prompt: user replied, pending push cancelled']);
   expect(posts).toEqual([]);
 });
 
@@ -669,7 +560,7 @@ test("a turn that starts by itself cancels it too, a subagent's does not", async
   await $.turn.start({ text: '', turnId: 't3' });
   await clock.advance(600_000);
 
-  expect(log).toEqual([RUNG, ARMED, 'turn: started with no prompt, pending push cancelled']);
+  expect(log).toEqual([DONE, ARMED, 'turn: started with no prompt, pending push cancelled']);
 });
 
 // A server's exit is a prompt too, a task's notification, and the log does
@@ -681,7 +572,7 @@ test("a task's notification cancels it, and is named as what started the turn", 
   await prompts($, 'task-notification');
   await clock.advance(600_000);
 
-  expect(log).toEqual([RUNG, ARMED, 'turn: a task-notification started one, pending push cancelled']);
+  expect(log).toEqual([DONE, ARMED, 'turn: a task-notification started one, pending push cancelled']);
   expect(posts).toEqual([]);
 });
 
@@ -707,14 +598,13 @@ test('with no push pending, a prompt runs nothing', async ($, on) => {
   expect(ran).toEqual([]);
 });
 
-test('watched at the end: the bell, and no wait', async ($, on) => {
-  const { log, rung, ran, clock } = engine(on, { looks: [WATCHED] });
+test('watched at the end: no wait', async ($, on) => {
+  const { log, ran, clock } = engine(on, { looks: [WATCHED] });
 
   await ends($);
   await clock.advance(600_000);
 
-  expect(rung).toEqual([BELL]);
-  expect(log).toEqual([RUNG, 'push: none, watched now']);
+  expect(log).toEqual([DONE, 'push: none, watched now']);
   expect(ran.filter((r) => r.startsWith('tmux_watched.sh pane')).length).toBe(1);
 });
 
@@ -737,10 +627,10 @@ test('the pane gone during the wait, or at the end: no push', async ($, on) => {
   await clock.advance(600_000);
 
   expect(log).toEqual([
-    RUNG,
+    DONE,
     ARMED,
     "wait: session or claude's pane %4 gone, no push",
-    RUNG,
+    DONE,
     "push: none, session or claude's pane %4 gone",
   ]);
   expect(posts).toEqual([]);
@@ -761,12 +651,12 @@ test('tmux failing is said, at the end on screen too, and never read as gone', a
   const mismatch = BROKEN[1];
 
   await ends($);
-  expect(log).toEqual([RUNG, `push: FAILED, ${mismatch}, so whether the turn was seen is unknown`]);
+  expect(log).toEqual([DONE, `push: FAILED, ${mismatch}, so whether the turn was seen is unknown`]);
   expect(toasts).toEqual([`session-done: ${mismatch}, so whether the turn was seen is unknown`]);
 
   await ends($);
   await clock.advance(600_000);
-  expect(log.slice(2)).toEqual([RUNG, ARMED, `wait: FAILED, ${mismatch}; no push`]);
+  expect(log.slice(2)).toEqual([DONE, ARMED, `wait: FAILED, ${mismatch}; no push`]);
   expect(toasts.length).toBe(1);
   expect(posts).toEqual([]);
 });
@@ -798,31 +688,29 @@ test('an end takes the push still pending from an earlier one, and decides afres
   await ends($);
   await clock.advance(5_000);
 
-  expect(log).toEqual([RUNG, ARMED, taken, notDone('monitor'), RUNG, ARMED, taken, RUNG, ARMED]);
+  expect(log).toEqual([DONE, ARMED, taken, notDone('monitor'), DONE, ARMED, taken, DONE, ARMED]);
 
   // One wait is left of the three, and it pushes once.
   await clock.advance(600_000);
   expect(posts.length).toBe(1);
 });
 
-test('$TMUX with no $TMUX_PANE: the bell, and the push fails loudly', async ($, on) => {
-  const { log, toasts, rung } = engine(on, { env: { TMUX_PANE: '' } });
+test('$TMUX with no $TMUX_PANE: the push fails loudly', async ($, on) => {
+  const { log, toasts } = engine(on, { env: { TMUX_PANE: '' } });
 
   await ends($);
 
-  expect(rung).toEqual([BELL]);
   expect(log[1]?.startsWith('push: FAILED, $TMUX is set but $TMUX_PANE is not, so ')).toBe(true);
   expect(log.length).toBe(2);
   expect(toasts.length).toBe(1);
 });
 
-test('with no topic file: the bell, the reason in the log, and tmux is asked nothing', async ($, on) => {
-  const { log, ran, rung } = engine(on, { topic: false });
+test('with no topic file: the reason in the log, and tmux is asked nothing', async ($, on) => {
+  const { log, ran } = engine(on, { topic: false });
 
   await ends($);
 
-  expect(rung).toEqual([BELL]);
-  expect(log).toEqual([RUNG, 'push: none, no topic file']);
+  expect(log).toEqual([DONE, 'push: none, no topic file']);
   expect(asked(ran)).toEqual([]);
 });
 
@@ -842,15 +730,14 @@ test('a push that cannot be sent is logged, and the topic never is', async ($, o
   expect(log.join('\n')).not.toContain('testtopic');
 });
 
-test('a debounce that is not a number of seconds: the bell, and the push fails loudly', async ($, on) => {
-  const { log, toasts, rung, posts, clock } = engine(on, { env: { CLAUDE_NTFY_DEBOUNCE_SECONDS: '10m' } });
+test('a debounce that is not a number of seconds: the push fails loudly', async ($, on) => {
+  const { log, toasts, posts, clock } = engine(on, { env: { CLAUDE_NTFY_DEBOUNCE_SECONDS: '10m' } });
 
   await ends($);
   await clock.advance(600_000);
 
   const what = 'CLAUDE_NTFY_DEBOUNCE_SECONDS is "10m", not a whole number of seconds above 0';
-  expect(rung).toEqual([BELL]);
-  expect(log).toEqual([RUNG, `push: FAILED, ${what}`]);
+  expect(log).toEqual([DONE, `push: FAILED, ${what}`]);
   expect(toasts).toEqual([`session-done: ${what}`]);
   expect(posts).toEqual([]);
 });

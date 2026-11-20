@@ -4,13 +4,11 @@
 # home/.claude/settings.json, so it runs whether or not any mod loads: that
 # is the point.
 #
-# Why. The mod turns Claude Code's own idle bell off for good
-# (engine-bell-off.sh, a key in ~/.claude.json that outlives it) and rings
-# in its place. A claude in which the mod does not load -- the mods folder
-# moved, a Claude Code whose mod API moved on, mods turned off -- then rings
-# nothing at all and pushes nothing, and nothing says so: the one sign was a
-# line missing from a log. A session started before the two mods were merged
-# sat silent like that for hours (2026-11-20).
+# Why. A claude in which the mod does not load -- the mods folder moved, a
+# Claude Code whose mod API moved on, mods turned off -- pushes nothing to
+# the phone, and nothing says so: the one sign is a line missing from a log.
+# A session started before this mod took the push over from the one that
+# had it (ntfy-stop) sat like that for hours (2026-11-20).
 #
 #   SessionStart (stdin: {"session_id": "4f1c9a2e-...", "cwd": "/home/u/work/bench", ...})
 #     |
@@ -30,20 +28,13 @@
 # session because an environment is inherited: a claude started from inside
 # another's SessionStart would find that one's mark, and not its own id.
 #
-# The warning says which of two states the session is in, by the key in
-# ~/.claude.json: the engine's bell off (no bell at all) or still on (its
-# bell a minute after every turn end; no push). It restores nothing: the key
-# is every running claude's, and turning the engine's bell back on would
-# ring twice in each session where the mod does run.
-#
 # One line a SessionStart in the mod's own log, beside the mod's:
 #   ~/.dotfiles/.logs/<UTC day>_claude_session_done/events.log
 #   2026-11-20T04:28:13Z bench 4f1c9a2e check: mod running
-#   2026-11-20T04:31:02Z bench 9d02c1aa check: FAILED, the mod is not running; Claude Code's own idle bell is off: no bell, no push
+#   2026-11-20T04:31:02Z bench 9d02c1aa check: FAILED, the mod is not running: no push
 #
-# Needs jq (nix/flake.nix), as engine-bell-off.sh does. Exit 1 and the
-# reason on stderr for what it cannot judge: no session id on stdin, no
-# ~/.claude.json, a log that cannot be written.
+# Needs jq (nix/flake.nix). Exit 1 and the reason on stderr for what it
+# cannot judge: no session id on stdin, a log that cannot be written.
 set -euo pipefail
 
 MOD=${0%/*}
@@ -71,18 +62,10 @@ if [ "${SESSION_DONE_MOD_SESSION:-}" = "$id" ]; then
   exit 0
 fi
 
-# An assignment, so its failure is this hook's: its own stderr names what it
-# cannot read.
-bell=$("$MOD/engine-bell-off.sh" --state)
-case $bell in
-  off) state="Claude Code's own idle bell is off: no bell, no push" ;;
-  on) state="Claude Code's own idle bell rings in its place (a minute after every turn end), and there is no push" ;;
-  *) die "engine-bell-off.sh --state said \"$bell\", neither on nor off" ;;
-esac
-event_log_note claude_session_done "$who" "check: FAILED, the mod is not running; $state" \
+event_log_note claude_session_done "$who" "check: FAILED, the mod is not running: no push" \
   || die "cannot log under $EVENT_LOG_ROOT"
 
 # systemMessage is the hook output Claude Code shows the person.
 mod=$(cd "$MOD" && pwd)
-jq -cn --arg text "session-done: the mod is not running in this session. $state. Why: claude plugin validate $mod, and CLAUDE_CODE_PLUGIN_DIRS in ~/.claude/settings.json. $mod/engine-bell-off.sh has how to turn Claude Code's own bell back on." \
+jq -cn --arg text "session-done: the mod is not running in this session, so nothing is pushed to the phone when it waits unwatched. Why: claude plugin validate $mod, and CLAUDE_CODE_PLUGIN_DIRS in ~/.claude/settings.json." \
   '{ systemMessage: $text }'

@@ -156,6 +156,28 @@ mkdir -p ~/.claude
 ln -sf ~/.dotfiles/home/AGENTS_global_instructions.md ~/.claude/CLAUDE.md
 ln -sf ~/.dotfiles/home/.claude/settings.json ~/.claude/settings.json
 ln -sf ~/.dotfiles/home/.claude/keybindings.json ~/.claude/keybindings.json
+# Claude Code's own idle bell, back on. From 2026-11-19 to 2026-11-20 the
+# session-done mod (home/.claude/mods/session-done/) rang in its place, and
+# turned it off by setting messageIdleNotifThresholdMs in claude's state file
+# to 2^31-1 ms: a key with no settings.json form, which outlives the mod.
+# Where that value is still there the key goes, and the engine rings a minute
+# after a turn's end again, its default; any other value is the person's own
+# and stays. The new copy is renamed into place, so a running claude never
+# reads half a file; what one writes between jq's read and the rename is
+# lost (a counter, a tip's history), once a machine. Delete this block after
+# 2026-12-31: every machine has run it by then, and from then on that value
+# in the file would be somebody's own choice.
+claude_state="${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json"
+if grep -Eqs '"messageIdleNotifThresholdMs": *2147483647' "$claude_state"; then
+  if claude_state_new=$(mktemp "$claude_state.XXXXXX") \
+    && jq 'del(.messageIdleNotifThresholdMs)' "$claude_state" >"$claude_state_new" \
+    && mv "$claude_state_new" "$claude_state"; then
+    echo "turned Claude Code's own idle bell back on (messageIdleNotifThresholdMs out of $claude_state)"
+  else
+    rm -f "$claude_state_new"
+    warn "could not turn Claude Code's own idle bell back on: jq 'del(.messageIdleNotifThresholdMs)' on $claude_state failed"
+  fi
+fi
 # Custom /theme presets (gruvbox-light, gruvbox-dark). Claude Code watches this
 # directory, and "New custom theme..." in /theme writes here, so themes made
 # there land in the repo too.

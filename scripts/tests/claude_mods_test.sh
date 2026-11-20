@@ -23,9 +23,8 @@
 # format need no claude: scripts/check.sh's `typescript` check.
 #
 # Not here, each with a shell test of its own: the session-done mod's
-# scripts, engine-bell-off.sh (scripts/tests/engine_bell_off_test.sh) and
-# loaded-check.sh (scripts/tests/session_done_loaded_check_test.sh); the
-# rule its push asks tmux by, scripts/tmux_watched.sh
+# script, loaded-check.sh (scripts/tests/session_done_loaded_check_test.sh);
+# the rule its push asks tmux by, scripts/tmux_watched.sh
 # (scripts/tests/tmux_watched_test.sh); and scripts/event_log_note.sh, the
 # mods' way to the event log (scripts/tests/prune_logs_test.sh).
 #

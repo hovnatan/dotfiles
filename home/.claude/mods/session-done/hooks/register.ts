@@ -1,31 +1,21 @@
-// session-done -- tell the person when a session is waiting for them, and
-// only then: its turn ended with nothing left that will start the next one
-// (the rule is below). Two things follow from that one rule, and only from
-// it:
+// session-done -- push to the person's phone when a session is waiting for
+// them and nobody is looking: its turn ended with nothing left that will
+// start the next one (the rule is below), and no terminal showed claude's
+// tmux pane for ten minutes after (push.ts).
 //
-//   the bell (bell.ts)   at once, through the person's notification channel
-//   the push (push.ts)   to ntfy.sh, if nobody looks at claude's tmux pane
-//                        for ten minutes
-//
-// Why a mod rings the bell. Claude Code's own idle bell (its `idle_prompt`
-// notification) rings 60 s after every turn end, and holds back only for
-// background agents and workflows. A turn that ended on a Monitor's event,
-// or with a shell still running in the background, rang it too: once per
-// event, for work that was not done (43 times in a day in one session,
-// 2026-11-19). No hook can veto that bell, so it is turned off whole
-// (engine-bell-off.sh, at each session's start) and rung from here. Its
-// minute is gone with it: the engine waited to see whether the person was
-// still there, and a bell for somebody who is there costs less than a
-// minute's wait for somebody who is not.
+// The bell is not this mod's: Claude Code rings its own, a minute after
+// every turn end (its `idle_prompt` notification). For a day this mod rang
+// in its place, at once and by the rule below (2026-11-19 to 2026-11-20);
+// the person went back to the engine's.
 //
 //   prompt.submit, the person's --> the shells the last turn left are
 //                                   servers from here on (see the rule)
 //   classic.Stop ----> remember what is left: background tasks, wakeups
 //
 //   turn.complete (main loop), by its reason:
-//     answer ---> anything left   --yes--> working: no bell, no push. The
-//                 that holds?              task's notification or the wakeup
-//                    | no                  starts a turn, and its end decides
+//     answer ---> anything left   --yes--> working: no push. The task's
+//                 that holds?              notification or the wakeup starts
+//                    | no                  a turn, and its end decides
 //     refusal -------+                       |
 //     error ---------+                       | only shells hold, and no turn
 //     aborted        |                       | starts for ten minutes
@@ -33,13 +23,12 @@
 //       Escape is at the keyboard)         quiet: taken for waiting
 //                    v                       |
 //          waiting for the person <----------'
-//             |-- the bell, at once
 //             '-- the push's wait (the diagram in push.ts)
 //
 //   turn.start (main loop) ----> a pending push and the quiet wait are
 //                                cancelled
 //
-// The rule: what holds the bell back at a turn's end.
+// The rule: what holds the push back at a turn's end.
 //   - A monitor, a subagent, a workflow, any task that is not a shell: each
 //     is there to wake the session, and its notification starts a turn.
 //   - A scheduled wakeup (a /loop's next iteration, a ScheduleWakeup, a
@@ -48,16 +37,16 @@
 //     the turn is waiting on. Its exit starts a turn.
 //   A shell that was running already when the person last prompted does NOT
 //   hold: it is taken for a server (a dev server, a log tail), which never
-//   exits, and a session that kept one never rang at all (2026-11-20).
+//   exits, and a session that kept one was never pushed at all (2026-11-20).
 //
 //     "start the dev server and fix the bug"  -> ends with the shell left,
-//        new since the prompt: not done. Ten quiet minutes later: the bell.
-//     "now commit it"   -> the shell is a server from here on: done, the bell
+//        new since the prompt: not done. Ten quiet minutes later: waiting.
+//     "now commit it"   -> the shell is a server from here on: done
 //
 //   Only a shell can be a server. A monitor or a wakeup that predates the
-//   prompt still holds: taken for furniture, each of its events would ring,
-//   and a bell at every monitor event is the complaint this mod answers. A
-//   shell notifies once, at its exit, so nothing rings for it twice.
+//   prompt still holds: taken for furniture, each of its events would start
+//   a push's wait for work that is not done. A shell notifies once, at its
+//   exit, so nothing is pushed for it twice.
 //
 //   The person's prompt is one whose origin says so (IS_PERSONS below: typed,
 //   Remote Control, a Slack ping), not a task's notification or a wakeup,
@@ -66,12 +55,12 @@
 // The quiet wait is for the turn that started the server and then asked
 // something: nothing tells a server from a build but time. It runs only
 // while shells alone hold. A monitor or a wakeup wakes the session for
-// certain, and a bell ten minutes into each /loop iteration is the noise
-// this mod is against. Its price: one bell during a build that runs longer
-// than CLAUDE_SESSION_QUIET_SECONDS (default 600) without a word. The
-// shells that sat out a quiet wait are servers from then on, as those that
-// sat out a prompt are: when one of two exits later, its turn's end rings at
-// once, not ten minutes on for the other.
+// certain, and a push ten minutes into each /loop iteration would be noise.
+// Its price: a push's wait may start during a build that runs longer than
+// CLAUDE_SESSION_QUIET_SECONDS (default 600) without a word. The shells that
+// sat out a quiet wait are servers from then on, as those that sat out a
+// prompt are: when one of two exits later, its turn's end is done at once,
+// not ten minutes on for the other.
 //
 // Why two events for one end. Only the Stop says what is left, but a Stop is
 // not yet the end: a Stop hook that blocks (a /goal, a plugin's) sends the
@@ -85,37 +74,34 @@
 // mod does not hook it, and the pane is where the error is read.
 //
 // What the rule cannot tell: a monitor that never fires again and a cron
-// however far off both hold, so a session that keeps one neither rings nor
-// pushes. A shell started in a turn that was then interrupted is not known
-// to have been there at the next prompt (an interrupted turn has no Stop),
-// so it holds for one turn more, until the quiet wait or the next prompt.
-//
-// The rule was the push's alone until 2026-11-20 (the ntfy-stop mod), and
-// narrower: it read background tasks off the Stop and nothing else. Hence
-// one mod for both, and bell and push with no say in when.
+// however far off both hold, so a session that keeps one is never pushed. A
+// shell started in a turn that was then interrupted is not known to have
+// been there at the next prompt (an interrupted turn has no Stop), so it
+// holds for one turn more, until the quiet wait or the next prompt. A `!`
+// command is no prompt to the engine (its output starts a turn, with no
+// prompt.submit before it; seen live on 2.1.329), so it draws no line
+// either: a server holds through its turn as well.
 //
 // Every decision is a line in the day's log, each led by the session's
-// folder and the start of its id, so a bell or a push that did or did not
-// arrive can be explained afterwards:
+// folder and the start of its id, so a push that did or did not arrive can
+// be explained afterwards:
 //   tail -f ~/.dotfiles/.logs/*_claude_session_done/events.log
-//   2026-11-20T02:31:07Z bench 4f1c9a2e stop: not done, background tasks running (shell, monitor), no bell, no push
-//   2026-11-20T02:38:10Z bench 4f1c9a2e stop: not done, background tasks running (shell), no bell, no push; 600s with no turn rings
-//   2026-11-20T02:48:10Z bench 4f1c9a2e quiet: no turn for 600s with background tasks running (shell), taken for waiting, bell rung via terminal_bell
+//   2026-11-20T02:31:07Z bench 4f1c9a2e stop: not done, background tasks running (shell, monitor), no push
+//   2026-11-20T02:38:10Z bench 4f1c9a2e stop: not done, background tasks running (shell), no push; waiting if no turn starts in 600s
+//   2026-11-20T02:48:10Z bench 4f1c9a2e quiet: no turn for 600s with background tasks running (shell), taken for waiting
 //   2026-11-20T02:48:10Z bench 4f1c9a2e push: unwatched, waiter armed (debounce 600s; pts/1 not focused, input 41s ago)
 //   2026-11-20T02:49:15Z bench 4f1c9a2e wait: seen after 65s, no push
 //   2026-11-20T02:52:40Z bench 4f1c9a2e prompt: user replied, pending push cancelled
-//   2026-11-20T02:53:02Z bench 4f1c9a2e stop: done beside 1 shell(s) from before the last prompt, bell rung via terminal_bell
+//   2026-11-20T02:53:02Z bench 4f1c9a2e stop: done beside 1 shell(s) from before the last prompt
 // Events:
-//   session  started (engine's own bell off | turned off) | FAILED
 //   stop     not done (background tasks running | wakeups scheduled), and
 //            the quiet wait if one started |
 //            done (beside N shells from before the last prompt) | refused |
-//            ended on an API error, each with what became of the bell (rung
-//            | not sent | FAILED) |
+//            ended on an API error, each followed by its push line |
 //            FAILED: no Stop before an answer's end, a Stop without
 //            background_tasks or session_crons, a reason not known here, a
 //            bad CLAUDE_SESSION_QUIET_SECONDS
-//   quiet    no turn for N s, taken for waiting, and the bell | FAILED
+//   quiet    no turn for N s, taken for waiting | FAILED
 //   push     none (not in tmux | no topic file | watched now | session or
 //            pane gone) | unwatched, waiter armed | sent | FAILED (no
 //            $TMUX_PANE, tmux failing or hung, a bad debounce, ntfy refusing)
@@ -123,13 +109,13 @@
 //   prompt   user replied, pending push cancelled
 //   turn     started with no prompt | a task-notification started one |
 //            another ended, pending push cancelled
+//   session  FAILED (the mark below could not be set)
 //   check    mod running | FAILED, the mod is not running (loaded-check.sh's
 //            lines, beside this folder: see the mark below)
 // A FAILED is a toast too, but under a wait: nobody is there to read one.
 //
 // Loaded by CLAUDE_CODE_PLUGIN_DIRS in home/.claude/settings.json.
 import type { EngineInterface, PromptOrigin, Register, TurnCompleteReason } from 'claude-code';
-import { engineBellOff, ring } from './bell';
 import { fail, note, seconds, words } from './log';
 import { armPush, cancelPush } from './push';
 
@@ -189,7 +175,7 @@ let quiet: { cancel: () => void } | null = null;
 
 const isShell = (t: Task): boolean => t.type === 'shell';
 
-const notDone = (on: string): string => `stop: not done, ${on}, no bell, no push`;
+const notDone = (on: string): string => `stop: not done, ${on}, no push`;
 
 // A turn of the main loop started or ended: whatever wait an earlier end
 // left, the quiet one here or the push's, is over.
@@ -258,20 +244,20 @@ async function wentQuiet($: EngineInterface, on: string, waited: number): Promis
   servers = lastShells;
 
   try {
-    await note($, `quiet: no turn for ${waited}s with ${on}, taken for waiting, bell ${await ring($)}`);
+    await note($, `quiet: no turn for ${waited}s with ${on}, taken for waiting`);
     await armPush($, `went quiet with ${on}`);
   } catch (err) {
     await note($, `quiet: FAILED, ${words(err)}`);
   }
 }
 
-// Shells alone hold the bell back: start the quiet wait and say so.
+// Shells alone hold the push back: start the quiet wait and say so.
 async function holdQuiet($: EngineInterface, on: string): Promise<void> {
   let wait: number;
   try {
     wait = seconds('CLAUDE_SESSION_QUIET_SECONDS', await $.env.get('CLAUDE_SESSION_QUIET_SECONDS'), 600);
   } catch (err) {
-    return fail($, 'stop', `${words(err)}; ${on}: no bell, no push`);
+    return fail($, 'stop', `${words(err)}; ${on}: no push`);
   }
 
   // A timer cancelled as it fires may still call back: only the wait that
@@ -282,22 +268,16 @@ async function holdQuiet($: EngineInterface, on: string): Promise<void> {
     void wentQuiet($, on, wait);
   });
   quiet = timer;
-  await note($, `${notDone(on)}; ${wait}s with no turn rings`);
+  await note($, `${notDone(on)}; waiting if no turn starts in ${wait}s`);
 }
 
 export const register: Register = (on) => {
-  on('session.start', async ($, e, next) => {
-    await engineBellOff($);
-
-    return next(e);
-  });
-
   // The mark that this mod is running, for loaded-check.sh beside this
   // folder: a SessionStart hook of settings.json, which Claude Code runs
   // beneath this one, inside next(e). It warns the person where the mark is
-  // not this session's id: the engine's bell is off for good, so a claude
-  // without this mod rings nothing. The mark is in claude's environment only
-  // while those hooks run, so no shell claude starts later carries it.
+  // not this session's id: a claude without this mod pushes nothing, and
+  // nothing else says so. The mark is in claude's environment only while
+  // those hooks run, so no shell claude starts later carries it.
   on('classic.SessionStart', async ($, e, next) => {
     // A write the engine holds (an organization's settings) resolves, with
     // why: the check beneath will then say the mod is not running, wrongly.
@@ -354,12 +334,10 @@ export const register: Register = (on) => {
         await (is.isShellsAlone ? holdQuiet($, is.on) : note($, notDone(is.on)));
         break;
       case 'unknown':
-        await fail($, 'stop', `${is.why}, so whether the session is done is unknown: no bell, no push`);
+        await fail($, 'stop', `${is.why}, so whether the session is done is unknown: no push`);
         break;
-      // The bell first: it is the one wanted now, and the push's question
-      // to tmux can take its time.
       case 'waiting':
-        await note($, `stop: ${is.how}${is.beside}, bell ${await ring($)}`);
+        await note($, `stop: ${is.how}${is.beside}`);
         await armPush($, is.how);
         break;
     }

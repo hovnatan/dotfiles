@@ -1,5 +1,5 @@
 // The mod's way to the day's event log and to the person's screen, for the
-// three files beside it.
+// two files beside it.
 //
 // In the files register.ts imports, whatever takes `$` is a function
 // declaration, never an arrow in a const: the engine follows `$` past an
@@ -13,7 +13,7 @@ export function script($: EngineInterface, name: string): string {
 }
 
 // On screen, for long enough to be read, and saying whose words these are.
-export function toast($: EngineInterface, text: string): void {
+function toast($: EngineInterface, text: string): void {
   $.ui.toast(`session-done: ${text}`, { timeoutMs: 15000 });
 }
 
