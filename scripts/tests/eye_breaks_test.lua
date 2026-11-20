@@ -175,6 +175,26 @@ expect(events, "returned@1025")
 eq(events[1].away, 425, "back after 7 min 5 s: away")
 eq(events[1].sound, true, "with the sound")
 
+-- --- the badge's second line: the time without input -------------------------
+s = start("idle on the badge")
+work(s, at(0), at(20))
+v = core.view(s, at(20))
+eq(badgeLine(v), "+5m short", "a break is due, and the badge up")
+eq(v.idle, nil, "typing is no idle time: idle")
+-- No input from 20:00.
+work(s, at(20), at(20, 55), { idleSince = at(20) })
+eq(core.view(s, at(20, 55)).idle, nil, "nor is 55 s without input")
+work(s, at(20, 55), at(21), { idleSince = at(20) })
+eq(core.view(s, at(21)).idle, "1m", "a minute without input is")
+work(s, at(21), at(24, 55), { idleSince = at(20) })
+v = core.view(s, at(24, 55))
+eq(badgeLine(v) .. " " .. v.idle, "+9m short 4m", "4 min 55 s of it, under the number")
+-- At 5 min that is away, a rest: the short break is no longer due.
+work(s, at(24, 55), at(25), { idleSince = at(20) })
+eq(badgeLine(core.view(s, at(25))), "hidden", "5 min of it is a rest, and the badge down")
+work(s, at(25), at(25, 5))
+eq(core.view(s, at(25, 5)).idle, nil, "input ends it")
+
 -- --- the lock screen: rest once it has lasted a break's length ---------------
 s = start("lock")
 work(s, at(0), at(10))
@@ -424,6 +444,7 @@ expect(
 )
 eq(asked, 181, "asked once a tick from 5 min idle on (181 ticks), not before: times asked")
 v = core.view(s, at(30))
+eq(v.idle, nil, "20 min without input under a video is not idle time: idle")
 eq(v.since, 1800, "the clock ran through the video: since")
 eq(v.due, "short", "so a break is due")
 check(
@@ -432,7 +453,9 @@ check(
 )
 -- The video ends; still no input. Away 5 min after its end, not at once.
 expect(work(s, at(30), at(34, 55), { idleSince = at(10) }), "badge_unhidden@1805 watching_ended@1805")
-eq(core.view(s, at(34, 55)).since, 2095, "4 min 55 s after the video the clock still runs: since")
+v = core.view(s, at(34, 55))
+eq(v.since, 2095, "4 min 55 s after the video the clock still runs: since")
+eq(v.idle, "4m", "and the idle time counts from the video's end, not the 24 min since a key")
 expect(work(s, at(34, 55), at(35), { idleSince = at(10) }), "")
 eq(core.view(s, at(35)).since, 0, "5 min after the video it is rest: since")
 events = work(s, at(35), at(35, 5))

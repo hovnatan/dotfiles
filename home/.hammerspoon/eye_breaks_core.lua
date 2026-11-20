@@ -17,7 +17,9 @@
 -- badge show one number, the same in both: the time until the next break
 -- is due, and once one is, how long it has been. (The badge had the time
 -- worked and the time to the short break, and the menu bar the time since
--- a rest: three numbers for one question, so they went, by request.)
+-- a rest: three numbers for one question, so they went, by request.) Under
+-- it the badge has the time without input, once that is a minute (by
+-- request): how far a rest taken by just stopping has got, see M.view.
 --
 --   since a rest   since a 10 min rest   shown
 --   17m            17m                   "3m"    plain: a short break in 3 min
@@ -216,7 +218,7 @@ end
 -- what was made of it for the log. A saved table that does not match SAVED
 -- raises: it is another version's or a corrupted one, not one to guess at.
 function M.new(cfg, saved, now)
-  local s = { cfg = cfg, badge = true, lastTickAt = now }
+  local s = { cfg = cfg, badge = true, lastTickAt = now, idleFor = 0 }
   rest(s, now, math.huge) -- both clocks start now
   if saved == nil then
     return s, "no saved state: clocks start now"
@@ -353,6 +355,8 @@ function M.tick(s, obs)
   -- 11:00 after 40 idle minutes makes it away at 11:05, not at once. Input
   -- after the stretch is later than its end, so obs.idle is then the smaller.
   local idleFor = s.watch and math.min(obs.idle, now - s.watch.to) or obs.idle
+  -- Kept for the badge's second line (M.view).
+  s.idleFor = idleFor
 
   -- Away: idle or asleep for their thresholds, or locked. `unseen` is how
   -- far back the away time starts: the idle or sleep time, or 0 for a
@@ -478,6 +482,13 @@ end
 --   badgeOn      the badge's toggle, for the menu
 --   snoozed      the time a snooze still runs, as the title counts it
 --                ("14m"); nil with none
+--   idle         the time without input, as of the last tick, for the
+--                badge's second line: "3m"; nil under a minute, which is
+--                working. It is the time that makes it away at awayAfter,
+--                so it counts from a video's end, not through it:
+--                  no input since 10:00, at 10:03          "3m"
+--                  the same, a video playing all along     nil
+--                  that video ended at 10:20, at 10:22     "2m"
 function M.view(s, now)
   local due, shortIn, longIn, snoozedFor = dueAt(s, now)
   local v = {
@@ -487,6 +498,7 @@ function M.view(s, now)
     longWhen = when(longIn),
     badgeOn = s.badge,
     snoozed = snoozedFor and countdown(snoozedFor),
+    idle = wholeMinutes(s.idleFor) >= 1 and M.fmt(s.idleFor) or nil,
     watched = s.watch and s.watch.to > s.lastRestAt and s.watch or nil,
   }
 
