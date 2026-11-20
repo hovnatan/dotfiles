@@ -89,11 +89,13 @@
 #   bells in w (out of view), q2, q1, -> prefix C-s from w: w's window, q2,
 #   a second apart                       q1, each at the window that rang;
 #                                        then, no bell left, back to q2 and
-#                                        to q1 (attached to last, no client
-#                                        on them); a session with no bell
+#                                        to q1 (used last, no client on
+#                                        them); a session with no bell
 #                                        time first
-#   prefix C-s with no bell, the one  -> the client stays and is told so
+#   prefix C-s with no bell, the one  -> the client goes there
 #   other session never attached to
+#   prefix C-s with no bell, no other -> the client stays and is told so
+#   session
 #   prefix c from window 0 of 3       -> new window at 1, the rest move up
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
@@ -509,7 +511,7 @@ done
 [ -z "$(what_key prefix t)" ] || fail "what_key reads prefix t, which the config leaves unbound, as bound: '$(what_key prefix t)'"
 [[ "$(what_key prefix c)" == "new-window -a -c "* ]] && [[ "$(what_key prefix C)" == *"new-session -s "* ]] \
   && [ "$(what_key prefix l)" = last-window ] \
-  && [ "$(what_key prefix s)" = 'choose-tree -Zs -F "#{E:@tree_row}" -O activity' ] \
+  && [ "$(what_key prefix s)" = 'choose-tree -Zs -F "#{E:@tree_row}" -O activity \; send-keys Down' ] \
   && pass "prefix c: new window, C: new session, l: last window, s: session picker" \
   || fail "prefix c '$(what_key prefix c)', C '$(what_key prefix C)', l '$(what_key prefix l)', s '$(what_key prefix s)'"
 
@@ -742,6 +744,15 @@ send_keys '\x01L'
 b=$(tw display -p -c "$cname" '#{client_session}')
 [ "$a $b" = "solo w" ] && pass "prefix L, L: sessions solo, w" || fail "prefix L, L: sessions $a $b, wanted solo w"
 
+# prefix s opens the picker one row below the client's own session: Enter
+# alone goes to the session used before it, solo.
+send_keys '\x01s'
+send_keys '\r'
+a=$(tw display -p -c "$cname" '#{client_session}')
+[ "$a" = solo ] && pass "prefix s, Enter: the session used before this one, solo" \
+  || fail "prefix s, Enter: session $a, wanted solo; sessions: $(tw list-sessions -F '#{session_name}=#{session_activity}' | paste -sd ' ' -)"
+tw switch-client -c "$cname" -t =w
+
 # A bell in a window out of view: its label is drawn on a yellow background (#d79921, as
 # the RGB parameters the client is sent).
 tw new-window -d -t =w: "printf '\\a'; exec sleep 100"
@@ -951,11 +962,13 @@ next_bell() {
 }
 next_bell "w:$rw" "-> w:$rw \(rang [0-9]+s ago, 3 held\)"
 next_bell "q2:$r2" "-> q2:$r2 \(rang [0-9]+s ago, 2 held\)"
+# q2 is used a second after w, for the way back below.
+sleep 1.1
 next_bell "q1:$r1" "-> q1:$r1 \(rang [0-9]+s ago, 1 held\)"
-next_bell "q2:$r2" "no bell held, -> q2 \(last attached [0-9]+s ago\)"
+next_bell "q2:$r2" "no bell held, -> q2 \(used [0-9]+s ago\)"
 grep -aqF "no bell held: back to q2" "$WORK/screen" && pass "going back for want of a bell, the client is told so" \
   || fail "no 'no bell held: back to q2' drawn for the client"
-next_bell "q1:$r1" "no bell held, -> q1 \(last attached [0-9]+s ago\)"
+next_bell "q1:$r1" "no bell held, -> q1 \(used [0-9]+s ago\)"
 # A session that holds a bell with no time (its hook not yet done) goes
 # first, though solo rings after q2 here.
 ring_in q2 next-q2b "$unwatched"
@@ -970,10 +983,13 @@ tw kill-window -t "=w:$rw"
 tw select-window -t "=w:$wcur"
 tw kill-session -t =q1
 tw kill-session -t =q2
-# No bell and nowhere to go back to: the one other session, a new solo, was
-# never attached to, so tmux has no time for it.
+# A session never attached to is one to go to as well: a new solo, the one
+# other session. With it gone there is nowhere to go.
 tw kill-session -t =solo
 tw new-session -d -s solo 'sleep 300'
+next_bell "solo:0" "no bell held, -> solo \(used [0-9]+s ago\)"
+tw switch-client -c "$wname" -t =w
+tw kill-session -t =solo
 nowhere="no bell held, and no detached session to go back to"
 next_bell "w:$wcur" "$nowhere"
 grep -aqF "$nowhere" "$WORK/screen" && pass "with no bell and no session to go back to, the client is told so" \

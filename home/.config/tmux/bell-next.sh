@@ -2,7 +2,7 @@
 # prefix C-s: take the client to a session holding a bell, at the window
 # that rang, the one that rang longest ago first. Pressed again it goes to
 # the next, as a window just shown no longer holds its bell. With no bell
-# left it goes back to the session attached to last.
+# left it goes to the session used last.
 #
 #   bars show " solo:1!  build:0! ", solo rang 14:02, build 14:05
 #     prefix C-s -> solo, window 1
@@ -15,9 +15,10 @@
 # goes to the back. One without it goes first: its bell's hook runs in the
 # background and may not have stamped it yet.
 #
-# Going back leaves out a session a client is on (another tab shows it) and
-# one never attached to, which tmux has no time for. The time is that of the
-# attach, not of leaving.
+# Used last is the first row of prefix s (tmux.conf) that no client is on:
+# by #{session_activity}, a client's last input in the session, or its
+# creation for one never attached to. A session another tab shows is left
+# out.
 #
 # Runs under bash 3.2 too: run-shell finds bash on the server's PATH.
 set -euo pipefail
@@ -33,9 +34,9 @@ who="bell-next ${client#/dev/}"
 now=${EPOCHSECONDS:-$(date +%s)}
 
 bell_id='' bell_at='' bell_held='' bell_name='' count=0
-back_id='' back_last='' back_name=''
+back_id='' back_used='' back_name=''
 # The name last: it may hold the separator.
-while IFS='|' read -r id attached last at held alerts name; do
+while IFS='|' read -r id attached used at held alerts name; do
   # Its own session's @bell is of the window the client is looking at, and
   # the hooks that clear it may still be running after a switch.
   [ "$id" != "$here" ] || held=$alerts
@@ -45,13 +46,13 @@ while IFS='|' read -r id attached last at held alerts name; do
     if [ -z "$bell_id" ] || [ "$at" -lt "$bell_at" ]; then
       bell_id=$id bell_at=$at bell_held=$held bell_name=$name
     fi
-  elif [ "$attached" = 0 ] && [ -n "$last" ]; then
-    if [ -z "$back_id" ] || [ "$last" -gt "$back_last" ]; then
-      back_id=$id back_last=$last back_name=$name
+  elif [ "$attached" = 0 ]; then
+    if [ -z "$back_id" ] || [ "$used" -gt "$back_used" ]; then
+      back_id=$id back_used=$used back_name=$name
     fi
   fi
 done < <(tmux -S "$socket" list-sessions \
-  -F '#{session_id}|#{session_attached}|#{session_last_attached}|#{@bell_at}|#{E:@bell_held}|#{session_alerts}|#{session_name}')
+  -F '#{session_id}|#{session_attached}|#{session_activity}|#{@bell_at}|#{E:@bell_held}|#{session_alerts}|#{session_name}')
 
 if [ -n "$bell_id" ]; then
   # "1!,3!" -> 1: the first window the marker names.
@@ -68,7 +69,7 @@ if [ -n "$bell_id" ]; then
 elif [ -n "$back_id" ]; then
   tmux -S "$socket" switch-client -c "$client" -t "$back_id" \; \
     display-message -c "$client" "no bell held: back to $back_name"
-  event_log_note tmux_hooks "$who: no bell held, -> $back_name (last attached $((now - back_last))s ago)"
+  event_log_note tmux_hooks "$who: no bell held, -> $back_name (used $((now - back_used))s ago)"
 else
   msg="no bell held, and no detached session to go back to"
   tmux -S "$socket" display-message -c "$client" "$msg"
