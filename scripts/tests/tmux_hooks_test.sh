@@ -93,8 +93,8 @@
 #                                        time first
 #   prefix C-s with no bell, the one  -> the client goes there
 #   other session never attached to
-#   prefix C-s with no bell, no other -> the client stays and is told so
-#   session
+#   prefix C-s with no bell, no other -> the client stays; no message is
+#   session                              drawn for either
 #   prefix c from window 0 of 3       -> new window at 1, the rest move up
 #   prefix S                          -> bar off for that session only, kept
 #                                        off while windows come and go;
@@ -875,8 +875,6 @@ next_bell "q2:$r2" "-> q2:$r2 \(rang [0-9]+s ago, 2 held\)"
 sleep 1.1
 next_bell "q1:$r1" "-> q1:$r1 \(rang [0-9]+s ago, 1 held\)"
 next_bell "q2:$r2" "no bell held, -> q2 \(used [0-9]+s ago\)"
-grep -aqF "no bell held: back to q2" "$WORK/screen" && pass "going back for want of a bell, the client is told so" \
-  || fail "no 'no bell held: back to q2' drawn for the client"
 next_bell "q1:$r1" "no bell held, -> q1 \(used [0-9]+s ago\)"
 # A session that holds a bell with no time (its hook not yet done) goes
 # first, though solo rings after q2 here.
@@ -899,10 +897,9 @@ tw new-session -d -s solo 'sleep 300'
 next_bell "solo:0" "no bell held, -> solo \(used [0-9]+s ago\)"
 tw switch-client -c "$wname" -t =w
 tw kill-session -t =solo
-nowhere="no bell held, and no detached session to go back to"
-next_bell "w:$wcur" "$nowhere"
-grep -aqF "$nowhere" "$WORK/screen" && pass "with no bell and no session to go back to, the client is told so" \
-  || fail "no '$nowhere' drawn for the client"
+next_bell "w:$wcur" "no bell held, and no detached session to go to"
+grep -aqF "no bell held" "$WORK/screen" && fail "a 'no bell held' message was drawn for the client" \
+  || pass "with no bell held, no message is drawn: the log has it"
 
 # prefix c from window 0 of three: the new window takes number 1, the old 1 moves to
 # 2. The panes need no shell, so the new one runs sleep in place of the config's fish.

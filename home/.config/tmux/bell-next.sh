@@ -7,7 +7,7 @@
 #   bars show " solo:1!  build:0! ", solo rang 14:02, build 14:05
 #     prefix C-s -> solo, window 1
 #     prefix C-s -> build, window 0
-#     prefix C-s -> notes ("no bell held: back to notes")
+#     prefix C-s -> notes
 #
 # The sessions are the ones the bars mark (@bell_held, tmux.conf), and the
 # client's own for a bell in one of its windows out of view. The order is by
@@ -67,11 +67,8 @@ if [ -n "$bell_id" ]; then
   if [ "$bell_at" = 0 ]; then when="at a time not recorded"; else when="$((now - bell_at))s ago"; fi
   event_log_note tmux_hooks "$who: -> $bell_name:$window (rang $when, $count held)"
 elif [ -n "$back_id" ]; then
-  tmux -S "$socket" switch-client -c "$client" -t "$back_id" \; \
-    display-message -c "$client" "no bell held: back to $back_name"
+  tmux -S "$socket" switch-client -c "$client" -t "$back_id"
   event_log_note tmux_hooks "$who: no bell held, -> $back_name (used $((now - back_used))s ago)"
 else
-  msg="no bell held, and no detached session to go back to"
-  tmux -S "$socket" display-message -c "$client" "$msg"
-  event_log_note tmux_hooks "$who: $msg"
+  event_log_note tmux_hooks "$who: no bell held, and no detached session to go to"
 fi
