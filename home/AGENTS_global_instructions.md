@@ -138,13 +138,6 @@ meant to open or `cd` to on its own line, flush left with no list indent, so no
 words around it can push it into the fold. A path longer than about 85
 characters goes as its folder on one line and the file names under it.
 
-# Plain ASCII
-
-Default to plain ASCII everywhere - code, comments, commit messages, prose -
-unless non-ASCII is genuinely required. In prose, fancy typography (em dashes,
-smart quotes) reads as an LLM tell; in code, lookalike Unicode trips ruff
-RUF001-003. Use `-`/`--`, straight quotes, `...`, `->`.
-
 # Markdown: lint what you write
 
 Lint every markdown file you create or edit with markdownlint-cli2 before
