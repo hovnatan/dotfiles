@@ -84,6 +84,14 @@ local function start(name)
   return core.new(cfg, nil, at(0))
 end
 
+-- `s` as a Hammerspoon reload at `now` restores it, and the note on what
+-- the time not running was taken for.
+local function restore(s, now)
+  local restored, why = core.new(cfg, core.saved(s), now)
+  note("restore: %s", why)
+  return restored, why
+end
+
 -- One tick at `now`, with the user typing (idle 1 s) unless `obs` says
 -- otherwise. obs.idleSince = <epoch s> is no input since then: idle grows
 -- with the clock. Returns the events, each with the time it came at.
@@ -649,6 +657,59 @@ work(s, at(0), at(20))
 core.snooze(s, at(20))
 expect(work(s, at(20), at(26), { watching = chrome }), "badge_hidden@1500 badge_glimpse@1500")
 
+-- --- a due break cancelled: the next is due a whole interval on, with no rest --
+s = start("a due break cancelled")
+work(s, at(0), at(5))
+eq(core.cancel(s, at(5)), nil, "with no break due there is nothing to cancel: cancel")
+eq(core.view(s, at(5)).title, "10m", "and nothing changed: title")
+work(s, at(5), at(20))
+eq(badgeLine(core.view(s, at(20))), "+5m short", "the badge before it")
+eq(core.cancel(s, at(20)), "short", "cancel says which break it was")
+v = core.view(s, at(20))
+eq(badgeLine(v), "hidden", "the badge is down")
+eq(v.title, "15m", "and the next break is a whole 15 min on: title")
+eq(v.snoozed, nil, "it is no snooze")
+eq(v.since, 1200, "and no rest: since")
+expect(work(s, at(20), at(35)), "")
+eq(
+  badgeLine(core.view(s, at(35))),
+  "+0m short",
+  "the next break is overdue by its own due time, not the cancelled one's"
+)
+-- A break taken after a cancel: the next is due 15 min after that rest (50:30).
+core.breakNow(s, at(35))
+expect(work(s, at(35), at(35, 30)), "break_done@2130")
+eq(core.view(s, at(40)).title, "11m", "after a rest the 15 min count from the rest: title")
+
+s = start("the long break cancelled")
+work(s, at(0), at(77))
+eq(badgeLine(core.view(s, at(77))), "+2m long", "the badge before it")
+eq(core.cancel(s, at(77)), "long", "cancel says which break it was")
+v = core.view(s, at(77))
+eq(v.title, "15m", "the short break, due too, went with it: title")
+eq(v.longWhen, "due in 1h15m", "and the long one is a whole 75 min on")
+eq(v.sinceLong, 77 * 60, "with no long rest: since a long rest")
+work(s, at(77), at(92))
+eq(badgeLine(core.view(s, at(92))), "+0m short", "15 min on a short break is due")
+eq(core.dueBreakNow(s, at(92)), false, "and that is the break a click on the badge brings")
+
+s = start("a short break cancelled, the long one near")
+work(s, at(0), at(70))
+eq(core.cancel(s, at(70)), "short", "the short break is the due one")
+eq(core.view(s, at(70)).title, "5m", "the long break is due when it was: title")
+-- Under a film, 5 min after the badge was last up: no glimpse would be due yet.
+expect(work(s, at(70), at(75), { watching = chrome }), "badge_hidden@4500 badge_glimpse@4500")
+eq(badgeLine(core.view(s, at(75))), "+0m long", "and shows the moment it comes due")
+
+s = start("what a cancel does not reach")
+work(s, at(0), at(20))
+core.snooze(s, at(20))
+eq(core.cancel(s, at(21)), nil, "a snoozed break is not due, so there is none to cancel")
+work(s, at(21), at(30))
+core.cancel(s, at(30))
+v = core.view(restore(s, at(30, 2)), at(30, 2))
+eq(badgeLine(v), "+15m short", "like a snooze it is not saved: a reload brings the break back")
+
 -- --- saved state: a reload keeps the clocks, a long gap is rest --------------
 s = start("save and restore")
 work(s, at(0), at(12))
@@ -656,18 +717,13 @@ core.setBadge(s, false)
 local saved = core.saved(s)
 check(saved.cfg == nil and saved.awaySince == nil, "saved holds only the persisted fields")
 eq(saved.lastLongRestAt, at(0), "the long clock is saved")
-local function restore(now)
-  local restored, why = core.new(cfg, saved, now)
-  note("restore: %s", why)
-  return restored, why
-end
-v = core.view(restore(at(12, 2)), at(12, 2))
+v = core.view(restore(s, at(12, 2)), at(12, 2))
 eq(v.since, 722, "a reload keeps the clock: since")
 eq(v.badgeOn, false, "and the badge's switch")
-v = core.view(restore(at(15)), at(15))
+v = core.view(restore(s, at(15)), at(15))
 eq(v.since, 0, "3 min not running is rest: since")
 eq(v.sinceLong, 900, "and not a long one: since a long rest")
-local restored, why = restore(at(50))
+local restored, why = restore(s, at(50))
 v = core.view(restored, at(50))
 eq(v.since, 0, "38 min not running is rest: since")
 eq(v.sinceLong, 0, "and a long one: since a long rest")

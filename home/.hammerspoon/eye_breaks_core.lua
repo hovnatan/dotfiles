@@ -56,6 +56,16 @@
 --   25:00   "10m"   plain: nothing is due before 35:00
 --   35:00   "+15m"  red again: 15 min overdue, not 0
 --
+-- Or cancelled (the menu, by request): the due break is given up, and the
+-- next is due a whole interval on, overdue from there. No rest either: the
+-- rest clocks, which the menu's "last rest" reads, stay as they are, and
+-- only the due times count from the cancel. A long break cancelled takes
+-- the short one with it, as a long rest would.
+--
+--   rested last at 0:00, cancelled at 25:00
+--   25:00   "20m"   plain: the next break is due at 45:00
+--   45:00   "+0m"   red: overdue from 45:00, though the last rest is 0:00
+--
 --                  asked for (badge click, menu)
 --     +---------+ ---------------------------------------> +----------+
 --     | working |                                          | on break |
@@ -159,6 +169,15 @@ local function when(seconds)
   return seconds > 0 and "due in " .. M.fmt(seconds + 59) or M.fmt(-seconds) .. " overdue"
 end
 
+-- The seconds until the short and the long break are owed, 0 or less once
+-- they are: an interval after the last rest, or after a cancel since
+-- (M.cancel). No snooze is in it.
+local function owedIn(s, now)
+  local from = math.max(s.lastRestAt, s.cancelledAt or 0)
+  local longFrom = math.max(s.lastLongRestAt, s.longCancelledAt or 0)
+  return s.cfg.breakAfter - (now - from), s.cfg.longBreakAfter - (now - longFrom)
+end
+
 -- The break that is due at `now`: "long" (which wins when both are),
 -- "short", or nil when none is, as under a break screen. And after it the
 -- seconds until the short and the long one are due, 0 or less once they are.
@@ -166,8 +185,7 @@ end
 -- break 5 min overdue, snoozed for 10 min a minute ago, is due in 9 min.
 -- Last come the seconds it is ahead, nil when it is not.
 local function dueAt(s, now)
-  local shortIn = s.cfg.breakAfter - (now - s.lastRestAt)
-  local longIn = s.cfg.longBreakAfter - (now - s.lastLongRestAt)
+  local shortIn, longIn = owedIn(s, now)
   local snoozedFor = nil
   if s.snoozedUntil and now < s.snoozedUntil then
     snoozedFor = s.snoozedUntil - now
@@ -180,11 +198,11 @@ local function dueAt(s, now)
   return due, shortIn, longIn, snoozedFor
 end
 
--- Whether a break asked for at `now` is the long one. By the rest clock
--- alone, on purpose: a snooze puts off the reminder, not which break
--- is owed.
+-- Whether a break asked for at `now` is the long one. Not by dueAt, on
+-- purpose: a snooze puts off the reminder, not which break is owed.
 local function longDue(s, now)
-  return now - s.lastLongRestAt >= s.cfg.longBreakAfter
+  local _, longIn = owedIn(s, now)
+  return longIn <= 0
 end
 
 -- The eyes rested for `lasted` seconds, until `now` (a break that ran to
@@ -452,6 +470,25 @@ function M.snooze(s, now, long)
   return true
 end
 
+-- Cancel the due break: its due time counts from `now`, and with the long
+-- one the short one's too. Returns which it was, "short" or "long"; nil
+-- with none due, when nothing changes. Not saved, as a snooze is not. And
+-- as there the badge counts as not shown since (s.badgeUpAt): a long break
+-- that comes due soon after a short one's cancel is to show at once, video
+-- or not.
+function M.cancel(s, now)
+  local due = dueAt(s, now)
+  if due == nil then
+    return nil
+  end
+  s.cancelledAt = now
+  if due == "long" then
+    s.longCancelledAt = now
+  end
+  s.badgeUpAt = nil
+  return due
+end
+
 function M.setBadge(s, on)
   s.badge = on
 end
@@ -468,7 +505,7 @@ end
 --   overlay      { remaining = <s>, long = <bool> } while a break is on
 --                screen, else nil
 --   due          the break that is due, which a click on the badge brings:
---                "short" (breakAfter since the last rest) or "long" (which
+--                "short" (breakAfter since the last rest or cancel) or "long" (which
 --                wins); nil when none is, as under a break screen. It
 --                colours the badge and the menu-bar clock.
 --   overdueMinutes  the minutes the due break has been due, the number

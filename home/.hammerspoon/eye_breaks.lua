@@ -4,7 +4,8 @@
 -- break, 30 seconds, is due 20 minutes after the last rest; a long one, 10
 -- minutes, after 75 minutes without a rest of that length. A right click
 -- on the badge snoozes the due break for 10 minutes; the menu has that
--- too, and a snooze of 30.
+-- too, a snooze of 30, and a cancel, after which the next break is due a
+-- whole interval on.
 --
 --   nothing due       menu bar  3m        plain: a break is due in 3 min
 --   short break due   menu bar (+29m)     on red: it is 29 min overdue
@@ -41,7 +42,7 @@
 -- from the keyboard, with a break due or not. From a shell:
 --   hs -q -c 'require("eye_breaks").breakNow()'
 -- also longBreakNow(), dueBreakNow() (the badge's click), skip(), lock(),
--- snooze() (a right click on the badge), longSnooze().
+-- snooze() (a right click on the badge), longSnooze(), cancel().
 -- Keep the -q: without it Hammerspoon echoes every console line to the
 -- connected `hs`. One that was killed used to make print() raise in whatever
 -- module logged next (2026-11-17, here: the timer stopped); print_guard.lua
@@ -698,6 +699,11 @@ end
 M.snooze = snoozing(false)
 M.longSnooze = snoozing(true)
 
+M.cancel = action("due break cancelled", function(now)
+  local which = core.cancel(state, now)
+  return which and string.format(": the %s one", which) or ": none was due, nothing changed"
+end)
+
 -- The break screen's Lock button: the lock watcher ticks when it has locked.
 function M.lock()
   log("lock asked for")
@@ -793,6 +799,7 @@ local function menuItems()
       fn = M.longSnooze,
       disabled = not v.due,
     },
+    { title = "Cancel this break", fn = M.cancel, disabled = not v.due },
     { title = "-" },
     { title = "Show badge", checked = v.badgeOn, fn = setBadge(not v.badgeOn) },
   }) do
