@@ -19,12 +19,19 @@
 #   16 x [ssh -> sftp-server]  ==lossy WAN==>  lftp pget  -->  <dest>/<name>
 #                                                        `->  <name>.lftp-pget-status
 #
+# DSM refuses the sftp subsystem ("subsystem request failed") unless "Enable
+# SFTP service" is ticked under Control Panel > File Services > FTP. With it
+# off, lftp's fish protocol does the same job over the plain ssh login, a
+# little less steadily: a fish:// URL, fish:connect-program in place of
+# sftp:connect-program below, and the file's absolute path on the NAS
+# (/volume1/share/...) instead of the share-relative one.
+#
 # The URL lives in an env var, not here: this repo is public and the address,
 # port and user name of a home NAS do not belong in it. The "dummy" password is
 # never used (ssh authenticates with the key) but lftp falls back to an
 # anonymous login as the local user without one.
 #
-# Requires: lftp (brew install lftp), key-based ssh auth to the NAS.
+# Requires: lftp (nix/flake.nix), key-based ssh auth to the NAS.
 
 set -euo pipefail
 
@@ -37,8 +44,12 @@ usage() {
 remote_path=$1
 dest_dir=${2:-.}
 : "${NAS_SFTP_URL:?set NAS_SFTP_URL, e.g. sftp://user:dummy@host:port}"
+[[ $NAS_SFTP_URL == sftp://* ]] || {
+  echo "NAS_SFTP_URL must be an sftp:// URL, got: ${NAS_SFTP_URL%%://*}://..." >&2
+  exit 1
+}
 command -v lftp >/dev/null || {
-  echo "lftp not found: brew install lftp" >&2
+  echo "lftp not found: it is in nix/flake.nix, see README.md for the nix profile setup" >&2
   exit 1
 }
 [ -d "$dest_dir" ] || {
