@@ -521,32 +521,11 @@ if [ "$(uname)" = "Darwin" ]; then
   # resets a change made in Preferences > General.
   defaults write com.colliderli.iina pauseWhenOpen -bool false
 
-  # Default tracks: English audio and English subtitles (Preferences > Video/Audio
-  # and > Subtitles, "Preferred language"). IINA hands these to mpv as alang/slang,
-  # and mpv's prefix match lets "en" pick tracks tagged en-US and an external
-  # "<name>.en.srt". E.g. a dub-first mkv (ru audio flagged default, en second)
-  # opens on the en audio with en subs; mpv's default subs-with-matching-audio=yes
-  # keeps the subs on although the audio is English too.
-  defaults write com.colliderli.iina audioLanguage -string en
-  defaults write com.colliderli.iina subLang -string en
-
-  # Subtitles (Preferences > Subtitle): yellow Avenir Next Demi Bold, size 47,
-  # where IINA has white Helvetica, 55. At 55 two lines take a sixth of the
-  # picture's height; Avenir's a, c, e, s are more open than Helvetica's. The
-  # font is named as IINA's picker stores it, and the weight is in that name,
-  # so bold stays off.
-  # Outline 2, not 3: at this weight a wider one thickens the letter shapes.
-  # Margin 40, not 22: descenders sat 3% of the height from the bottom edge.
-  defaults write com.colliderli.iina subTextColorString -string 0.9336273074150085/0.921125590801239/0.19451847672462463/1.0
-  defaults write com.colliderli.iina subTextFont -string AvenirNext-DemiBold
-  defaults write com.colliderli.iina subTextSize -float 47
-  defaults write com.colliderli.iina subBold -bool false
-  defaults write com.colliderli.iina subBorderSize -float 2
-  defaults write com.colliderli.iina subMarginY -float 40
-
   # Without these IINA reads neither file linked above: mpv.conf and scripts/
   # come from the config directory (Preferences > Advanced, which the first
-  # switches on), the keys from the conf named here (> Key Bindings).
+  # switches on), the keys from the conf named here (> Key Bindings). The
+  # default tracks and the subtitle look are in that mpv.conf, whose values
+  # replace IINA's Preferences > Subtitle and "Preferred language" at launch.
   defaults write com.colliderli.iina enableAdvancedSettings -bool true
   defaults write com.colliderli.iina useUserDefinedConfDir -bool true
   # shellcheck disable=SC2088 # IINA stores the tilde and expands it itself
