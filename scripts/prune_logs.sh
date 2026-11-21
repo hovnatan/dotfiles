@@ -11,9 +11,11 @@
 #   named <YYYYMMDD_HHMMSS>_<name>   what the event logs make
 #   holding events.log and nothing else
 #   not the newest of its <name>
-#   last written over KEEP_DAYS days ago
+#   last written over KEEP_DAYS days ago; a test's, named <name>_test,
+#     over KEEP_DAYS_TEST
 #
 #   20260801_101500_appearance_sh/events.log   60 days     removed
+#   20260925_090000_picker_test/events.log     5 days      removed: a test's
 #   20260929_234931_bell_banner_repro/         README.md   kept: a record of
 #                                                          work, however old
 #   20260815_080000_dbus_session/events.log    45 days,    kept: the bus that
@@ -33,6 +35,9 @@ set -euo pipefail
 . "$(dirname "$0")/lib/event_log.sh"
 
 KEEP_DAYS=30
+# A test's log is read when the run fails, the same day, and the tests make
+# a directory a run: a third of all there were (812 of 2,418, 2026-11-20).
+KEEP_DAYS_TEST=3
 root=$EVENT_LOG_ROOT
 
 [ -d "$root" ] || {
@@ -61,9 +66,13 @@ older=$(
   done | sort | awk '{ name = substr($0, 17); if (name in last) print last[name]; last[name] = $0 }'
 )
 
-# The event logs last written over KEEP_DAYS days ago, in one find for them
-# all, a path a line:  ./20260801_101500_appearance_sh/events.log
-old=$(find . -mindepth 2 -maxdepth 2 -type f -name events.log -mtime +"$KEEP_DAYS")
+# The event logs last written over KEEP_DAYS days ago, and the tests' over
+# KEEP_DAYS_TEST, in one find for them all, a path a line:
+#   ./20260801_101500_appearance_sh/events.log
+old=$(
+  find . -mindepth 2 -maxdepth 2 -type f -name events.log \
+    \( -mtime +"$KEEP_DAYS" -o -path './*_test/events.log' -mtime +"$KEEP_DAYS_TEST" \)
+)
 nl='
 '
 
@@ -83,5 +92,5 @@ while IFS= read -r d; do
 done <<<"$older"
 
 if [ "$removed" -gt 0 ]; then
-  log "removed $removed event log(s) last written over $KEEP_DAYS days ago"
+  log "removed $removed event log(s) last written over $KEEP_DAYS days ago (a test's: over $KEEP_DAYS_TEST)"
 fi

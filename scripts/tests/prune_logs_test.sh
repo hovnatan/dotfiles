@@ -11,6 +11,9 @@
 #   20250103_000000_old                events.log         40 days   kept: newest of "old"
 #   20250101_000000_young              events.log         5 days    kept: not old enough
 #   20250102_000000_young              events.log         today     kept
+#   20250101_000000_unit_test          events.log         5 days    removed: a test's
+#   20250102_000000_unit_test          events.log         1 day     kept: not old enough
+#   20250103_000000_unit_test          events.log         today     kept
 #   20250101_000000_record             events.log, README 40 days   kept: a record
 #   20250102_000000_record             events.log, sub/   40 days   kept: a record
 #   20250103_000000_record             events.log         today     (the newest of "record")
@@ -99,6 +102,9 @@ event_log 20250102_000000_old 40
 event_log 20250103_000000_old 40
 event_log 20250101_000000_young 5
 event_log 20250102_000000_young 0
+event_log 20250101_000000_unit_test 5
+event_log 20250102_000000_unit_test 1
+event_log 20250103_000000_unit_test 0
 event_log 20250101_000000_record 40
 echo "what was found" >"$L/20250101_000000_record/README.md"
 event_log 20250102_000000_record 40
@@ -113,11 +119,11 @@ age 40 "$WORK/elsewhere.log" "$L/20250101_000000_linked/events.log"
 event_log 20250102_000000_linked 0
 event_log notes 40
 event_log 2025_notes_b 40
-left | grep -v -E '^2025010[12]_000000_old$' >"$WORK/expected"
+left | grep -v -E '^(2025010[12]_000000_old|20250101_000000_unit_test)$' >"$WORK/expected"
 
 if run; then
   if left >"$WORK/after" && diff "$WORK/expected" "$WORK/after" >"$WORK/diff"; then
-    pass "only the two old event logs that are not the newest went ($(wc -l <"$WORK/after" | tr -d ' ') kept)"
+    pass "only the two old event logs that are not the newest went, and the test's of 5 days ($(wc -l <"$WORK/after" | tr -d ' ') kept)"
   else
     fail "kept the wrong ones (< expected, > found): $(cat "$WORK/diff")"
   fi
@@ -130,9 +136,9 @@ fi
 # --- its own log ------------------------------------------------------------------
 
 own=$(own_logs | head -1)
-if [ -n "$own" ] && [ "$(grep -c ' removed 2025010[12]_000000_old$' "$own/events.log")" -eq 2 ] \
-  && grep -q 'removed 2 event log' "$own/events.log"; then
-  pass "own log names both and counts them"
+if [ -n "$own" ] && [ "$(grep -c -E ' removed (2025010[12]_000000_old|20250101_000000_unit_test)$' "$own/events.log")" -eq 3 ] \
+  && grep -q 'removed 3 event log' "$own/events.log"; then
+  pass "own log names the three and counts them"
 else
   fail "own log: $(cat "$own/events.log" 2>&1)"
 fi

@@ -64,8 +64,9 @@ It is kept short on purpose - every line here is paid on every session.
   (shell), `home/.hammerspoon/event_log.lua` or `scripts/event_log_note.sh`
   (a claude mod); `.logs` is ignored through
   `home/.config/git/ignore`. A directory holding only `events.log` is pruned
-  30 days after its last write (`scripts/prune_logs.sh`), so a record worth
-  keeping needs a file of another name beside it.
+  30 days after its last write, a `*_test` one after 3
+  (`scripts/prune_logs.sh`), so a record worth keeping needs a file of
+  another name beside it.
 
 ## Maintaining this file
 
