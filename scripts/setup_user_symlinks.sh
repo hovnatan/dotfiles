@@ -530,6 +530,29 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.colliderli.iina audioLanguage -string en
   defaults write com.colliderli.iina subLang -string en
 
+  # Subtitles (Preferences > Subtitle): yellow Avenir Next Demi Bold, size 47,
+  # where IINA has white Helvetica, 55. At 55 two lines take a sixth of the
+  # picture's height; Avenir's a, c, e, s are more open than Helvetica's. The
+  # font is named as IINA's picker stores it, and the weight is in that name,
+  # so bold stays off.
+  # Outline 2, not 3: at this weight a wider one thickens the letter shapes.
+  # Margin 40, not 22: descenders sat 3% of the height from the bottom edge.
+  defaults write com.colliderli.iina subTextColorString -string 0.9336273074150085/0.921125590801239/0.19451847672462463/1.0
+  defaults write com.colliderli.iina subTextFont -string AvenirNext-DemiBold
+  defaults write com.colliderli.iina subTextSize -float 47
+  defaults write com.colliderli.iina subBold -bool false
+  defaults write com.colliderli.iina subBorderSize -float 2
+  defaults write com.colliderli.iina subMarginY -float 40
+
+  # Without these IINA reads neither file linked above: mpv.conf and scripts/
+  # come from the config directory (Preferences > Advanced, which the first
+  # switches on), the keys from the conf named here (> Key Bindings).
+  defaults write com.colliderli.iina enableAdvancedSettings -bool true
+  defaults write com.colliderli.iina useUserDefinedConfDir -bool true
+  # shellcheck disable=SC2088 # IINA stores the tilde and expands it itself
+  defaults write com.colliderli.iina userDefinedConfDir -string '~/.config/iina/'
+  defaults write com.colliderli.iina currentInputConfigName -string my
+
   # Keyboard navigation (System Settings > Keyboard): Tab moves focus to
   # every button in a dialog and Space presses it, not only Return (default
   # button) and Esc (Cancel). E.g. a three-button dialog: Tab, Tab, Space
