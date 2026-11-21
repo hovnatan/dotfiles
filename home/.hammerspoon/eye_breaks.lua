@@ -37,9 +37,10 @@
 --                    core.view  --> menu-bar title, badge, break screen
 --                    core.saved --> hs.settings "eye_breaks.state"
 --
--- The menu-bar item has the two breaks and the badge's switch, which is
--- saved, so it outlives a reload. Option-9 anywhere is the badge's click
--- from the keyboard, with a break due or not. From a shell:
+-- The menu-bar item has the two breaks and the badge's switch, which
+-- outlives a reload, as a snooze and a cancel do (SAVED in the core has
+-- what is saved). Option-9 anywhere is the badge's click from the
+-- keyboard, with a break due or not. From a shell:
 --   hs -q -c 'require("eye_breaks").breakNow()'
 -- also longBreakNow(), dueBreakNow() (the badge's click), skip(), lock(),
 -- snooze() (a right click on the badge), longSnooze(), cancel().

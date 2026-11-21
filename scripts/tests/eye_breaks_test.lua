@@ -92,6 +92,11 @@ local function restore(s, now)
   return restored, why
 end
 
+-- What is shown at `now`, right after such a reload.
+local function reloaded(s, now)
+  return core.view(restore(s, now), now)
+end
+
 -- One tick at `now`, with the user typing (idle 1 s) unless `obs` says
 -- otherwise. obs.idleSince = <epoch s> is no input since then: idle grows
 -- with the clock. Returns the events, each with the time it came at.
@@ -701,14 +706,33 @@ eq(core.view(s, at(70)).title, "5m", "the long break is due when it was: title")
 expect(work(s, at(70), at(75), { watching = chrome }), "badge_hidden@4500 badge_glimpse@4500")
 eq(badgeLine(core.view(s, at(75))), "+0m long", "and shows the moment it comes due")
 
-s = start("what a cancel does not reach")
+s = start("a snoozed break is not cancelled")
 work(s, at(0), at(20))
 core.snooze(s, at(20))
 eq(core.cancel(s, at(21)), nil, "a snoozed break is not due, so there is none to cancel")
-work(s, at(21), at(30))
-core.cancel(s, at(30))
-v = core.view(restore(s, at(30, 2)), at(30, 2))
-eq(badgeLine(v), "+15m short", "like a snooze it is not saved: a reload brings the break back")
+
+s = start("a snooze outlasts a reload")
+work(s, at(0), at(20))
+local unsnoozed = core.saved(s)
+core.snooze(s, at(20), true)
+eq(core.sameButTick(unsnoozed, core.saved(s)), false, "a snooze is a change to write: same")
+work(s, at(20), at(25))
+v = reloaded(s, at(25, 2))
+eq(v.snoozed, "25m", "after a reload the snooze runs on: snoozed")
+eq(badgeLine(v), "hidden", "and the badge is down")
+
+s = start("a cancel outlasts a reload")
+work(s, at(0), at(77))
+local uncancelled = core.saved(s)
+core.cancel(s, at(77))
+eq(core.sameButTick(uncancelled, core.saved(s)), false, "a cancel is a change to write: same")
+v = reloaded(s, at(77, 2))
+eq(v.title, "15m", "after a reload the short break is due when the cancel put it: title")
+eq(v.longWhen, "due in 1h15m", "and the long one")
+-- 5 min not running is a short rest, and leaves the long break its cancel.
+v = reloaded(s, at(82))
+eq(v.title, "15m", "a rest after the cancel is what the short break counts from: title")
+eq(v.longWhen, "due in 1h10m", "the long one from its cancel still")
 
 -- --- saved state: a reload keeps the clocks, a long gap is rest --------------
 s = start("save and restore")
@@ -717,10 +741,10 @@ core.setBadge(s, false)
 local saved = core.saved(s)
 check(saved.cfg == nil and saved.awaySince == nil, "saved holds only the persisted fields")
 eq(saved.lastLongRestAt, at(0), "the long clock is saved")
-v = core.view(restore(s, at(12, 2)), at(12, 2))
+v = reloaded(s, at(12, 2))
 eq(v.since, 722, "a reload keeps the clock: since")
 eq(v.badgeOn, false, "and the badge's switch")
-v = core.view(restore(s, at(15)), at(15))
+v = reloaded(s, at(15))
 eq(v.since, 0, "3 min not running is rest: since")
 eq(v.sinceLong, 900, "and not a long one: since a long rest")
 local restored, why = restore(s, at(50))
@@ -780,6 +804,22 @@ local short = state({})
 short.lastTickAt = nil
 raises("lastTickAt is a nil, not a number", "a missing field", core.new, cfg, short, at(0))
 raises("lastLongRestAt <= lastRestAt", "clocks out of order", core.new, cfg, state({ lastLongRestAt = 2 }), at(0))
+raises(
+  "cancelledAt is a string, not a number or nil",
+  "a cancel of a wrong type",
+  core.new,
+  cfg,
+  state({ cancelledAt = "x" }),
+  at(0)
+)
+raises(
+  "longCancelledAt <= cancelledAt",
+  "a long cancel with no cancel",
+  core.new,
+  cfg,
+  state({ longCancelledAt = 2 }),
+  at(0)
+)
 saved.surprise = 1
 raises("unknown field: surprise", "an unknown field", core.new, cfg, saved, at(0))
 

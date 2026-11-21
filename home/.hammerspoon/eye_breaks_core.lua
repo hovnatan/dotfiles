@@ -62,6 +62,8 @@
 -- only the due times count from the cancel. A long break cancelled takes
 -- the short one with it, as a long rest would.
 --
+-- A snooze and a cancel outlast a reload, as the rest clocks do.
+--
 --   rested last at 0:00, cancelled at 25:00
 --   25:00   "20m"   plain: the next break is due at 45:00
 --   45:00   "+0m"   red: overdue from 45:00, though the last rest is 0:00
@@ -134,12 +136,19 @@ M.defaults = {
   longSnoozeFor = 30 * 60,
 }
 
--- What survives a Hammerspoon reload (M.saved / M.new), and its type.
+-- What survives a Hammerspoon reload (M.saved / M.new), and its type: the
+-- clocks and what the user set. Not the break on screen (s.onBreak), which
+-- a reload takes down, nor what the next tick finds again. "or nil" is a
+-- field that is not there until there is one, so a state saved without it
+-- fits.
 local SAVED = {
   lastRestAt = "number",
   lastLongRestAt = "number",
   lastTickAt = "number",
   badge = "boolean",
+  cancelledAt = "number or nil",
+  longCancelledAt = "number or nil",
+  snoozedUntil = "number or nil",
 }
 
 -- The minutes every number shown counts in: whole ones, rounded down.
@@ -234,7 +243,7 @@ end
 
 -- A state from what the last load saved (nil on a first run), and a note on
 -- what was made of it for the log. A saved table that does not match SAVED
--- raises: it is another version's or a corrupted one, not one to guess at.
+-- raises: it is not one to guess at.
 function M.new(cfg, saved, now)
   local s = { cfg = cfg, badge = true, lastTickAt = now, idleFor = 0 }
   rest(s, now, math.huge) -- both clocks start now
@@ -249,7 +258,7 @@ function M.new(cfg, saved, now)
   end
   for key, kind in pairs(SAVED) do
     local value = saved[key]
-    if type(value) ~= kind then
+    if not kind:find(type(value), 1, true) then
       error(string.format("saved state field %s is a %s, not a %s", key, type(value), kind))
     end
     s[key] = value
@@ -257,6 +266,10 @@ function M.new(cfg, saved, now)
   -- A long rest is a rest.
   if s.lastLongRestAt > s.lastRestAt then
     error("saved state does not have lastLongRestAt <= lastRestAt")
+  end
+  -- A long break's cancel is a cancel.
+  if (s.longCancelledAt or 0) > (s.cancelledAt or 0) then
+    error("saved state does not have longCancelledAt <= cancelledAt")
   end
 
   -- Hammerspoon was not running (reboot, quit), so nobody counted. Taken as
@@ -457,10 +470,8 @@ end
 
 -- Snooze the due break: none is due from `now` for snoozeFor, or with
 -- `long` for longSnoozeFor. Returns whether a break was due; with none,
--- nothing changes. Like the break on screen it is not saved, so a reload
--- inside it brings the badge back. The badge counts as not shown since
--- (s.badgeUpAt, see M.tick): what comes due at the end is to show at once,
--- video or not.
+-- nothing changes. The badge counts as not shown since (s.badgeUpAt, see
+-- M.tick): what comes due at the end is to show at once, video or not.
 function M.snooze(s, now, long)
   if dueAt(s, now) == nil then
     return false
@@ -472,10 +483,9 @@ end
 
 -- Cancel the due break: its due time counts from `now`, and with the long
 -- one the short one's too. Returns which it was, "short" or "long"; nil
--- with none due, when nothing changes. Not saved, as a snooze is not. And
--- as there the badge counts as not shown since (s.badgeUpAt): a long break
--- that comes due soon after a short one's cancel is to show at once, video
--- or not.
+-- with none due, when nothing changes. As in a snooze the badge counts as
+-- not shown since (s.badgeUpAt): a long break that comes due soon after a
+-- short one's cancel is to show at once, video or not.
 function M.cancel(s, now)
   local due = dueAt(s, now)
   if due == nil then
