@@ -107,9 +107,8 @@ local function viewerIsFrontmost()
   return app ~= nil and app:bundleID() == VIEWER
 end
 
--- The tap runs only while a viewer is frontmost. Re-read on every watcher
--- event, not taken from the event's app: when the last viewer closes, what
--- matters is whatever is frontmost now, possibly nothing.
+-- The tap runs only while a viewer is frontmost: this asks macOS which app
+-- that is now.
 local function update()
   if viewerIsFrontmost() then
     M.tap:start()
@@ -199,14 +198,29 @@ end
 
 M.tap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, onKeyDown)
 
+-- An app coming to the front says by itself whether the tap runs. One
+-- leaving does not: when the last viewer closes, what matters is whatever is
+-- frontmost by then, possibly nothing, so macOS is asked; and only while the
+-- tap runs, as an app leaving cannot start it.
+--
+-- Asking at every event asked under the lock screen too, where no app is
+-- frontmost and Hammerspoon prints "Unable to fetch frontmost application"
+-- for each ask: one at every lock and unlock, about 12 a day (2026-11-21).
+-- Locking with a viewer in front still asks once, to stop the tap.
+--
 -- Kept in the module table so the watcher is not garbage-collected.
-local WATCHED = {
-  [hs.application.watcher.activated] = true,
+local LEAVING = {
   [hs.application.watcher.deactivated] = true,
   [hs.application.watcher.terminated] = true,
 }
-M.watcher = hs.application.watcher.new(function(_, eventType)
-  if WATCHED[eventType] then
+M.watcher = hs.application.watcher.new(function(_, eventType, app)
+  if eventType == hs.application.watcher.activated then
+    if app and app:bundleID() == VIEWER then
+      M.tap:start()
+    else
+      M.tap:stop()
+    end
+  elseif LEAVING[eventType] and M.tap:isEnabled() then
     update()
   end
 end)
