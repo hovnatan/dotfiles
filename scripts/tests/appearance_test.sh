@@ -4,7 +4,7 @@
 # points Claude Code's theme and zathura's colours at light or dark. Runs the
 # script for real in a throwaway HOME; zathura and the session bus are stood
 # in for, so no window opens and the machine's own links stay as they are.
-# Needs python3 and a tmux with theme hooks (3.6 or later); about 5 s.
+# Needs python3 and a tmux with theme hooks (3.6 or later); about 15 s.
 #
 #   throwaway HOME
 #     .claude/themes/gruvbox-{light,dark}.json    copies of the repo's
@@ -20,7 +20,9 @@
 #   arguments    an unknown one, and none on Linux, fail
 #   in the way   a file where the link goes fails, and is left alone
 #   no zathura   links only
-#   windows      each window gets each `set` line of the theme, in order
+#   windows      no bus fails; one that comes up a second into the run is
+#                waited for, and each window gets each `set` line of the
+#                theme, in order
 #   refused      a window answering false fails the run
 #   theme file   a line that is not a `set` fails the run
 #   tmux         the theme lines of home/.config/tmux/tmux.conf (six hooks, the
@@ -167,13 +169,15 @@ else
   fail "windows: no bus: $(cat "$WORK/out")"
 fi
 
-python3 -c 'import socket, sys, time
-s = socket.socket(socket.AF_UNIX); s.bind(sys.argv[1]); time.sleep(60)' "$SOCKDIR/bus" &
+# The bus comes up a second into the run, as at a login, where launchd
+# starts it beside whatever runs the script (2026-11-10: 0.04 s too late).
+(
+  sleep 1
+  exec python3 -c 'import socket, sys, time
+s = socket.socket(socket.AF_UNIX); s.bind(sys.argv[1]); time.sleep(60)' "$SOCKDIR/bus"
+) &
 listener=$!
-for _ in $(seq 50); do
-  [ -S "$SOCKDIR/bus" ] && break
-  sleep 0.1
-done
+[ ! -S "$SOCKDIR/bus" ] || fail "late bus: the socket was there before the run"
 
 : >"$WORK/calls"
 {
@@ -183,7 +187,7 @@ done
   done
 } >"$WORK/expected"
 if run zathura dark && diff "$WORK/expected" "$WORK/calls" >"$WORK/diff"; then
-  pass "windows: both got the $(grep -c '^set ' "$H/.config/zathura/gruvbox-dark") set lines of the dark theme"
+  pass "windows: a bus up 1 s into the run is waited for, and both got the $(grep -c '^set ' "$H/.config/zathura/gruvbox-dark") set lines of the dark theme"
 else
   fail "windows: $(cat "$WORK/out" "$WORK/diff")"
 fi

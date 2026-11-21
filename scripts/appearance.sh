@@ -89,7 +89,14 @@ if ! command -v zathura >/dev/null; then
 fi
 bus="${XDG_RUNTIME_DIR:-$HOME/.cache}/bus"
 command -v dbus-send >/dev/null || die "dbus-send missing: apply the Nix package set (dotup)"
-[ -S "$bus" ] || die "no session bus at $bus: install with ~/.dotfiles/scripts/setup_user_symlinks.sh"
+# At a login launchd starts the bus beside whatever runs this (Hammerspoon,
+# a tmux server), and this got there first by 0.04 s (2026-11-10).
+BUS_WAIT=5 # seconds
+for ((i = 0; i < BUS_WAIT * 10; i++)); do
+  [ -S "$bus" ] && break
+  sleep 0.1
+done
+[ -S "$bus" ] || die "no session bus at $bus after $BUS_WAIT s: on macOS scripts/macos/dbus_session.sh keeps it (its log: ~/.dotfiles/.logs/*_dbus_session/events.log), installed by ~/.dotfiles/scripts/setup_user_symlinks.sh"
 send() { dbus-send --bus="unix:path=$bus" --print-reply --reply-timeout=3000 "$@"; }
 
 names=$(send --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames \
