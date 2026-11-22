@@ -1,0 +1,34 @@
+diff --git i/home/.config/tmux/vendor/extrakto/extrakto_plugin.py w/home/.config/tmux/vendor/extrakto/extrakto_plugin.py
+index a4250879..55556a35 100755
+--- i/home/.config/tmux/vendor/extrakto/extrakto_plugin.py
++++ w/home/.config/tmux/vendor/extrakto/extrakto_plugin.py
+@@ -139,6 +139,11 @@ class ExtraktoPlugin:
+         self.open_tool = get_option("@extrakto_open_tool")
+         self.alt = get_option("@extrakto_alt")
+         self.prefix_name = get_option("@extrakto_prefix_name")
++        # Local change (.upstream): text from outside the panes, the output of
++        # @extrakto_extra_command run with the trigger pane's id and the number
++        # of lines taken of a pane; run once for each number of lines.
++        self.extra_command = get_option("@extrakto_extra_command")
++        self.extra_text = {}
+ 
+         self.original_grab_area = self.grab_area
+ 
+@@ -252,6 +257,17 @@ class ExtraktoPlugin:
+                 if pane.startswith("0:") and pane[:2] != self.trigger_pane:
+                     captured += self.capture_pane(pane[2:], capture_pane_start) + "\n"
+ 
++        # Local change (.upstream)
++        if self.extra_command:
++            lines = capture_pane_start[1:]
++            if lines not in self.extra_text:
++                self.extra_text[lines] = subprocess.check_output(
++                    f"{self.extra_command} '{self.trigger_pane}' {lines}",
++                    shell=True,
++                    universal_newlines=True,
++                )
++            captured += self.extra_text[lines]
++
+         captured += self.capture_pane(self.trigger_pane, capture_pane_start)
+         return captured
+ 

@@ -8,10 +8,23 @@
 #   pane %0: prints "alpha reconcile_ledger.py beta"
 #   pane %1: a `cat`, so what lands in it shows on its cursor line
 #
-#   C-a Tab, "reconc", Tab   -> %1 reads "reconcile_ledger.py": a word from
+#   C-a Tab, "reconc", Enter -> %1 reads "reconcile_ledger.py": a word from
 #                               the other pane, inserted at the cursor
-#   C-a Tab, "alpha", Enter  -> tmux's buffer holds "alpha" (the copy, by
+#   C-a Tab, "alpha", Tab    -> tmux's buffer holds "alpha" (the copy, by
 #                               tmux_osc52), %1 untouched
+#
+# and of @extrakto_extra_command, the local change to it (its .upstream): a
+# command whose output is offered with the panes' text. tmux.conf's own is
+# claude-transcript.sh, which says nothing for these panes, no claude in
+# them; a stand-in set in its place prints a word no pane holds.
+#
+#   C-a Tab, "ledger_arch", Enter -> %1 reads "ledger_archive.py" right after
+#                                    what it held, and the stand-in was run
+#                                    with %1, the pane the key was pressed
+#                                    in, and 2000, the lines taken of a pane
+#
+# and that local.patch beside the vendored copy is that change as it is in
+# the tree.
 #
 # Exit 0 = all passed; on failure the work dir is kept and printed.
 
@@ -58,8 +71,19 @@ cursor_line() {
 line_is() { [ "$(cursor_line)" = "$1" ]; }
 # fzf_up: extrakto's fzf runs in the popup; a beat more for it to read keys
 fzf_up() { pgrep -f 'fzf --multi --print-query' >/dev/null && sleep 0.3; }
+fzf_gone() { ! pgrep -f 'fzf --multi --print-query' >/dev/null; }
 # press <keys>: what the terminal sends, in Python escapes (pty_client.py)
 press() { printf '%s\n' "$1" >"$WORK/keys"; }
+# pick <query> <key>: prefix Tab once no popup is up, the query typed into
+# extrakto's fzf, then the key
+pick() {
+  until_ok 5 fzf_gone || return 1
+  press '\001\t'
+  until_ok 5 fzf_up || return 1
+  press "$1"
+  sleep 0.3
+  press "$2"
+}
 
 grep -E '^(set-option -g prefix |set-option -g @extrakto_|run-shell .*/extrakto\.tmux)' \
   "$REPO/home/.config/tmux/tmux.conf" >"$WORK/extrakto.conf"
@@ -86,11 +110,7 @@ until_ok 5 attached || fail "the client never attached"
 
 # --- insert and copy --------------------------------------------------------------
 
-press '\001\t'
-if until_ok 5 fzf_up; then
-  press 'reconc'
-  sleep 0.3
-  press '\r'
+if pick reconc '\r'; then
   until_ok 5 line_is reconcile_ledger.py \
     && pass "Enter inserts a word from the other pane at the cursor" \
     || fail "after reconc Enter, %1 reads '$(cursor_line)'"
@@ -98,20 +118,41 @@ else
   fail "no extrakto fzf after C-a Tab"
 fi
 
-fzf_gone() { ! pgrep -f 'fzf --multi --print-query' >/dev/null; }
 buffer_is() { [ "$(t show-buffer 2>/dev/null)" = "$1" ]; }
-until_ok 5 fzf_gone || fail "the first popup never closed"
-press '\001\t'
-if until_ok 5 fzf_up; then
-  press 'alpha'
-  sleep 0.3
-  press '\t'
+if pick alpha '\t'; then
   until_ok 5 buffer_is alpha \
     && line_is reconcile_ledger.py \
     && pass "Tab copies the pick to tmux's buffer and leaves the pane alone" \
     || fail "after alpha Tab, buffer '$(t show-buffer 2>&1)', %1 '$(cursor_line)'"
 else
   fail "no extrakto fzf for the copy"
+fi
+
+# --- text from outside the panes --------------------------------------------------
+
+cat >"$WORK/extra.sh" <<EOF
+#!/bin/sh
+echo "\$*" >"$WORK/extra.args"
+echo "delta ledger_archive.py"
+EOF
+chmod +x "$WORK/extra.sh"
+t set-option -g @extrakto_extra_command "$WORK/extra.sh"
+if pick ledger_arch '\r'; then
+  until_ok 5 line_is reconcile_ledger.pyledger_archive.py \
+    && [ "$(cat "$WORK/extra.args")" = "%1 2000" ] \
+    && pass "a word of @extrakto_extra_command's output is offered and inserted; the command is run with the pane and the lines taken of one" \
+    || fail "after ledger_arch Enter, %1 reads '$(cursor_line)', the command was run with '$(cat "$WORK/extra.args" 2>&1)'"
+else
+  fail "no extrakto fzf with @extrakto_extra_command set"
+fi
+
+# A bump re-copies upstream's files and applies the patch, so the patch has
+# to be the change that is in the tree.
+vendor=home/.config/tmux/vendor/extrakto
+if out=$(git -C "$REPO" apply --check -R "$vendor/local.patch" 2>&1); then
+  pass "local.patch comes off the vendored extrakto cleanly"
+else
+  fail "local.patch is not the vendored extrakto's local change: $out"
 fi
 
 finish

@@ -25,10 +25,8 @@
     {
       "context": "Scroll",
       "bindings": {
-        "meta+k": "scroll:pageUp",
-        "meta+j": "scroll:pageDown",
-        "meta+g": "scroll:top",
-        "meta+shift+g": "scroll:bottom"
+        "ctrl+enter": "scroll:bottom",
+        "escape": "scroll:bottom"
       }
     }
   ]

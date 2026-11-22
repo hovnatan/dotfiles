@@ -12,6 +12,8 @@
 #   log <text>                       a UTC-stamped line
 #   pass <what> / fail <what>        a PASS or FAIL line; fail counts
 #   until_ok <seconds> <command...>  poll until the command succeeds
+#   find_copy_bash <scratch dir>     COPY_BASH: a bash whose copy runs, for a
+#                                    pane that runs bash under another name
 #   drop_work                        for an EXIT trap: remove $WORK, or keep
 #                                    it and say where when a check failed
 #   finish                           the count of failures, as the last line
@@ -40,6 +42,34 @@ until_ok() {
     sleep 0.1
   done
   return 1
+}
+
+# find_copy_bash <scratch dir>: COPY_BASH is a bash whose copy runs. A test
+# runs copies of bash under other names, since tmux reports a pane's command
+# by its file name. macOS kills a copy of a platform binary ("Killed: 9" for
+# /bin/bash), which is what `command -v bash` finds when /bin comes before
+# the Nix profile on PATH, as in an agent's shell: those panes then died at
+# once, and later steps failed or hung on a session that was gone. So the
+# first bash on PATH whose copy runs, resolved past links (a copied link
+# target, not a copied wrapper).
+# A new file per try: macOS remembers the kill for a file overwritten in
+# place, and would kill the next copy written over it too.
+find_copy_bash() {
+  local dir=$1 b n=0
+  COPY_BASH=
+  for b in $(type -ap bash); do
+    n=$((n + 1))
+    b=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$b")
+    cp "$b" "$dir/bash_probe$n" && ("$dir/bash_probe$n" -c :) 2>/dev/null && {
+      COPY_BASH=$b
+      break
+    }
+  done
+  rm -f "$dir"/bash_probe*
+  [ -n "$COPY_BASH" ] || {
+    log "FAIL no bash on PATH runs when copied ($(type -ap bash | paste -sd ' ' -)); macOS kills copies of /bin/bash: put Nix's bash ahead of /bin on PATH"
+    exit 1
+  }
 }
 
 drop_work() {

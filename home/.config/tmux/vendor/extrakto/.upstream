@@ -3,5 +3,7 @@ subdir=
 branch=master
 commit=d1af77988081dae496fa4a1f5e5e6bc9ef66767f
 # Byte-for-byte at that commit (upstream has no releases or tags), minus its
-# CI and tests: .github/ tests/ .gitignore .editorconfig. Loaded from
-# ~/.config/tmux/tmux.conf; bump by re-copying the same files at a reviewed commit.
+# CI and tests: .github/ tests/ .gitignore .editorconfig, and plus one local
+# change, local.patch: the @extrakto_extra_command option (tmux.conf says what
+# for). Loaded from ~/.config/tmux/tmux.conf; bump by re-copying the same files
+# at a reviewed commit, then `git apply home/.config/tmux/vendor/extrakto/local.patch`.

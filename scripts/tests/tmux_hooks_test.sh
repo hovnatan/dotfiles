@@ -143,31 +143,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# COPY_BASH: a bash whose copy runs. Panes below run copies of bash under
-# other names, since tmux reports a pane's command by its file name. macOS
-# kills a copy of a platform binary ("Killed: 9" for /bin/bash), which is
-# what `command -v bash` finds when /bin comes before the Nix profile on
-# PATH, as in an agent's shell: those panes then died at once, and later
-# steps failed or hung on a session that was gone. So the first bash on
-# PATH whose copy runs, resolved past links (a copied link target, not a
-# copied wrapper).
-# A new file per try: macOS remembers the kill for a file overwritten in
-# place, and would kill the next copy written over it too.
-COPY_BASH=
-n=0
-for b in $(type -ap bash); do
-  n=$((n + 1))
-  b=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$b")
-  cp "$b" "$SOCKDIR/bash_probe$n" && ("$SOCKDIR/bash_probe$n" -c :) 2>/dev/null && {
-    COPY_BASH=$b
-    break
-  }
-done
-rm -f "$SOCKDIR"/bash_probe*
-[ -n "$COPY_BASH" ] || {
-  log "FAIL no bash on PATH runs when copied ($(type -ap bash | paste -sd ' ' -)); macOS kills copies of /bin/bash: put Nix's bash ahead of /bin on PATH"
-  exit 1
-}
+find_copy_bash "$SOCKDIR"
 
 # The throwaway HOME holds the repo at ~/.dotfiles, where the hook lines
 # expect their scripts; the logs land in its .logs, not the checkout's.

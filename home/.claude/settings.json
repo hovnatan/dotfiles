@@ -5,7 +5,8 @@
     "CLAUDE_CODE_AUTO_CONNECT_IDE": "false",
     "CLAUDE_CODE_IDE_SKIP_AUTO_INSTALL": "1",
     "CLAUDE_CODE_DISABLE_AGENT_VIEW": "1",
-    "CLAUDE_CODE_PLUGIN_DIRS": "~/.dotfiles/home/.claude/mods/session-rename:~/.dotfiles/home/.claude/mods/session-done:~/.dotfiles/home/.claude/mods/prompt-grammar"
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/.dotfiles/home/.claude/mods/session-rename:~/.dotfiles/home/.claude/mods/session-done:~/.dotfiles/home/.claude/mods/prompt-grammar",
+    "CLAUDE_CODE_SCROLL_SPEED": "5"
   },
   "permissions": {
     "allow": [
@@ -67,6 +68,11 @@
           {
             "type": "command",
             "command": "~/.dotfiles/home/.claude/mods/session-done/loaded-check.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.dotfiles/home/.config/tmux/claude-transcript.sh note",
             "timeout": 5
           }
         ]
@@ -143,7 +149,7 @@
   },
   "autoCompactWindow": 300000,
   "dialogExpiry": "never",
-  "tui": "default",
+  "tui": "fullscreen",
   "voice": {
     "enabled": false,
     "mode": "tap"
@@ -155,6 +161,7 @@
   "editorMode": "normal",
   "preferredNotifChannel": "terminal_bell",
   "precomputeCompactionEnabled": true,
+  "wheelScrollAccelerationEnabled": false,
   "showTurnDuration": true,
   "showMessageTimestamps": true,
   "remoteControlAtStartup": true,

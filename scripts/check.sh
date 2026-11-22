@@ -68,7 +68,7 @@ need() {
 # shell_files: every tracked shell script, NUL-separated. The git hooks
 # have no .sh, as git runs them by their bare names. Vendored code
 # (home/.config/tmux/vendor/, each pinned by its .upstream) is left out: it
-# stays byte-for-byte upstream's, in upstream's style.
+# stays upstream's but for a local.patch beside it, in upstream's style.
 shell_files() {
   git ls-files -z '*.sh' 'scripts/git-hooks/*' ':(exclude)home/.config/tmux/vendor/**'
 }
