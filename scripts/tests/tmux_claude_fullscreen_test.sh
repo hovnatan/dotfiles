@@ -106,12 +106,13 @@ value() { inner display-message -p -t "t:$1" "$2"; }
 is() { [ "$(value "$1" "$2")" = "$3" ]; }
 
 # stand_in <window> <name> <alternate|normal>: the window, with tmux seeing
-# the name as its pane's command and the screen it asked for.
+# the name as its pane's command and the screen it asked for. exec: tmux
+# starts the command with sh -c, and dash, Ubuntu's sh, stays in front of it.
 stand_in() {
   local window=$1 name=$2 screen=$3 alternate=0
   [ "$screen" = alternate ] && alternate=1
   inner new-window -d -n "$window" \
-    "$(printf '%q ' "$WORK/bin/$name" "$WORK/standin.sh" "$screen" "$WORK/$window.bytes")"
+    "exec $(printf '%q ' "$WORK/bin/$name" "$WORK/standin.sh" "$screen" "$WORK/$window.bytes")"
   if until_ok 5 is "$window" '#{pane_current_command} #{alternate_on}' "$name $alternate" \
     && until_ok 5 test -e "$WORK/$window.bytes"; then
     pass "$window: tmux sees $name on the $screen screen"
