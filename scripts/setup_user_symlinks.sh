@@ -521,6 +521,14 @@ if [ "$(uname)" = "Darwin" ]; then
   # resets a change made in Preferences > General.
   defaults write com.colliderli.iina pauseWhenOpen -bool false
 
+  # Both on by default, in Preferences > General. "Allow multiple player
+  # windows" off: a file opened while another plays takes its window instead
+  # of a second one. "Play next item automatically" off: playback stops at a
+  # file's end, where IINA would go on to the next file of the folder, e.g.
+  # the next episode.
+  defaults write com.colliderli.iina alwaysOpenInNewWindow -bool false
+  defaults write com.colliderli.iina playlistAutoPlayNext -bool false
+
   # Without these IINA reads neither file linked above: mpv.conf and scripts/
   # come from the config directory (Preferences > Advanced, which the first
   # switches on), the keys from the conf named here (> Key Bindings). The
