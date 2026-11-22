@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Which Chrome profile a clicked link opens in (and that it gets a new
-# window), the command line Chrome is handed, and how the machine-private
-# config loads, against Hammerspoon doubles (url_dispatcher_test.lua), so no
-# macOS UI or Chrome is needed and it runs in CI on Linux and macOS.
+# Which Chrome profile a clicked link opens in, the command line Chrome is
+# handed, and how the machine-private config loads, against Hammerspoon
+# doubles (url_dispatcher_test.lua), so no macOS UI or Chrome is needed and
+# it runs in CI on Linux and macOS.
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
 . "$REPO/scripts/lib/event_log.sh"

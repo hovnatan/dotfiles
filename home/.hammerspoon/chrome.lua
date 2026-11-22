@@ -15,15 +15,14 @@ end
 
 -- Hand Chrome a command line: start it, or reach the running one.
 --   M.open({ profile = "Profile 1" })
---   M.open({ profile = "Profile 1", url = "https://x", newWindow = true, raise = true })
---     -> open -nb com.google.Chrome --args --profile-directory=Profile 1 --new-window https://x
+--   M.open({ profile = "Profile 1", url = "https://x", raise = true })
+--     -> open -nb com.google.Chrome --args --profile-directory=Profile 1 https://x
 --
---   profile    profile directory to open in; absent, Chrome picks the one
---              it used last
---   url        page to open; absent, the profile's window comes forward
---   newWindow  the URL gets a window of its own rather than a tab in the
---              profile's last window
---   raise      activate Chrome once it has the command line
+--   profile  profile directory to open in; absent, Chrome picks the one it
+--            used last
+--   url      page to open, as a tab in the profile's last window; absent,
+--            that window comes forward
+--   raise    activate Chrome once it has the command line
 --
 -- `open -n` reaches a running Chrome through a short-lived second instance,
 -- which is what makes Chrome's switches work on an already-open browser.
@@ -34,10 +33,6 @@ function M.open(opts)
   local args = { "-nb", M.BUNDLE_ID, "--args" }
   if opts.profile then
     args[#args + 1] = "--profile-directory=" .. opts.profile
-  end
-  if opts.newWindow then
-    assert(opts.url, "chrome.open: newWindow needs a url; alone it opens an empty window")
-    args[#args + 1] = "--new-window"
   end
   if opts.url then
     args[#args + 1] = opts.url
