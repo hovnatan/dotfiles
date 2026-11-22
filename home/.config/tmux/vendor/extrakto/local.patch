@@ -1,34 +1,104 @@
-diff --git i/home/.config/tmux/vendor/extrakto/extrakto_plugin.py w/home/.config/tmux/vendor/extrakto/extrakto_plugin.py
-index a4250879..55556a35 100755
---- i/home/.config/tmux/vendor/extrakto/extrakto_plugin.py
+diff --git c/home/.config/tmux/vendor/extrakto/extrakto_plugin.py w/home/.config/tmux/vendor/extrakto/extrakto_plugin.py
+index a4250879..632b1e52 100755
+--- c/home/.config/tmux/vendor/extrakto/extrakto_plugin.py
 +++ w/home/.config/tmux/vendor/extrakto/extrakto_plugin.py
-@@ -139,6 +139,11 @@ class ExtraktoPlugin:
+@@ -139,6 +139,17 @@ class ExtraktoPlugin:
          self.open_tool = get_option("@extrakto_open_tool")
          self.alt = get_option("@extrakto_alt")
          self.prefix_name = get_option("@extrakto_prefix_name")
 +        # Local change (.upstream): text from outside the panes, the output of
-+        # @extrakto_extra_command run with the trigger pane's id and the number
-+        # of lines taken of a pane; run once for each number of lines.
++        # @extrakto_extra_command run with a pane's id and the number of lines
++        # taken of it; run once for each pane taken.
 +        self.extra_command = get_option("@extrakto_extra_command")
 +        self.extra_text = {}
++        # Local change (.upstream): the areas the grab key steps through,
++        # split at commas as their names hold spaces. Unset: upstream's steps.
++        self.grab_area_order = [
++            area for area in get_option("@extrakto_grab_area_order").split(",") if area
++        ]
++        self.next_grab_area = self.prep_cycle(self.grab_area_order)
  
          self.original_grab_area = self.grab_area
  
-@@ -252,6 +257,17 @@ class ExtraktoPlugin:
-                 if pane.startswith("0:") and pane[:2] != self.trigger_pane:
-                     captured += self.capture_pane(pane[2:], capture_pane_start) + "\n"
+@@ -227,7 +238,7 @@ class ExtraktoPlugin:
+     def get_capture_pane_start(self):
+         if self.grab_area == "recent" or self.grab_area == "window recent":
+             capture_start = "-10"
+-        elif self.grab_area == "full" or self.grab_area == "window full":
++        elif self.grab_area.endswith("full"):
+             history_limit = get_option("@extrakto_history_limit")
+             capture_start = f"-{history_limit}"
+         elif self.grab_area.startswith("window "):
+@@ -237,23 +248,46 @@ class ExtraktoPlugin:
+         return capture_start
  
-+        # Local change (.upstream)
-+        if self.extra_command:
-+            lines = capture_pane_start[1:]
-+            if lines not in self.extra_text:
-+                self.extra_text[lines] = subprocess.check_output(
-+                    f"{self.extra_command} '{self.trigger_pane}' {lines}",
-+                    shell=True,
-+                    universal_newlines=True,
+     def capture_panes(self):
+-        captured = ""
+         capture_pane_start = self.get_capture_pane_start()
+ 
+-        if self.grab_area.startswith("window"):
+-            panes = subprocess.check_output(
+-                ["tmux", "list-panes", "-F", "#{pane_active}:#{pane_id}"],
+-                universal_newlines=True,
+-            ).split("\n")
+-            for pane in panes:
+-                # exclude the active (for split) and trigger panes
+-                # in popup mode the active and tigger panes are the same
+-                # todo: split by :
+-                if pane.startswith("0:") and pane[:2] != self.trigger_pane:
+-                    captured += self.capture_pane(pane[2:], capture_pane_start) + "\n"
++        # Local change (.upstream): the panes of the trigger pane's session
++        # and of the whole server too, each with its extra text, several
++        # panes at a time. Not extrakto's own pane (split mode), and the
++        # trigger pane last.
++        from concurrent.futures import ThreadPoolExecutor
+ 
+-        captured += self.capture_pane(self.trigger_pane, capture_pane_start)
+-        return captured
++        scope = {"window": [], "session": ["-s"], "server": ["-a"]}.get(
++            self.grab_area.split(" ")[0]
++        )
++        panes = []
++        if scope is not None:
++            panes = subprocess.check_output(
++                ["tmux", "list-panes", *scope, "-t", self.trigger_pane, "-F", "#{pane_id}"],
++                universal_newlines=True,
++            ).split()
++        own = (self.trigger_pane, os.environ.get("TMUX_PANE"))
++        panes = [pane for pane in panes if pane not in own] + [self.trigger_pane]
++        with ThreadPoolExecutor(8) as pool:
++            return "\n".join(
++                pool.map(
++                    lambda pane: self.extra(pane, capture_pane_start)
++                    + self.capture_pane(pane, capture_pane_start),
++                    panes,
 +                )
-+            captured += self.extra_text[lines]
++            )
 +
-         captured += self.capture_pane(self.trigger_pane, capture_pane_start)
-         return captured
++    # Local change (.upstream)
++    def extra(self, pane, capture_pane_start):
++        if not self.extra_command:
++            return ""
++        key = (pane, capture_pane_start)
++        if key not in self.extra_text:
++            self.extra_text[key] = subprocess.check_output(
++                f"{self.extra_command} '{pane}' {capture_pane_start[1:]}",
++                shell=True,
++                universal_newlines=True,
++            )
++        return self.extra_text[key]
  
+     def capture_pane(self, pane, capture_pane_start):
+         command = ["tmux", "capture-pane", "-pJ", "-S", capture_pane_start, "-t", pane]
+@@ -414,6 +448,11 @@ class ExtraktoPlugin:
+                 sel_filter = self.next_filter[sel_filter]
+             elif key == self.clip_mode_key:
+                 self.clip_mode = self.next_clip_mode[self.clip_mode]
++            elif key == self.grab_key and self.next_grab_area:
++                # Local change (.upstream)
++                self.grab_area = self.next_grab_area.get(
++                    self.grab_area, self.grab_area_order[0]
++                )
+             elif key == self.grab_key:
+                 # cycle between options like this:
+                 # recent -> full -> window recent -> window full -> custom (if any) -> recent ...
