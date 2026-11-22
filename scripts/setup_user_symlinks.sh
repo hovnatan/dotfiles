@@ -532,6 +532,14 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.colliderli.iina userDefinedConfDir -string '~/.config/iina/'
   defaults write com.colliderli.iina currentInputConfigName -string my
 
+  # IINA's on-screen badges (Pause, volume, seek) at the subtitles' size, where
+  # IINA has 20 pt (Preferences > UI > On Screen Display > Text size). 56 pt
+  # of the system font has the capitals of mpv.conf's sub-font-size=51 at full
+  # screen on a display 1080 pt high; it is points, so it does not shrink with
+  # the window as the subtitles do. The line under Pause and Resume (position
+  # / duration) is half this, which IINA caps at 25 pt.
+  defaults write com.colliderli.iina osdTextSize -float 56
+
   # Keyboard navigation (System Settings > Keyboard): Tab moves focus to
   # every button in a dialog and Space presses it, not only Return (default
   # button) and Esc (Cancel). E.g. a three-button dialog: Tab, Tab, Space
