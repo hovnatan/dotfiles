@@ -6,10 +6,11 @@
 # does. Needs tmux (3.6 or later, for the focus hooks), python3 and fzf;
 # about 70 s.
 #
-#   sessions   a: sleep           b: a stand-in "claude" (a link to bash,
+#   sessions   a: sleep           b: a stand-in "claude" (a copy of bash,
 #                                    idle on a FIFO; the name and the
 #                                    foreground are all
 #                                    focus-out-unattached.sh looks at)
+#              c: the same stand-in, suspended under a shell
 #
 #   client attaches to a                  -> attached ... session=a
 #   a bystander client attaches to b, and reports nothing
@@ -170,12 +171,21 @@ gone() { ! kill -0 "$1" 2>/dev/null; }
 # bash, not sleep: Ubuntu 26.04's sleep is uutils' multi-call binary, which
 # refuses to run under another name (a copy: "coreutils: unknown program
 # 'claude'"). The FIFO has no writer, so read just waits.
-ln -s "$(command -v bash)" "$WORK/claude"
+cp "$COPY_BASH" "$WORK/claude"
 mkfifo "$WORK/never"
 grep -E '^set-hook -g (client-(attached|detached|session-changed|focus-in|focus-out)|pane-title-changed)' \
   "$REPO/home/.config/tmux/tmux.conf" >"$WORK/hooks.conf"
+grep -E '^set-option -g @claude_pane ' "$REPO/home/.config/tmux/tmux.conf" >"$WORK/claude_pane.conf"
 t -f /dev/null new-session -d -s a 'sleep 300'
 t new-session -d -s b "$WORK/claude -c 'read -r -t 300 <>$WORK/never'"
+t source-file "$WORK/claude_pane.conf"
+# c: a claude suspended under its shell, which a focus-out must not reach.
+t new-session -d -s c "$COPY_BASH --norc --noprofile -i"
+pane_runs() { [ "$(t display-message -p -t "=$1:" '#{E:@claude_pane}')" = "$2" ]; }
+t send-keys -t =c: "$WORK/claude -c 'read -r -t 300 <>$WORK/never'" Enter
+until_ok 5 pane_runs c 1 || fail "the claude of session c never came to the foreground"
+t send-keys -t =c: C-z
+until_ok 5 pane_runs c 0 || fail "the claude of session c was not suspended"
 t set -g focus-events on
 if t source-file "$WORK/hooks.conf" 2>"$WORK/out"; then
   pass "$("$TMUX_BIN" -V) takes the $(wc -l <"$WORK/hooks.conf" | tr -d ' ') hook lines of home/.config/tmux/tmux.conf"
@@ -236,7 +246,19 @@ kill "$bystander"
 wait "$bystander" 2>/dev/null
 bystander=
 wait_for ' synthetic focus-out to %[0-9]+ \(b\): no client attached$' \
-  && pass "the focus-out sent to the clientless claude pane is logged" || fail "no synthetic focus-out line: $(hooks_log)"
+  && pass "the focus-out sent to the clientless claude pane, and not to a suspended claude's, is logged" \
+  || fail "no synthetic focus-out line for b alone: $(hooks_log)"
+
+t set -gu @claude_pane
+if out=$("$REPO/home/.config/tmux/focus-out-unattached.sh" "$SOCK" 2>&1); then
+  fail "the sweep on a server without @claude_pane did not fail: $out"
+else
+  case "$out" in
+    *"@claude_pane is not set"*) pass "the sweep on a server without @claude_pane fails and says so" ;;
+    *) fail "the sweep on a server without @claude_pane failed with: $out" ;;
+  esac
+fi
+t source-file "$WORK/claude_pane.conf"
 
 # --- windows: the status bar, the bindings, Cmd-J / Cmd-K ------------------------------
 
