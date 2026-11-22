@@ -1,17 +1,29 @@
 // What prompt-grammar does with a prompt, case by case. Nothing sits beneath
-// the mod in a test: engine() stands for the model, the event log, the
-// terminal's width and the clock the check waits on.
+// the mod in a test: engine() stands for the model, the event log, the pane
+// and the clock the check waits on.
 
 import type { TestBody } from 'claude-code/testing';
 import { expect, mock, test } from 'claude-code/testing';
 
-type Engine = { answer?: string; modelFails?: true; isNarrow?: true };
+type Engine = { answer?: string; outputTokens?: number; modelFails?: true; modelRefused?: true };
 
 const USAGE = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
 const RAN = { stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false };
 const TWO_SLIPS = JSON.stringify([
-  { wrong: 'would it better', fixed: 'would it be better', why: 'missing "be"' },
-  { wrong: 'with fix', fixed: 'with the fix', why: 'missing article' },
+  {
+    wrong: 'would it better',
+    fixed: 'would it be better',
+    why: 'missing "be"',
+    explain: 'An adjective such as "better" needs the verb "be" in front of it.',
+    examples: ['Would it be faster to rebase?', 'It would be easier to start over.'],
+  },
+  {
+    wrong: 'with fix',
+    fixed: 'with the fix',
+    why: 'missing article',
+    explain: 'A single countable thing that both of us know takes "the".',
+    examples: ['Push the branch.', 'Open the file.'],
+  },
 ]);
 const PROMPT = 'would it better to push the branch with fix?';
 
@@ -35,6 +47,7 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
   const toasts: string[] = [];
   const logged: string[] = [];
   const opened: string[] = [];
+  const closed: string[] = [];
   const clock = mock.clock(on, { now: 1_000_000 });
 
   on('session.id', () => ({ value: '4f1c9a2e-0000' }));
@@ -54,9 +67,12 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
   on('model.complete', (_, e) => {
     asked.push({ model: e.model, system: e.system ?? '', prompt: e.prompt });
 
+    if (how.modelRefused) return { deny: 'the model opus is not allowed here' };
+    const usage = { ...USAGE, output_tokens: how.outputTokens ?? 0 };
+
     return how.modelFails
-      ? { value: { isAnswered: false, reason: 'empty-reply', usage: USAGE } }
-      : { value: { isAnswered: true, text: how.answer ?? '[]', usage: USAGE } };
+      ? { value: { isAnswered: false, reason: 'empty-reply', usage } }
+      : { value: { isAnswered: true, text: how.answer ?? '[]', usage } };
   });
   on('ui.toast', (_, e) => {
     toasts.push(e.text);
@@ -66,12 +82,20 @@ const engine = (on: Parameters<TestBody>[1], how: Engine = {}) => {
   on('ui.open', (_, e) => {
     opened.push(e.id);
 
-    return {
-      value: how.isNarrow ? { isPlaced: false, reason: 'unasked under 144 columns (120 now)' } : { isPlaced: true },
-    };
+    return { value: { isPlaced: true } };
+  });
+  on('ui.panes', () => ({
+    value: opened
+      .filter((id) => !closed.includes(id))
+      .map((id) => ({ id, title: id, isShown: true, isFocused: false, isPlaced: true })),
+  }));
+  on('ui.close', (_, e) => {
+    closed.push(e.id);
+
+    return { value: undefined };
   });
 
-  return { asked, toasts, logged, opened, clock };
+  return { asked, toasts, logged, opened, closed, clock };
 };
 
 type Kind = 'composer' | 'bridge' | 'sdk' | 'task-notification';
@@ -99,17 +123,19 @@ const pane = async ($: Parameters<TestBody>[0]): Promise<string> => {
   return texts.join('\n');
 };
 
-test('slips are listed in the pane, logged, and the pane opens', async ($, on) => {
+test('slips are a toast, logged, and listed in the pane once it is asked for', async ($, on) => {
   const { asked, logged, opened, toasts, clock } = engine(on, { answer: TWO_SLIPS });
 
   expect(await typed($, clock, PROMPT)).toEqual({ text: PROMPT });
 
   expect(asked).toHaveLength(1);
-  expect(asked[0]?.model).toBe('sonnet');
+  expect(asked[0]?.model).toBe('opus');
   expect(asked[0]?.prompt).toBe(`<message>\n${PROMPT}\n</message>`);
   expect(asked[0]?.system).toContain('JSON array');
-  expect(opened).toEqual(['grammar']);
-  expect(toasts).toEqual([]);
+  expect(opened).toEqual([]);
+  expect(toasts).toEqual([
+    '"would it better" -> "would it be better" (missing "be"); "with fix" -> "with the fix" (missing article)',
+  ]);
   expect(logged).toEqual([
     'backend 4f1c9a2e 2 slips: "would it better" -> "would it be better" (missing "be"); "with fix" -> "with the fix" (missing article)',
   ]);
@@ -119,6 +145,9 @@ test('slips are listed in the pane, logged, and the pane opens', async ($, on) =
   expect(drawn).toContain('- would it better');
   expect(drawn).toContain('+ would it be better');
   expect(drawn).toContain('(missing article)');
+  expect(drawn).toContain('An adjective such as "better" needs the verb "be" in front of it.');
+  expect(drawn).toContain('e.g. Would it be faster to rebase?');
+  expect(drawn).toContain('e.g. Open the file.');
 });
 
 test('the prompt enters before its check is asked for', async ($, on) => {
@@ -132,18 +161,17 @@ test('the prompt enters before its check is asked for', async ($, on) => {
   expect(asked).toHaveLength(1);
 });
 
-test('a clean prompt says so and opens nothing', async ($, on) => {
-  const { logged, opened, clock } = engine(on);
+test('a clean prompt is logged and left out of the pane', async ($, on) => {
+  const { logged, clock } = engine(on);
 
   await typed($, clock, 'can you run the tests again?');
 
-  expect(opened).toEqual([]);
   expect(logged).toEqual(['backend 4f1c9a2e clean']);
-  expect(await pane($)).toContain('no slips');
+  expect(await pane($)).toBe('No slips yet.');
 });
 
 test('the newest prompt is drawn first', async ($, on) => {
-  const { clock } = engine(on);
+  const { clock } = engine(on, { answer: TWO_SLIPS });
 
   await typed($, clock, 'can you run the tests again?');
   await typed($, clock, 'and what is the status now?');
@@ -167,7 +195,7 @@ test('what I did not type, or is too short to hold grammar, is not checked', asy
   await clock.advance(1);
 
   expect(asked).toHaveLength(0);
-  expect(await pane($)).toBe('No prompt checked yet.');
+  expect(await pane($)).toBe('No slips yet.');
 });
 
 test('a prompt sent over Remote Control is checked', async ($, on) => {
@@ -179,11 +207,10 @@ test('a prompt sent over Remote Control is checked', async ($, on) => {
 });
 
 test('no answer from the model is a failed check, said on screen and in the log', async ($, on) => {
-  const { logged, opened, toasts, clock } = engine(on, { modelFails: true });
+  const { logged, toasts, clock } = engine(on, { modelFails: true });
 
   await typed($, clock, PROMPT);
 
-  expect(opened).toEqual([]);
   expect(logged).toEqual(['backend 4f1c9a2e FAILED, no answer from the model (empty-reply)']);
   expect(toasts).toEqual(['prompt not checked: no answer from the model (empty-reply)']);
   expect(await pane($)).toContain('not checked: no answer from the model (empty-reply)');
@@ -194,32 +221,75 @@ test('an answer that is not the list asked for fails the check, and is not read 
 
   await typed($, clock, PROMPT);
 
-  expect(logged).toEqual(['backend 4f1c9a2e FAILED, the model\'s answer is not a list: {"wrong":"with fix"}']);
-});
-
-test('where the pane is not drawn, the first slip is a toast', async ($, on) => {
-  const { toasts, clock } = engine(on, { answer: TWO_SLIPS, isNarrow: true });
-
-  await typed($, clock, PROMPT);
-
-  expect(toasts).toEqual([
-    '"would it better" -> "would it be better" (missing "be"), and 1 more. /grammar lists them.',
+  expect(logged).toEqual([
+    `backend 4f1c9a2e unread answer: ${JSON.stringify('{"wrong":"with fix"}')}`,
+    'backend 4f1c9a2e FAILED, the model\'s answer is not a list: {"wrong":"with fix"}',
   ]);
 });
 
-test('/grammar opens the pane', async ($, on) => {
-  const { opened } = engine(on);
+test('a call the engine refuses is a failed check, in the pane and the log', async ($, on) => {
+  const { logged, toasts, clock } = engine(on, { modelRefused: true });
 
-  await $.session.start({ cwd: '/work/backend', surface: 'terminal', isInteractive: true });
-  const ran = await $.command.run({
-    command: 'grammar',
-    args: '',
-    origin: { kind: 'composer' },
-    presentation: { isFullscreen: false, columns: 80 },
+  await typed($, clock, PROMPT);
+
+  const why = 'prompt-grammar: $.model.complete: the model opus is not allowed here';
+  expect(logged).toEqual([`backend 4f1c9a2e FAILED, ${why}`]);
+  expect(toasts).toEqual([`prompt not checked: ${why}`]);
+  expect(await pane($)).toContain(`not checked: ${why}`);
+});
+
+test('an answer cut at the token cap says so', async ($, on) => {
+  const { logged, clock } = engine(on, { answer: '[{"wrong":"with fix","fixed":"with the', outputTokens: 4000 });
+
+  await typed($, clock, PROMPT);
+
+  expect(logged.at(-1)).toBe("backend 4f1c9a2e FAILED, the model's answer was cut at 4000 tokens");
+});
+
+test('a slip without its explanation fails the check', async ($, on) => {
+  const { logged, clock } = engine(on, {
+    answer: '[{"wrong":"with fix","fixed":"with the fix","why":"missing article"}]',
   });
 
+  await typed($, clock, PROMPT);
+
+  expect(logged.at(-1)).toContain(
+    "FAILED, an entry of the model's answer is not { wrong, fixed, why, explain, examples }",
+  );
+});
+
+test('a list taken back and written again fails the check, and the log keeps the answer', async ($, on) => {
+  const answer = `${TWO_SLIPS}\n\nWait, the second is no slip.\n\n[]`;
+  const { logged, toasts, clock } = engine(on, { answer });
+
+  await typed($, clock, PROMPT);
+
+  expect(toasts).toHaveLength(1);
+  expect(toasts[0]).toContain("prompt not checked: the model's answer is not JSON (");
+  expect(logged).toHaveLength(2);
+  expect(logged[0]).toBe(`backend 4f1c9a2e unread answer: ${JSON.stringify(answer)}`);
+  expect(logged[1]).toContain("FAILED, the model's answer is not JSON (");
+});
+
+test('/grammar opens the pane, and closes it when it is shown', async ($, on) => {
+  const { opened, closed } = engine(on);
+  const grammar = () =>
+    $.command.run({
+      command: 'grammar',
+      args: '',
+      origin: { kind: 'composer' },
+      presentation: { isFullscreen: false, columns: 80 },
+    });
+
+  await $.session.start({ cwd: '/work/backend', surface: 'terminal', isInteractive: true });
+
+  expect(await grammar()).toEqual({ text: 'Grammar pane opened.', isTextDisplayOnly: true });
   expect(opened).toEqual(['grammar']);
-  expect(ran).toEqual({ text: 'Grammar pane opened.', isTextDisplayOnly: true });
+  expect(closed).toEqual([]);
+
+  expect(await grammar()).toEqual({ text: 'Grammar pane closed.', isTextDisplayOnly: true });
+  expect(opened).toEqual(['grammar']);
+  expect(closed).toEqual(['grammar']);
 });
 
 test('a long prompt, most of it a paste, is sent as its two ends', async ($, on) => {

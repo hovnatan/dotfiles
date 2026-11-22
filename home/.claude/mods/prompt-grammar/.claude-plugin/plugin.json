@@ -1,7 +1,7 @@
 {
   "name": "prompt-grammar",
   "version": "1.0.0",
-  "description": "Checks the grammar of each prompt I type and lists the slips, wrong and fixed, in a pane beside the chat",
+  "description": "Checks the grammar of each prompt I type and shows the slips, wrong and fixed, in a toast",
   "author": { "name": "Hovnatan Karapetyan" },
   "types": "./types/index.d.ts"
 }
