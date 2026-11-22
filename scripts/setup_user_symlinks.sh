@@ -529,6 +529,11 @@ if [ "$(uname)" = "Darwin" ]; then
   defaults write com.colliderli.iina alwaysOpenInNewWindow -bool false
   defaults write com.colliderli.iina playlistAutoPlayNext -bool false
 
+  # Off by default ("Quit after all windows are closed", > General). On, so
+  # closing the player window is IINA quitting: Night Shift comes back only
+  # at the quit (home/.hammerspoon/iina_night_shift.lua).
+  defaults write com.colliderli.iina quitWhenNoOpenedWindow -bool true
+
   # Without these IINA reads neither file linked above: mpv.conf and scripts/
   # come from the config directory (Preferences > Advanced, which the first
   # switches on), the keys from the conf named here (> Key Bindings). The
