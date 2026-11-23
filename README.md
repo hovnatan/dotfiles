@@ -80,7 +80,7 @@ Command-line tools come from Nix, the same set at the same versions on
 Linux boxes and Macs (since 2026-09-23; the `Brewfile` keeps only the casks,
 App Store apps and VS Code extensions). The curated list is `nix/flake.nix`:
 almost everything is in its `common` list, and the per-OS lists hold the
-exceptions (only zsh, Linux-only, as macOS ships its own). `nix/flake.lock`
+few exceptions, each with its reason beside it. `nix/flake.lock`
 pins the nixpkgs revision, so every machine that applies the same commit
 gets the same builds. Nix's copy wins over the distro's (`~/.nix-profile/bin`
 precedes `/usr/bin`), but not over `~/.local/bin`: a self-installed `uv`

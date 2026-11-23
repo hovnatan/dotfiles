@@ -9,10 +9,6 @@
 # non-zero at the end, rather than leaving the rest of the machine
 # half-installed over one unrelated file.
 
-# set -e
-
-# rm -rf ~/.tmux.conf ~/.zshrc ~/.bashrc_local ~/.vimrc ~/.bashrc_local ~/.config/htop ~/.ssh/config
-
 failed=0
 warn() {
   echo -e "\033[33mwarning: $*\033[0m" >&2
@@ -420,7 +416,7 @@ ln -sfn ~/.dotfiles/home/.config/ruff ~/.config/ruff
 # instructions pass it with --config
 ln -sfn ~/.dotfiles/home/.config/markdownlint ~/.config/markdownlint
 
-mkdir -p ~/.local/{bin,local}
+mkdir -p ~/.local/bin
 ln -sf ~/.dotfiles/home/.npmrc ~/.npmrc
 
 # agy -- Google's Antigravity CLI, from Google's installer rather than
