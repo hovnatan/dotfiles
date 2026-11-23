@@ -423,6 +423,27 @@ ln -sfn ~/.dotfiles/home/.config/markdownlint ~/.config/markdownlint
 mkdir -p ~/.local/{bin,local}
 ln -sf ~/.dotfiles/home/.npmrc ~/.npmrc
 
+# agy -- Google's Antigravity CLI, from Google's installer rather than
+# nix/flake.nix: the binary it puts at ~/.local/bin/agy updates itself, which
+# a copy in the Nix store cannot. Gated on the binary being absent, so a
+# re-run downloads nothing. The installer runs with a throwaway HOME: its last
+# step (`agy install`) appends a PATH line to every shell profile under HOME,
+# home/.config/fish/config.fish among them through the ~/.config/fish link,
+# and ~/.local/bin is on PATH already (home/.profile.shared).
+if [ ! -x ~/.local/bin/agy ]; then
+  echo "agy: installing with https://antigravity.google/cli/install.sh"
+  agy_bin=$HOME/.local/bin
+  agy_home=$(mktemp -d)
+  curl -fsSL https://antigravity.google/cli/install.sh -o "$agy_home/install.sh" \
+    && HOME="$agy_home" bash "$agy_home/install.sh" --dir "$agy_bin"
+  rm -rf "$agy_home"
+  if [ -x "$agy_bin/agy" ]; then
+    echo "agy: installed at $agy_bin/agy (the path the installer names above is in its throwaway HOME)"
+  else
+    warn "agy did not install (message above); re-run, or see https://antigravity.google/docs/cli/install"
+  fi
+fi
+
 ln -sfn ~/.dotfiles/home/.config/uv ~/.config/uv
 
 # docker's zsh completion, where home/.zshrc.shared's fpath looks for it.
