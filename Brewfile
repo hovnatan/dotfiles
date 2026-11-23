@@ -50,6 +50,9 @@ brew "mas"
 # so the cask cannot install (2026-09-22).
 cask "alt-tab"
 cask "ankerwork"
+# antigravity -- Google's agent app; its terminal side is agy, which
+# scripts/setup_user_symlinks.sh installs (2026-11-23)
+cask "antigravity"
 cask "chatgpt"
 cask "claude"
 cask "discord"
