@@ -3,7 +3,9 @@
 -- One key answers "how much of the movie is left?": flashes the remaining
 -- playtime top-right together with the wall-clock time playback will end,
 -- so you can decide whether to keep watching without doing the arithmetic.
+-- The file's name is the line above it.
 --
+--                    S04E07.mkv
 --     41:17 left, ends at 23:52
 --
 -- Two bindings: show-time-left is the message on its own, and
@@ -29,6 +31,12 @@ local overlay = mp.create_osd_overlay("ass-events")
 local hide_timer = nil
 
 local function flash(text)
+  -- Nothing is loaded in an idle player, so there is no name to show.
+  local name = mp.get_property("filename")
+  if name then
+    -- Escaped: a { in a file's name would start an ASS tag and hide the rest.
+    text = mp.command_native({ "escape-ass", name }) .. "\\N" .. text
+  end
   overlay.data = "{\\an9}" .. text
   overlay:update()
 
