@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# What mpv_night_shift.lua runs when mpv launches and quits, against
+# What mpv_night_shift.lua runs while mpv is open and once none is, against
 # Hammerspoon doubles, so no mpv, macOS or Hammerspoon is needed and it runs
-# in CI on Linux and macOS: which verb of night_shift.swift each event asks
-# for, their order when events come faster than the script, and the alert
+# in CI on Linux and macOS: which verb of night_shift.swift each check asks
+# for, their order when checks come faster than the script, and the alert
 # when the script fails, hangs or does not start.
 set -euo pipefail
 REPO=$(cd "$(dirname "$0")/../.." && pwd)

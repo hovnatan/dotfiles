@@ -1,34 +1,37 @@
 -- Night Shift is turned off for mpv, so a film is not tinted warm, and
--- given back to its schedule afterwards:
+-- given back to its schedule afterwards. An mpv launch starts a check every
+-- CHECK seconds, which runs for as long as an mpv is open:
 --
---   mpv launching or launched, or open at load --> night_shift.swift off
---   the last mpv quit                          --> night_shift.swift resume
+--   an mpv is open, first check that finds one --> night_shift.swift off
+--   none is open any more                      --> night_shift.swift resume
 --
--- Both launch events ask for `off`, which does nothing the second time: an
--- mpv started from a terminal is told as `launching` alone, never `launched`.
+-- The check, not the launch, turns it off, so a run that is over at once
+-- (`mpv --version`, a script probing a file) leaves the screen alone. The
+-- check, not mpv's quit, gives it back, because an mpv without a window is a
+-- background app to macOS and is told as no quit at all, however it ends.
+-- The price is that the tint leaves up to CHECK seconds into a film and
+-- returns up to CHECK seconds after it.
 --
 -- mpv is a process per player window, each an app of the same bundle id
--- (started from a terminal too), so a quit resumes only when no other is
--- left.
+-- (started from a terminal too), so "open" is any of them.
 --
 -- `off` turns Night Shift off if it is on. `resume` turns it on if its
 -- schedule (System Settings > Displays > Night Shift) has it on at that
--- minute, and leaves it off otherwise. Nothing is remembered from launch to
--- quit: what the quit does depends on the schedule alone, so a Hammerspoon
--- reload mid-film loses nothing, and Night Shift turned off by hand for a
--- film is back on after it. With no schedule it stays off after mpv.
+-- minute, and leaves it off otherwise, so Night Shift turned off by hand for
+-- a film is back on after it. With no schedule it stays off after mpv.
 --
--- Only the launch turns it off: the schedule starting while mpv is open
--- (a film running through sunset) turns it on as usual.
+-- `off` is asked once for a run of open mpvs: the schedule starting while
+-- mpv is open (a film running through sunset) turns it on as usual.
 local M = {}
 
 local MPV = "io.mpv"
 local SCRIPT = os.getenv("HOME") .. "/.dotfiles/scripts/macos/night_shift.swift"
 local TIMEOUT = 30 -- seconds; the script takes about 0.4
+local CHECK = 2 -- seconds
 
 -- Every run is logged with what the script answered (event_log.lua), e.g.
---   2026-11-22T05:20:11.113Z off (mpv launched): was on: turned off
---   2026-11-22T07:02:40.530Z resume (mpv quit): turned on (sunset to sunrise, and it is night)
+--   2026-11-22T05:20:11.113Z off (mpv open): was on: turned off
+--   2026-11-22T07:02:40.530Z resume (no mpv left): turned on (sunset to sunrise, and it is night)
 local log
 log, M.logDir = require("event_log").new("mpv_night_shift")
 local fail, guarded = require("failure").new("mpv_night_shift", log)
@@ -84,32 +87,57 @@ local function ask(verb, why)
   run()
 end
 
+local function mpvOpen()
+  return #hs.application.applicationsForBundleID(MPV) > 0
+end
+
+M.held = false -- `off` was asked for the mpv open now
+
+local check
+local function arm()
+  M.checkTimer = hs.timer.doAfter(CHECK, function()
+    guarded(check)
+  end)
+end
+
+check = function()
+  M.checkTimer = nil
+  local open = mpvOpen()
+  -- Armed before asking: a script that fails raises, and the checks go on.
+  if open then
+    arm()
+  end
+  if open and not M.held then
+    M.held = true
+    ask("off", "mpv open")
+  elseif not open and M.held then
+    M.held = false
+    ask("resume", "no mpv left")
+  elseif not open then
+    log("left alone: mpv was gone within %d s of its launch", CHECK)
+  end
+end
+
 -- Kept in M so it is not garbage-collected.
 M.watcher = hs.application.watcher.new(function(_, event, app)
   guarded(function()
     if not app or app:bundleID() ~= MPV then
       return
     end
-    if event == hs.application.watcher.launching then
-      ask("off", "mpv launching")
-    elseif event == hs.application.watcher.launched then
-      ask("off", "mpv launched")
-    elseif event == hs.application.watcher.terminated then
-      -- The one that quit is told apart by pid, in case it is still listed.
-      for _, other in ipairs(hs.application.applicationsForBundleID(MPV)) do
-        if other:pid() ~= app:pid() then
-          log("no resume (mpv quit): another mpv is open")
-          return
-        end
-      end
-      ask("resume", "mpv quit")
+    -- An mpv started from a terminal is told as `launching` alone.
+    local launch = event == hs.application.watcher.launching or event == hs.application.watcher.launched
+    if launch and not M.checkTimer then
+      arm()
     end
   end)
 end)
 M.watcher:start()
 
-if #hs.application.applicationsForBundleID(MPV) > 0 then
+-- A reload mid-film: no launch is coming to start the checks.
+if mpvOpen() then
+  M.held = true
   ask("off", "mpv open at load")
+  arm()
 end
 
 return M

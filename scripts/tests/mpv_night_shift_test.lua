@@ -1,6 +1,7 @@
 -- mpv_night_shift.lua against Hammerspoon doubles:
 --
---   test --event(kind, bundle)--> watcher callback --> doubled hs.task
+--   test --event(kind, bundle)--> watcher callback --> the check's timer
+--   test --tick()---------------> the check          --> doubled hs.task
 --   test --finish(code, out)----> the task's callback    (records the verb)
 --   test --the timeout firing---> the doubled timer's function
 --
@@ -24,6 +25,7 @@ local MPV, CHROME = "io.mpv", "com.google.Chrome"
 -- timer, terminated }. world.alerts and world.logged: what the module said.
 -- world.startFails makes the next task's start() return false.
 local world
+local mod -- the module, as the last load() returned it
 
 local function app(bundle, pid)
   return {
@@ -113,17 +115,16 @@ local function load(mpvOpen)
     }
   end
   _G.hs = stubHs()
-  return require("mpv_night_shift")
+  mod = require("mpv_night_shift")
+  return mod
 end
 
--- An app event; world.open, the pids of the mpv processes running, follows
--- mpv's launches and quits. `listed` keeps a quit one in it, as a process
--- still listed when its quit is told would be.
-local function event(kind, bundle, pid, listed)
+-- An app event. world.open holds the pids of the mpv processes running: a
+-- launch adds one, and gone() takes one away, with no event, as the module
+-- is told of none it uses.
+local function event(kind, bundle, pid)
   pid = pid or 1
-  if bundle == MPV and kind == "launching" then
-    table.insert(world.open, pid)
-  elseif bundle == MPV and kind == "launched" then
+  if bundle == MPV and (kind == "launching" or kind == "launched") then
     local listed = false
     for _, open in ipairs(world.open) do
       listed = listed or open == pid
@@ -131,15 +132,26 @@ local function event(kind, bundle, pid, listed)
     if not listed then
       table.insert(world.open, pid)
     end
-  elseif bundle == MPV and kind == "terminated" and not listed then
-    for i, open in ipairs(world.open) do
-      if open == pid then
-        table.remove(world.open, i)
-        break
-      end
-    end
   end
   world.onApp("the app's name", kind, bundle and app(bundle, pid))
+end
+
+local function gone(pid)
+  pid = pid or 1
+  for i, open in ipairs(world.open) do
+    if open == pid then
+      table.remove(world.open, i)
+      return
+    end
+  end
+  error("no mpv " .. pid .. " is open")
+end
+
+-- The check's timer firing.
+local function tick()
+  local timer = assert(mod.checkTimer, "no check is armed")
+  assert(timer.seconds == 2, "the check is armed for " .. tostring(timer.seconds) .. " s")
+  timer.fire()
 end
 
 -- The script of task `n` ending.
@@ -171,86 +183,125 @@ local function test(name, fn)
   end
 end
 
-test("mpv not open at load: nothing runs", function()
+test("mpv not open at load: nothing runs, no check is armed", function()
   load(false)
   eq(verbs(), "", "tasks")
+  eq(mod.checkTimer, nil, "the check")
 end)
 
-test("mpv open at load: off", function()
+test("mpv open at load: off at once, and the checks run", function()
   load(true)
   eq(verbs(), "off", "tasks")
   eq(world.tasks[1].path, os.getenv("HOME") .. "/.dotfiles/scripts/macos/night_shift.swift", "script")
   finish(1, 0, "already off\n")
   eq(world.logged[1], "off (mpv open at load): already off", "log")
   assert(world.tasks[1].timer.stopped, "the timeout was left running")
+  tick()
+  eq(verbs(), "off", "a check with it still open")
+  gone()
+  tick()
+  eq(verbs(), "off resume", "the check after it went")
 end)
 
-test("launch turns off, quit resumes", function()
+test("a launch turns off at the first check, and no mpv left resumes", function()
   load(false)
   event("launched", MPV)
-  eq(verbs(), "off", "after the launch")
+  eq(verbs(), "", "before the check")
+  tick()
+  eq(verbs(), "off", "at the check")
   finish(1, 0, "was on: turned off\n")
-  event("terminated", MPV)
-  eq(verbs(), "off resume", "after the quit")
+  eq(world.logged[1], "off (mpv open): was on: turned off", "log")
+  gone()
+  tick()
+  eq(verbs(), "off resume", "the check after it went")
   finish(2, 0, "turned on (sunset to sunrise, and it is night)\n")
-  eq(world.logged[2], "resume (mpv quit): turned on (sunset to sunrise, and it is night)", "log")
+  eq(world.logged[2], "resume (no mpv left): turned on (sunset to sunrise, and it is night)", "log")
+  eq(mod.checkTimer, nil, "the check, with no mpv left")
   eq(#world.alerts, 0, "alerts")
 end)
 
-test("other apps and other events of mpv run nothing", function()
+test("an mpv gone before the first check, as mpv --version is, runs nothing", function()
+  load(false)
+  event("launching", MPV)
+  gone()
+  tick()
+  eq(verbs(), "", "tasks")
+  eq(world.logged[1], "left alone: mpv was gone within 2 s of its launch", "log")
+  eq(mod.checkTimer, nil, "the check")
+end)
+
+test("off is asked once, however long mpv stays open", function()
+  load(false)
+  event("launched", MPV)
+  tick()
+  finish(1, 0, "was on: turned off\n")
+  tick()
+  tick()
+  tick()
+  eq(verbs(), "off", "tasks")
+end)
+
+test("other apps and other events of mpv arm no check", function()
   load(false)
   event("launched", CHROME)
   event("terminated", CHROME)
   event("activated", MPV)
+  event("terminated", MPV)
   event("terminated", nil)
+  eq(mod.checkTimer, nil, "the check")
   eq(verbs(), "", "tasks")
 end)
 
 test("a launch from a terminal, told as launching alone, turns off", function()
   load(false)
   event("launching", MPV)
-  eq(verbs(), "off", "after the launch")
-  finish(1, 0, "was on: turned off\n")
-  eq(world.logged[1], "off (mpv launching): was on: turned off", "log")
-  event("terminated", MPV)
-  eq(verbs(), "off resume", "after the quit")
+  tick()
+  eq(verbs(), "off", "tasks")
 end)
 
-test("a launch told as launching and then launched asks for off twice", function()
+test("a launch told as launching and then launched arms one check", function()
   load(false)
   event("launching", MPV)
-  finish(1, 0, "was on: turned off\n")
+  local first = mod.checkTimer
   event("launched", MPV)
-  finish(2, 0, "already off\n")
-  event("terminated", MPV)
-  eq(verbs(), "off off resume", "tasks")
+  eq(mod.checkTimer, first, "the check")
+  tick()
+  eq(verbs(), "off", "tasks")
 end)
 
-test("a quit resumes only when no other mpv is left", function()
+test("it resumes only when no mpv is left", function()
   load(false)
   event("launched", MPV, 1)
+  tick()
   finish(1, 0, "was on: turned off\n")
   event("launched", MPV, 2)
-  finish(2, 0, "already off\n")
-  event("terminated", MPV, 1)
-  eq(verbs(), "off off", "after the first quit")
-  eq(world.logged[3], "no resume (mpv quit): another mpv is open", "log")
-  event("terminated", MPV, 2)
-  eq(verbs(), "off off resume", "after the last quit")
+  gone(1)
+  tick()
+  eq(verbs(), "off", "with the second still open")
+  gone(2)
+  tick()
+  eq(verbs(), "off resume", "with none left")
 end)
 
-test("a quit one still listed does not count as another", function()
-  load(false)
-  event("launched", MPV, 1)
-  finish(1, 0, "was on: turned off\n")
-  event("terminated", MPV, 1, true)
-  eq(verbs(), "off resume", "tasks")
-end)
-
-test("a quit while off still runs waits for it", function()
+test("an mpv launched after a resume turns off again", function()
   load(false)
   event("launched", MPV)
-  event("terminated", MPV)
+  tick()
+  finish(1, 0, "was on: turned off\n")
+  gone()
+  tick()
+  finish(2, 0, "turned on (sunset to sunrise, and it is night)\n")
+  event("launched", MPV)
+  tick()
+  eq(verbs(), "off resume off", "tasks")
+end)
+
+test("a resume while off still runs waits for it", function()
+  load(false)
+  event("launched", MPV)
+  tick()
+  gone()
+  tick()
   eq(verbs(), "off", "while off runs")
   finish(1, 0, "was on: turned off\n")
   eq(verbs(), "off resume", "once off ended")
@@ -259,47 +310,57 @@ end)
 test("of several asked for while one runs, the last alone follows", function()
   load(false)
   event("launched", MPV)
-  event("terminated", MPV)
+  tick()
+  gone()
+  tick()
   event("launched", MPV)
-  event("terminated", MPV)
+  tick()
+  gone()
+  tick()
   finish(1, 0, "already off\n")
   eq(verbs(), "off resume", "tasks")
   finish(2, 0, "left off (no schedule)\n")
   eq(verbs(), "off resume", "nothing is left to run")
 end)
 
-test("a failed script alerts with its error, and the next event still runs", function()
+test("a failed script alerts with its error, and the next check still runs", function()
   load(false)
   event("launched", MPV)
+  tick()
   finish(1, 1, "", "night_shift: CoreBrightness has no class CBBlueLightClient\n")
   eq(#world.alerts, 1, "alerts")
   assert(world.alerts[1]:find("no class CBBlueLightClient", 1, true), "the alert: " .. world.alerts[1])
   assert(world.alerts[1]:find("exit 1", 1, true), "the alert: " .. world.alerts[1])
-  event("terminated", MPV)
+  gone()
+  tick()
   eq(verbs(), "off resume", "tasks")
 end)
 
 test("a script that hangs is killed and alerted, and its late end ignored", function()
   load(false)
   event("launched", MPV)
+  tick()
   world.tasks[1].timer.fire()
   assert(world.tasks[1].terminated, "the task was not terminated")
   eq(#world.alerts, 1, "alerts")
   assert(world.alerts[1]:find("took over", 1, true), "the alert: " .. world.alerts[1])
-  event("terminated", MPV)
-  eq(verbs(), "off resume", "the next event runs")
+  gone()
+  tick()
+  eq(verbs(), "off resume", "the next check runs")
   finish(1, 15, "")
   eq(#world.alerts, 1, "alerts after the late end")
   eq(#world.logged, 1, "log lines after the late end")
 end)
 
-test("a script that cannot start alerts, and the next event still runs", function()
+test("a script that cannot start alerts, and the checks go on", function()
   load(false)
   world.startFails = true
   event("launched", MPV)
+  tick()
   eq(#world.alerts, 1, "alerts")
   assert(world.alerts[1]:find("could not start", 1, true), "the alert: " .. world.alerts[1])
-  event("terminated", MPV)
+  gone()
+  tick()
   eq(verbs(), "resume", "tasks")
 end)
 
