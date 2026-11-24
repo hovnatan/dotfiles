@@ -291,48 +291,68 @@ else
   echo "$HOME/.hov-dotfiles-private not cloned - no work log routine"
 fi
 
-# Claude Code personal skills. Keep ~/.claude/skills as a real directory so
-# skills installed by other means are left alone, and symlink in each skill
-# vendored under .dotfiles/home/.claude/skills/.
+# Skills, for every agent. The real folder is home/.agents/skills/ in this repo:
+#   ~/.agents/skills          Codex, and any tool that follows that convention
+#   ~/.gemini/config/skills   Antigravity (agy and the app; also reads
+#                             ~/.gemini/skills, never ~/.agents/skills globally)
+#   ~/.claude/skills          Claude Code: a real directory with one link per
+#                             skill, so its own synced/ account-skill cache
+#                             stays out of this checkout and out of Codex's
+#                             recursive ~/.agents/skills scan
 #
 # Where each skill comes from (keep this the only place that says so):
-#   vendored  home/.claude/skills/<name>/, pinned by .upstream, drift reported
-#             by scripts/check_skill_updates.sh. Bump = re-copy + update commit=.
+#   own       home/.agents/skills/<name>/, written here.
 #   plugin    mattpocock-skills@mattpocock, from the author's own marketplace
 #             (mattpocock/skills), both declared in home/.claude/settings.json;
 #             its skills resolve by bare name (/grill-me, /tdd, /retro, ...).
 #             Not @claude-plugins-official: that catalog's pin lagged upstream
-#             by weeks. Never copy them into ~/.claude/skills: a loose copy
+#             by weeks. Never copy them into the skills folder: a loose copy
 #             shadows the plugin and stops updating.
 # Gotcha: `npx skills add <repo> --skill=<name>` with a non-interactive flag
-# copies EVERY skill in the repo, not just <name>. Vendor by hand instead.
-mkdir -p ~/.claude/skills
-for skill in ~/.dotfiles/home/.claude/skills/*/; do
-  [ -d "$skill" ] || continue
-  link=~/.claude/skills/"$(basename "$skill")"
-  # A real directory here (e.g. a skill installed by `npx skills add` before
-  # it was vendored) would make ln -sfn drop the link *inside* it rather than
-  # replace it. Stop and let the user decide which copy wins.
+# copies EVERY skill in the repo, not just <name>. Copy the one in by hand.
+skills=~/.dotfiles/home/.agents/skills
+for link in ~/.agents/skills ~/.gemini/config/skills; do
   if [ -d "$link" ] && [ ! -L "$link" ]; then
-    warn "$link is a real directory, not a symlink; remove or move it first"
+    warn "$link is a real directory holding skills of its own; move them into $skills or delete them, remove it and re-run"
     continue
   fi
-  ln -sfn "${skill%/}" "$link"
-done
-# A skill removed from the repo leaves its link dangling (the /label skill,
-# 2026-10-23): drop the links into home/.claude/skills that point at nothing.
-# Only those -- a link elsewhere, or a real directory, is not ours to judge.
-for link in ~/.claude/skills/*; do
-  [ -L "$link" ] && [ ! -e "$link" ] || continue
-  case $(readlink "$link") in
-    "$HOME"/.dotfiles/home/.claude/skills/*) rm "$link" && echo "removed $link (its skill left the repo)" ;;
-  esac
+  mkdir -p "$(dirname "$link")"
+  ln -sfn "$skills" "$link"
 done
 
-# Expose the same skills under ~/.agents/skills for tools that look there.
-mkdir -p ~/.agents
-rm -rf ~/.agents/skills
-ln -s ~/.claude/skills ~/.agents/skills
+if [ -L ~/.claude/skills ]; then
+  if [ "$(readlink ~/.claude/skills)" = "$skills" ]; then
+    rm ~/.claude/skills
+  else
+    warn "$HOME/.claude/skills is a symlink, not a real directory; remove it and re-run"
+  fi
+fi
+if [ ! -L ~/.claude/skills ]; then
+  mkdir -p ~/.claude/skills
+  for skill in "$skills"/*/; do
+    [ -f "${skill}SKILL.md" ] || continue
+    link=~/.claude/skills/"$(basename "$skill")"
+    # A real directory here (e.g. a skill installed by `npx skills add`)
+    # would make ln -sfn drop the link *inside* it rather than replace it.
+    # Stop and let the user decide which copy wins.
+    if [ -d "$link" ] && [ ! -L "$link" ]; then
+      warn "$link is a real directory, not a symlink; remove or move it first"
+      continue
+    fi
+    ln -sfn "${skill%/}" "$link"
+  done
+  # A skill removed from (or moved within) the repo leaves its link dangling:
+  # drop only links into this repo's skills dirs; anything else is not ours
+  # to judge.
+  for old in ~/.claude/skills/*; do
+    [ -L "$old" ] && [ ! -e "$old" ] || continue
+    case $(readlink "$old") in
+      "$HOME"/.dotfiles/home/.agents/skills/* | "$HOME"/.dotfiles/home/.claude/skills/*)
+        rm "$old" && echo "removed $old (its skill left the repo)"
+        ;;
+    esac
+  done
+fi
 
 # Directory links get an explicit target with -n: `ln -sf <dir> ~/.config/`
 # would follow an existing ~/.config/<name> link on a re-run and drop a

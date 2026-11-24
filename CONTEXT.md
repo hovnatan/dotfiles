@@ -73,10 +73,6 @@ the hunspell word list, the grammar-drill bank, each machine's own files
 such as its ntfy topic) and `~/.hov-dotfiles-private` (work: the work log
 config, internal documents, hosts).
 
-**Vendored skill**:
-A Claude Code skill copied into `home/.claude/skills/<name>/` and pinned by
-its `.upstream` file.
-
 **Plugin skill**:
 A skill that resolves from an enabled plugin by bare name and is never copied
-into `~/.claude/skills`, since a loose copy would shadow it and stop updating.
+into `home/.agents/skills/`, since a loose copy would shadow it and stop updating.

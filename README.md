@@ -14,7 +14,8 @@ environment every login shell reads, bash or zsh).
 installed under whatever name each tool reads; `scripts/setup_user_symlinks.sh`
 lists the links and why each name. Edit that file; every tool sees the change.
 Situational policy (remote runs, ntfy) lives in skills under
-`home/.claude/skills/`, which Codex also sees via `~/.agents/skills`.
+`home/.agents/skills/`, linked into Claude Code (`~/.claude/skills`), Codex
+(`~/.agents/skills`) and Antigravity (`~/.gemini/config/skills`).
 
 Everything outside `home/` is repo tooling that never lands in `$HOME`:
 `scripts/` (all executables, invoked by absolute path), `claude_tmux_session/`,
@@ -176,7 +177,7 @@ Starts a manager tmux session `manager` at boot: Claude Code with
 permissions bypassed, started in `~/.dotfiles/claude_tmux_session`. Nothing
 watches it after: a manager that quits leaves its shell at a prompt, the
 session up, until you bring it back (below). Ask it (e.g. over Remote Control) to open
-other sessions: per the `tmux-session` skill (`home/.claude/skills/tmux-session/`, which
+other sessions: per the `tmux-session` skill (`home/.agents/skills/tmux-session/`, which
 any claude on any machine follows, not the manager alone) it opens a tmux session `<name>`
 in a folder and starts claude there, or resumes a named conversation, in auto permission
 mode (permissions bypassed only on explicit request).

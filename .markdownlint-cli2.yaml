@@ -6,9 +6,8 @@ globs:
 # set as CI's clean checkout.
 gitignore: true
 # Vendored code (a .upstream file at its root): byte-for-byte copies of a
-# reviewed upstream commit, skills replaced whole by check_skill_updates.sh
-# --apply. Restyling one here would show as drift from upstream. Add a skill
-# to this list when vendoring it (e.g. "home/.claude/skills/<name>/**").
+# reviewed upstream commit. Restyling one here would show as drift from
+# upstream.
 ignores:
   - "home/.config/tmux/vendor/**"
 config:

@@ -44,8 +44,6 @@ It is kept short on purpose - every line here is paid on every session.
   (`scripts/tests/<name>_test.sh`). Linux-only tests skip on a Mac: run them in the
   local Ubuntu guest,
   `vagrant/Vagrantfile` (commands in its header), which has no live sessions to disturb.
-  Vendored skills are ignored in `.markdownlint-cli2.yaml`: add a skill there when
-  vendoring it.
 - Launch or relaunch a Mac GUI app from a shell with
   `scripts/macos/open_clean.sh -a <App>`, which gives it a Dock launch's environment.
   Plain `open` hands the app this shell's, an agent's included, and every window it opens

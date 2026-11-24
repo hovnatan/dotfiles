@@ -3,7 +3,7 @@
 # Start the Claude Code manager in a tmux session "manager" at boot (once:
 # nothing restarts it after; claude-tmux.service says why). The session starts in
 # ~/.dotfiles/claude_tmux_session, whose AGENTS.md sends it to the
-# tmux-session skill (home/.claude/skills/) for how to start and resume the
+# tmux-session skill (home/.agents/skills/) for how to start and resume the
 # other Claude Code tmux sessions on demand. Opt-in per machine
 # -- not part of setup_user_symlinks.sh.
 #

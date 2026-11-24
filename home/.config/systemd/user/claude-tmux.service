@@ -17,7 +17,7 @@ RemainAfterExit=no
 
 # The one managed session is "manager", started in
 # ~/.dotfiles/claude_tmux_session; the AGENTS.md there says what is the
-# manager's own, and the tmux-session skill (home/.claude/skills/) how it
+# manager's own, and the tmux-session skill (home/.agents/skills/) how it
 # starts the other Claude Code sessions on this server.
 
 # The sessions run on the default tmux server, beside anything started there
