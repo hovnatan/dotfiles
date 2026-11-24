@@ -25,6 +25,14 @@ local osd_duration = 3 -- seconds the message stays up
 local overlay = mp.create_osd_overlay("ass-events")
 local hide_timer = nil
 
+local function hide()
+  if hide_timer then
+    hide_timer:kill()
+    hide_timer = nil
+  end
+  overlay:remove()
+end
+
 local function flash(text)
   -- Nothing is loaded in an idle player, so there is no name to show.
   local name = mp.get_property("filename")
@@ -40,10 +48,7 @@ local function flash(text)
   if hide_timer then
     hide_timer:kill()
   end
-  hide_timer = mp.add_timeout(osd_duration, function()
-    overlay:remove()
-    hide_timer = nil
-  end)
+  hide_timer = mp.add_timeout(osd_duration, hide)
 end
 
 -- 5025s -> "1:23:45"; 2477s -> "41:17". Hours are dropped when zero so the
@@ -71,6 +76,7 @@ local function show_time_left()
     return
   end
 
+  remaining = math.max(0, remaining)
   local ends_at = os.date("%H:%M", os.time() + math.floor(remaining + 0.5))
   flash(string.format("%s left, ends at %s", fmt_hms(remaining), ends_at))
 end
@@ -83,5 +89,7 @@ mp.add_key_binding("SPACE", "pause-with-time-left", function()
   -- a message over the first seconds of playback is just noise.
   if mp.get_property_bool("pause") then
     show_time_left()
+  else
+    hide()
   end
 end)

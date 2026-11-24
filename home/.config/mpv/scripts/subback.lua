@@ -1,4 +1,4 @@
--- flash-subs-on-back.lua
+-- subback.lua
 --
 -- LEFT seeks back a few seconds. If subtitles are off, it also flashes them
 -- on for a moment so you can read the line you just missed, then hides them
@@ -17,8 +17,44 @@ local flash_duration = 6 -- seconds to keep subs visible
 
 local timer = nil
 
+local function cancel_timer()
+  if timer then
+    timer:kill()
+    timer = nil
+  end
+end
+
+-- If the user toggles subtitles off mid-flash (e.g. pressing v once to hide,
+-- or twice to keep them on), drop our timer so it never fights them.
+mp.observe_property("sub-visibility", "bool", function(_, visible)
+  if timer and visible == false then
+    cancel_timer()
+  end
+end)
+
+-- Freeze the flash countdown while paused so a line stays up while reading it.
+mp.observe_property("pause", "bool", function(_, paused)
+  if not timer then
+    return
+  end
+  if paused then
+    timer:stop()
+  else
+    timer:resume()
+  end
+end)
+
+-- Switching files mid-flash should not leak the temporary sub-visibility=yes
+-- into the next playlist item or hide its subtitles seconds later.
+mp.register_event("end-file", function()
+  if timer then
+    cancel_timer()
+    mp.set_property("sub-visibility", "no")
+  end
+end)
+
 mp.add_key_binding("LEFT", "flash-subs-on-back", function()
-  mp.commandv("seek", seek_amount)
+  mp.commandv("seek", seek_amount, "exact")
 
   -- Subtitles the user enabled are theirs: seek and leave them alone.
   if timer == nil and mp.get_property("sub-visibility") == "yes" then
@@ -28,12 +64,10 @@ mp.add_key_binding("LEFT", "flash-subs-on-back", function()
   mp.set_property("sub-visibility", "yes")
 
   -- Restart the countdown, so holding LEFT keeps the subs up rather than
-  -- letting the first press hide them mid-scrub.
-  if timer then
-    timer:kill()
-  end
+  -- letting the first press hide them mid-scrub. Start paused if playback is.
+  cancel_timer()
   timer = mp.add_timeout(flash_duration, function()
-    mp.set_property("sub-visibility", "no")
     timer = nil
-  end)
-end)
+    mp.set_property("sub-visibility", "no")
+  end, mp.get_property_bool("pause"))
+end, { repeatable = true })
