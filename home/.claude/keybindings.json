@@ -25,8 +25,7 @@
     {
       "context": "Scroll",
       "bindings": {
-        "ctrl+enter": "scroll:bottom",
-        "escape": "scroll:bottom"
+        "ctrl+enter": "scroll:bottom"
       }
     }
   ]
