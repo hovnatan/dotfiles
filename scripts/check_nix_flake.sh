@@ -46,9 +46,13 @@ SYSTEMS=(x86_64-linux aarch64-linux aarch64-darwin)
 # And slack-cli, Slack's release binary (not in nixpkgs, nix/flake.nix): the
 # hash-pinned tarball download and an install that copies one file
 # (2026-10-25).
+# And mpv (Mac only): mpv-with-scripts, a makeWrapper script over the
+# substituted mpv (allowSubstitutes = false in nixpkgs), and lua-5.2.4-env,
+# the symlink farm of the Lua its wrapper points at; 7 s for the whole set
+# on an M-series Mac (2026-11-23).
 # Extend only with a derivation you have checked is trivial, or say here what
 # it costs.
-LOCAL_OK='^(dotfiles-packages|slack-cli-[0-9.]+|slack_cli_[0-9.]+_(linux|macOS)_[a-z0-9]+\.tar\.gz|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|zathura-with-plugins-[0-9.]+|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+(-go-modules)?|source|vagrant-[0-9.]+|vagrant-spec-[0-9a-f]+|ruby3\.[0-9]+-.+|.+\.gem|Gemfile(\.lock)?|gemfile-and-lockfile)$'
+LOCAL_OK='^(dotfiles-packages|slack-cli-[0-9.]+|slack_cli_[0-9.]+_(linux|macOS)_[a-z0-9]+\.tar\.gz|builder\.pl|hunspell-with-dicts-[0-9.]+|nodejs-[0-9.]+|azure-cli-extensions|zathura-with-plugins-[0-9.]+|mpv-with-scripts-[0-9.]+|lua-[0-9.]+-env|python3\.[0-9]+-azure-cli-[0-9.]+|terraform-[0-9.]+(-go-modules)?|source|vagrant-[0-9.]+|vagrant-spec-[0-9a-f]+|ruby3\.[0-9]+-.+|.+\.gem|Gemfile(\.lock)?|gemfile-and-lockfile)$'
 
 build=0
 case "${1:-}" in

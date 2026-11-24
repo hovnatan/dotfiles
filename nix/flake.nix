@@ -7,6 +7,8 @@
 # Install:  nix profile add path:$HOME/.dotfiles/nix         (once per machine)
 # Apply:    nix profile upgrade nix                            (after the list or lock changed;
 #                                                               `dotup` does this)
+#           scripts/macos/nix_apps.sh                          (a Mac, after an upgrade by hand:
+#                                                               the set's .app copies; `dotup` too)
 # Bump:     nix flake update --flake path:$HOME/.dotfiles/nix  then commit flake.lock and apply
 # Inspect:  nix profile list; nix flake metadata path:$HOME/.dotfiles/nix
 # Check:    scripts/check_nix_flake.sh [--build]           before pushing; CI runs it
@@ -317,6 +319,13 @@
             # needs to serialise its ~/.gitconfig writes. Mac only: Linux has
             # it from util-linux, macOS has none (2026-11-12)
             pkgs.flock
+            # mpv -- media player, configured in home/.config/mpv; prebuilt by
+            # cache.nixos.org, where Homebrew's
+            # mpv.app cask was disabled 2026-09-01 (fails Gatekeeper). Its
+            # mpv.app reaches Spotlight as a copy in "~/Applications/Nix Apps"
+            # (scripts/macos/nix_apps.sh). Mac only: the Linux boxes are
+            # headless (2026-11-23)
+            pkgs.mpv
             # zathura -- PDF, EPUB, DjVu, PostScript and comic-book viewer, recoloured
             # to gruvbox (home/.config/zathura/zathurarc); DjVu is why not
             # sioyek (MuPDF has no DjVu). A CLI binary, no .app: start it from

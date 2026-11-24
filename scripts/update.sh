@@ -14,6 +14,7 @@
 #                              macOS only: Brewfile drift report (advisory)
 #                              Ubuntu only: Aptfile drift report (advisory)
 #                              apply the pinned Nix package set (if installed)
+#                              macOS only: copy its apps where Spotlight looks
 #                                                                  v
 #                              reminders: tmux, Hammerspoon, open shells
 #
@@ -170,6 +171,11 @@ nix_apply() {
         echo "  already applied: nix/ unchanged since profile entry '$entries' was built"
       else
         nix profile upgrade "$entries" 2>&1 | sed 's/^/  /'
+      fi
+      # Every run, not only after an upgrade: one made by hand is caught up
+      # here.
+      if [ "$(uname)" = Darwin ]; then
+        ~/.dotfiles/scripts/macos/nix_apps.sh | sed 's/^/  /'
       fi
       ;;
     *)
