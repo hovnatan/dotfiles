@@ -13,20 +13,15 @@
 -- paused, so the play/pause key doubles as the "how much is left" key:
 -- pausing to check the clock is what you were going to do anyway.
 --
--- IINA does not forward unbound keys to mpv, so the keys below only matter
--- for plain mpv. Under IINA the keys come from its own key-binding conf
--- (Preferences > Key Bindings), which needs the lines
---
---     o script-binding show-time-left
---     SPACE script-binding pause-with-time-left
+-- The keys below are the script's defaults; input.conf binds the same two
+-- by name.
 
 local key = "o"
 local osd_duration = 3 -- seconds the message stays up
 
 -- Drawn as an ASS overlay pinned top-right ({\an9}) rather than through
--- mp.osd_message: that one lands at mpv's OSD position, top-left, which is
--- where IINA draws its own "Pause" badge, and the two would overlap on
--- every pause.
+-- mp.osd_message: that one lands at mpv's OSD position, top-left, and the
+-- next OSD message (a seek, a volume change) replaces it.
 local overlay = mp.create_osd_overlay("ass-events")
 local hide_timer = nil
 

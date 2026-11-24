@@ -479,25 +479,18 @@ fi
 
 # macOS only
 if [ "$(uname)" = "Darwin" ]; then
-  # IINA reads ~/.config/iina as its mpv config dir, incl. scripts/
-  ln -sfn ~/.dotfiles/home/.config/iina ~/.config/iina
+  # mpv (nix/flake.nix). ~/.config/mpv is a real directory, not a link into
+  # the repo: mpv writes its watch-later files there.
+  mkdir -p ~/.config/mpv
+  ln -sf ~/.dotfiles/home/.config/mpv/mpv.conf ~/.config/mpv/mpv.conf
+  ln -sf ~/.dotfiles/home/.config/mpv/input.conf ~/.config/mpv/input.conf
+  ln -sfn ~/.dotfiles/home/.config/mpv/scripts ~/.config/mpv/scripts
+  ln -sfn ~/.dotfiles/home/.config/mpv/shaders ~/.config/mpv/shaders
 
-  # IINA lists its key-binding confs (Preferences > Key Bindings) from this
-  # directory with the URL-based FileManager API, which refuses a symlinked
-  # directory (fatal "Cannot get user config file!" at launch), and saves them
-  # with an atomic write that replaces a symlinked file by a plain one. So the
-  # repo file is the source and IINA gets a plain copy: installed when absent,
-  # left alone when identical, and a warning when the two differ, since
-  # either side may hold the newer edit and only you know which.
-  iina_conf=~/.dotfiles/home/.config/iina/input_conf/my.conf
-  iina_installed="$HOME/Library/Application Support/com.colliderli.iina/input_conf/my.conf"
-  mkdir -p "$(dirname "$iina_installed")"
-  if [ ! -e "$iina_installed" ]; then
-    cp "$iina_conf" "$iina_installed"
-  elif ! cmp -s "$iina_conf" "$iina_installed"; then
-    warn "IINA key bindings differ between the repo and the installed copy:
-       repo -> IINA: cp '$iina_conf' '$iina_installed'
-       IINA -> repo: cp '$iina_installed' '$iina_conf'"
+  # IINA's config used to live in this repo (removed 2026-11-23, mpv took its
+  # place); drop the link left dangling.
+  if [ -L ~/.config/iina ] && [ ! -e ~/.config/iina ]; then
+    rm ~/.config/iina
   fi
 
   # colima's config used to live in this repo (removed 2026-10-07, colima
@@ -551,44 +544,6 @@ if [ "$(uname)" = "Darwin" ]; then
   # open documents, and a warning on every run whenever Preview was open cost
   # more than the colors are worth. Run it by hand when wanted:
   #   ~/.dotfiles/scripts/macos/setup_preview_markup.sh
-
-  # IINA starts every file paused by default ("Pause when opening a file").
-  # Play on open instead. IINA reads this from UserDefaults at each file open,
-  # so it takes effect without a restart; repo is the source, so re-running
-  # resets a change made in Preferences > General.
-  defaults write com.colliderli.iina pauseWhenOpen -bool false
-
-  # Both on by default, in Preferences > General. "Allow multiple player
-  # windows" off: a file opened while another plays takes its window instead
-  # of a second one. "Play next item automatically" off: playback stops at a
-  # file's end, where IINA would go on to the next file of the folder, e.g.
-  # the next episode.
-  defaults write com.colliderli.iina alwaysOpenInNewWindow -bool false
-  defaults write com.colliderli.iina playlistAutoPlayNext -bool false
-
-  # Off by default ("Quit after all windows are closed", > General). On, so
-  # closing the player window is IINA quitting: Night Shift comes back only
-  # at the quit (home/.hammerspoon/iina_night_shift.lua).
-  defaults write com.colliderli.iina quitWhenNoOpenedWindow -bool true
-
-  # Without these IINA reads neither file linked above: mpv.conf and scripts/
-  # come from the config directory (Preferences > Advanced, which the first
-  # switches on), the keys from the conf named here (> Key Bindings). The
-  # default tracks and the subtitle look are in that mpv.conf, whose values
-  # replace IINA's Preferences > Subtitle and "Preferred language" at launch.
-  defaults write com.colliderli.iina enableAdvancedSettings -bool true
-  defaults write com.colliderli.iina useUserDefinedConfDir -bool true
-  # shellcheck disable=SC2088 # IINA stores the tilde and expands it itself
-  defaults write com.colliderli.iina userDefinedConfDir -string '~/.config/iina/'
-  defaults write com.colliderli.iina currentInputConfigName -string my
-
-  # IINA's on-screen badges (Pause, volume, seek) at the subtitles' size, where
-  # IINA has 20 pt (Preferences > UI > On Screen Display > Text size). 56 pt
-  # of the system font has the capitals of mpv.conf's sub-font-size=51 at full
-  # screen on a display 1080 pt high; it is points, so it does not shrink with
-  # the window as the subtitles do. The line under Pause and Resume (position
-  # / duration) is half this, which IINA caps at 25 pt.
-  defaults write com.colliderli.iina osdTextSize -float 56
 
   # Keyboard navigation (System Settings > Keyboard): Tab moves focus to
   # every button in a dialog and Space presses it, not only Return (default

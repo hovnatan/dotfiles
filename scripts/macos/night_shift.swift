@@ -1,5 +1,5 @@
 #!/usr/bin/swift
-// Night Shift from the command line, for home/.hammerspoon/iina_night_shift.lua:
+// Night Shift from the command line, for home/.hammerspoon/mpv_night_shift.lua:
 //
 //   night_shift.swift status   enabled=no mode=sun scheduled=yes
 //   night_shift.swift off      turn it off if it is on

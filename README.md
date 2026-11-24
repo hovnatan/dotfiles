@@ -55,9 +55,8 @@ lists what to reload (tmux, Hammerspoon, open shells). Dirty tracked files are
 stashed around the pull and popped after; a pop conflict stops the run with the
 paths listed and the stash kept. Local commits not on origin make it refuse:
 push or rebase them first. The installer is safe to re-run; anything that needs
-a decision (IINA key bindings differing from the repo, a real directory where a
-skill link belongs) is reported as a warning and makes the run exit non-zero
-once the rest is done.
+a decision (a real directory where a skill link belongs) is reported as a
+warning and makes the run exit non-zero once the rest is done.
 
 ## Checks before a push
 
