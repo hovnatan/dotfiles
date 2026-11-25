@@ -165,6 +165,12 @@
             # fd -- the fish fzf plugin's file search (FZF_FIND_FILE_COMMAND
             # in home/.config/fish/config.fish)
             pkgs.fd
+            # ffmpeg -- ffmpeg and ffprobe: cutting, converting and probing
+            # video and audio, and the contact sheets agents tile from screen
+            # recordings. The same build mpv links on a Mac, so ~1 MiB there;
+            # ~87 MiB on Linux, GTK and SDL for an ffplay a headless box
+            # cannot use (ffmpeg-headless would be ~1 MiB) (2026-11-24)
+            pkgs.ffmpeg
             # fish -- interactive shell, config in home/.config/fish with its
             # plugins vendored there; the login shell stays the account's own
             pkgs.fish
