@@ -15,10 +15,10 @@
 #                                   |                |
 #      ~/.claude/themes/gruvbox.json                ~/.config/zathura/theme
 #        -> gruvbox-<mode>.json                       -> gruvbox-<mode>
-#      Claude Code watches the directory,           read by zathura at start;
-#      so sessions that run recolour                each window that is open is
-#      at once                                      sent the file's `set` lines
-#                                                   over D-Bus
+#      Claude Code watches the directory            read by zathura at start;
+#      and goes by the file's time, set new         each window that is open is
+#      at each flip, so sessions that run           sent the file's `set` lines
+#      recolour at once                             over D-Bus
 #
 # Both links are machine-local (.gitignore): which appearance a machine is
 # in is its own state. The tracked configs name the link, never a mode, so
@@ -75,6 +75,11 @@ point() {
   fi
   ln -s "$target" "$link.new.$$"
   mv -f "$link.new.$$" "$link"
+  # Claude Code reloads a theme when the modification time it reads through
+  # the link changes. A pull that writes both theme files leaves them with one
+  # time, and a flip between them went unseen (2026-11-24). zathura's link
+  # does not need this.
+  touch "$dir/$target"
   log "$link -> $target"
 }
 

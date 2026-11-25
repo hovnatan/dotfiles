@@ -16,7 +16,8 @@
 #                                                 zathura windows, anything
 #                                                 else with "boolean true"
 #
-#   links        light, dark, light again; a second run changes nothing
+#   links        light, dark, light again; a second run changes nothing; the
+#                theme file a link moves to gets a new modification time
 #   arguments    an unknown one, and none on Linux, fail
 #   in the way   a file where the link goes fails, and is left alone
 #   no zathura   links only
@@ -120,6 +121,15 @@ if run no-zathura light && both_point_at light && [ "$(grep -c ' already$' "$WOR
 else
   fail "links: a second run: $(cat "$WORK/out")"
 fi
+# One time on both theme files, as after a pull that wrote both: Claude Code
+# goes by the time it reads through the link, and saw no flip (2026-11-24).
+touch -t 202601010000 "$H"/.claude/themes/gruvbox-{light,dark}.json
+if run no-zathura dark && [ "$H/.claude/themes/gruvbox-dark.json" -nt "$H/.claude/themes/gruvbox-light.json" ]; then
+  pass "links: the theme file the link moves to gets a new modification time"
+else
+  fail "links: gruvbox-dark.json is no newer than gruvbox-light.json after a flip to it: $(cat "$WORK/out")"
+fi
+run no-zathura light || fail "links: back to light: $(cat "$WORK/out")"
 if grep -q 'no zathura on this machine' "$WORK/out"; then
   pass "no zathura: links only"
 else
