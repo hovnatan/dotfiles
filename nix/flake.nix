@@ -106,6 +106,21 @@
               };
             };
 
+          # vobsub2srt as nixpkgs builds it cannot find its language data
+          # ("Failed loading language 'eng'"): it looks in
+          # /usr/share/tesseract-ocr/tessdata. The wrapper names the data of
+          # the tesseract 3 it links; a --tesseract-data given by hand comes
+          # later on the command line (2026-11-25)
+          vobsub2srt = pkgs.symlinkJoin {
+            name = "vobsub2srt-with-tessdata";
+            paths = [ pkgs.vobsub2srt ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+            postBuild = ''
+              wrapProgram $out/bin/vobsub2srt \
+                --add-flags "--tesseract-data ${pkgs.tesseract3}/share/tessdata"
+            '';
+          };
+
           # Every machine: Linux boxes and Macs get the same tools at the
           # same versions (2026-09-23). The macOS entries came from the
           # Brewfile's formulae, their comments carried over.
@@ -332,6 +347,17 @@
             # (scripts/macos/nix_apps.sh). Mac only: the Linux boxes are
             # headless (2026-11-23)
             pkgs.mpv
+            # tesseract and vobsub2srt -- picture subtitles (VobSub .idx/.sub)
+            # to text .srt for mpv, by scripts/vobsub_to_srt.py. vobsub2srt's
+            # own OCR is a 2014 build on tesseract 3, which reads the capital
+            # I as l or |; it is here for --dump-images (one .pgm per line)
+            # and the timings in the .srt it writes, and tesseract 5 reads
+            # the images. ~2.1 GiB, nearly all of it language data, every
+            # language once for each tesseract: the cache's builds, where an
+            # English-only override would compile vobsub2srt here. Mac only,
+            # beside mpv (2026-11-25)
+            pkgs.tesseract
+            vobsub2srt
             # zathura -- PDF, EPUB, DjVu, PostScript and comic-book viewer, recoloured
             # to gruvbox (home/.config/zathura/zathurarc); DjVu is why not
             # sioyek (MuPDF has no DjVu). A CLI binary, no .app: start it from
