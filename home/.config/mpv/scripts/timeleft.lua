@@ -13,10 +13,8 @@
 -- paused, so the play/pause key doubles as the "how much is left" key:
 -- pausing to check the clock is what you were going to do anyway.
 --
--- The keys below are the script's defaults; input.conf binds the same two
--- by name.
+-- No keys here: input.conf binds both by name.
 
-local key = "o"
 local osd_duration = 3 -- seconds the message stays up
 
 -- Drawn as an ASS overlay pinned top-right ({\an9}) rather than through
@@ -32,6 +30,9 @@ local function hide()
   end
   overlay:remove()
 end
+
+-- Switching files or stopping should not leave the previous file's message up.
+mp.register_event("end-file", hide)
 
 local function flash(text)
   -- Nothing is loaded in an idle player, so there is no name to show.
@@ -81,9 +82,9 @@ local function show_time_left()
   flash(string.format("%s left, ends at %s", fmt_hms(remaining), ends_at))
 end
 
-mp.add_key_binding(key, "show-time-left", show_time_left)
+mp.add_key_binding(nil, "show-time-left", show_time_left)
 
-mp.add_key_binding("SPACE", "pause-with-time-left", function()
+mp.add_key_binding(nil, "pause-with-time-left", function()
   mp.commandv("cycle", "pause")
   -- Only on the way into pause: resuming is a decision already made, and
   -- a message over the first seconds of playback is just noise.
