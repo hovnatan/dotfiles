@@ -37,6 +37,10 @@
 
 set -euo pipefail
 
+# say is a plain line for check and a logged, timestamped one once install
+# has started its log.
+say() { echo "$*"; }
+
 # set -e stops the script with the failed command's own status, which can be
 # 1 -- check's "drift". So drift and die exit through finish, and any other
 # failed exit is turned into 2 here.
@@ -53,9 +57,11 @@ on_exit() {
 }
 trap on_exit EXIT
 
-# say is a plain line for check and a logged, timestamped one once install
-# has started its log.
-say() { echo "$*"; }
+# Sourced before this script's own die, which has to be the one left standing:
+# it exits 2, through finish.
+# shellcheck source=scripts/lib/event_log.sh
+. "$(dirname "$0")/lib/event_log.sh"
+
 die() {
   say "apt_bundle.sh: error: $*" >&2
   finish 2
@@ -245,8 +251,6 @@ write_repo() {
 }
 
 install_all() {
-  # shellcheck source=scripts/lib/event_log.sh
-  . "$(dirname "$0")/lib/event_log.sh"
   event_log_start apt_bundle
   say() { log "$*"; }
 

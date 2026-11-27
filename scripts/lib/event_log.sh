@@ -112,3 +112,13 @@ log() {
   printf '%s %s\n' "$stamp" "$*" >>"$EVENT_LOG_FILE"
   printf '%s %s\n' "$stamp" "$*"
 }
+
+# die <message>: how a script with a log ends on a state it did not expect:
+# the message as an ERROR line, in the log and on stderr, and exit 1. Calls
+# log, so a log must be started first (event_log_start or event_log_daily).
+# A script whose failure is something else (apt_bundle.sh's exit 2) defines
+# its own after sourcing this.
+die() {
+  log "ERROR $*" >&2
+  exit 1
+}

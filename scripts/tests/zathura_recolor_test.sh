@@ -112,8 +112,10 @@ fi
 for arg in "" "org.pwmt.zathura.PID-12x"; do
   if run $arg; then
     fail "arguments: '$arg' was taken"
-  elif grep -q 'usage: zathura_recolor.sh' "$WORK/out" && [ ! -s "$WORK/calls" ]; then
-    pass "arguments: '$arg' refused, nothing sent"
+  elif grep -q 'ERROR usage: zathura_recolor.sh' "$WORK/out" \
+    && [ "$(tail -n 1 "$H"/.dotfiles/.logs/*_zathura_recolor/events.log)" = "$(cat "$WORK/out")" ] \
+    && [ ! -s "$WORK/calls" ]; then
+    pass "arguments: '$arg' refused with an ERROR line, logged too, nothing sent"
   else
     fail "arguments: '$arg': $(shown)"
   fi

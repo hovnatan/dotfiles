@@ -64,11 +64,6 @@ done
 . "$(dirname "$0")/lib/event_log.sh"
 event_log_start atuin_import_remote
 
-die() {
-  log "FAIL $*" >&2
-  exit 1
-}
-
 # The columns copied, by name: every one atuin 18.24 has. A missing one on
 # either side stops the run (see the header).
 COPY_COLUMNS="id, timestamp, duration, exit, command, cwd, session, hostname, deleted_at, author, intent, shell, author_kind"

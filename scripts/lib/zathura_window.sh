@@ -3,7 +3,8 @@
 # zathura_window.sh -- a zathura window from outside: its colours sent over
 # D-Bus, and whether it is plain (recolouring off, the document in its own
 # colours). Sourced, not run, by scripts/appearance.sh and
-# scripts/zathura_recolor.sh, which define die.
+# scripts/zathura_recolor.sh, after scripts/lib/event_log.sh: its die is how
+# these end.
 #
 #                 pages                   margins (default-bg)
 #   recoloured    the theme's colours     the theme's page colour

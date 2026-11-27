@@ -24,10 +24,6 @@ here=$(dirname "$0")
 . "$here/lib/event_log.sh"
 # No prune: the day's first would run on a key press.
 event_log_daily zathura_recolor --no-prune
-die() {
-  log "ERROR $*" >&2
-  exit 1
-}
 # shellcheck source=scripts/lib/zathura_window.sh
 . "$here/lib/zathura_window.sh"
 
