@@ -468,6 +468,31 @@ if [ ! -x ~/.local/bin/agy ]; then
   fi
 fi
 
+# agy settings (~/.gemini/antigravity-cli/settings.json). The file is not
+# linked into this repo: agy writes machine-local state there (trustedWorkspaces,
+# /config and /permissions changes) and replaces the file atomically (0600),
+# which would drop a symlink. Merge just the shared defaults when missing or
+# different; Remote Control has no settings.json key, so --remote-control stays
+# in home/.config/fish/functions/agy.fish.
+agy_settings=~/.gemini/antigravity-cli/settings.json
+if ! command -v jq >/dev/null; then
+  warn "jq is not installed; skipping $agy_settings defaults"
+elif [ ! -f "$agy_settings" ] \
+  || ! jq -e '.altScreenMode == "always" and .model == "Gemini 4 Neon (High)"' "$agy_settings" >/dev/null 2>&1; then
+  mkdir -p "$(dirname "$agy_settings")"
+  agy_settings_in=/dev/null
+  [ -f "$agy_settings" ] && agy_settings_in=$agy_settings
+  if agy_settings_new=$(mktemp "$agy_settings.XXXXXX") \
+    && jq -s '(.[0] // {}) + {altScreenMode: "always", model: "Gemini 4 Neon (High)"}' "$agy_settings_in" >"$agy_settings_new" \
+    && chmod 600 "$agy_settings_new" \
+    && mv "$agy_settings_new" "$agy_settings"; then
+    echo "agy: updated $agy_settings (altScreenMode, model)"
+  else
+    rm -f "${agy_settings_new:-}"
+    warn "could not update $agy_settings"
+  fi
+fi
+
 ln -sfn ~/.dotfiles/home/.config/uv ~/.config/uv
 
 # docker's zsh completion, where home/.zshrc.shared's fpath looks for it.
