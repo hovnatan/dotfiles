@@ -103,6 +103,13 @@ trade. The same goes for your own long tasks - surface a finding when you
 have it instead of holding everything for the final report, unless the task's
 output contract is a single structured payload.
 
+# Writing: the Minto pyramid
+
+Shape anything longer than a few lines that I will read as a Minto pyramid:
+the answer first (the conclusion, the recommendation, or what you need from
+me), then the few distinct points that carry it, then the evidence under
+each. I read from the top and stop once I have enough.
+
 # Results: leave a handoff document next to the artifacts
 
 When a task produces results someone will later read, compare against, or
