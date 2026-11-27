@@ -347,6 +347,14 @@
             # (scripts/macos/nix_apps.sh). Mac only: the Linux boxes are
             # headless (2026-11-23)
             pkgs.mpv
+            # scantailor-advanced -- cleans up scanned pages before they
+            # become a PDF or DjVu: splits spreads, deskews, crops to the
+            # content, sets margins, writes black-and-white or mixed TIFFs.
+            # The fork of ScanTailor still maintained in nixpkgs (vigri's);
+            # ~143 MiB beside this set, mostly Qt 5. A CLI binary
+            # (scantailor), no .app: start it from a terminal. Mac only: the
+            # Linux boxes are headless (2026-11-26)
+            pkgs.scantailor-advanced
             # tesseract and vobsub2srt -- picture subtitles (VobSub .idx/.sub)
             # to text .srt for mpv, by scripts/vobsub_to_srt.py. vobsub2srt's
             # own OCR is a 2014 build on tesseract 3, which reads the capital
