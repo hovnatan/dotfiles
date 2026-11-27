@@ -18,7 +18,8 @@ Situational policy (remote runs, ntfy) lives in skills under
 (`~/.agents/skills`) and Antigravity (`~/.gemini/config/skills`).
 
 Everything outside `home/` is repo tooling that never lands in `$HOME`:
-`scripts/` (all executables, invoked by absolute path), `claude_tmux_session/`,
+`scripts/` (the executables, invoked by absolute path; a script only one skill
+runs sits in that skill's folder instead), `claude_tmux_session/`,
 `nix/`, `apt/`, `docs/` (handoffs for one-off migrations), `.devcontainer/`,
 `docker/`. `scripts/setup_user_symlinks.sh` performs the install and is the
 authoritative map of what goes where. Nothing in this repo is on `PATH`;

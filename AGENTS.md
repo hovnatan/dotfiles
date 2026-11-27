@@ -8,8 +8,11 @@ It is kept short on purpose - every line here is paid on every session.
 - `home/` mirrors `$HOME`: entries install at the same relative path under `~`
   (`home/.vimrc` -> `~/.vimrc`). Everything outside `home/` (`scripts/`,
   `claude_tmux_session/`, `nix/`, `apt/`, `docs/`, `.devcontainer/`, `docker/`,
-  `vagrant/`) is repo tooling that never lands in `$HOME`; all executables live in
-  `scripts/` and are invoked by absolute path, nothing here is on `PATH`.
+  `vagrant/`) is repo tooling that never lands in `$HOME`; executables live in
+  `scripts/` and are invoked by absolute path, nothing here is on `PATH`. A script
+  only one skill runs sits beside that skill's `SKILL.md` instead
+  (`home/.agents/skills/<name>/`), named there by file name alone, its test in
+  `scripts/tests/` with the rest.
   `scripts/setup_user_symlinks.sh` is the authoritative install map - add a line there
   when adding a file under `home/`.
   It is safe to re-run; `scripts/update.sh` (alias `dotup`) pulls and re-runs it

@@ -34,7 +34,8 @@ jobs:
         run: |
           nix profile add --inputs-from "path:$PWD/nix" \
             nixpkgs#tmux nixpkgs#bashInteractive nixpkgs#python3 nixpkgs#lua5_4 nixpkgs#fish \
-            nixpkgs#fzf nixpkgs#zsh nixpkgs#atuin nixpkgs#sqlite nixpkgs#coreutils-prefixed
+            nixpkgs#fzf nixpkgs#zsh nixpkgs#atuin nixpkgs#sqlite nixpkgs#coreutils-prefixed \
+            nixpkgs#uv
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
 
       # systemd-run --user and systemctl --user need the runner's user
@@ -50,5 +51,5 @@ jobs:
 
       - run: |
           tmux -V; bash --version | head -1; python3 --version
-          fish --version; fzf --version; zsh --version
+          fish --version; fzf --version; zsh --version; uv --version
       - run: scripts/check.sh tests
