@@ -142,11 +142,15 @@ ln -sf ~/.dotfiles/home/.codex/config.toml ~/.codex/config.toml
 # home/AGENTS_global_instructions.md, installed under whatever name each tool
 # reads. At user level Claude Code reads only ~/.claude/CLAUDE.md (since
 # v2.1.277 it reads AGENTS.md in projects, never at user level); Codex reads
-# ~/.codex/AGENTS.md. Add ~/.config/opencode/AGENTS.md if opencode is ever
-# installed. The source is not named AGENTS.md: in a project an agent loads
-# every AGENTS.md above the files it reads, so work under home/ got the same
-# instructions a second time.
+# ~/.codex/AGENTS.md; Antigravity (agy, the app, IDE) and Gemini CLI read
+# ~/.gemini/GEMINI.md (Antigravity also reads ~/.gemini/AGENTS.md). Add
+# ~/.config/opencode/AGENTS.md if opencode is ever installed. The source is
+# not named AGENTS.md: in a project an agent loads every AGENTS.md above the
+# files it reads, so work under home/ got the same instructions a second time.
 ln -sf ~/.dotfiles/home/AGENTS_global_instructions.md ~/.codex/AGENTS.md
+
+mkdir -p ~/.gemini
+ln -sf ~/.dotfiles/home/AGENTS_global_instructions.md ~/.gemini/GEMINI.md
 
 mkdir -p ~/.claude
 ln -sf ~/.dotfiles/home/AGENTS_global_instructions.md ~/.claude/CLAUDE.md
