@@ -2,8 +2,6 @@
 # scripts/appearance.sh sends each one to the zathura windows that are open.
 set recolor-lightcolor "#282828"
 set recolor-darkcolor "#ebdbb2"
-# default-bg shows through the 1px gap between pages: a shade off the page
-# colour (gruvbox bg2), or the line between pages disappears.
-set default-bg "#504945"
+set default-bg "#282828"
 set statusbar-bg "#282828"
 set statusbar-fg "#ebdbb2"

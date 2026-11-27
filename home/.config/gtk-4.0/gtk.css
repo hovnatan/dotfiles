@@ -1,0 +1,7 @@
+/* zathura: the line between pages. zathurarc has no colour for the 1px gap,
+   which shows default-bg, the page's own colour while recolouring. The grey is
+   in both gruvbox palettes, so one rule serves light and dark. The chain is
+   scrolledwindow > document > page grid > page (zathura's document-widget.c). */
+#zathura scrolledwindow > widget > widget > widget {
+  box-shadow: 0 1px 0 0 #928374;
+}

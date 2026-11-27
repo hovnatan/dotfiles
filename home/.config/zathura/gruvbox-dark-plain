@@ -1,0 +1,5 @@
+# zathura in the dark appearance with recolouring off (the r key): what a
+# plain window has over gruvbox-dark. Only `set` lines;
+# scripts/lib/zathura_window.sh says who sends them. Black, not the page's
+# white: a white window is too much light in the dark.
+set default-bg "#000000"

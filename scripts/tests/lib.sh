@@ -14,6 +14,8 @@
 #   until_ok <seconds> <command...>  poll until the command succeeds
 #   find_copy_bash <scratch dir>     COPY_BASH: a bash whose copy runs, for a
 #                                    pane that runs bash under another name
+#   dbus_send_stub <bin dir>         a dbus-send there that records its
+#                                    calls and stands in for the bus
 #   drop_work                        for an EXIT trap: remove $WORK, or keep
 #                                    it and say where when a check failed
 #   finish                           the count of failures, as the last line
@@ -32,6 +34,28 @@ pass() { log "PASS $*"; }
 fail() {
   log "FAIL $*"
   failures=$((failures + 1))
+}
+
+# dbus_send_stub <bin dir>: a dbus-send in that directory, for a test that
+# puts it first on PATH. Each call is a line in $CALLS, the destination and
+# the last argument. ListNames is answered with two zathura windows, pids 11
+# and $SECOND; anything else with "boolean $ANSWER" (true unless set).
+dbus_send_stub() {
+  cat >"$1/dbus-send" <<'STUB'
+#!/bin/sh
+for arg in "$@"; do
+  case "$arg" in --dest=*) dest=${arg#--dest=} ;; esac
+  last=$arg
+done
+echo "$dest | $last" >> "$CALLS"
+case "$last" in
+  *ListNames)
+    printf '   array [\n      string "org.freedesktop.DBus"\n      string "org.pwmt.zathura.PID-11"\n      string ":1.7"\n      string "org.pwmt.zathura.PID-%s"\n   ]\n' "$SECOND"
+    ;;
+  *) echo "   boolean ${ANSWER:-true}" ;;
+esac
+STUB
+  chmod +x "$1/dbus-send"
 }
 
 until_ok() {

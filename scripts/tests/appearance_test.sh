@@ -8,13 +8,10 @@
 #
 #   throwaway HOME
 #     .claude/themes/gruvbox-{light,dark}.json    copies of the repo's
-#     .config/zathura/gruvbox-{light,dark}        copies of the repo's
+#     .config/zathura/gruvbox-*                   copies of the repo's
 #     .cache/bus                                  a socket nobody answers on
 #     bin/zathura                                 only has to exist
-#     bin/dbus-send                               records its arguments;
-#                                                 answers ListNames with two
-#                                                 zathura windows, anything
-#                                                 else with "boolean true"
+#     bin/dbus-send                               lib.sh's dbus_send_stub
 #
 #   links        light, dark, light again; a second run changes nothing; the
 #                theme file a link moves to gets a new modification time
@@ -24,6 +21,9 @@
 #   windows      no bus fails; one that comes up a second into the run is
 #                waited for, and each window gets each `set` line of the
 #                theme, in order
+#   plain        a window noted as plain (recolouring off, by
+#                scripts/zathura_recolor.sh) gets the theme's plain settings
+#                after the theme's, in light and in dark
 #   refused      a window answering false fails the run
 #   theme file   a line that is not a `set` fails the run
 #   tmux         the theme lines of home/.config/tmux/tmux.conf (six hooks, the
@@ -71,25 +71,9 @@ trap cleanup EXIT
 
 mkdir -p "$H/.claude/themes" "$H/.config/zathura" "$H/bin"
 cp "$REPO"/home/.claude/themes/gruvbox-{light,dark}.json "$H/.claude/themes/"
-cp "$REPO"/home/.config/zathura/gruvbox-{light,dark} "$H/.config/zathura/"
+cp "$REPO"/home/.config/zathura/gruvbox-* "$H/.config/zathura/"
 
-cat >"$H/bin/dbus-send" <<'STUB'
-#!/bin/sh
-# Stand-in for dbus-send: one line per call in $CALLS, the destination and
-# the last argument.
-for arg in "$@"; do
-  case "$arg" in --dest=*) dest=${arg#--dest=} ;; esac
-  last=$arg
-done
-echo "$dest | $last" >> "$CALLS"
-case "$last" in
-  *ListNames)
-    printf '   array [\n      string "org.freedesktop.DBus"\n      string "org.pwmt.zathura.PID-11"\n      string ":1.7"\n      string "org.pwmt.zathura.PID-22"\n   ]\n'
-    ;;
-  *) echo "   boolean ${ANSWER:-true}" ;;
-esac
-STUB
-chmod +x "$H/bin/dbus-send"
+dbus_send_stub "$H/bin"
 
 # Run the script in the throwaway HOME. PATH is the system's plus bin/, so
 # the machine's own zathura and dbus-send are out of reach; $1 says whether
@@ -100,6 +84,7 @@ run() {
   local path=/usr/bin:/bin
   [ "$with_zathura" = zathura ] && path="$H/bin:$path"
   env -i HOME="$H" PATH="$path" XDG_RUNTIME_DIR="$SOCKDIR" CALLS="$WORK/calls" ANSWER="${ANSWER:-true}" \
+    SECOND="${SECOND:-22}" \
     "$SCRIPT" "$@" >"$WORK/out" 2>&1
 }
 points_at() { [ "$(readlink "$1")" = "$2" ]; }
@@ -190,17 +175,49 @@ listener=$!
 [ ! -S "$SOCKDIR/bus" ] || fail "late bus: the socket was there before the run"
 
 : >"$WORK/calls"
+# sets_for <pid> <file...>: the calls that send that window those files' set lines
+sets_for() {
+  local pid=$1 f
+  shift
+  for f in "$@"; do
+    sed -n "s/^set /org.pwmt.zathura.PID-$pid | string:set /p" "$H/.config/zathura/$f"
+  done
+}
 {
   echo "org.freedesktop.DBus | org.freedesktop.DBus.ListNames"
-  for pid in 11 22; do
-    sed -n 's/^set /string:set /p' "$H/.config/zathura/gruvbox-dark" | sed "s/^/org.pwmt.zathura.PID-$pid | /"
-  done
+  sets_for 11 gruvbox-dark
+  sets_for 22 gruvbox-dark
 } >"$WORK/expected"
 if run zathura dark && diff "$WORK/expected" "$WORK/calls" >"$WORK/diff"; then
   pass "windows: a bus up 1 s into the run is waited for, and both got the $(grep -c '^set ' "$H/.config/zathura/gruvbox-dark") set lines of the dark theme"
 else
   fail "windows: $(cat "$WORK/out" "$WORK/diff")"
 fi
+
+# The second window is this test's own process, noted as plain the way
+# zathura_recolor.sh notes one.
+(
+  die() { exit 1; }
+  HOME=$H
+  unset XDG_CACHE_HOME
+  # shellcheck source=scripts/lib/zathura_window.sh
+  . "$REPO/scripts/lib/zathura_window.sh"
+  zathura_plain_note "org.pwmt.zathura.PID-$$"
+) || fail "plain: noting the window"
+for mode in light dark; do
+  : >"$WORK/calls"
+  {
+    echo "org.freedesktop.DBus | org.freedesktop.DBus.ListNames"
+    sets_for 11 "gruvbox-$mode"
+    sets_for $$ "gruvbox-$mode" "gruvbox-$mode-plain"
+  } >"$WORK/expected"
+  if SECOND=$$ run zathura "$mode" && diff "$WORK/expected" "$WORK/calls" >"$WORK/diff"; then
+    pass "plain: $mode, the plain window gets $(grep '^set ' "$H/.config/zathura/gruvbox-$mode-plain") after the theme, the other the theme alone"
+  else
+    fail "plain: $mode: $(cat "$WORK/out" "$WORK/diff")"
+  fi
+done
+rm -r "$H/.cache/zathura_plain"
 
 if ANSWER=false run zathura light; then
   fail "refused: a window answering false passed"

@@ -411,6 +411,14 @@ if [ -d ~/.config/zathura ] && [ ! -L ~/.config/zathura ]; then
 else
   ln -sfn ~/.dotfiles/home/.config/zathura ~/.config/zathura
 fi
+# The line between zathura's pages is GTK CSS (the file says why). The file is
+# linked, not the directory: GTK and desktop themes keep their own files there.
+if [ -e ~/.config/gtk-4.0/gtk.css ] && [ ! -L ~/.config/gtk-4.0/gtk.css ]; then
+  warn "$HOME/.config/gtk-4.0/gtk.css is a real file, not a symlink; merge it into ~/.dotfiles/home/.config/gtk-4.0/gtk.css, remove it and re-run"
+else
+  mkdir -p ~/.config/gtk-4.0
+  ln -sf ~/.dotfiles/home/.config/gtk-4.0/gtk.css ~/.config/gtk-4.0/gtk.css
+fi
 
 # glow (nix/flake.nix) reads glow.yml from ~/Library/Preferences/glow on macOS
 # and ~/.config/glow elsewhere. The file is linked, not the directory: glow

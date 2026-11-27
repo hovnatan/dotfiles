@@ -1,0 +1,4 @@
+# zathura in the light appearance with recolouring off (the r key): what a
+# plain window has over gruvbox-light. Only `set` lines;
+# scripts/lib/zathura_window.sh says who sends them.
+set default-bg "#ffffff"

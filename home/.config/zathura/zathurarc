@@ -24,9 +24,13 @@ map <S-o> focus_inputbar ":open "
 # Gruvbox recolouring: page white -> the theme's background, page black ->
 # its foreground, the shades in between blended. Same palette as Ghostty,
 # nvim (gruvbox.nvim) and the Claude Code theme. `r` toggles it off for pages
-# where colour matters (photos, plots).
+# where colour matters (photos, plots), and the margins with them
+# (gruvbox-*-plain): scripts/zathura_recolor.sh, which says why that takes a
+# script.
+# zathura's own toggle stays on ctrl-r, pages only, for a window that is not
+# on the session bus, where r does nothing.
 set recolor true
-map r recolor
+map r exec "sh -c 'exec ~/.dotfiles/scripts/zathura_recolor.sh $DBUS'"
 
 # The colours: `theme` is a machine-local link to gruvbox-light or
 # gruvbox-dark, whichever the system appearance is. scripts/appearance.sh

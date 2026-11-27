@@ -28,7 +28,8 @@
 # zathura is reached over the session bus that
 # scripts/macos/dbus_session.sh keeps at ~/.cache/bus, where it registers as
 # org.pwmt.zathura.PID-<pid>. A window opened before that bus ran is not on
-# it and keeps its colours until reopened.
+# it and keeps its colours until reopened. A window whose recolouring is
+# off keeps that state's margins (scripts/lib/zathura_window.sh).
 #
 # Logs to ~/.dotfiles/.logs/<UTC>_appearance_sh/events.log (scripts/lib/event_log.sh).
 
@@ -44,6 +45,8 @@ die() {
   log "ERROR $*" >&2
   exit 1
 }
+# shellcheck source=scripts/lib/zathura_window.sh
+. "$(dirname "$0")/lib/zathura_window.sh"
 
 # --- which appearance ---------------------------------------------------------
 
@@ -84,7 +87,7 @@ point() {
 }
 
 point "$HOME/.claude/themes/gruvbox.json" "gruvbox-$mode.json"
-point "$HOME/.config/zathura/theme" "gruvbox-$mode"
+point "$ZATHURA_THEME" "gruvbox-$mode"
 
 # --- the zathura windows that are open ----------------------------------------
 
@@ -92,41 +95,24 @@ if ! command -v zathura >/dev/null; then
   log "no zathura on this machine"
   exit 0
 fi
-bus="${XDG_RUNTIME_DIR:-$HOME/.cache}/bus"
 command -v dbus-send >/dev/null || die "dbus-send missing: apply the Nix package set (dotup)"
 # At a login launchd starts the bus beside whatever runs this (Hammerspoon,
 # a tmux server), and this got there first by 0.04 s (2026-11-10).
 BUS_WAIT=5 # seconds
 for ((i = 0; i < BUS_WAIT * 10; i++)); do
-  [ -S "$bus" ] && break
+  [ -S "$ZATHURA_BUS" ] && break
   sleep 0.1
 done
-[ -S "$bus" ] || die "no session bus at $bus after $BUS_WAIT s: on macOS scripts/macos/dbus_session.sh keeps it (its log: ~/.dotfiles/.logs/*_dbus_session/events.log), installed by ~/.dotfiles/scripts/setup_user_symlinks.sh"
-send() { dbus-send --bus="unix:path=$bus" --print-reply --reply-timeout=3000 "$@"; }
+[ -S "$ZATHURA_BUS" ] || die "no session bus at $ZATHURA_BUS after $BUS_WAIT s: on macOS scripts/macos/dbus_session.sh keeps it (its log: ~/.dotfiles/.logs/*_dbus_session/events.log), installed by ~/.dotfiles/scripts/setup_user_symlinks.sh"
 
-names=$(send --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames \
+names=$(zathura_bus_send --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames \
   | sed -n 's/.*"\(org\.pwmt\.zathura\.PID-[0-9]*\)".*/\1/p')
 if [ -z "$names" ]; then
   log "no zathura window on the bus (one opened before the bus ran has to be reopened)"
   exit 0
 fi
 
-# Its `set` lines one by one, not zathura's SourceConfig: that reads all of
-# zathurarc again and would undo what was changed in the window since
-# (zoom mode, a statusbar toggled on).
 for name in $names; do
-  while IFS= read -r line; do
-    case "$line" in
-      set\ *) ;;
-      "" | \#*) continue ;;
-      *) die "$HOME/.config/zathura/theme: not a set line: $line" ;;
-    esac
-    reply=$(send --dest="$name" /org/pwmt/zathura org.pwmt.zathura.ExecuteCommand "string:$line") \
-      || die "$name: no answer to '$line'"
-    case "$reply" in
-      *"boolean true"*) ;;
-      *) die "$name refused '$line': $reply" ;;
-    esac
-  done <"$HOME/.config/zathura/theme"
+  zathura_apply "$name"
   log "$name recoloured $mode"
 done
