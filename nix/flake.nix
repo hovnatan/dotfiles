@@ -301,6 +301,10 @@
             # (home/.config/tmux/tmux.conf status-right); one binary for macOS and
             # Linux, no plugin manager (2026-11-03)
             pkgs.tmux-mem-cpu-load
+            # tmux-thumbs -- Vimium-style in-place hints on the visible pane
+            # (home/.config/tmux/tmux.conf, prefix f): Rust binary, no plugin
+            # manager (2026-11-27)
+            pkgs.tmuxPlugins.tmux-thumbs
             # typescript -- tsc, the type check of the claude mods
             # (home/.claude/mods/, scripts/tests/claude_mods_test.sh) (2026-11-19)
             pkgs.typescript

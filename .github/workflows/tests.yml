@@ -33,9 +33,9 @@ jobs:
       - name: pinned tools into the default profile
         run: |
           nix profile add --inputs-from "path:$PWD/nix" \
-            nixpkgs#tmux nixpkgs#bashInteractive nixpkgs#python3 nixpkgs#lua5_4 nixpkgs#fish \
-            nixpkgs#fzf nixpkgs#zsh nixpkgs#atuin nixpkgs#sqlite nixpkgs#coreutils-prefixed \
-            nixpkgs#uv
+            nixpkgs#tmux nixpkgs#tmuxPlugins.tmux-thumbs nixpkgs#bashInteractive nixpkgs#python3 \
+            nixpkgs#lua5_4 nixpkgs#fish nixpkgs#fzf nixpkgs#zsh nixpkgs#atuin nixpkgs#sqlite \
+            nixpkgs#coreutils-prefixed nixpkgs#uv
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
 
       # systemd-run --user and systemctl --user need the runner's user
