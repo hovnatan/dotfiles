@@ -7,6 +7,9 @@ set statusbar-home-tilde true
 # No statusbar or inputbar until needed (ctrl-n toggles the statusbar)
 set guioptions ''
 set selection-clipboard clipboard
+# Mouse wheel and trackpad distance, three times the default 40. zathura has
+# this one setting for the wheel, j/k and the arrows, so their step grows too.
+set scroll-step 120
 
 map d scroll half-down
 map u scroll half-up
